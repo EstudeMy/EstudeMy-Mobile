@@ -1,0 +1,55 @@
+name: Mobile CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+      - develop
+  pull_request:
+    branches:
+      - main
+      - develop
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Instalar dependências
+        run: npm install
+
+      - name: Rodar Linter
+        run: npm run lint
+
+      - name: Validação do TypeScript (Typecheck)
+        run: npx tsc --noEmit
+
+      - name: Validação do Build de Produção (Expo Export)
+        run: npx expo export
+
+      - name: Enviar e-mail em caso de falha
+        if: failure()
+        uses: dawidd6/action-send-mail@v3
+        with:
+          server_address: smtp.gmail.com
+          server_port: 587
+          username: ${{ secrets.EMAIL_ORIGIN }}
+          password: ${{ secrets.EMAIL_APP_PASSWORD }}  
+          subject: "❌ Falha no CI/CD - EstudeMy Mobile"
+          body: "A pipeline de integração contínua do aplicativo mobile falhou nos testes estáticos (linter/typecheck/build). Por favor, verifique os logs do GitHub Actions para mais detalhes."
+          to: ${{ secrets.EMAIL_DESTINO }}
+          from: ${{ secrets.EMAIL_ORIGIN }}
