@@ -199,7 +199,8 @@ export default function GameScreen() {
     try {
       await concluirFase({
         faseId: faseId,
-        pontuacao: Math.round((acertos / totalQuestions) * 100),
+        pontuacao: acertos,
+        totalPerguntas: totalQuestions,
         acertos: acertos,
         erros: erros,
       });

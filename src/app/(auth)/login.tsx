@@ -13,13 +13,12 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
-import { useLanguage } from '../../contexts/LanguageContext';
 import api from '../../services/api';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
-  const { t } = useLanguage();
+
 
   const [identifier, setIdentifier] = useState('');
   const [senha, setSenha] = useState('');
@@ -36,20 +35,23 @@ export default function LoginScreen() {
     setErrorMsg(null);
 
     try {
+      const cleanEmail = identifier.trim();
       const response = await api.post('/api/auth/login', {
-        identifier: identifier.trim(),
+        email: cleanEmail,
+        identifier: cleanEmail,
         senha: senha,
       });
 
       if (response.data && response.data.token) {
-        await login(response.data.token, response.data.user);
+        const userObj = response.data.usuario || response.data.user;
+        await login(response.data.token, userObj);
         router.replace('/(tabs)/home');
       } else {
         setErrorMsg('Erro inesperado ao realizar login.');
       }
     } catch (error: any) {
       console.error('Erro na requisição de login:', error);
-      const msg = error.response?.data?.message || 'Email, usuário ou senha incorretos.';
+      const msg = error.response?.data?.message || 'Email ou senha incorretos.';
       setErrorMsg(msg);
     } finally {
       setLoading(false);

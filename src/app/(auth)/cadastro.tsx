@@ -54,35 +54,41 @@ export default function CadastroScreen() {
     setErrorMsg(null);
 
     try {
-      // 1. Registrar o usuário
-      const registerRes = await api.post('/api/auth/register', {
+      // 1. Registrar o usuário com o personagem escolhido
+      await api.post('/api/auth/register', {
         nome: nome.trim(),
         email: email.trim(),
         senha: senha,
         username: username.trim().toLowerCase(),
         dataNascimento: formattedDate,
         tipoUsuario: tipoUsuario,
+        personagem: selectedChar,
         aceiteTermos: true,
       });
 
       // 2. Realizar login automático logo em seguida
       const loginRes = await api.post('/api/auth/login', {
+        email: email.trim(),
         identifier: email.trim(),
         senha: senha,
       });
 
       const token = loginRes.data.token;
+      const userObj = loginRes.data.usuario || loginRes.data.user;
 
-      // 3. Atualizar o personagem selecionado no perfil
-      await api.put('/api/auth/criarPerfil', {
-        personagem: selectedChar,
-        materiaFavorita: 'Programação',
-      }, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
+      // 3. Garantir a atualização do personagem selecionado
+      try {
+        await api.put('/api/users/atualizar-personagem', {
+          personagem: selectedChar,
+        }, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+      } catch (charError) {
+        console.warn('Personagem já atribuído no cadastro:', charError);
+      }
 
       // 4. Logar a sessão localmente
-      await login(token);
+      await login(token, userObj);
       router.replace('/(tabs)/home');
 
     } catch (error: any) {

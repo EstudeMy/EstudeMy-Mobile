@@ -49,7 +49,13 @@ export default function TrilhaDetailScreen() {
         const progressoRes = await api.get(`/api/progresso/trilha/${id}`);
         if (progressoRes.data) {
           setIniciada(true);
-          setFasesConcluidas(progressoRes.data.fasesConcluidas || []);
+          const progMap = progressoRes.data.progresso;
+          if (progMap && typeof progMap === 'object') {
+            const completed = Object.keys(progMap).filter((fId) => progMap[fId] === true);
+            setFasesConcluidas(completed);
+          } else if (Array.isArray(progressoRes.data.fasesConcluidas)) {
+            setFasesConcluidas(progressoRes.data.fasesConcluidas);
+          }
         }
       } catch (err: any) {
         if (err.response?.status === 404) {

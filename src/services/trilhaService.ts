@@ -10,6 +10,9 @@ export interface Trilha {
   popularidade?: number;
   visualizacoes?: number;
   criadoPor?: string;
+  imagem?: string;
+  disponibilidade?: string;
+  idioma?: string;
 }
 
 export const listarTrilhas = async (): Promise<Trilha[]> => {
@@ -18,7 +21,7 @@ export const listarTrilhas = async (): Promise<Trilha[]> => {
 };
 
 export const buscarTrilhas = async (query: string): Promise<Trilha[]> => {
-  const response = await api.get(`${API_ENDPOINTS.TRILHAS.BUSCAR}?query=${encodeURIComponent(query)}`);
+  const response = await api.get(`${API_ENDPOINTS.TRILHAS.BUSCAR}?q=${encodeURIComponent(query)}`);
   return response.data || [];
 };
 
@@ -43,11 +46,12 @@ export const buscarTrilhaPorId = async (id: string): Promise<Trilha> => {
 };
 
 export const iniciarTrilha = async (trilhaId: string): Promise<any> => {
-  const response = await api.post(`${API_ENDPOINTS.TRILHAS.INICIAR}/${trilhaId}`);
+  const response = await api.post(API_ENDPOINTS.TRILHAS.INICIAR(trilhaId));
   return response.data;
 };
 
 export const incrementarVisualizacoes = async (trilhaId: string): Promise<any> => {
-  const response = await api.post(`${API_ENDPOINTS.TRILHAS.VISUALIZAR}/${trilhaId}`);
+  const response = await api.post(API_ENDPOINTS.TRILHAS.VISUALIZAR(trilhaId));
   return response.data;
 };
+

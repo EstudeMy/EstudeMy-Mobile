@@ -13,11 +13,13 @@ import { Trophy, Award, Medal } from 'lucide-react-native';
 
 interface LeaderboardUser {
   _id: string;
-  nome: string;
-  username: string;
-  personagem: string;
-  xpTotal: number;
+  nome?: string;
+  name?: string;
+  username?: string;
+  personagem?: string;
+  xpTotal?: number;
   acertosPercentual?: number;
+  mediaAcertos?: number;
 }
 
 export default function RankingScreen() {
@@ -63,6 +65,9 @@ export default function RankingScreen() {
   const renderUserRow = ({ item, index }: { item: LeaderboardUser; index: number }) => {
     const isTop3 = index < 3;
     const position = index + 1;
+    const displayName = item.nome || item.name || item.username || 'Estudante';
+    const displayUsername = item.username || item.name || 'estudante';
+    const percentual = item.mediaAcertos !== undefined ? item.mediaAcertos : (item.acertosPercentual !== undefined ? item.acertosPercentual : 0);
 
     return (
       <View
@@ -78,8 +83,8 @@ export default function RankingScreen() {
             {isTop3 ? renderPodiumIcon(index) : <Text style={styles.positionText}>{position}</Text>}
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{item.nome}</Text>
-            <Text style={styles.userUsername}>@{item.username || 'estudante'}</Text>
+            <Text style={styles.userName}>{displayName}</Text>
+            <Text style={styles.userUsername}>@{displayUsername}</Text>
             <Text style={styles.charTag}>{item.personagem || 'Samurai'}</Text>
           </View>
         </View>
@@ -89,7 +94,7 @@ export default function RankingScreen() {
             <Text style={styles.scoreText}>{item.xpTotal || 0} XP</Text>
           ) : (
             <Text style={styles.scoreText}>
-              {item.acertosPercentual !== undefined ? `${Math.round(item.acertosPercentual)}%` : '0%'}
+              {Math.round(percentual)}%
             </Text>
           )}
         </View>

@@ -11,7 +11,7 @@ import {
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import api from '../../services/api';
-import { LogOut, Globe, Moon, Sun, Shield, User, RefreshCw } from 'lucide-react-native';
+import { LogOut, Globe, Shield } from 'lucide-react-native';
 
 const CHARACTERS = ['Samurai', 'Mago', 'Guerreiro'];
 const LANGUAGES = [
@@ -24,9 +24,10 @@ type LanguageCode = 'pt-BR' | 'en-US' | 'es-ES';
 
 export default function PerfilScreen() {
   const { user, logout, refreshUser } = useAuth();
-  const { language, setLanguage, t } = useLanguage();
+  const { language, setLanguage } = useLanguage();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';
+
 
   const [loadingChar, setLoadingChar] = useState<string | null>(null);
 

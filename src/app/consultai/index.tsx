@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import api from '../../services/api';
-import { Sparkles, Brain, ArrowLeft, PlusCircle, Check } from 'lucide-react-native';
+import { Sparkles, Brain, ArrowLeft, PlusCircle } from 'lucide-react-native';
 
 interface SugestaoTrilha {
   trilha: {
@@ -20,25 +20,26 @@ interface SugestaoTrilha {
     materia: string;
     dificuldade: string;
   };
-  secoes: Array<{
+  secoes: {
     titulo: string;
     descricao: string;
     ordem: number;
-    fases: Array<{
+    fases: {
       titulo: string;
       descricao: string;
       ordem: number;
       conteudo: string;
-      perguntas: Array<{
+      perguntas: {
         enunciado: string;
         alternativas: string[];
         respostaCorreta: string;
-      }>;
-    }>;
-  }>;
+      }[];
+    }[];
+  }[];
 }
 
 export default function ConsultAiScreen() {
+
   const router = useRouter();
   const colorScheme = useColorScheme();
   const isDark = colorScheme === 'dark';

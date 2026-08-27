@@ -1,13 +1,12 @@
 import React, { useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ImageBackground, Image } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
-import { useLanguage } from '../contexts/LanguageContext';
 
 export default function LandingPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-  const { t } = useLanguage();
+
 
   // Se já estiver logado, redireciona diretamente para o painel principal (tabs)/home
   useEffect(() => {

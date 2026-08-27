@@ -5,10 +5,13 @@ export interface Fase {
   _id: string;
   titulo: string;
   descricao?: string;
+  conteudo?: string;
   ordem: number;
   trilhaId: string;
   secaoId: string;
   perguntas: any[];
+  personagem_selecionado?: string;
+  cenario?: string;
 }
 
 export const listarFases = async (trilhaId?: string | null): Promise<Fase[]> => {
@@ -38,9 +41,19 @@ export const buscarFasePorId = async (id: string): Promise<Fase> => {
 export const concluirFase = async (dados: {
   faseId: string;
   pontuacao: number;
-  acertos: number;
-  erros: number;
+  acertos?: number;
+  erros?: number;
+  totalPerguntas?: number;
+  respostasUsuario?: any[];
 }): Promise<any> => {
-  const response = await api.post(API_ENDPOINTS.PROGRESSO.SALVAR, dados);
+  const total = dados.totalPerguntas || ((dados.acertos || 0) + (dados.erros || 0)) || 1;
+  const payload = {
+    faseId: dados.faseId,
+    pontuacao: dados.pontuacao,
+    totalPerguntas: total,
+    respostasUsuario: dados.respostasUsuario || [],
+  };
+  const response = await api.post(API_ENDPOINTS.PROGRESSO.SALVAR, payload);
   return response.data;
 };
+
