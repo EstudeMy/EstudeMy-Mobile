@@ -1,11 +1,10 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { useColorScheme } from 'react-native';
+import { useTheme } from '../../contexts/ThemeContext';
 import { Home, Trophy, User } from 'lucide-react-native';
 
 export default function TabLayout() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { isDark, colors } = useTheme();
 
   return (
     <Tabs
@@ -27,6 +26,7 @@ export default function TabLayout() {
         },
       }}
     >
+
       <Tabs.Screen
         name="home"
         options={{

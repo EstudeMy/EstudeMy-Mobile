@@ -6,8 +6,8 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
-  useColorScheme,
 } from 'react-native';
+import { useTheme } from '../../contexts/ThemeContext';
 import api from '../../services/api';
 import { Trophy, Award, Medal } from 'lucide-react-native';
 
@@ -23,8 +23,7 @@ interface LeaderboardUser {
 }
 
 export default function RankingScreen() {
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { isDark, colors } = useTheme();
 
   const [activeTab, setActiveTab] = useState<'XP' | 'ACERTOS'>('XP');
   const [loading, setLoading] = useState(true);
@@ -73,27 +72,27 @@ export default function RankingScreen() {
       <View
         style={[
           styles.rowCard,
-          isDark ? styles.cardDark : styles.cardLight,
+          { backgroundColor: colors.card },
           isTop3 && styles.top3Card,
           index === 0 && styles.firstPlaceCard,
         ]}
       >
         <View style={styles.leftSection}>
           <View style={styles.positionWrapper}>
-            {isTop3 ? renderPodiumIcon(index) : <Text style={styles.positionText}>{position}</Text>}
+            {isTop3 ? renderPodiumIcon(index) : <Text style={[styles.positionText, { color: colors.text }]}>{position}</Text>}
           </View>
           <View style={styles.userInfo}>
-            <Text style={styles.userName}>{displayName}</Text>
-            <Text style={styles.userUsername}>@{displayUsername}</Text>
+            <Text style={[styles.userName, { color: colors.text }]}>{displayName}</Text>
+            <Text style={[styles.userUsername, { color: colors.textMuted }]}>@{displayUsername}</Text>
             <Text style={styles.charTag}>{item.personagem || 'Samurai'}</Text>
           </View>
         </View>
 
         <View style={styles.rightSection}>
           {activeTab === 'XP' ? (
-            <Text style={styles.scoreText}>{item.xpTotal || 0} XP</Text>
+            <Text style={[styles.scoreText, { color: colors.text }]}>{item.xpTotal || 0} XP</Text>
           ) : (
-            <Text style={styles.scoreText}>
+            <Text style={[styles.scoreText, { color: colors.text }]}>
               {Math.round(percentual)}%
             </Text>
           )}
@@ -103,15 +102,15 @@ export default function RankingScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#11111f' : '#f3f4f6' }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Título */}
       <View style={styles.header}>
-        <Text style={styles.title}>Hall da Fama 🏆</Text>
-        <Text style={styles.subtitle}>Os melhores heróis da semana</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Hall da Fama 🏆</Text>
+        <Text style={[styles.subtitle, { color: colors.textMuted }]}>Os melhores heróis da semana</Text>
       </View>
 
       {/* Tabs */}
-      <View style={styles.tabsContainer}>
+      <View style={[styles.tabsContainer, { backgroundColor: colors.cardSecondary }]}>
         <TouchableOpacity
           style={[styles.tabButton, activeTab === 'XP' && styles.tabButtonActive]}
           onPress={() => setActiveTab('XP')}
@@ -130,6 +129,7 @@ export default function RankingScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+
 
       {/* Lista */}
       {loading ? (

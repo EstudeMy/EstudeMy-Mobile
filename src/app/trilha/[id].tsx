@@ -6,9 +6,9 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  useColorScheme,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTheme } from '../../contexts/ThemeContext';
 import { buscarTrilhaPorId, iniciarTrilha, Trilha } from '../../services/trilhaService';
 import { buscarSecoesPorTrilha, Secao } from '../../services/secaoService';
 import { buscarFasesPorTrilha, Fase } from '../../services/faseService';
@@ -18,8 +18,8 @@ import { Lock, CheckCircle, Play, ArrowLeft } from 'lucide-react-native';
 export default function TrilhaDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { isDark, colors } = useTheme();
+
 
   const [loading, setLoading] = useState(true);
   const [trilha, setTrilha] = useState<Trilha | null>(null);
@@ -93,7 +93,7 @@ export default function TrilhaDetailScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: isDark ? '#1a1a2a' : '#f9fafb' }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
@@ -101,24 +101,24 @@ export default function TrilhaDetailScreen() {
 
   if (!trilha) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: isDark ? '#1a1a2a' : '#f9fafb' }]}>
-        <Text style={{ color: '#ffffff' }}>Trilha não encontrada.</Text>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
+        <Text style={{ color: colors.text }}>Trilha não encontrada.</Text>
       </View>
     );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#11111f' : '#f3f4f6' }]}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Botão Voltar */}
       <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
         <ArrowLeft size={24} color="#ffffff" />
       </TouchableOpacity>
 
       {/* Header da Trilha */}
-      <View style={[styles.headerCard, isDark ? styles.cardDark : styles.cardLight]}>
+      <View style={[styles.headerCard, { backgroundColor: colors.card }]}>
         <Text style={styles.trackSubject}>{trilha.materia.toUpperCase()}</Text>
-        <Text style={styles.trackTitle}>{trilha.titulo}</Text>
-        {trilha.descricao && <Text style={styles.trackDesc}>{trilha.descricao}</Text>}
+        <Text style={[styles.trackTitle, { color: colors.text }]}>{trilha.titulo}</Text>
+        {trilha.descricao && <Text style={[styles.trackDesc, { color: colors.textMuted }]}>{trilha.descricao}</Text>}
 
         {/* Botão de Ação / Iniciar */}
         {!iniciada ? (
@@ -136,10 +136,10 @@ export default function TrilhaDetailScreen() {
           </TouchableOpacity>
         ) : (
           <View style={styles.progressSummary}>
-            <Text style={styles.progressSummaryText}>
+            <Text style={[styles.progressSummaryText, { color: colors.text }]}>
               Progresso: {fasesConcluidas.length} de {fases.length} fases completadas
             </Text>
-            <View style={styles.progressBg}>
+            <View style={[styles.progressBg, { backgroundColor: colors.cardSecondary }]}>
               <View
                 style={[
                   styles.progressFill,
@@ -152,9 +152,9 @@ export default function TrilhaDetailScreen() {
       </View>
 
       {/* Lista de Seções & Fases */}
-      <Text style={styles.sectionHeading}>Jornada de Aprendizado</Text>
+      <Text style={[styles.sectionHeading, { color: colors.text }]}>Jornada de Aprendizado</Text>
       {secoes.length === 0 ? (
-        <Text style={styles.emptyText}>Esta trilha ainda não tem seções estruturadas.</Text>
+        <Text style={[styles.emptyText, { color: colors.textMuted }]}>Esta trilha ainda não tem seções estruturadas.</Text>
       ) : (
         secoes.map((secao) => {
           // Filtrar fases pertencentes a esta seção
@@ -164,14 +164,14 @@ export default function TrilhaDetailScreen() {
             <View key={secao._id} style={styles.secaoBlock}>
               {/* Header da Seção */}
               <View style={styles.secaoHeader}>
-                <Text style={styles.secaoTitle}>{secao.titulo}</Text>
-                {secao.descricao && <Text style={styles.secaoDesc}>{secao.descricao}</Text>}
+                <Text style={[styles.secaoTitle, { color: colors.text }]}>{secao.titulo}</Text>
+                {secao.descricao && <Text style={[styles.secaoDesc, { color: colors.textMuted }]}>{secao.descricao}</Text>}
               </View>
 
               {/* Fases */}
               <View style={styles.fasesContainer}>
                 {fasesDaSecao.length === 0 ? (
-                  <Text style={styles.emptyFases}>Nenhuma fase nesta seção.</Text>
+                  <Text style={[styles.emptyFases, { color: colors.textMuted }]}>Nenhuma fase nesta seção.</Text>
                 ) : (
                   fasesDaSecao.map((fase, fIdx) => {
                     const isCompleted = fasesConcluidas.includes(fase._id);
@@ -197,7 +197,7 @@ export default function TrilhaDetailScreen() {
                         key={fase._id}
                         style={[
                           styles.faseCard,
-                          isDark ? styles.cardDark : styles.cardLight,
+                          { backgroundColor: colors.card },
                           !isUnlocked && styles.faseLockedCard,
                           isCompleted && styles.faseCompletedCard,
                         ]}
@@ -220,11 +220,11 @@ export default function TrilhaDetailScreen() {
                               <Text style={styles.faseBadgeText}>{fase.ordem}</Text>
                             </View>
                             <View style={{ flex: 1 }}>
-                              <Text style={[styles.faseTitle, !isUnlocked && styles.textLocked]}>
+                              <Text style={[styles.faseTitle, { color: colors.text }, !isUnlocked && styles.textLocked]}>
                                 {fase.titulo}
                               </Text>
                               {fase.descricao && (
-                                <Text style={styles.faseDesc} numberOfLines={2}>
+                                <Text style={[styles.faseDesc, { color: colors.textMuted }]} numberOfLines={2}>
                                   {fase.descricao}
                                 </Text>
                               )}

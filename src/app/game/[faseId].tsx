@@ -13,6 +13,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { buscarFasePorId, concluirFase, Fase } from '../../services/faseService';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { ArrowLeft, Check, X, ShieldAlert, Sparkles, Heart } from 'lucide-react-native';
 
 const screenWidth = Dimensions.get('window').width;
@@ -50,8 +51,8 @@ export default function GameScreen() {
   const { faseId } = useLocalSearchParams<{ faseId: string }>();
   const router = useRouter();
   const { user, refreshUser } = useAuth();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { isDark, colors } = useTheme();
+
 
   const [loading, setLoading] = useState(true);
   const [fase, setFase] = useState<Fase | null>(null);
@@ -313,11 +314,11 @@ export default function GameScreen() {
       </View>
 
       {/* PERGUNTA E ALTERNATIVAS */}
-      <ScrollView contentContainerStyle={styles.scrollQuiz} style={styles.quizArea}>
+      <ScrollView contentContainerStyle={styles.scrollQuiz} style={[styles.quizArea, { backgroundColor: colors.background }]}>
         {/* Enunciado */}
-        <View style={[styles.questionCard, isDark ? styles.cardDark : styles.cardLight]}>
+        <View style={[styles.questionCard, { backgroundColor: colors.card }]}>
           <Text style={styles.questionIndexText}>Pergunta {currentQuestionIdx + 1} de {totalQuestions}</Text>
-          <Text style={styles.questionStatement}>{currentQuestion.enunciado}</Text>
+          <Text style={[styles.questionStatement, { color: colors.text }]}>{currentQuestion.enunciado}</Text>
         </View>
 
         {/* Alternativas */}
@@ -329,7 +330,7 @@ export default function GameScreen() {
                 key={index}
                 style={[
                   styles.optionBtn,
-                  isDark ? styles.cardDark : styles.cardLight,
+                  { backgroundColor: colors.card },
                   isSelected && styles.optionBtnSelected,
                   answered && index === currentQuestion.respostaCorreta && styles.optionBtnCorrect,
                   answered && isSelected && index !== currentQuestion.respostaCorreta && styles.optionBtnIncorrect,
@@ -338,8 +339,8 @@ export default function GameScreen() {
                 disabled={answered}
                 activeOpacity={0.8}
               >
-                <Text style={styles.optionLetter}>{String.fromCharCode(65 + index)})</Text>
-                <Text style={styles.optionText}>{opcao}</Text>
+                <Text style={[styles.optionLetter, { color: colors.textMuted }]}>{String.fromCharCode(65 + index)})</Text>
+                <Text style={[styles.optionText, { color: answered ? '#ffffff' : colors.text }]}>{opcao}</Text>
               </TouchableOpacity>
             );
           })}

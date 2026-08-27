@@ -6,12 +6,12 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
-  useColorScheme,
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
+import { useTheme, ThemePreference } from '../../contexts/ThemeContext';
 import api from '../../services/api';
-import { LogOut, Globe, Shield } from 'lucide-react-native';
+import { LogOut, Globe, Shield, Sun, Moon, Smartphone } from 'lucide-react-native';
 
 const CHARACTERS = ['Samurai', 'Mago', 'Guerreiro'];
 const LANGUAGES = [
@@ -20,14 +20,18 @@ const LANGUAGES = [
   { code: 'es-ES', label: 'Español' },
 ] as const;
 
+const THEMES = [
+  { code: 'light', label: 'Claro', icon: Sun },
+  { code: 'dark', label: 'Escuro', icon: Moon },
+  { code: 'system', label: 'Sistema (Auto)', icon: Smartphone },
+] as const;
+
 type LanguageCode = 'pt-BR' | 'en-US' | 'es-ES';
 
 export default function PerfilScreen() {
   const { user, logout, refreshUser } = useAuth();
   const { language, setLanguage } = useLanguage();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
-
+  const { themePreference, setThemePreference, isDark, colors } = useTheme();
 
   const [loadingChar, setLoadingChar] = useState<string | null>(null);
 
@@ -51,35 +55,39 @@ export default function PerfilScreen() {
     await refreshUser();
   };
 
+  const handleThemeChange = async (pref: ThemePreference) => {
+    await setThemePreference(pref, true);
+  };
+
   // Cálculo de nível
   const xp = user?.xpTotal || 0;
   const level = Math.floor(xp / 100) + 1;
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#11111f' : '#f3f4f6' }]}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Título */}
       <View style={styles.header}>
-        <Text style={styles.title}>Meu Perfil 👤</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Meu Perfil 👤</Text>
       </View>
 
       {/* Card do Usuário */}
-      <View style={[styles.profileCard, isDark ? styles.cardDark : styles.cardLight]}>
+      <View style={[styles.profileCard, { backgroundColor: colors.card }]}>
         <View style={styles.avatarContainer}>
           <Text style={styles.avatarText}>
             {(user?.nome || 'E')[0].toUpperCase()}
           </Text>
         </View>
-        <Text style={styles.userName}>{user?.nome || 'Estudante'}</Text>
-        <Text style={styles.userEmail}>{user?.email || 'email@provedor.com'}</Text>
+        <Text style={[styles.userName, { color: colors.text }]}>{user?.nome || 'Estudante'}</Text>
+        <Text style={[styles.userEmail, { color: colors.textMuted }]}>{user?.email || 'email@provedor.com'}</Text>
         <View style={styles.levelRow}>
           <Text style={styles.levelLabel}>Nível {level}</Text>
-          <Text style={styles.xpLabel}>Total: {xp} XP</Text>
+          <Text style={[styles.xpLabel, { backgroundColor: colors.cardSecondary, color: colors.text }]}>Total: {xp} XP</Text>
         </View>
       </View>
 
       {/* Seção: Escolha de Personagem */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Classe / Personagem</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Classe / Personagem</Text>
         <View style={styles.characterContainer}>
           {CHARACTERS.map((char) => {
             const isSelected = user?.personagem === char;
@@ -90,8 +98,8 @@ export default function PerfilScreen() {
                 key={char}
                 style={[
                   styles.charBtn,
+                  { backgroundColor: isSelected ? '#16A34A' : colors.cardSecondary },
                   isSelected && styles.charBtnActive,
-                  isDark ? styles.charBtnDark : styles.charBtnLight,
                 ]}
                 onPress={() => handleUpdateCharacter(char)}
                 disabled={isLoading || isSelected}
@@ -100,7 +108,7 @@ export default function PerfilScreen() {
                 {isLoading ? (
                   <ActivityIndicator size="small" color="#ffffff" />
                 ) : (
-                  <Text style={[styles.charBtnText, isSelected && styles.charBtnTextActive]}>
+                  <Text style={[styles.charBtnText, { color: isSelected ? '#ffffff' : colors.textMuted }, isSelected && styles.charBtnTextActive]}>
                     {char}
                   </Text>
                 )}
@@ -110,10 +118,43 @@ export default function PerfilScreen() {
         </View>
       </View>
 
+      {/* Seção: Aparência / Tema */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          <Sun size={18} color={colors.textMuted} style={styles.sectionIcon} /> Tema do App
+        </Text>
+        <View style={styles.optionsList}>
+          {THEMES.map((tItem) => {
+            const isSelected = themePreference === tItem.code;
+            const IconComp = tItem.icon;
+            return (
+              <TouchableOpacity
+                key={tItem.code}
+                style={[
+                  styles.optionRow,
+                  { backgroundColor: colors.card },
+                  isSelected && { borderColor: '#4F46E5' },
+                ]}
+                onPress={() => handleThemeChange(tItem.code as ThemePreference)}
+                activeOpacity={0.8}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <IconComp size={18} color={isSelected ? '#4F46E5' : colors.textMuted} />
+                  <Text style={[styles.optionLabel, { color: colors.text }, isSelected && { color: '#4F46E5', fontWeight: '900' }]}>
+                    {tItem.label}
+                  </Text>
+                </View>
+                {isSelected && <View style={styles.radioDot} />}
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+
       {/* Seção: Idioma */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>
-          <Globe size={18} color="#9CA3AF" style={styles.sectionIcon} /> Idioma do App
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          <Globe size={18} color={colors.textMuted} style={styles.sectionIcon} /> Idioma do App
         </Text>
         <View style={styles.optionsList}>
           {LANGUAGES.map((lang) => {
@@ -123,13 +164,13 @@ export default function PerfilScreen() {
                 key={lang.code}
                 style={[
                   styles.optionRow,
-                  isDark ? styles.cardDark : styles.cardLight,
-                  isSelected && styles.optionRowActive,
+                  { backgroundColor: colors.card },
+                  isSelected && { borderColor: '#4F46E5' },
                 ]}
                 onPress={() => handleLanguageChange(lang.code)}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.optionLabel, isSelected && styles.optionLabelActive]}>
+                <Text style={[styles.optionLabel, { color: colors.text }, isSelected && { color: '#4F46E5', fontWeight: '900' }]}>
                   {lang.label}
                 </Text>
                 {isSelected && <View style={styles.radioDot} />}
@@ -141,16 +182,16 @@ export default function PerfilScreen() {
 
       {/* Seção: Informações Gerais */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>
-          <Shield size={18} color="#9CA3AF" style={styles.sectionIcon} /> Segurança & Conta
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          <Shield size={18} color={colors.textMuted} style={styles.sectionIcon} /> Segurança & Conta
         </Text>
         <View style={styles.optionsList}>
-          <View style={[styles.infoRow, isDark ? styles.cardDark : styles.cardLight]}>
-            <Text style={styles.infoKey}>Perfil tipo:</Text>
-            <Text style={styles.infoValue}>{user?.tipoUsuario || 'ALUNO'}</Text>
+          <View style={[styles.infoRow, { backgroundColor: colors.card }]}>
+            <Text style={[styles.infoKey, { color: colors.textMuted }]}>Perfil tipo:</Text>
+            <Text style={[styles.infoValue, { color: colors.text }]}>{user?.tipoUsuario || 'ALUNO'}</Text>
           </View>
-          <View style={[styles.infoRow, isDark ? styles.cardDark : styles.cardLight]}>
-            <Text style={styles.infoKey}>Status da conta:</Text>
+          <View style={[styles.infoRow, { backgroundColor: colors.card }]}>
+            <Text style={[styles.infoKey, { color: colors.textMuted }]}>Status da conta:</Text>
             <Text style={[styles.infoValue, { color: '#10B981', fontWeight: '900' }]}>
               {user?.isVerified ? 'VERIFICADO' : 'ATIVO'}
             </Text>
@@ -168,6 +209,7 @@ export default function PerfilScreen() {
     </ScrollView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {

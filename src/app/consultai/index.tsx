@@ -10,6 +10,7 @@ import {
   useColorScheme,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTheme } from '../../contexts/ThemeContext';
 import api from '../../services/api';
 import { Sparkles, Brain, ArrowLeft, PlusCircle } from 'lucide-react-native';
 
@@ -39,10 +40,9 @@ interface SugestaoTrilha {
 }
 
 export default function ConsultAiScreen() {
-
   const router = useRouter();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { isDark, colors } = useTheme();
+
 
   const [materia, setMateria] = useState('');
   const [tema, setTema] = useState('');
@@ -146,19 +146,19 @@ export default function ConsultAiScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#11111f' : '#f3f4f6' }]}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Voltar */}
       <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
         <ArrowLeft size={24} color="#ffffff" />
       </TouchableOpacity>
 
       {/* Header */}
-      <View style={[styles.headerCard, isDark ? styles.cardDark : styles.cardLight]}>
+      <View style={[styles.headerCard, { backgroundColor: colors.card }]}>
         <View style={styles.headerTitleRow}>
           <Brain size={28} color="#818CF8" />
-          <Text style={styles.title}>Consult.Ai 🤖</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Consult.Ai 🤖</Text>
         </View>
-        <Text style={styles.desc}>
+        <Text style={[styles.desc, { color: colors.textMuted }]}>
           Crie trilhas completas de aprendizado gamificado com o poder da Inteligência Artificial.
         </Text>
       </View>
@@ -171,16 +171,16 @@ export default function ConsultAiScreen() {
 
       {/* Form de Geração */}
       {!sugestao ? (
-        <View style={[styles.formCard, isDark ? styles.cardDark : styles.cardLight]}>
-          <Text style={styles.formTitle}>Parâmetros da Trilha</Text>
+        <View style={[styles.formCard, { backgroundColor: colors.card }]}>
+          <Text style={[styles.formTitle, { color: colors.text }]}>Parâmetros da Trilha</Text>
 
           {/* Matéria */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Matéria (Ex: História, Geografia, Química)</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Matéria (Ex: História, Geografia, Química)</Text>
             <TextInput
-              style={[styles.input, isDark ? styles.inputDark : styles.inputLight]}
+              style={[styles.input, { backgroundColor: colors.cardSecondary, color: colors.text }]}
               placeholder="Digite a matéria básica"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textMuted}
               value={materia}
               onChangeText={setMateria}
             />
@@ -188,15 +188,15 @@ export default function ConsultAiScreen() {
 
           {/* Tema / Objetivo */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Tema de Estudo ou Objetivo Específico</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Tema de Estudo ou Objetivo Específico</Text>
             <TextInput
               style={[
                 styles.input,
                 styles.textArea,
-                isDark ? styles.inputDark : styles.inputLight,
+                { backgroundColor: colors.cardSecondary, color: colors.text },
               ]}
               placeholder="Ex: Revolução Francesa, focado na Queda da Bastilha e Declaração dos Direitos"
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.textMuted}
               multiline
               numberOfLines={3}
               value={tema}
@@ -206,19 +206,19 @@ export default function ConsultAiScreen() {
 
           {/* Dificuldade */}
           <View style={styles.inputGroup}>
-            <Text style={styles.label}>Dificuldade</Text>
+            <Text style={[styles.label, { color: colors.text }]}>Dificuldade</Text>
             <View style={styles.selectorRow}>
               {['Facil', 'Medio', 'Dificil'].map((diff) => (
                 <TouchableOpacity
                   key={diff}
                   style={[
                     styles.selectorBtn,
+                    { backgroundColor: colors.cardSecondary },
                     dificuldade === diff && styles.selectorBtnActive,
-                    isDark ? styles.inputDark : styles.inputLight,
                   ]}
                   onPress={() => setDificuldade(diff as any)}
                 >
-                  <Text style={[styles.selectorBtnText, dificuldade === diff && styles.textActive]}>
+                  <Text style={[styles.selectorBtnText, { color: colors.textMuted }, dificuldade === diff && styles.textActive]}>
                     {diff === 'Facil' ? 'Fácil' : diff === 'Medio' ? 'Médio' : 'Difícil'}
                   </Text>
                 </TouchableOpacity>
@@ -229,18 +229,18 @@ export default function ConsultAiScreen() {
           {/* Estrutura */}
           <View style={styles.rowInputs}>
             <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Nº Seções</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Nº Seções</Text>
               <TextInput
-                style={[styles.input, isDark ? styles.inputDark : styles.inputLight]}
+                style={[styles.input, { backgroundColor: colors.cardSecondary, color: colors.text }]}
                 keyboardType="number-pad"
                 value={secoesNum}
                 onChangeText={setSecoesNum}
               />
             </View>
             <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={styles.label}>Fases / Seção</Text>
+              <Text style={[styles.label, { color: colors.text }]}>Fases / Seção</Text>
               <TextInput
-                style={[styles.input, isDark ? styles.inputDark : styles.inputLight]}
+                style={[styles.input, { backgroundColor: colors.cardSecondary, color: colors.text }]}
                 keyboardType="number-pad"
                 value={fasesNum}
                 onChangeText={setFasesNum}
@@ -268,33 +268,33 @@ export default function ConsultAiScreen() {
       ) : (
         /* Resultado da Geração */
         <View style={styles.resultContainer}>
-          <View style={[styles.resultHeaderCard, isDark ? styles.cardDark : styles.cardLight]}>
+          <View style={[styles.resultHeaderCard, { backgroundColor: colors.card }]}>
             <Sparkles size={32} color="#F59E0B" />
-            <Text style={styles.resultTitle}>{sugestao.trilha.titulo}</Text>
-            <Text style={styles.resultDesc}>{sugestao.trilha.descricao}</Text>
+            <Text style={[styles.resultTitle, { color: colors.text }]}>{sugestao.trilha.titulo}</Text>
+            <Text style={[styles.resultDesc, { color: colors.textMuted }]}>{sugestao.trilha.descricao}</Text>
             <View style={styles.badgeRow}>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{sugestao.trilha.materia}</Text>
+              <View style={[styles.badge, { backgroundColor: colors.cardSecondary }]}>
+                <Text style={[styles.badgeText, { color: colors.primary }]}>{sugestao.trilha.materia}</Text>
               </View>
-              <View style={styles.badge}>
-                <Text style={styles.badgeText}>{sugestao.trilha.dificuldade}</Text>
+              <View style={[styles.badge, { backgroundColor: colors.cardSecondary }]}>
+                <Text style={[styles.badgeText, { color: colors.primary }]}>{sugestao.trilha.dificuldade}</Text>
               </View>
             </View>
           </View>
 
           {/* Estrutura de Seções Geradas */}
-          <Text style={styles.structureTitle}>Estrutura da Trilha Gerada</Text>
+          <Text style={[styles.structureTitle, { color: colors.text }]}>Estrutura da Trilha Gerada</Text>
           {sugestao.secoes.map((sec, sIdx) => (
-            <View key={sIdx} style={[styles.secaoCard, isDark ? styles.cardDark : styles.cardLight]}>
-              <Text style={styles.secaoName}>
+            <View key={sIdx} style={[styles.secaoCard, { backgroundColor: colors.card }]}>
+              <Text style={[styles.secaoName, { color: colors.text }]}>
                 Seção {sec.ordem}: {sec.titulo}
               </Text>
               {sec.fases.map((fase, fIdx) => (
                 <View key={fIdx} style={styles.faseItem}>
-                  <Text style={styles.faseName}>
+                  <Text style={[styles.faseName, { color: colors.text }]}>
                     Fase {fase.ordem}: {fase.titulo}
                   </Text>
-                  <Text style={styles.faseQuestions}>
+                  <Text style={[styles.faseQuestions, { color: colors.textMuted }]}>
                     ({fase.perguntas.length} perguntas de quiz geradas)
                   </Text>
                 </View>

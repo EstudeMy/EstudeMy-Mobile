@@ -8,18 +8,17 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
-  useColorScheme,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { obterContinue, obterNovidades, obterPopulares, buscarTrilhas, Trilha } from '../../services/trilhaService';
 import { Search, Brain, Zap, Sparkles } from 'lucide-react-native';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user, token } = useAuth();
-  const colorScheme = useColorScheme();
-  const isDark = colorScheme === 'dark';
+  const { isDark, colors } = useTheme();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
@@ -75,15 +74,15 @@ export default function HomeScreen() {
 
   const renderTrackCard = ({ item }: { item: Trilha }) => (
     <TouchableOpacity
-      style={[styles.trackCard, isDark ? styles.cardDark : styles.cardLight]}
+      style={[styles.trackCard, { backgroundColor: colors.card }]}
       onPress={() => router.push(`/trilha/${item._id}`)}
       activeOpacity={0.8}
     >
-      <Text style={styles.trackSubject}>{item.materia.toUpperCase()}</Text>
-      <Text style={styles.trackTitle} numberOfLines={2}>{item.titulo}</Text>
+      <Text style={[styles.trackSubject, { color: colors.textMuted }]}>{item.materia.toUpperCase()}</Text>
+      <Text style={[styles.trackTitle, { color: colors.text }]} numberOfLines={2}>{item.titulo}</Text>
       {item.nivelDificuldade && (
-        <View style={styles.badge}>
-          <Text style={styles.badgeText}>{item.nivelDificuldade}</Text>
+        <View style={[styles.badge, { backgroundColor: colors.cardSecondary }]}>
+          <Text style={[styles.badgeText, { color: colors.primary }]}>{item.nivelDificuldade}</Text>
         </View>
       )}
     </TouchableOpacity>
@@ -91,20 +90,20 @@ export default function HomeScreen() {
 
   if (loading) {
     return (
-      <View style={[styles.loadingContainer, { backgroundColor: isDark ? '#1a1a2a' : '#f9fafb' }]}>
+      <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
         <ActivityIndicator size="large" color="#4F46E5" />
       </View>
     );
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: isDark ? '#11111f' : '#f3f4f6' }]}>
+    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Header do Usuário */}
-      <View style={[styles.headerCard, isDark ? styles.cardDark : styles.cardLight]}>
+      <View style={[styles.headerCard, { backgroundColor: colors.card }]}>
         <View style={styles.userRow}>
           <View>
-            <Text style={styles.greeting}>Olá, {user?.nome || 'Estudante'}!</Text>
-            <Text style={styles.avatarLabel}>Classe: {user?.personagem || 'Samurai'}</Text>
+            <Text style={[styles.greeting, { color: colors.text }]}>Olá, {user?.nome || 'Estudante'}!</Text>
+            <Text style={[styles.avatarLabel, { color: colors.textMuted }]}>Classe: {user?.personagem || 'Samurai'}</Text>
           </View>
           <View style={styles.levelBadge}>
             <Text style={styles.levelBadgeText}>Lvl {level}</Text>
@@ -114,24 +113,25 @@ export default function HomeScreen() {
         {/* Barra de XP */}
         <View style={styles.xpRow}>
           <Zap size={16} color="#EAB308" fill="#EAB308" />
-          <Text style={styles.xpText}>{xpInLevel}/100 XP</Text>
+          <Text style={[styles.xpText, { color: colors.text }]}>{xpInLevel}/100 XP</Text>
         </View>
-        <View style={styles.progressBarBg}>
+        <View style={[styles.progressBarBg, { backgroundColor: colors.cardSecondary }]}>
           <View style={[styles.progressBarFill, { width: `${xpInLevel}%` }]} />
         </View>
       </View>
 
       {/* Caixa de Pesquisa */}
       <View style={styles.searchContainer}>
-        <Search size={20} color="#9CA3AF" style={styles.searchIcon} />
+        <Search size={20} color={colors.textMuted} style={styles.searchIcon} />
         <TextInput
-          style={[styles.searchInput, isDark ? styles.inputDark : styles.inputLight]}
+          style={[styles.searchInput, { backgroundColor: colors.card, color: colors.text }]}
           placeholder="Pesquisar trilhas ou matérias..."
-          placeholderTextColor="#9CA3AF"
+          placeholderTextColor={colors.textMuted}
           value={searchQuery}
           onChangeText={handleSearch}
         />
       </View>
+
 
       {/* Botão Prominente ConsultAi IA */}
       <TouchableOpacity
@@ -150,9 +150,9 @@ export default function HomeScreen() {
       {/* Resultados da Pesquisa */}
       {searchResults !== null ? (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Resultados da Pesquisa</Text>
+          <Text style={[styles.sectionTitle, { color: colors.text }]}>Resultados da Pesquisa</Text>
           {searchResults.length === 0 ? (
-            <Text style={styles.emptyText}>Nenhuma trilha encontrada.</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>Nenhuma trilha encontrada.</Text>
           ) : (
             <FlatList
               data={searchResults}
@@ -169,7 +169,7 @@ export default function HomeScreen() {
           {/* Trilhas em Andamento */}
           {continueTrilhas.length > 0 && (
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Continuar Estudando</Text>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Continuar Estudando</Text>
               <FlatList
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -183,9 +183,9 @@ export default function HomeScreen() {
 
           {/* Trilhas Populares */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Mais Populares 🔥</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Mais Populares 🔥</Text>
             {populares.length === 0 ? (
-              <Text style={styles.emptyText}>Nenhuma trilha disponível.</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>Nenhuma trilha disponível.</Text>
             ) : (
               <FlatList
                 horizontal
@@ -200,9 +200,9 @@ export default function HomeScreen() {
 
           {/* Novidades */}
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Novidades 🌟</Text>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Novidades 🌟</Text>
             {novidades.length === 0 ? (
-              <Text style={styles.emptyText}>Nenhuma trilha nova por enquanto.</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>Nenhuma trilha nova por enquanto.</Text>
             ) : (
               <FlatList
                 horizontal
