@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
-import { getSubjectImage, getTrackImage } from '../../constants/assets';
+import { getTrackImage } from '../../constants/assets';
 import { buscarTrilhaPorId, iniciarTrilha, Trilha } from '../../services/trilhaService';
 
 import { buscarSecoesPorTrilha, Secao } from '../../services/secaoService';
@@ -21,7 +21,7 @@ import { Lock, CheckCircle, Play, ArrowLeft } from 'lucide-react-native';
 export default function TrilhaDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
-  const { isDark, colors } = useTheme();
+  const { colors } = useTheme();
 
   const [loading, setLoading] = useState(true);
   const [trilha, setTrilha] = useState<Trilha | null>(null);
@@ -33,8 +33,7 @@ export default function TrilhaDetailScreen() {
   const [fasesConcluidas, setFasesConcluidas] = useState<string[]>([]);
   const [loadingAction, setLoadingAction] = useState(false);
 
-
-  const fetchTrilhaDetails = async () => {
+  const fetchTrilhaDetails = useCallback(async () => {
     if (!id) return;
     setLoading(true);
     try {
@@ -73,12 +72,14 @@ export default function TrilhaDetailScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [id]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchTrilhaDetails();
-  }, [id]);
+  }, [fetchTrilhaDetails]);
+
+
 
   const handleIniciarTrilha = async () => {
     if (!id) return;

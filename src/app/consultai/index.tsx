@@ -42,17 +42,23 @@ interface SugestaoTrilha {
 export default function ConsultAiScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { isDark, colors } = useTheme();
-
-  const isAuthorized =
-    user?.tipoUsuario === 'PROFESSOR' ||
-    user?.tipoUsuario === 'ADMINISTRADOR' ||
-    user?.tipoUsuario === 'OWNER';
+  const { colors } = useTheme();
 
   const [materia, setMateria] = useState('');
   const [tema, setTema] = useState('');
   const [dificuldade, setDificuldade] = useState<'Facil' | 'Medio' | 'Dificil'>('Facil');
   const [secoesNum, setSecoesNum] = useState('2');
+  const [fasesNum, setFasesNum] = useState('2');
+
+  const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [sugestao, setSugestao] = useState<SugestaoTrilha | null>(null);
+
+  const isAuthorized =
+    user?.tipoUsuario === 'PROFESSOR' ||
+    user?.tipoUsuario === 'ADMINISTRADOR' ||
+    user?.tipoUsuario === 'OWNER';
 
   if (!isAuthorized) {
     return (
@@ -68,13 +74,6 @@ export default function ConsultAiScreen() {
       </View>
     );
   }
-
-  const [fasesNum, setFasesNum] = useState('2');
-
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [sugestao, setSugestao] = useState<SugestaoTrilha | null>(null);
 
   const handleGerarTrilha = async () => {
     if (!materia || !tema) {

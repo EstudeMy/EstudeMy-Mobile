@@ -15,7 +15,8 @@ export default function LandingPage() {
     if (isAuthenticated) {
       router.replace('/(tabs)/home');
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, router]);
+
 
   return (
     <ImageBackground

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -26,15 +26,14 @@ interface LeaderboardUser {
 }
 
 export default function RankingScreen() {
-  const { isDark, colors } = useTheme();
+  const { colors } = useTheme();
   const { t } = useLanguage();
 
   const [activeTab, setActiveTab] = useState<'XP' | 'ACERTOS'>('XP');
   const [loading, setLoading] = useState(true);
   const [usersList, setUsersList] = useState<LeaderboardUser[]>([]);
 
-
-  const fetchRankings = async () => {
+  const fetchRankings = useCallback(async () => {
     setLoading(true);
     try {
       const endpoint = activeTab === 'XP' ? '/api/ranking/nivel' : '/api/ranking';
@@ -46,12 +45,14 @@ export default function RankingScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [activeTab]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchRankings();
-  }, [activeTab]);
+  }, [fetchRankings]);
+
+
 
   const renderPodiumIcon = (index: number) => {
     switch (index) {

@@ -14,7 +14,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { criarTrilhaManual } from '../../services/trilhaService';
 import { FASE_BACKGROUNDS } from '../../constants/assets';
-import { ArrowLeft, BookOpen, PlusCircle, ShieldAlert, Sparkles } from 'lucide-react-native';
+import { ArrowLeft, BookOpen, PlusCircle, ShieldAlert } from 'lucide-react-native';
 
 const MATERIAS = [
   'Matemática',
@@ -42,7 +42,7 @@ const IDIOMAS = ['Português', 'Inglês', 'Espanhol'];
 export default function CriarTrilhaScreen() {
   const router = useRouter();
   const { user } = useAuth();
-  const { isDark, colors } = useTheme();
+  const { colors } = useTheme();
 
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
@@ -50,9 +50,10 @@ export default function CriarTrilhaScreen() {
   const [dificuldade, setDificuldade] = useState<'Facil' | 'Medio' | 'Dificil'>('Facil');
   const [faseSelecionada, setFaseSelecionada] = useState(2); // Montanha default
   const [cenarioPath, setCenarioPath] = useState('/img/fases/montanha.jpg');
-  const [disponibilidade, setDisponibilidade] = useState<'Aberto' | 'Privado'>('Aberto');
-  const [pagamento, setPagamento] = useState<'Gratuita' | 'Paga'>('Gratuita');
+  const [disponibilidade] = useState<'Aberto' | 'Privado'>('Aberto');
+  const [pagamento] = useState<'Gratuita' | 'Paga'>('Gratuita');
   const [idioma, setIdioma] = useState('Português');
+
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);

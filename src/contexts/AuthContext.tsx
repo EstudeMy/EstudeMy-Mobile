@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
 import { getToken, removeToken, setToken } from '../services/authHelpers';
 import api from '../services/api';
 import { useRouter } from 'expo-router';
@@ -39,13 +39,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     await removeToken();
     setUser(null);
     setAuthState(null);
     // Redireciona para o fluxo de autenticação
     router.replace('/');
-  };
+  }, [router]);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -79,7 +79,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     };
 
     loadUser();
-  }, []);
+  }, [logout]);
 
   const login = async (newToken: string, userData?: User) => {
     setLoading(true);

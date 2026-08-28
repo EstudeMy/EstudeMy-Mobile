@@ -4,6 +4,7 @@ import { getToken, removeToken } from './authHelpers';
 
 export { API_BASE_URL, API_TIMEOUT };
 
+// eslint-disable-next-line import/no-named-as-default-member
 const api: AxiosInstance = axios.create({
   baseURL: API_CONFIG.baseURL,
   timeout: API_CONFIG.timeout,
@@ -11,6 +12,7 @@ const api: AxiosInstance = axios.create({
     ...API_CONFIG.headers,
   },
 });
+
 
 /**
  * Interceptor de requisição: Insere o token Bearer no cabeçalho

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -22,7 +22,7 @@ import {
   getMappedIdioma,
   Trilha,
 } from '../../services/trilhaService';
-import { getSubjectImage, getCharacterImage, getTrackImage, EXTRA_IMAGES } from '../../constants/assets';
+import { getCharacterImage, getTrackImage, EXTRA_IMAGES } from '../../constants/assets';
 import { Search, Zap, Sparkles, BookOpen, PlusCircle } from 'lucide-react-native';
 
 export default function HomeScreen() {
@@ -44,7 +44,7 @@ export default function HomeScreen() {
   const [novidades, setNovidades] = useState<Trilha[]>([]);
   const [searchResults, setSearchResults] = useState<Trilha[] | null>(null);
 
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     setLoading(true);
     try {
       const mappedIdioma = getMappedIdioma(language);
@@ -61,14 +61,16 @@ export default function HomeScreen() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [language]);
 
   useEffect(() => {
     if (token) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchDashboardData();
     }
-  }, [token, language]);
+  }, [token, fetchDashboardData]);
+
+
 
 
   const handleSearch = async (text: string) => {

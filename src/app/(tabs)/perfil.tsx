@@ -34,7 +34,8 @@ type LanguageCode = 'pt-BR' | 'en-US' | 'es-ES';
 export default function PerfilScreen() {
   const { user, logout, refreshUser } = useAuth();
   const { language, setLanguage, t } = useLanguage();
-  const { themePreference, setThemePreference, isDark, colors } = useTheme();
+  const { themePreference, setThemePreference, colors } = useTheme();
+
 
 
   const [loadingChar, setLoadingChar] = useState<string | null>(null);
