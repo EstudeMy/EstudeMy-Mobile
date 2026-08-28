@@ -6,10 +6,13 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTheme } from '../../contexts/ThemeContext';
+import { getSubjectImage, getTrackImage } from '../../constants/assets';
 import { buscarTrilhaPorId, iniciarTrilha, Trilha } from '../../services/trilhaService';
+
 import { buscarSecoesPorTrilha, Secao } from '../../services/secaoService';
 import { buscarFasesPorTrilha, Fase } from '../../services/faseService';
 import api from '../../services/api';
@@ -20,7 +23,6 @@ export default function TrilhaDetailScreen() {
   const router = useRouter();
   const { isDark, colors } = useTheme();
 
-
   const [loading, setLoading] = useState(true);
   const [trilha, setTrilha] = useState<Trilha | null>(null);
   const [secoes, setSecoes] = useState<Secao[]>([]);
@@ -30,6 +32,7 @@ export default function TrilhaDetailScreen() {
   const [iniciada, setIniciada] = useState(false);
   const [fasesConcluidas, setFasesConcluidas] = useState<string[]>([]);
   const [loadingAction, setLoadingAction] = useState(false);
+
 
   const fetchTrilhaDetails = async () => {
     if (!id) return;
@@ -116,9 +119,18 @@ export default function TrilhaDetailScreen() {
 
       {/* Header da Trilha */}
       <View style={[styles.headerCard, { backgroundColor: colors.card }]}>
-        <Text style={styles.trackSubject}>{trilha.materia.toUpperCase()}</Text>
-        <Text style={[styles.trackTitle, { color: colors.text }]}>{trilha.titulo}</Text>
-        {trilha.descricao && <Text style={[styles.trackDesc, { color: colors.textMuted }]}>{trilha.descricao}</Text>}
+        <Image
+          source={getTrackImage(trilha)}
+          style={styles.trackHeaderCover}
+          resizeMode="cover"
+        />
+        <View style={{ padding: 16 }}>
+          <Text style={styles.trackSubject}>{trilha.materia.toUpperCase()}</Text>
+          <Text style={[styles.trackTitle, { color: colors.text }]}>{trilha.titulo}</Text>
+          {trilha.descricao && <Text style={[styles.trackDesc, { color: colors.textMuted }]}>{trilha.descricao}</Text>}
+        </View>
+
+
 
         {/* Botão de Ação / Iniciar */}
         {!iniciada ? (
@@ -279,7 +291,6 @@ const styles = StyleSheet.create({
     borderColor: '#ffffff',
   },
   headerCard: {
-    padding: 22,
     borderRadius: 16,
     borderWidth: 4,
     borderColor: '#1b1b1b',
@@ -288,7 +299,14 @@ const styles = StyleSheet.create({
     shadowOpacity: 1,
     shadowRadius: 0,
     elevation: 6,
-    marginBottom: 26,
+    marginBottom: 28,
+    overflow: 'hidden',
+  },
+  trackHeaderCover: {
+    width: '100%',
+    height: 180,
+    borderBottomWidth: 3,
+    borderBottomColor: '#1b1b1b',
   },
   cardDark: {
     backgroundColor: '#2D2D44',

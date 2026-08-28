@@ -6,8 +6,11 @@ import {
   FlatList,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from 'react-native';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { getCharacterImage, EXTRA_IMAGES } from '../../constants/assets';
 import api from '../../services/api';
 import { Trophy, Award, Medal } from 'lucide-react-native';
 
@@ -24,10 +27,12 @@ interface LeaderboardUser {
 
 export default function RankingScreen() {
   const { isDark, colors } = useTheme();
+  const { t } = useLanguage();
 
   const [activeTab, setActiveTab] = useState<'XP' | 'ACERTOS'>('XP');
   const [loading, setLoading] = useState(true);
   const [usersList, setUsersList] = useState<LeaderboardUser[]>([]);
+
 
   const fetchRankings = async () => {
     setLoading(true);
@@ -81,6 +86,11 @@ export default function RankingScreen() {
           <View style={styles.positionWrapper}>
             {isTop3 ? renderPodiumIcon(index) : <Text style={[styles.positionText, { color: colors.text }]}>{position}</Text>}
           </View>
+          <Image
+            source={getCharacterImage(item.personagem)}
+            style={styles.userCharAvatar}
+            resizeMode="contain"
+          />
           <View style={styles.userInfo}>
             <Text style={[styles.userName, { color: colors.text }]}>{displayName}</Text>
             <Text style={[styles.userUsername, { color: colors.textMuted }]}>@{displayUsername}</Text>
@@ -90,7 +100,10 @@ export default function RankingScreen() {
 
         <View style={styles.rightSection}>
           {activeTab === 'XP' ? (
-            <Text style={[styles.scoreText, { color: colors.text }]}>{item.xpTotal || 0} XP</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Image source={EXTRA_IMAGES.coin} style={styles.coinIcon} resizeMode="contain" />
+              <Text style={[styles.scoreText, { color: colors.text }]}>{item.xpTotal || 0} XP</Text>
+            </View>
           ) : (
             <Text style={[styles.scoreText, { color: colors.text }]}>
               {Math.round(percentual)}%
@@ -105,8 +118,11 @@ export default function RankingScreen() {
     <View style={[styles.container, { backgroundColor: colors.background }]}>
       {/* Título */}
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>Hall da Fama 🏆</Text>
-        <Text style={[styles.subtitle, { color: colors.textMuted }]}>Os melhores heróis da semana</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+          <Image source={EXTRA_IMAGES.trofeu} style={styles.trophyHeaderImg} resizeMode="contain" />
+          <Text style={[styles.title, { color: colors.text }]}>{t('common.ranking') || 'Hall da Fama'}</Text>
+        </View>
+        <Text style={[styles.subtitle, { color: colors.textMuted }]}>{t('ranking.subtitle') || 'Os melhores heróis da semana'}</Text>
       </View>
 
       {/* Tabs */}
@@ -116,7 +132,7 @@ export default function RankingScreen() {
           onPress={() => setActiveTab('XP')}
         >
           <Text style={[styles.tabButtonText, activeTab === 'XP' && styles.tabButtonTextActive]}>
-            Nível / XP
+            {t('ranking.xpTab') || 'Nível / XP'}
           </Text>
         </TouchableOpacity>
 
@@ -125,11 +141,10 @@ export default function RankingScreen() {
           onPress={() => setActiveTab('ACERTOS')}
         >
           <Text style={[styles.tabButtonText, activeTab === 'ACERTOS' && styles.tabButtonTextActive]}>
-            Média de Acertos
+            {t('ranking.accuracyTab') || 'Média de Acertos'}
           </Text>
         </TouchableOpacity>
       </View>
-
 
       {/* Lista */}
       {loading ? (
@@ -138,7 +153,7 @@ export default function RankingScreen() {
         </View>
       ) : usersList.length === 0 ? (
         <View style={styles.emptyContainer}>
-          <Text style={styles.emptyText}>Nenhum herói no ranking ainda.</Text>
+          <Text style={styles.emptyText}>{t('ranking.noUsers') || 'Nenhum herói no ranking ainda.'}</Text>
         </View>
       ) : (
         <FlatList
@@ -281,6 +296,21 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '800',
     marginTop: 4,
+  },
+  trophyHeaderImg: {
+    width: 36,
+    height: 36,
+  },
+  userCharAvatar: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    marginRight: 10,
+    backgroundColor: '#374151',
+  },
+  coinIcon: {
+    width: 18,
+    height: 18,
   },
   rightSection: {
     alignItems: 'flex-end',

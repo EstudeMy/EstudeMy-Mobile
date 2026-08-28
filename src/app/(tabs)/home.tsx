@@ -8,19 +8,36 @@ import {
   TouchableOpacity,
   TextInput,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { obterContinue, obterNovidades, obterPopulares, buscarTrilhas, Trilha } from '../../services/trilhaService';
-import { Search, Brain, Zap, Sparkles } from 'lucide-react-native';
+import {
+  obterContinue,
+  obterNovidades,
+  obterPopulares,
+  buscarTrilhas,
+  getMappedIdioma,
+  Trilha,
+} from '../../services/trilhaService';
+import { getSubjectImage, getCharacterImage, getTrackImage, EXTRA_IMAGES } from '../../constants/assets';
+import { Search, Zap, Sparkles, BookOpen, PlusCircle } from 'lucide-react-native';
 
 export default function HomeScreen() {
   const router = useRouter();
   const { user, token } = useAuth();
   const { isDark, colors } = useTheme();
+  const { language, t } = useLanguage();
+
+  const canCreateTrack =
+    user?.tipoUsuario === 'PROFESSOR' ||
+    user?.tipoUsuario === 'ADMINISTRADOR' ||
+    user?.tipoUsuario === 'OWNER';
 
   const [searchQuery, setSearchQuery] = useState('');
+
   const [loading, setLoading] = useState(true);
   const [continueTrilhas, setContinueTrilhas] = useState<Trilha[]>([]);
   const [populares, setPopulares] = useState<Trilha[]>([]);
@@ -30,10 +47,11 @@ export default function HomeScreen() {
   const fetchDashboardData = async () => {
     setLoading(true);
     try {
+      const mappedIdioma = getMappedIdioma(language);
       const [continueData, popularesData, novidadesData] = await Promise.all([
-        obterContinue(),
-        obterPopulares(),
-        obterNovidades(),
+        obterContinue(mappedIdioma),
+        obterPopulares(mappedIdioma),
+        obterNovidades(mappedIdioma),
       ]);
       setContinueTrilhas(continueData);
       setPopulares(popularesData);
@@ -50,7 +68,8 @@ export default function HomeScreen() {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchDashboardData();
     }
-  }, [token]);
+  }, [token, language]);
+
 
   const handleSearch = async (text: string) => {
     setSearchQuery(text);
@@ -72,21 +91,37 @@ export default function HomeScreen() {
   const level = Math.floor(xp / 100) + 1;
   const xpInLevel = xp % 100;
 
-  const renderTrackCard = ({ item }: { item: Trilha }) => (
-    <TouchableOpacity
-      style={[styles.trackCard, { backgroundColor: colors.card }]}
-      onPress={() => router.push(`/trilha/${item._id}`)}
-      activeOpacity={0.8}
-    >
-      <Text style={[styles.trackSubject, { color: colors.textMuted }]}>{item.materia.toUpperCase()}</Text>
-      <Text style={[styles.trackTitle, { color: colors.text }]} numberOfLines={2}>{item.titulo}</Text>
-      {item.nivelDificuldade && (
-        <View style={[styles.badge, { backgroundColor: colors.cardSecondary }]}>
-          <Text style={[styles.badgeText, { color: colors.primary }]}>{item.nivelDificuldade}</Text>
+  const renderTrackCard = ({ item }: { item: Trilha }) => {
+    const trackImage = getTrackImage(item);
+    const diff = item.dificuldade || item.nivelDificuldade || 'Fácil';
+
+    return (
+      <TouchableOpacity
+        style={[styles.trackCard, { backgroundColor: colors.card }]}
+        onPress={() => router.push(`/trilha/${item._id}`)}
+        activeOpacity={0.85}
+      >
+        <Image
+          source={trackImage}
+          style={styles.trackCoverImage}
+          resizeMode="cover"
+        />
+        <View style={styles.trackCardContent}>
+          <Text style={[styles.trackCardTitle, { color: colors.text }]} numberOfLines={2}>
+            {item.titulo}
+          </Text>
+          {item.descricao ? (
+            <Text style={[styles.trackCardDesc, { color: colors.textSecondary }]} numberOfLines={3}>
+              {item.descricao}
+            </Text>
+          ) : null}
+          <Text style={[styles.trackCardMeta, { color: colors.textMuted }]}>
+            Matéria: <Text style={{ fontWeight: '800', color: colors.text }}>{item.materia}</Text> | Dificuldade: <Text style={{ fontWeight: '800', color: colors.text }}>{diff}</Text>
+          </Text>
         </View>
-      )}
-    </TouchableOpacity>
-  );
+      </TouchableOpacity>
+    );
+  };
 
   if (loading) {
     return (
@@ -101,9 +136,16 @@ export default function HomeScreen() {
       {/* Header do Usuário */}
       <View style={[styles.headerCard, { backgroundColor: colors.card }]}>
         <View style={styles.userRow}>
-          <View>
-            <Text style={[styles.greeting, { color: colors.text }]}>Olá, {user?.nome || 'Estudante'}!</Text>
-            <Text style={[styles.avatarLabel, { color: colors.textMuted }]}>Classe: {user?.personagem || 'Samurai'}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <Image
+              source={getCharacterImage(user?.personagem)}
+              style={styles.headerAvatarImg}
+              resizeMode="contain"
+            />
+            <View>
+              <Text style={[styles.greeting, { color: colors.text }]}>Olá, {user?.nome || 'Estudante'}!</Text>
+              <Text style={[styles.avatarLabel, { color: colors.textMuted }]}>Classe: {user?.personagem || 'Samurai'}</Text>
+            </View>
           </View>
           <View style={styles.levelBadge}>
             <Text style={styles.levelBadgeText}>Lvl {level}</Text>
@@ -132,35 +174,56 @@ export default function HomeScreen() {
         />
       </View>
 
+      {/* Ações Exclusivas para Professor / Administrador / Owner */}
+      {canCreateTrack && (
+        <View style={styles.actionsGroup}>
+          {/* Botão Prominente ConsultAi IA */}
+          <TouchableOpacity
+            style={styles.aiButton}
+            onPress={() => router.push('/consultai')}
+            activeOpacity={0.9}
+          >
+            <Image source={EXTRA_IMAGES.consultai} style={styles.aiCardImg} resizeMode="contain" />
+            <View style={styles.aiTextContainer}>
+              <Text style={styles.aiButtonTitle}>Consult.Ai 🤖</Text>
+              <Text style={styles.aiButtonSub}>Gerador de trilhas e desafios com Inteligência Artificial</Text>
+            </View>
+            <Sparkles size={22} color="#FBBF24" />
+          </TouchableOpacity>
 
-      {/* Botão Prominente ConsultAi IA */}
-      <TouchableOpacity
-        style={styles.aiButton}
-        onPress={() => router.push('/consultai')}
-        activeOpacity={0.9}
-      >
-        <Brain size={24} color="#ffffff" style={styles.aiIcon} />
-        <View style={styles.aiTextContainer}>
-          <Text style={styles.aiButtonTitle}>Consult.Ai</Text>
-          <Text style={styles.aiButtonSub}>Gerar trilhas de estudo personalizadas com IA</Text>
+          {/* Botão Criar Trilha Manual (Sem IA) */}
+          <TouchableOpacity
+            style={styles.manualButton}
+            onPress={() => router.push('/criar-trilha' as any)}
+            activeOpacity={0.9}
+          >
+            <View style={styles.manualIconBox}>
+              <BookOpen size={24} color="#ffffff" />
+            </View>
+            <View style={styles.aiTextContainer}>
+              <Text style={styles.aiButtonTitle}>Criar Trilha Manual ✍️</Text>
+              <Text style={styles.aiButtonSub}>Monte sua trilha com seus próprios temas e matérias</Text>
+            </View>
+            <PlusCircle size={22} color="#86EFAC" />
+          </TouchableOpacity>
         </View>
-        <Sparkles size={20} color="#FBBF24" />
-      </TouchableOpacity>
+      )}
 
       {/* Resultados da Pesquisa */}
       {searchResults !== null ? (
         <View style={styles.section}>
-          <Text style={[styles.sectionTitle, { color: colors.text }]}>Resultados da Pesquisa</Text>
+          <View style={[styles.sectionHeaderPill, { backgroundColor: isDark ? '#262626' : '#E5E7EB' }]}>
+            <Text style={[styles.sectionHeaderPillText, { color: colors.text }]}>{t('common.search') || 'Resultados da Pesquisa'}</Text>
+          </View>
           {searchResults.length === 0 ? (
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>Nenhuma trilha encontrada.</Text>
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('search.noResults') || 'Nenhuma trilha encontrada.'}</Text>
           ) : (
             <FlatList
               data={searchResults}
               renderItem={renderTrackCard}
               keyExtractor={(item) => item._id}
-              numColumns={2}
               scrollEnabled={false}
-              columnWrapperStyle={styles.gridWrapper}
+              contentContainerStyle={{ gap: 16 }}
             />
           )}
         </View>
@@ -169,7 +232,9 @@ export default function HomeScreen() {
           {/* Trilhas em Andamento */}
           {continueTrilhas.length > 0 && (
             <View style={styles.section}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Continuar Estudando</Text>
+              <View style={[styles.sectionHeaderPill, { backgroundColor: isDark ? '#262626' : '#E5E7EB' }]}>
+                <Text style={[styles.sectionHeaderPillText, { color: colors.text }]}>{t('home.continueLearning') || 'Continuar Estudando 📖'}</Text>
+              </View>
               <FlatList
                 horizontal
                 showsHorizontalScrollIndicator={false}
@@ -183,9 +248,11 @@ export default function HomeScreen() {
 
           {/* Trilhas Populares */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Mais Populares 🔥</Text>
+            <View style={[styles.sectionHeaderPill, { backgroundColor: isDark ? '#262626' : '#E5E7EB' }]}>
+              <Text style={[styles.sectionHeaderPillText, { color: colors.text }]}>{t('home.popularTrails') || 'Melhores para você 🔥'}</Text>
+            </View>
             {populares.length === 0 ? (
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>Nenhuma trilha disponível.</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('home.noPopularTrails') || 'Nenhuma trilha disponível.'}</Text>
             ) : (
               <FlatList
                 horizontal
@@ -200,9 +267,11 @@ export default function HomeScreen() {
 
           {/* Novidades */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.text }]}>Novidades 🌟</Text>
+            <View style={[styles.sectionHeaderPill, { backgroundColor: isDark ? '#262626' : '#E5E7EB' }]}>
+              <Text style={[styles.sectionHeaderPillText, { color: colors.text }]}>{t('home.newTrails') || 'Novidades 🌟'}</Text>
+            </View>
             {novidades.length === 0 ? (
-              <Text style={[styles.emptyText, { color: colors.textMuted }]}>Nenhuma trilha nova por enquanto.</Text>
+              <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('home.noNewTrails') || 'Nenhuma trilha nova por enquanto.'}</Text>
             ) : (
               <FlatList
                 horizontal
@@ -335,20 +404,46 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     color: '#1b1b1b',
   },
+  actionsGroup: {
+    gap: 12,
+    marginBottom: 24,
+  },
   aiButton: {
     backgroundColor: '#6366F1', // indigo-500
     borderWidth: 3,
     borderColor: '#1b1b1b',
     borderRadius: 12,
-    padding: 16,
+    padding: 14,
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 24,
     shadowColor: '#000000',
     shadowOffset: { width: 4, height: 4 },
     shadowOpacity: 1,
     shadowRadius: 0,
     elevation: 4,
+  },
+  manualButton: {
+    backgroundColor: '#15803D', // green-700
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    borderRadius: 12,
+    padding: 14,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+  },
+  manualIconBox: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: 'rgba(0,0,0,0.25)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginRight: 12,
   },
   aiIcon: {
     marginRight: 12,
@@ -368,65 +463,88 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   section: {
-    marginBottom: 24,
+    marginBottom: 28,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: '900',
-    color: '#ffffff',
-    marginBottom: 14,
-  },
-  carouselContainer: {
-    gap: 14,
-    paddingRight: 16,
-  },
-  trackCard: {
-    width: 160,
-    height: 150,
-    padding: 14,
-    borderRadius: 12,
-    borderWidth: 3,
+  sectionHeaderPill: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 14,
+    borderWidth: 2.5,
     borderColor: '#1b1b1b',
-    justifyContent: 'space-between',
+    alignSelf: 'center',
+    marginBottom: 16,
     shadowColor: '#000000',
-    shadowOffset: { width: 4, height: 4 },
+    shadowOffset: { width: 3, height: 3 },
     shadowOpacity: 1,
     shadowRadius: 0,
     elevation: 3,
   },
-  trackSubject: {
-    fontSize: 11,
-    fontWeight: '800',
-    color: '#9CA3AF',
+  sectionHeaderPillText: {
+    fontSize: 17,
+    fontWeight: '900',
+    textAlign: 'center',
+    letterSpacing: 0.5,
   },
-  trackTitle: {
-    fontSize: 14,
-    fontWeight: '800',
-    color: '#ffffff',
-    marginVertical: 6,
-  },
-  badge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#1E1E2F',
-    borderWidth: 1,
+  headerAvatarImg: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    borderWidth: 2,
     borderColor: '#1b1b1b',
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    borderRadius: 4,
+    backgroundColor: '#374151',
   },
-  badgeText: {
-    color: '#A5B4FC',
-    fontSize: 10,
-    fontWeight: '800',
+  aiCardImg: {
+    width: 44,
+    height: 44,
+    marginRight: 12,
+  },
+  carouselContainer: {
+    gap: 16,
+    paddingRight: 16,
+    paddingBottom: 8,
+  },
+  trackCard: {
+    width: 240,
+    borderRadius: 14,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+  },
+  trackCoverImage: {
+    width: '100%',
+    height: 140,
+    borderBottomWidth: 2,
+    borderBottomColor: '#1b1b1b',
+  },
+  trackCardContent: {
+    padding: 12,
+  },
+  trackCardTitle: {
+    fontSize: 15,
+    fontWeight: '900',
+    marginBottom: 4,
+    lineHeight: 20,
+  },
+  trackCardDesc: {
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 16,
+    marginBottom: 8,
+  },
+  trackCardMeta: {
+    fontSize: 11,
+    fontWeight: '700',
   },
   emptyText: {
     color: '#9CA3AF',
     fontSize: 14,
     fontWeight: '600',
     fontStyle: 'italic',
-  },
-  gridWrapper: {
-    justifyContent: 'space-between',
-    marginBottom: 14,
+    textAlign: 'center',
   },
 });

@@ -1,10 +1,12 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { Home, Trophy, User } from 'lucide-react-native';
 
 export default function TabLayout() {
-  const { isDark, colors } = useTheme();
+  const { isDark } = useTheme();
+  const { t } = useLanguage();
 
   return (
     <Tabs
@@ -26,28 +28,28 @@ export default function TabLayout() {
         },
       }}
     >
-
       <Tabs.Screen
         name="home"
         options={{
-          title: 'Home',
+          title: t('common.home') || 'Home',
           tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="ranking"
         options={{
-          title: 'Ranking',
+          title: t('common.ranking') || 'Ranking',
           tabBarIcon: ({ color, size }) => <Trophy color={color} size={size} />,
         }}
       />
       <Tabs.Screen
         name="perfil"
         options={{
-          title: 'Perfil',
+          title: t('common.profile') || 'Perfil',
           tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
         }}
       />
     </Tabs>
   );
 }
+

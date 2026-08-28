@@ -6,19 +6,22 @@ import {
   ScrollView,
   TouchableOpacity,
   ActivityIndicator,
+  Image,
 } from 'react-native';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme, ThemePreference } from '../../contexts/ThemeContext';
+import { getCharacterImage } from '../../constants/assets';
 import api from '../../services/api';
 import { LogOut, Globe, Shield, Sun, Moon, Smartphone } from 'lucide-react-native';
 
 const CHARACTERS = ['Samurai', 'Mago', 'Guerreiro'];
 const LANGUAGES = [
-  { code: 'pt-BR', label: 'Português' },
-  { code: 'en-US', label: 'English' },
-  { code: 'es-ES', label: 'Español' },
+  { code: 'pt-BR', label: 'Português (Brasil)', flag: '🇧🇷' },
+  { code: 'en-US', label: 'English (US)', flag: '🇺🇸' },
+  { code: 'es-ES', label: 'Español (España)', flag: '🇪🇸' },
 ] as const;
+
 
 const THEMES = [
   { code: 'light', label: 'Claro', icon: Sun },
@@ -30,8 +33,9 @@ type LanguageCode = 'pt-BR' | 'en-US' | 'es-ES';
 
 export default function PerfilScreen() {
   const { user, logout, refreshUser } = useAuth();
-  const { language, setLanguage } = useLanguage();
+  const { language, setLanguage, t } = useLanguage();
   const { themePreference, setThemePreference, isDark, colors } = useTheme();
+
 
   const [loadingChar, setLoadingChar] = useState<string | null>(null);
 
@@ -73,9 +77,11 @@ export default function PerfilScreen() {
       {/* Card do Usuário */}
       <View style={[styles.profileCard, { backgroundColor: colors.card }]}>
         <View style={styles.avatarContainer}>
-          <Text style={styles.avatarText}>
-            {(user?.nome || 'E')[0].toUpperCase()}
-          </Text>
+          <Image
+            source={getCharacterImage(user?.personagem)}
+            style={styles.avatarImage}
+            resizeMode="contain"
+          />
         </View>
         <Text style={[styles.userName, { color: colors.text }]}>{user?.nome || 'Estudante'}</Text>
         <Text style={[styles.userEmail, { color: colors.textMuted }]}>{user?.email || 'email@provedor.com'}</Text>
@@ -98,17 +104,22 @@ export default function PerfilScreen() {
                 key={char}
                 style={[
                   styles.charBtn,
-                  { backgroundColor: isSelected ? '#16A34A' : colors.cardSecondary },
+                  { backgroundColor: isSelected ? '#16A34A' : colors.card },
                   isSelected && styles.charBtnActive,
                 ]}
                 onPress={() => handleUpdateCharacter(char)}
                 disabled={isLoading || isSelected}
                 activeOpacity={0.8}
               >
+                <Image
+                  source={getCharacterImage(char)}
+                  style={styles.charSelectImg}
+                  resizeMode="contain"
+                />
                 {isLoading ? (
-                  <ActivityIndicator size="small" color="#ffffff" />
+                  <ActivityIndicator size="small" color="#ffffff" style={{ marginTop: 6 }} />
                 ) : (
-                  <Text style={[styles.charBtnText, { color: isSelected ? '#ffffff' : colors.textMuted }, isSelected && styles.charBtnTextActive]}>
+                  <Text style={[styles.charBtnText, { color: isSelected ? '#ffffff' : colors.text }, isSelected && styles.charBtnTextActive]}>
                     {char}
                   </Text>
                 )}
@@ -117,6 +128,7 @@ export default function PerfilScreen() {
           })}
         </View>
       </View>
+
 
       {/* Seção: Aparência / Tema */}
       <View style={styles.section}>
@@ -154,7 +166,7 @@ export default function PerfilScreen() {
       {/* Seção: Idioma */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          <Globe size={18} color={colors.textMuted} style={styles.sectionIcon} /> Idioma do App
+          <Globe size={18} color={colors.textMuted} style={styles.sectionIcon} /> {t('settings.language') || 'Idioma do App'}
         </Text>
         <View style={styles.optionsList}>
           {LANGUAGES.map((lang) => {
@@ -170,9 +182,12 @@ export default function PerfilScreen() {
                 onPress={() => handleLanguageChange(lang.code)}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.optionLabel, { color: colors.text }, isSelected && { color: '#4F46E5', fontWeight: '900' }]}>
-                  {lang.label}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+                  <Text style={{ fontSize: 20 }}>{lang.flag}</Text>
+                  <Text style={[styles.optionLabel, { color: colors.text }, isSelected && { color: '#4F46E5', fontWeight: '900' }]}>
+                    {lang.label}
+                  </Text>
+                </View>
                 {isSelected && <View style={styles.radioDot} />}
               </TouchableOpacity>
             );
@@ -249,20 +264,25 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
   },
   avatarContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: '#4F46E5', // indigo-600
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    backgroundColor: '#374151',
     borderWidth: 3,
     borderColor: '#1b1b1b',
     justifyContent: 'center',
     alignItems: 'center',
     marginBottom: 16,
+    overflow: 'hidden',
   },
-  avatarText: {
-    fontSize: 36,
-    fontWeight: '900',
-    color: '#ffffff',
+  avatarImage: {
+    width: 74,
+    height: 74,
+  },
+  charSelectImg: {
+    width: 48,
+    height: 48,
+    marginBottom: 8,
   },
   userName: {
     fontSize: 20,

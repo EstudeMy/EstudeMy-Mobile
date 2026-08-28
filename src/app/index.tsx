@@ -2,11 +2,13 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
+import { useTheme } from '../contexts/ThemeContext';
+import { BACKGROUND_IMAGES } from '../constants/assets';
 
 export default function LandingPage() {
   const router = useRouter();
   const { isAuthenticated } = useAuth();
-
+  const { isDark } = useTheme();
 
   // Se já estiver logado, redireciona diretamente para o painel principal (tabs)/home
   useEffect(() => {
@@ -17,10 +19,11 @@ export default function LandingPage() {
 
   return (
     <ImageBackground
-      source={require('../../assets/images/background-lp.jpg')}
+      source={isDark ? BACKGROUND_IMAGES.landingDark : BACKGROUND_IMAGES.landingLight}
       style={styles.container}
       resizeMode="cover"
     >
+
       <View style={styles.overlay}>
         {/* Logo/Título */}
         <View style={styles.header}>

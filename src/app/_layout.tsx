@@ -33,6 +33,7 @@ function RootLayoutContent() {
         <Stack.Screen name="trilha/[id]" />
         <Stack.Screen name="game/[faseId]" />
         <Stack.Screen name="consultai/index" />
+        <Stack.Screen name="criar-trilha/index" />
       </Stack>
     </>
   );

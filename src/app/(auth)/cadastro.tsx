@@ -10,9 +10,11 @@ import {
   Platform,
   ScrollView,
   ImageBackground,
+  Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
+import { getCharacterImage, BACKGROUND_IMAGES } from '../../constants/assets';
 import api from '../../services/api';
 
 const CHARACTERS_LIST = [
@@ -20,6 +22,7 @@ const CHARACTERS_LIST = [
   { id: 'Mago', name: 'Mago', description: 'Conjurador de feitiços com alto poder de mana.' },
   { id: 'Guerreiro', name: 'Guerreiro', description: 'Combatente forte e resistente com alto HP.' },
 ];
+
 
 export default function CadastroScreen() {
   const router = useRouter();
@@ -102,7 +105,7 @@ export default function CadastroScreen() {
 
   return (
     <ImageBackground
-      source={require('../../../assets/images/background-lp.jpg')}
+      source={BACKGROUND_IMAGES.loginDark}
       style={styles.container}
       resizeMode="cover"
     >
@@ -221,8 +224,15 @@ export default function CadastroScreen() {
                     onPress={() => setSelectedChar(char.id)}
                     activeOpacity={0.8}
                   >
-                    <Text style={styles.charName}>{char.name}</Text>
-                    <Text style={styles.charDescription}>{char.description}</Text>
+                    <Image
+                      source={getCharacterImage(char.id)}
+                      style={styles.charAvatarImg}
+                      resizeMode="contain"
+                    />
+                    <View style={{ flex: 1 }}>
+                      <Text style={styles.charName}>{char.name}</Text>
+                      <Text style={styles.charDescription}>{char.description}</Text>
+                    </View>
                   </TouchableOpacity>
                 ))}
               </View>
@@ -358,6 +368,13 @@ const styles = StyleSheet.create({
     borderColor: '#1b1b1b',
     padding: 12,
     marginBottom: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  charAvatarImg: {
+    width: 44,
+    height: 44,
   },
   charCardActive: {
     borderColor: '#16A34A', // green-600 border for active character

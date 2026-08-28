@@ -7,10 +7,12 @@ export interface Trilha {
   materia: string;
   descricao?: string;
   nivelDificuldade?: string;
+  dificuldade?: string;
   popularidade?: number;
   visualizacoes?: number;
   criadoPor?: string;
   imagem?: string;
+  image?: string;
   disponibilidade?: string;
   idioma?: string;
 }
@@ -20,25 +22,51 @@ export const listarTrilhas = async (): Promise<Trilha[]> => {
   return response.data || [];
 };
 
+export const criarTrilhaManual = async (dados: {
+  titulo: string;
+  descricao: string;
+  materia: string;
+  dificuldade: 'Facil' | 'Medio' | 'Dificil';
+  disponibilidade?: 'Aberto' | 'Privado';
+  pagamento?: 'Gratuita' | 'Paga';
+  faseSelecionada?: number;
+  imagem?: string;
+  idioma?: string;
+}): Promise<Trilha> => {
+  const response = await api.post('/api/trilhas', dados);
+  return response.data;
+};
+
 export const buscarTrilhas = async (query: string): Promise<Trilha[]> => {
   const response = await api.get(`${API_ENDPOINTS.TRILHAS.BUSCAR}?q=${encodeURIComponent(query)}`);
   return response.data || [];
 };
 
-export const obterNovidades = async (): Promise<Trilha[]> => {
-  const response = await api.get(API_ENDPOINTS.TRILHAS.NOVIDADES);
+
+export const getMappedIdioma = (lang: string) => {
+  if (lang === 'en-US') return 'Inglês';
+  if (lang === 'es-ES') return 'Espanhol';
+  return 'Português';
+};
+
+export const obterNovidades = async (idioma?: string): Promise<Trilha[]> => {
+  const query = idioma ? `?idioma=${encodeURIComponent(idioma)}` : '';
+  const response = await api.get(`${API_ENDPOINTS.TRILHAS.NOVIDADES}${query}`);
   return response.data || [];
 };
 
-export const obterPopulares = async (): Promise<Trilha[]> => {
-  const response = await api.get(API_ENDPOINTS.TRILHAS.POPULARES);
+export const obterPopulares = async (idioma?: string): Promise<Trilha[]> => {
+  const query = idioma ? `?idioma=${encodeURIComponent(idioma)}` : '';
+  const response = await api.get(`${API_ENDPOINTS.TRILHAS.POPULARES}${query}`);
   return response.data || [];
 };
 
-export const obterContinue = async (): Promise<Trilha[]> => {
-  const response = await api.get(API_ENDPOINTS.TRILHAS.CONTINUE);
+export const obterContinue = async (idioma?: string): Promise<Trilha[]> => {
+  const query = idioma ? `?idioma=${encodeURIComponent(idioma)}` : '';
+  const response = await api.get(`${API_ENDPOINTS.TRILHAS.CONTINUE}${query}`);
   return response.data || [];
 };
+
 
 export const buscarTrilhaPorId = async (id: string): Promise<Trilha> => {
   const response = await api.get(API_ENDPOINTS.TRILHAS.POR_ID(id));

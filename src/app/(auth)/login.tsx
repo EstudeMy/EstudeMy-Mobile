@@ -13,12 +13,14 @@ import {
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { BACKGROUND_IMAGES } from '../../constants/assets';
 import api from '../../services/api';
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login } = useAuth();
-
+  const { isDark } = useTheme();
 
   const [identifier, setIdentifier] = useState('');
   const [senha, setSenha] = useState('');
@@ -60,10 +62,11 @@ export default function LoginScreen() {
 
   return (
     <ImageBackground
-      source={require('../../../assets/images/background-lp.jpg')}
+      source={isDark ? BACKGROUND_IMAGES.loginDark : BACKGROUND_IMAGES.loginLight}
       style={styles.container}
       resizeMode="cover"
     >
+
       <View style={styles.overlay}>
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}

@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
-  useColorScheme,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import api from '../../services/api';
-import { Sparkles, Brain, ArrowLeft, PlusCircle } from 'lucide-react-native';
+import { Sparkles, Brain, ArrowLeft, PlusCircle, ShieldAlert } from 'lucide-react-native';
 
 interface SugestaoTrilha {
   trilha: {
@@ -41,13 +41,34 @@ interface SugestaoTrilha {
 
 export default function ConsultAiScreen() {
   const router = useRouter();
+  const { user } = useAuth();
   const { isDark, colors } = useTheme();
 
+  const isAuthorized =
+    user?.tipoUsuario === 'PROFESSOR' ||
+    user?.tipoUsuario === 'ADMINISTRADOR' ||
+    user?.tipoUsuario === 'OWNER';
 
   const [materia, setMateria] = useState('');
   const [tema, setTema] = useState('');
   const [dificuldade, setDificuldade] = useState<'Facil' | 'Medio' | 'Dificil'>('Facil');
   const [secoesNum, setSecoesNum] = useState('2');
+
+  if (!isAuthorized) {
+    return (
+      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
+        <ShieldAlert size={64} color="#EF4444" style={{ marginBottom: 16 }} />
+        <Text style={[styles.deniedTitle, { color: colors.text }]}>Acesso Restrito</Text>
+        <Text style={[styles.deniedDesc, { color: colors.textMuted }]}>
+          Apenas professores e administradores têm permissão para gerar trilhas com a Consult.Ai.
+        </Text>
+        <TouchableOpacity style={styles.backHomeBtn} onPress={() => router.replace('/(tabs)/home')} activeOpacity={0.8}>
+          <Text style={styles.backHomeBtnText}>Voltar para a Home</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
   const [fasesNum, setFasesNum] = useState('2');
 
   const [loading, setLoading] = useState(false);
@@ -597,7 +618,31 @@ const styles = StyleSheet.create({
   },
   cancelBtnText: {
     color: '#EF4444',
-    fontWeight: '800',
     fontSize: 14,
+    fontWeight: '800',
+  },
+  deniedTitle: {
+    fontSize: 22,
+    fontWeight: '900',
+    marginBottom: 8,
+  },
+  deniedDesc: {
+    fontSize: 14,
+    textAlign: 'center',
+    lineHeight: 20,
+    marginBottom: 24,
+  },
+  backHomeBtn: {
+    backgroundColor: '#4F46E5',
+    paddingVertical: 14,
+    paddingHorizontal: 24,
+    borderRadius: 10,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+  },
+  backHomeBtnText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '900',
   },
 });

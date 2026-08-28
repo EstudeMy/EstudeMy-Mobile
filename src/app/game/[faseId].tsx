@@ -6,15 +6,17 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   ScrollView,
-  useColorScheme,
   Dimensions,
+  ImageBackground,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { buscarFasePorId, concluirFase, Fase } from '../../services/faseService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { FASE_BACKGROUNDS } from '../../constants/assets';
 import { ArrowLeft, Check, X, ShieldAlert, Sparkles, Heart } from 'lucide-react-native';
+
 
 const screenWidth = Dimensions.get('window').width;
 
@@ -282,36 +284,42 @@ export default function GameScreen() {
       </TouchableOpacity>
 
       {/* ÁREA DE COMBATE RPG */}
-      <View style={styles.combatArea}>
-        {/* Jogador */}
-        <View style={[styles.characterBox, playerHit && styles.hitActive]}>
-          <Text style={styles.characterName}>{playerClassName}</Text>
-          <Image source={playerAsset} style={styles.characterGif} contentFit="contain" />
-          <View style={styles.hpContainer}>
-            <Heart size={12} color="#EF4444" fill="#EF4444" style={{ marginRight: 4 }} />
-            <View style={styles.hpBarBg}>
-              <View style={[styles.hpBarFill, { width: `${playerHP}%` }]} />
+      <ImageBackground
+        source={FASE_BACKGROUNDS.castelo}
+        style={styles.combatArea}
+        resizeMode="cover"
+      >
+        <View style={styles.combatOverlay}>
+          {/* Jogador */}
+          <View style={[styles.characterBox, playerHit && styles.hitActive]}>
+            <Text style={styles.characterName}>{playerClassName}</Text>
+            <Image source={playerAsset} style={styles.characterGif} contentFit="contain" />
+            <View style={styles.hpContainer}>
+              <Heart size={12} color="#EF4444" fill="#EF4444" style={{ marginRight: 4 }} />
+              <View style={styles.hpBarBg}>
+                <View style={[styles.hpBarFill, { width: `${playerHP}%` }]} />
+              </View>
             </View>
+            <Text style={styles.hpText}>{playerHP}/100 HP</Text>
           </View>
-          <Text style={styles.hpText}>{playerHP}/100 HP</Text>
-        </View>
 
-        {/* VS */}
-        <Text style={styles.vsText}>VS</Text>
+          {/* VS */}
+          <Text style={styles.vsText}>VS</Text>
 
-        {/* Inimigo */}
-        <View style={[styles.characterBox, enemyHit && styles.hitActive]}>
-          <Text style={styles.characterName}>{fase.titulo.split(' ')[0]}</Text>
-          <Image source={enemyAsset} style={styles.characterGif} contentFit="contain" />
-          <View style={styles.hpContainer}>
-            <Heart size={12} color="#EF4444" fill="#EF4444" style={{ marginRight: 4 }} />
-            <View style={styles.hpBarBg}>
-              <View style={[styles.hpBarFill, { width: `${(enemyHP / enemyMaxHP) * 100}%`, backgroundColor: '#3B82F6' }]} />
+          {/* Inimigo */}
+          <View style={[styles.characterBox, enemyHit && styles.hitActive]}>
+            <Text style={styles.characterName}>{fase.titulo.split(' ')[0]}</Text>
+            <Image source={enemyAsset} style={styles.characterGif} contentFit="contain" />
+            <View style={styles.hpContainer}>
+              <Heart size={12} color="#EF4444" fill="#EF4444" style={{ marginRight: 4 }} />
+              <View style={styles.hpBarBg}>
+                <View style={[styles.hpBarFill, { width: `${(enemyHP / enemyMaxHP) * 100}%`, backgroundColor: '#3B82F6' }]} />
+              </View>
             </View>
+            <Text style={styles.hpText}>{enemyHP}/{enemyMaxHP} HP</Text>
           </View>
-          <Text style={styles.hpText}>{enemyHP}/{enemyMaxHP} HP</Text>
         </View>
-      </View>
+      </ImageBackground>
 
       {/* PERGUNTA E ALTERNATIVAS */}
       <ScrollView contentContainerStyle={styles.scrollQuiz} style={[styles.quizArea, { backgroundColor: colors.background }]}>
@@ -412,13 +420,16 @@ const styles = StyleSheet.create({
     borderColor: '#ffffff',
   },
   combatArea: {
+    borderBottomWidth: 4,
+    borderColor: '#1b1b1b',
+    overflow: 'hidden',
+  },
+  combatOverlay: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-evenly',
     paddingVertical: 18,
-    backgroundColor: '#1E1E2F',
-    borderBottomWidth: 4,
-    borderColor: '#1b1b1b',
+    backgroundColor: 'rgba(15, 15, 26, 0.72)',
   },
   characterBox: {
     alignItems: 'center',
