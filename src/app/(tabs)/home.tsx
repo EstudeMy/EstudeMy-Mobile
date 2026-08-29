@@ -53,9 +53,17 @@ export default function HomeScreen() {
         obterPopulares(mappedIdioma),
         obterNovidades(mappedIdioma),
       ]);
-      setContinueTrilhas(continueData);
-      setPopulares(popularesData);
-      setNovidades(novidadesData);
+
+      const filterByLanguage = (trilhas: Trilha[]) => {
+        return trilhas.filter((t) => {
+          const trilhaIdioma = t.idioma || 'Português';
+          return trilhaIdioma === mappedIdioma;
+        });
+      };
+
+      setContinueTrilhas(filterByLanguage(continueData));
+      setPopulares(filterByLanguage(popularesData));
+      setNovidades(filterByLanguage(novidadesData));
     } catch (error) {
       console.error('Erro ao carregar dados do dashboard:', error);
     } finally {
@@ -82,7 +90,12 @@ export default function HomeScreen() {
 
     try {
       const results = await buscarTrilhas(text);
-      setSearchResults(results);
+      const mappedIdioma = getMappedIdioma(language);
+      const filteredResults = results.filter((t) => {
+        const trilhaIdioma = t.idioma || 'Português';
+        return trilhaIdioma === mappedIdioma;
+      });
+      setSearchResults(filteredResults);
     } catch (e) {
       console.error('Erro ao pesquisar trilhas:', e);
     }
@@ -145,8 +158,8 @@ export default function HomeScreen() {
               resizeMode="contain"
             />
             <View>
-              <Text style={[styles.greeting, { color: colors.text }]}>Olá, {user?.nome || 'Estudante'}!</Text>
-              <Text style={[styles.avatarLabel, { color: colors.textMuted }]}>Classe: {user?.personagem || 'Samurai'}</Text>
+              <Text style={[styles.greeting, { color: colors.text }]}>{t('common.hello') || 'Olá'}, {user?.nome || t('common.student') || 'Estudante'}!</Text>
+              <Text style={[styles.avatarLabel, { color: colors.textMuted }]}>{t('common.class') || 'Classe'}: {user?.personagem ? (t(`characterPage.classes.${user.personagem.toLowerCase()}`) || user.personagem) : (t('characterPage.classes.samurai') || 'Samurai')}</Text>
             </View>
           </View>
           <View style={styles.levelBadge}>
@@ -169,7 +182,7 @@ export default function HomeScreen() {
         <Search size={20} color={colors.textMuted} style={styles.searchIcon} />
         <TextInput
           style={[styles.searchInput, { backgroundColor: colors.card, color: colors.text }]}
-          placeholder="Pesquisar trilhas ou matérias..."
+          placeholder={t('home.searchPlaceholder') || 'Pesquisar trilhas ou matérias...'}
           placeholderTextColor={colors.textMuted}
           value={searchQuery}
           onChangeText={handleSearch}
@@ -187,8 +200,8 @@ export default function HomeScreen() {
           >
             <Image source={EXTRA_IMAGES.consultai} style={styles.aiCardImg} resizeMode="contain" />
             <View style={styles.aiTextContainer}>
-              <Text style={styles.aiButtonTitle}>Consult.Ai 🤖</Text>
-              <Text style={styles.aiButtonSub}>Gerador de trilhas e desafios com Inteligência Artificial</Text>
+              <Text style={styles.aiButtonTitle}>{t('home.aiTitle') || 'Consult.Ai 🤖'}</Text>
+              <Text style={styles.aiButtonSub}>{t('home.aiDesc') || 'Gerador de trilhas e desafios com Inteligência Artificial'}</Text>
             </View>
             <Sparkles size={22} color="#FBBF24" />
           </TouchableOpacity>
@@ -203,8 +216,8 @@ export default function HomeScreen() {
               <BookOpen size={24} color="#ffffff" />
             </View>
             <View style={styles.aiTextContainer}>
-              <Text style={styles.aiButtonTitle}>Criar Trilha Manual ✍️</Text>
-              <Text style={styles.aiButtonSub}>Monte sua trilha com seus próprios temas e matérias</Text>
+              <Text style={styles.aiButtonTitle}>{t('home.manualTitle') || 'Criar Trilha Manual ✍️'}</Text>
+              <Text style={styles.aiButtonSub}>{t('home.manualDesc') || 'Monte sua trilha com seus próprios temas e matérias'}</Text>
             </View>
             <PlusCircle size={22} color="#86EFAC" />
           </TouchableOpacity>
@@ -215,7 +228,7 @@ export default function HomeScreen() {
       {searchResults !== null ? (
         <View style={styles.section}>
           <View style={[styles.sectionHeaderPill, { backgroundColor: isDark ? '#262626' : '#E5E7EB' }]}>
-            <Text style={[styles.sectionHeaderPillText, { color: colors.text }]}>{t('common.search') || 'Resultados da Pesquisa'}</Text>
+            <Text style={[styles.sectionHeaderPillText, { color: colors.text }]}>{t('common.searchResults') || 'Resultados da Pesquisa'}</Text>
           </View>
           {searchResults.length === 0 ? (
             <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('search.noResults') || 'Nenhuma trilha encontrada.'}</Text>

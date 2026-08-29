@@ -16,7 +16,18 @@
     "medium": "Medium",
     "hard": "Hard",
     "paid": "Paid",
-    "by": "By"
+    "by": "By",
+    "class": "Class",
+    "hello": "Hello",
+    "student": "Student",
+    "searchResults": "Search Results",
+    "more": "More",
+    "roles": {
+      "ALUNO": "Student",
+      "PROFESSOR": "Teacher",
+      "ADMINISTRADOR": "Administrator",
+      "OWNER": "Owner"
+    }
   },
   "settings": {
     "title": "Settings",
@@ -63,7 +74,9 @@
     "twoFactorDisableConfirmText": "To confirm disabling two-factor authentication, enter your password and the current code from the authenticator app or a backup code.",
     "twoFactorPassword": "Your Current Password",
     "twoFactorCodeOrBackup": "Authentication / Backup Code",
-    "twoFactorDisableConfirm": "Disable"
+    "twoFactorDisableConfirm": "Disable",
+    "system": "System (Auto)",
+    "securityAccount": "Security & Account"
   },
   "navigation": {
     "myCourses": "My Courses",
@@ -75,7 +88,17 @@
   "home": {
     "continue": "Continue",
     "news": "News",
-    "bestForYou": "Best for You"
+    "bestForYou": "Best for You",
+    "continueLearning": "Continue Learning 📖",
+    "popularTrails": "Best for you 🔥",
+    "noPopularTrails": "No trails available.",
+    "newTrails": "What's New 🌟",
+    "noNewTrails": "No new trails for now.",
+    "searchPlaceholder": "Search trails or subjects...",
+    "aiTitle": "Consult.Ai 🤖",
+    "aiDesc": "Generator of trails and challenges with Artificial Intelligence",
+    "manualTitle": "Create Manual Trail ✍️",
+    "manualDesc": "Build your trail with your own topics and subjects"
   },
   "search": {
     "placeholder": "Search trails...",
@@ -235,14 +258,21 @@
     "xpLabel": "XP",
     "guerreiro": "Warrior",
     "mago": "Mage",
-    "samurai": "Samurai"
+    "samurai": "Samurai",
+    "subtitle": "The best heroes of the week",
+    "xpTab": "Level / XP",
+    "accuracyTab": "Average Hits",
+    "noUsers": "No heroes in the ranking yet."
   },
   "myCourses": {
     "title": "My Courses",
     "description": "View the courses you started and continue where you left off",
     "loading": "Loading your courses...",
     "empty": "You haven't started any courses yet.",
-    "explore": "Explore available trails on the home page to start!"
+    "explore": "Explore available trails on the home page to start!",
+    "inProgress": "In Progress",
+    "completed": "Completed",
+    "emptyCompleted": "You haven't completed any courses yet."
   },
   "savedLessons": {
     "title": "Saved Lessons",
@@ -256,7 +286,11 @@
     "error": "Error loading user data.",
     "character": "CHARACTER",
     "account": "ACCOUNT",
-    "xpTotal": "Total XP:"
+    "xpTotal": "Total XP:",
+    "profileType": "Profile type:",
+    "accountStatus": "Account status:",
+    "statusActive": "ACTIVE",
+    "statusVerified": "VERIFIED"
   },
   "characterPage": {
     "title": "Customize Character",

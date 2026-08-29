@@ -16,6 +16,7 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../../contexts/AuthContext';
 import { getCharacterImage, BACKGROUND_IMAGES } from '../../constants/assets';
 import api from '../../services/api';
+import { ArrowLeft } from 'lucide-react-native';
 
 const CHARACTERS_LIST = [
   { id: 'Samurai', name: 'Samurai', description: 'Guerreiro de honra com ataques rápidos de espada.' },
@@ -35,13 +36,30 @@ export default function CadastroScreen() {
   const [dataNascimento, setDataNascimento] = useState(''); // Formato DD/MM/AAAA
   const [tipoUsuario, setTipoUsuario] = useState<'ALUNO' | 'PROFESSOR'>('ALUNO');
   const [selectedChar, setSelectedChar] = useState('Samurai');
+
+  // Campos adicionais para professor
+  const [registroProfissional, setRegistroProfissional] = useState('');
+  const [titulacao, setTitulacao] = useState('');
   
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  const TITULACAO_OPTIONS = [
+    { id: 'Graduação', name: 'Graduação' },
+    { id: 'Especialização', name: 'Especialização' },
+    { id: 'Mestrado', name: 'Mestrado' },
+    { id: 'Doutorado', name: 'Doutorado' },
+    { id: 'Pós-Doutorado', name: 'Pós-Doutorado' },
+  ];
+
   const handleCadastro = async () => {
     if (!nome || !username || !email || !senha || !dataNascimento) {
       setErrorMsg('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    if (tipoUsuario === 'PROFESSOR' && (!registroProfissional || !titulacao)) {
+      setErrorMsg('Por favor, preencha seu Registro Profissional e Titulação.');
       return;
     }
 
@@ -67,6 +85,8 @@ export default function CadastroScreen() {
         tipoUsuario: tipoUsuario,
         personagem: selectedChar,
         aceiteTermos: true,
+        registroProfissional: tipoUsuario === 'PROFESSOR' ? registroProfissional.trim() : undefined,
+        titulacao: tipoUsuario === 'PROFESSOR' ? titulacao : undefined,
       });
 
       // 2. Realizar login automático logo em seguida
@@ -110,6 +130,15 @@ export default function CadastroScreen() {
       resizeMode="cover"
     >
       <View style={styles.overlay}>
+        {/* Botão Voltar */}
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => router.back()}
+          activeOpacity={0.8}
+        >
+          <ArrowLeft size={24} color="#ffffff" />
+        </TouchableOpacity>
+
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardContainer}
@@ -210,6 +239,50 @@ export default function CadastroScreen() {
                   </TouchableOpacity>
                 </View>
               </View>
+
+              {/* Campos extras para Professor */}
+              {tipoUsuario === 'PROFESSOR' && (
+                <>
+                  {/* Registro Profissional */}
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>Registro Profissional</Text>
+                    <TextInput
+                      style={styles.input}
+                      placeholder="Ex: CRM, CREF, etc."
+                      placeholderTextColor="#9CA3AF"
+                      value={registroProfissional}
+                      onChangeText={setRegistroProfissional}
+                    />
+                  </View>
+
+                  {/* Titulação */}
+                  <View style={styles.inputContainer}>
+                    <Text style={styles.label}>Titulação</Text>
+                    <View style={styles.titulacaoContainer}>
+                      {TITULACAO_OPTIONS.map((option) => (
+                        <TouchableOpacity
+                          key={option.id}
+                          style={[
+                            styles.titulacaoBtn,
+                            titulacao === option.id && styles.titulacaoBtnActive,
+                          ]}
+                          onPress={() => setTitulacao(option.id)}
+                          activeOpacity={0.8}
+                        >
+                          <Text
+                            style={[
+                              styles.titulacaoBtnText,
+                              titulacao === option.id && { color: '#ffffff' },
+                            ]}
+                          >
+                            {option.name}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  </View>
+                </>
+              )}
 
               {/* Seleção de Personagem */}
               <View style={styles.inputContainer}>
@@ -429,5 +502,41 @@ const styles = StyleSheet.create({
     color: '#16A34A',
     fontSize: 14,
     fontWeight: '800',
+  },
+  titulacaoContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  titulacaoBtn: {
+    backgroundColor: '#1E1E2F',
+    paddingVertical: 10,
+    paddingHorizontal: 14,
+    borderRadius: 8,
+    borderWidth: 2.5,
+    borderColor: '#1b1b1b',
+  },
+  titulacaoBtnActive: {
+    backgroundColor: '#CA8A04', // matching active color theme (yellow-600)
+    borderColor: '#1b1b1b',
+  },
+  titulacaoBtnText: {
+    color: '#9CA3AF',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  backBtn: {
+    position: 'absolute',
+    top: 52,
+    left: 20,
+    backgroundColor: '#1b1b1b',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    zIndex: 10,
   },
 });

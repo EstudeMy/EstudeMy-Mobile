@@ -16,6 +16,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { BACKGROUND_IMAGES } from '../../constants/assets';
 import api from '../../services/api';
+import { ArrowLeft } from 'lucide-react-native';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -68,6 +69,15 @@ export default function LoginScreen() {
     >
 
       <View style={styles.overlay}>
+        {/* Botão Voltar */}
+        <TouchableOpacity
+          style={styles.backBtn}
+          onPress={() => router.back()}
+          activeOpacity={0.8}
+        >
+          <ArrowLeft size={24} color="#ffffff" />
+        </TouchableOpacity>
+
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardContainer}
@@ -255,5 +265,19 @@ const styles = StyleSheet.create({
     color: '#CA8A04',
     fontSize: 14,
     fontWeight: '800',
+  },
+  backBtn: {
+    position: 'absolute',
+    top: 52,
+    left: 20,
+    backgroundColor: '#1b1b1b',
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    zIndex: 10,
   },
 });

@@ -16,7 +16,18 @@
     "medium": "Médio",
     "hard": "Difícil",
     "paid": "Paga",
-    "by": "Por"
+    "by": "Por",
+    "class": "Classe",
+    "hello": "Olá",
+    "student": "Estudante",
+    "searchResults": "Resultados da Pesquisa",
+    "more": "Mais",
+    "roles": {
+      "ALUNO": "Estudante",
+      "PROFESSOR": "Professor",
+      "ADMINISTRADOR": "Administrador",
+      "OWNER": "Dono"
+    }
   },
   "settings": {
     "title": "Configurações",
@@ -63,7 +74,9 @@
     "twoFactorDisableConfirmText": "Para confirmar a desativação da autenticação de dois fatores, digite sua senha e o código atual do aplicativo de autenticação ou um código de recuperação.",
     "twoFactorPassword": "Sua Senha Atual",
     "twoFactorCodeOrBackup": "Código de Autenticação / Recuperação",
-    "twoFactorDisableConfirm": "Desativar"
+    "twoFactorDisableConfirm": "Desativar",
+    "system": "Sistema (Auto)",
+    "securityAccount": "Segurança & Conta"
   },
   "navigation": {
     "myCourses": "Meus Cursos",
@@ -75,7 +88,17 @@
   "home": {
     "continue": "Continue",
     "news": "Novidades",
-    "bestForYou": "Melhores para você"
+    "bestForYou": "Melhores para você",
+    "continueLearning": "Continuar Estudando 📖",
+    "popularTrails": "Melhores para você 🔥",
+    "noPopularTrails": "Nenhuma trilha disponível.",
+    "newTrails": "Novidades 🌟",
+    "noNewTrails": "Nenhuma trilha nova por enquanto.",
+    "searchPlaceholder": "Pesquisar trilhas ou matérias...",
+    "aiTitle": "Consult.Ai 🤖",
+    "aiDesc": "Gerador de trilhas e desafios com Inteligência Artificial",
+    "manualTitle": "Criar Trilha Manual ✍️",
+    "manualDesc": "Monte sua trilha com seus próprios temas e matérias"
   },
   "search": {
     "placeholder": "Pesquisar trilhas...",
@@ -235,14 +258,21 @@
     "xpLabel": "XP",
     "guerreiro": "Guerreiro",
     "mago": "Mago",
-    "samurai": "Samurai"
+    "samurai": "Samurai",
+    "subtitle": "Os melhores heróis da semana",
+    "xpTab": "Nível / XP",
+    "accuracyTab": "Média de Acertos",
+    "noUsers": "Nenhum herói no ranking ainda."
   },
   "myCourses": {
     "title": "Meus Cursos",
     "description": "Visualize os cursos que você iniciou e continue de onde parou",
     "loading": "Carregando seus cursos...",
     "empty": "Você ainda não iniciou nenhum curso.",
-    "explore": "Explore as trilhas disponíveis na página inicial para começar!"
+    "explore": "Explore as trilhas disponíveis na página inicial para começar!",
+    "inProgress": "Em Andamento",
+    "completed": "Concluídos",
+    "emptyCompleted": "Você ainda não concluiu nenhum curso."
   },
   "savedLessons": {
     "title": "Lições Salvas",
@@ -256,7 +286,11 @@
     "error": "Erro ao carregar dados do usuário.",
     "character": "PERSONAGEM",
     "account": "CONTA",
-    "xpTotal": "XP Total:"
+    "xpTotal": "XP Total:",
+    "profileType": "Perfil tipo:",
+    "accountStatus": "Status da conta:",
+    "statusActive": "ATIVO",
+    "statusVerified": "VERIFICADO"
   },
   "characterPage": {
     "title": "Personalizar Personagem",

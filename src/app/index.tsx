@@ -4,6 +4,8 @@ import { useRouter } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { BACKGROUND_IMAGES } from '../constants/assets';
+import { SvgXml } from 'react-native-svg';
+import { ESTUDE_MY_LOGO_XML } from '../constants/svgs';
 
 export default function LandingPage() {
   const router = useRouter();
@@ -28,7 +30,9 @@ export default function LandingPage() {
       <View style={styles.overlay}>
         {/* Logo/Título */}
         <View style={styles.header}>
-          <Text style={styles.welcomeText}>Estude.My</Text>
+          <View style={{ marginBottom: 10 }}>
+            <SvgXml xml={ESTUDE_MY_LOGO_XML} width={310} height={60} />
+          </View>
           <Text style={styles.subtext}>Aprenda Jogando!</Text>
         </View>
 

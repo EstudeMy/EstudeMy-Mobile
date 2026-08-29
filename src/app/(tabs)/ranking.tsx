@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { getCharacterImage, EXTRA_IMAGES } from '../../constants/assets';
 import api from '../../services/api';
 import { Trophy, Award, Medal } from 'lucide-react-native';
@@ -28,6 +29,7 @@ interface LeaderboardUser {
 export default function RankingScreen() {
   const { colors } = useTheme();
   const { t } = useLanguage();
+  const { user } = useAuth();
 
   const [activeTab, setActiveTab] = useState<'XP' | 'ACERTOS'>('XP');
   const [loading, setLoading] = useState(true);
@@ -73,6 +75,7 @@ export default function RankingScreen() {
     const displayName = item.nome || item.name || item.username || 'Estudante';
     const displayUsername = item.username || item.name || 'estudante';
     const percentual = item.mediaAcertos !== undefined ? item.mediaAcertos : (item.acertosPercentual !== undefined ? item.acertosPercentual : 0);
+    const isCurrentUser = user && (user._id === item._id || user.id === item._id);
 
     return (
       <View
@@ -80,7 +83,7 @@ export default function RankingScreen() {
           styles.rowCard,
           { backgroundColor: colors.card },
           isTop3 && styles.top3Card,
-          index === 0 && styles.firstPlaceCard,
+          isCurrentUser && styles.currentUserCard,
         ]}
       >
         <View style={styles.leftSection}>
@@ -261,8 +264,8 @@ const styles = StyleSheet.create({
   top3Card: {
     borderWidth: 3.5,
   },
-  firstPlaceCard: {
-    borderColor: '#F59E0B', // Destaque de ouro
+  currentUserCard: {
+    borderColor: '#F59E0B', // Destaque para o usuário atual
   },
   leftSection: {
     flexDirection: 'row',

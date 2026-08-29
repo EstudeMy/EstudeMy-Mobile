@@ -34,6 +34,10 @@ function RootLayoutContent() {
         <Stack.Screen name="game/[faseId]" />
         <Stack.Screen name="consultai/index" />
         <Stack.Screen name="criar-trilha/index" />
+        <Stack.Screen name="configuracoes" />
+        <Stack.Screen name="perfil" />
+        <Stack.Screen name="meus-cursos" />
+        <Stack.Screen name="licoes-salvas" />
       </Stack>
     </>
   );

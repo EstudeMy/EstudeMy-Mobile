@@ -2,7 +2,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Home, Trophy, User } from 'lucide-react-native';
+import { Home, Trophy, MoreHorizontal } from 'lucide-react-native';
 
 export default function TabLayout() {
   const { isDark } = useTheme();
@@ -43,10 +43,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="perfil"
+        name="mais"
         options={{
-          title: t('common.profile') || 'Perfil',
-          tabBarIcon: ({ color, size }) => <User color={color} size={size} />,
+          title: t('common.more') || 'Mais',
+          tabBarIcon: ({ color, size }) => <MoreHorizontal color={color} size={size} />,
         }}
       />
     </Tabs>

@@ -16,7 +16,45 @@
     "medium": "Medio",
     "hard": "Difícil",
     "paid": "De pago",
-    "by": "Por"
+    "by": "Por",
+    "class": "Clase",
+    "hello": "Hola",
+    "student": "Estudiante",
+    "searchResults": "Resultados de la Búsqueda",
+    "more": "Más",
+    "roles": {
+      "ALUNO": "Estudiante",
+      "PROFESSOR": "Profesor",
+      "ADMINISTRADOR": "Administrador",
+      "OWNER": "Propietario"
+    }
+  },
+  "home": {
+    "continueLearning": "Continuar Estudiando 📖",
+    "popularTrails": "Lo mejor para ti 🔥",
+    "noPopularTrails": "No hay rutas disponibles.",
+    "newTrails": "Novedades 🌟",
+    "noNewTrails": "No hay nuevas rutas por ahora.",
+    "continue": "Continuar",
+    "news": "Novedades",
+    "bestForYou": "Mejor para ti"
+  },
+  "search": {
+    "noResults": "No se encontraron senderos",
+    "placeholder": "Buscar senderos...",
+    "filterBySubject": "Filtrar por materia:",
+    "all": "Todas",
+    "searching": "Buscando...",
+    "resultsFor": "senderos encontrados",
+    "resultFor": "sendero encontrado",
+    "for": "para"
+  },
+  "ranking": {
+    "title": "Clasificación",
+    "subtitle": "Mira cómo te comparas con otros estudiantes",
+    "xpTab": "Experiencia (XP)",
+    "accuracyTab": "Precisión",
+    "noUsers": "Aún no hay usuarios en la clasificación."
   },
   "settings": {
     "title": "Configuración",
@@ -258,7 +296,9 @@
     "twoFactorDisableConfirmText": "Para confirmar la desactivación de la autenticación de dos factores, ingresa tu contraseña y el código actual de la aplicación de autenticación o un código de recuperación.",
     "twoFactorPassword": "Tu Contraseña Actual",
     "twoFactorCodeOrBackup": "Código de Autenticación / Recuperación",
-    "twoFactorDisableConfirm": "Desactivar"
+    "twoFactorDisableConfirm": "Desactivar",
+    "system": "Sistema (Auto)",
+    "securityAccount": "Seguridad y Cuenta"
   },
   "navigation": {
     "myCourses": "Mis Cursos",
@@ -270,7 +310,17 @@
   "home": {
     "continue": "Continuar",
     "news": "Novedades",
-    "bestForYou": "Mejor para ti"
+    "bestForYou": "Mejor para ti",
+    "continueLearning": "Continuar Estudiando 📖",
+    "popularTrails": "Lo mejor para ti 🔥",
+    "noPopularTrails": "No hay rutas disponibles.",
+    "newTrails": "Novedades 🌟",
+    "noNewTrails": "No hay nuevas rutas por ahora.",
+    "searchPlaceholder": "Buscar rutas o materias...",
+    "aiTitle": "Consult.Ai 🤖",
+    "aiDesc": "Generador de rutas y desafíos con Inteligencia Artificial",
+    "manualTitle": "Crear Ruta Manual ✍️",
+    "manualDesc": "Crea tu ruta con tus propios temas y materias"
   },
   "search": {
     "placeholder": "Buscar senderos...",
@@ -430,14 +480,21 @@
     "xpLabel": "XP",
     "guerreiro": "Guerrero",
     "mago": "Mago",
-    "samurai": "Samurái"
+    "samurai": "Samurái",
+    "subtitle": "Los mejores héroes de la semana",
+    "xpTab": "Nivel / XP",
+    "accuracyTab": "Promedio de aciertos",
+    "noUsers": "Ningún héroe en el ranking todavía."
   },
   "myCourses": {
     "title": "Mis Cursos",
     "description": "Visualiza los cursos que iniciaste y continúa donde lo dejaste",
     "loading": "Cargando tus cursos...",
     "empty": "Aún no has iniciado ningún curso.",
-    "explore": "¡Explora las rutas disponibles en la página de inicio para comenzar!"
+    "explore": "¡Explora las rutas disponíveis en la página de inicio para comenzar!",
+    "inProgress": "En Curso",
+    "completed": "Completados",
+    "emptyCompleted": "Aún no has completado ningún curso."
   },
   "savedLessons": {
     "title": "Lecciones Guardadas",
@@ -451,7 +508,11 @@
     "error": "Error al cargar los datos del usuario.",
     "character": "PERSONAJE",
     "account": "CUENTA",
-    "xpTotal": "XP Total:"
+    "xpTotal": "XP Total:",
+    "profileType": "Tipo de perfil:",
+    "accountStatus": "Estado de la cuenta:",
+    "statusActive": "ACTIVO",
+    "statusVerified": "VERIFICADO"
   },
   "characterPage": {
     "title": "Personalizar Personaje",
