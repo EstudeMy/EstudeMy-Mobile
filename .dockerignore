@@ -1,0 +1,16 @@
+node_modules
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.expo
+dist
+web-build
+.git
+.github
+.vscode
+.idea
+*.log
+.env*.local
+*.pdf
+.DS_Store
+Thumbs.db

@@ -112,3 +112,22 @@ src/
         ```bash
         npm run lint
         ```
+
+---
+
+## 🐳 Executando com Docker (Mobile + Backend + MongoDB)
+
+O projeto conta com ambiente completo em contêineres Docker orquestrando o **App Mobile (Web/Nginx)**, a **API Backend** e o banco **MongoDB**:
+
+1.  **Iniciar a Stack Completa:**
+    ```bash
+    npm run docker:up
+    # ou diretamente: docker compose up -d --build
+    ```
+
+2.  **Acessos Locais:**
+    *   **App Mobile Web:** [http://localhost:8081](http://localhost:8081)
+    *   **Backend API:** [http://localhost:5000](http://localhost:5000)
+
+Para mais detalhes sobre configuração de rede, emuladores Android e modo desenvolvimento com hot reload, consulte o guia completo em [DOCKER.md](file:///c:/Users/Alunos/Documents/GitHub/EstudeMy-Mobile/DOCKER.md).
+

@@ -44,7 +44,7 @@ export default function MaisScreen() {
         {/* Opção Configurações */}
         <TouchableOpacity
           style={[styles.menuItem, { backgroundColor: colors.card }]}
-          onPress={() => router.push('/configuracoes')}
+          onPress={() => router.push('/configuracoes' as any)}
           activeOpacity={0.85}
         >
           <View style={styles.menuItemLeft}>
@@ -61,7 +61,7 @@ export default function MaisScreen() {
         {/* Opção Meus Cursos */}
         <TouchableOpacity
           style={[styles.menuItem, { backgroundColor: colors.card }]}
-          onPress={() => router.push('/meus-cursos')}
+          onPress={() => router.push('/meus-cursos' as any)}
           activeOpacity={0.85}
         >
           <View style={styles.menuItemLeft}>
@@ -78,7 +78,7 @@ export default function MaisScreen() {
         {/* Opção Lições Salvas */}
         <TouchableOpacity
           style={[styles.menuItem, { backgroundColor: colors.card }]}
-          onPress={() => router.push('/licoes-salvas')}
+          onPress={() => router.push('/licoes-salvas' as any)}
           activeOpacity={0.85}
         >
           <View style={styles.menuItemLeft}>

@@ -1,0 +1,275 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 520" width="100%" height="100%" style="background:#ffffff; font-family:'Plus Jakarta Sans', -apple-system, sans-serif;">
+  <defs>
+    <!-- Gradientes -->
+    <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#0284c7" />
+      <stop offset="100%" stop-color="#0369a1" />
+    </linearGradient>
+    
+    <linearGradient id="edgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f59e0b" />
+      <stop offset="100%" stop-color="#d97706" />
+    </linearGradient>
+
+    <linearGradient id="dmzGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#10b981" />
+      <stop offset="100%" stop-color="#059669" />
+    </linearGradient>
+
+    <linearGradient id="privGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#6366f1" />
+      <stop offset="100%" stop-color="#4f46e5" />
+    </linearGradient>
+
+    <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%" filterUnits="userSpaceOnUse">
+      <feDropShadow dx="0" dy="3" stdDeviation="4" flood-color="#0f172a" flood-opacity="0.08" />
+    </filter>
+
+    <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#0284c7" />
+    </marker>
+
+    <marker id="arrowGreen" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#059669" />
+    </marker>
+
+    <marker id="arrowPurple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+      <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#6366f1" />
+    </marker>
+  </defs>
+
+  <!-- BANNER TOPO -->
+  <rect x="20" y="15" width="920" height="42" rx="8" fill="url(#headerGrad)" />
+  <text x="35" y="36" fill="#ffffff" font-size="13" font-weight="800" letter-spacing="0.5">ESTUDEMY • ARQUITETURA DE IMPLANTAÇÃO EM NUVEM (ENTREGA 1 - PI V)</text>
+  <text x="35" y="49" fill="#e0f2fe" font-size="9.5" font-weight="500">Padrão Cloud-Agnostic baseado em Contêineres Docker (CaaS sobre IaaS) • OCI Free Tier / AWS</text>
+  <rect x="790" y="24" width="135" height="24" rx="12" fill="#ffffff" fill-opacity="0.2" />
+  <text x="857" y="40" fill="#ffffff" font-size="9" font-weight="700" text-anchor="middle">FATEC VOTORANTIM</text>
+
+  <!-- ========================================================= -->
+  <!-- 1. CAMADA EXTERNA: CLIENTES (X: 20 a 160)                 -->
+  <!-- ========================================================= -->
+  <rect x="20" y="70" width="145" height="430" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.5" filter="url(#shadow)" />
+  <rect x="20" y="70" width="145" height="30" rx="10" fill="#f1f5f9" />
+  <text x="92" y="90" fill="#0f172a" font-size="10" font-weight="800" text-anchor="middle">CLIENTES &amp; ACESSO</text>
+
+  <!-- Card App Mobile -->
+  <rect x="30" y="112" width="125" height="90" rx="7" fill="#ffffff" stroke="#93c5fd" stroke-width="1.2" filter="url(#shadow)" />
+  <text x="92" y="132" fill="#0369a1" font-size="11" font-weight="800" text-anchor="middle">📱 App Mobile</text>
+  <text x="92" y="148" fill="#334155" font-size="8.5" font-weight="600" text-anchor="middle">React Native / Expo</text>
+  <text x="92" y="162" fill="#64748b" font-size="7.5" text-anchor="middle">Android &amp; iOS</text>
+  <rect x="42" y="172" width="101" height="18" rx="4" fill="#eff6ff" />
+  <text x="92" y="184" fill="#1d4ed8" font-size="7" font-weight="700" text-anchor="middle">API Client (Axios)</text>
+
+  <!-- Card Navegador Web -->
+  <rect x="30" y="215" width="125" height="90" rx="7" fill="#ffffff" stroke="#93c5fd" stroke-width="1.2" filter="url(#shadow)" />
+  <text x="92" y="235" fill="#0369a1" font-size="11" font-weight="800" text-anchor="middle">🌐 Navegador Web</text>
+  <text x="92" y="251" fill="#334155" font-size="8.5" font-weight="600" text-anchor="middle">Mobile Web (SPA)</text>
+  <text x="92" y="265" fill="#64748b" font-size="7.5" text-anchor="middle">Portal Aluno / Prof.</text>
+  <rect x="42" y="275" width="101" height="18" rx="4" fill="#eff6ff" />
+  <text x="92" y="287" fill="#1d4ed8" font-size="7" font-weight="700" text-anchor="middle">HTTP / SPA Router</text>
+
+  <!-- Card DevOps / Admin -->
+  <rect x="30" y="318" width="125" height="85" rx="7" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2" filter="url(#shadow)" />
+  <text x="92" y="338" fill="#334155" font-size="11" font-weight="800" text-anchor="middle">👨‍💻 DevOps / Admin</text>
+  <text x="92" y="354" fill="#475569" font-size="8" font-weight="600" text-anchor="middle">Gerência Segura</text>
+  <rect x="42" y="368" width="101" height="20" rx="4" fill="#f1f5f9" />
+  <text x="92" y="381" fill="#0f172a" font-size="7" font-weight="700" text-anchor="middle">SSH (Porta 22 / Chave)</text>
+
+  <!-- Card GitHub CI/CD -->
+  <rect x="30" y="415" width="125" height="75" rx="7" fill="#ffffff" stroke="#cbd5e1" stroke-width="1.2" filter="url(#shadow)" />
+  <text x="92" y="435" fill="#334155" font-size="10.5" font-weight="800" text-anchor="middle">🐙 GitHub Actions</text>
+  <text x="92" y="451" fill="#64748b" font-size="7.5" text-anchor="middle">Pipeline CI/CD</text>
+  <rect x="42" y="460" width="101" height="18" rx="4" fill="#f8fafc" />
+  <text x="92" y="472" fill="#475569" font-size="7" font-weight="700" text-anchor="middle">Automated Deploy</text>
+
+  <!-- ========================================================= -->
+  <!-- 2. CAMADA DE BORDA: CLOUDFLARE WAF / CDN (X: 190 a 280)    -->
+  <!-- ========================================================= -->
+  <rect x="185" y="70" width="105" height="430" rx="10" fill="#fffbeb" stroke="#fcd34d" stroke-width="1.5" filter="url(#shadow)" />
+  <rect x="185" y="70" width="105" height="30" rx="10" fill="url(#edgeGrad)" />
+  <text x="237" y="90" fill="#ffffff" font-size="9.5" font-weight="800" text-anchor="middle">BORDA (EDGE)</text>
+
+  <rect x="193" y="115" width="89" height="60" rx="6" fill="#ffffff" stroke="#fde68a" />
+  <text x="237" y="133" fill="#b45309" font-size="8.5" font-weight="800" text-anchor="middle">🛡️ WAF &amp; DDoS</text>
+  <text x="237" y="147" fill="#78350f" font-size="7.2" text-anchor="middle">Filtro de Ataques</text>
+  <text x="237" y="159" fill="#78350f" font-size="7.2" text-anchor="middle">L3 / L4 / L7</text>
+
+  <rect x="193" y="185" width="89" height="60" rx="6" fill="#ffffff" stroke="#fde68a" />
+  <text x="237" y="203" fill="#b45309" font-size="8.5" font-weight="800" text-anchor="middle">🔒 SSL / TLS 1.3</text>
+  <text x="237" y="217" fill="#78350f" font-size="7.2" text-anchor="middle">Terminação Borda</text>
+  <text x="237" y="229" fill="#78350f" font-size="7.2" text-anchor="middle">HTTPS Forçado</text>
+
+  <rect x="193" y="255" width="89" height="60" rx="6" fill="#ffffff" stroke="#fde68a" />
+  <text x="237" y="273" fill="#b45309" font-size="8.5" font-weight="800" text-anchor="middle">⚡ CDN Cache</text>
+  <text x="237" y="287" fill="#78350f" font-size="7.2" text-anchor="middle">Cache Estático</text>
+  <text x="237" y="299" fill="#78350f" font-size="7.2" text-anchor="middle">Assets / JS / SVG</text>
+
+  <rect x="193" y="325" width="89" height="60" rx="6" fill="#ffffff" stroke="#fde68a" />
+  <text x="237" y="343" fill="#b45309" font-size="8.5" font-weight="800" text-anchor="middle">🌍 Anycast DNS</text>
+  <text x="237" y="357" fill="#78350f" font-size="7.2" text-anchor="middle">estudemy.site</text>
+  <text x="237" y="369" fill="#78350f" font-size="7.2" text-anchor="middle">api.estudemy.site</text>
+
+  <rect x="193" y="405" width="89" height="75" rx="6" fill="#ffffff" stroke="#fde68a" />
+  <text x="237" y="425" fill="#b45309" font-size="8" font-weight="800" text-anchor="middle">Rate Limiting</text>
+  <text x="237" y="440" fill="#78350f" font-size="7" text-anchor="middle">Anti-Brute Force</text>
+  <text x="237" y="453" fill="#78350f" font-size="7" text-anchor="middle">nas rotas</text>
+  <text x="237" y="465" fill="#b45309" font-size="7" font-weight="700" text-anchor="middle">/api/auth/*</text>
+
+  <!-- ========================================================= -->
+  <!-- 3. NUVEM CORPORATIVA: VCN / VPC (X: 310 a 940)             -->
+  <!-- ========================================================= -->
+  <rect x="305" y="70" width="635" height="430" rx="12" fill="#f8fafc" stroke="#0284c7" stroke-width="2" stroke-dasharray="6,4" />
+  
+  <!-- Header da VCN -->
+  <rect x="305" y="70" width="635" height="28" rx="10" fill="#0f172a" />
+  <text x="320" y="88" fill="#38bdf8" font-size="10" font-weight="800">REDE VIRTUAL DE NUVEM (VCN / VPC) • CIDR 10.0.0.0/16</text>
+  <text x="830" y="88" fill="#94a3b8" font-size="8.5" font-weight="600">OCI Free Tier / AWS</text>
+
+  <!-- 3.1 SUBNET PÚBLICA (DMZ - 10.0.1.0/24) -->
+  <rect x="318" y="110" width="165" height="375" rx="8" fill="#f0fdf4" stroke="#86efac" stroke-width="1.5" />
+  <rect x="318" y="110" width="165" height="26" rx="8" fill="url(#dmzGrad)" />
+  <text x="400" y="127" fill="#ffffff" font-size="9" font-weight="800" text-anchor="middle">SUBNET PÚBLICA (DMZ)</text>
+  <text x="400" y="147" fill="#166534" font-size="7.5" font-weight="700" text-anchor="middle">10.0.1.0/24 • Internet Gateway</text>
+
+  <!-- Card Internet Gateway -->
+  <rect x="328" y="156" width="145" height="50" rx="6" fill="#ffffff" stroke="#bbf7d0" />
+  <text x="400" y="174" fill="#15803d" font-size="9" font-weight="800" text-anchor="middle">🌐 Internet Gateway</text>
+  <text x="400" y="188" fill="#166534" font-size="7" text-anchor="middle">Ponto de Entrada/Saída Público</text>
+  <text x="400" y="198" fill="#047857" font-size="6.8" font-weight="700" text-anchor="middle">0.0.0.0/0 ➔ WAN</text>
+
+  <!-- Card Cloud Load Balancer / Nginx Gateway -->
+  <rect x="328" y="215" width="145" height="155" rx="6" fill="#ffffff" stroke="#86efac" stroke-width="1.5" filter="url(#shadow)" />
+  <rect x="328" y="215" width="145" height="22" rx="6" fill="#dcfce7" />
+  <text x="400" y="230" fill="#166534" font-size="8.5" font-weight="800" text-anchor="middle">⚖️ LOAD BALANCER / NGINX</text>
+  
+  <rect x="336" y="244" width="129" height="22" rx="4" fill="#f0fdf4" stroke="#bbf7d0" />
+  <text x="400" y="258" fill="#15803d" font-size="7.5" font-weight="700" text-anchor="middle">Porta 80 (HTTP) ➔ Redir 301</text>
+  
+  <rect x="336" y="272" width="129" height="22" rx="4" fill="#ecfdf5" stroke="#86efac" />
+  <text x="400" y="286" fill="#047857" font-size="7.5" font-weight="800" text-anchor="middle">Porta 443 (HTTPS / TLS 1.3)</text>
+
+  <text x="400" y="307" fill="#334155" font-size="7.2" text-anchor="middle">• Certificado Let's Encrypt</text>
+  <text x="400" y="319" fill="#334155" font-size="7.2" text-anchor="middle">• Reverse Proxy / SPA Fallback</text>
+  <text x="400" y="331" fill="#334155" font-size="7.2" text-anchor="middle">• Encaminha /api ➔ Porta 5000</text>
+  <text x="400" y="343" fill="#334155" font-size="7.2" text-anchor="middle">• Servidor Web Mobile ➔ 8081</text>
+  <text x="400" y="355" fill="#334155" font-size="7.2" text-anchor="middle">• Compressão Gzip Ativa</text>
+
+  <!-- Card NAT Gateway -->
+  <rect x="328" y="380" width="145" height="50" rx="6" fill="#ffffff" stroke="#bbf7d0" />
+  <text x="400" y="398" fill="#15803d" font-size="9" font-weight="800" text-anchor="middle">🔄 NAT Gateway</text>
+  <text x="400" y="412" fill="#166534" font-size="7" text-anchor="middle">Saída Segura sem IP Público</text>
+  <text x="400" y="422" fill="#047857" font-size="6.8" font-weight="700" text-anchor="middle">Updates &amp; APIs de IA (Gemini)</text>
+
+  <!-- Security List Pública -->
+  <rect x="328" y="438" width="145" height="38" rx="5" fill="#f8fafc" stroke="#cbd5e1" />
+  <text x="400" y="451" fill="#0f172a" font-size="7" font-weight="700" text-anchor="middle">🛡️ Security List Pública</text>
+  <text x="400" y="462" fill="#475569" font-size="6.5" text-anchor="middle">In: 80, 443 (0.0.0.0/0) | 22 (VPN)</text>
+  <text x="400" y="471" fill="#475569" font-size="6.5" text-anchor="middle">Out: Todas para Subnet Privada</text>
+
+  <!-- 3.2 SUBNET PRIVADA (10.0.2.0/24) -->
+  <rect x="495" y="110" width="435" height="375" rx="8" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1.5" />
+  <rect x="495" y="110" width="435" height="26" rx="8" fill="url(#privGrad)" />
+  <text x="712" y="127" fill="#ffffff" font-size="9" font-weight="800" text-anchor="middle">SUBNET PRIVADA (APLICAÇÃO &amp; DADOS - SEM IP PÚBLICO)</text>
+  <text x="712" y="147" fill="#5b21b6" font-size="7.5" font-weight="700" text-anchor="middle">10.0.2.0/24 • Isolamento Total L3/L4 • Acesso apenas via Load Balancer</text>
+
+  <!-- Host VM Box -->
+  <rect x="507" y="156" width="411" height="230" rx="8" fill="#ffffff" stroke="#ddd6fe" stroke-width="1.2" filter="url(#shadow)" />
+  <rect x="507" y="156" width="411" height="22" rx="8" fill="#ede9fe" />
+  <text x="520" y="171" fill="#4c1d95" font-size="8" font-weight="800">🖥️ HOST VM: Ubuntu Server 24.04 LTS (4 OCPUs ARM / 24 GB RAM / Docker Engine 26)</text>
+  
+  <!-- Docker Engine Network Sub-box -->
+  <rect x="517" y="185" width="391" height="190" rx="6" fill="#f8fafc" stroke="#818cf8" stroke-dasharray="4,2" />
+  <text x="530" y="200" fill="#4338ca" font-size="7.5" font-weight="800">🐳 DOCKER COMPOSE NETWORK (estudemy_network • Driver Bridge)</text>
+
+  <!-- Container 1: Mobile Web -->
+  <rect x="525" y="210" width="180" height="75" rx="6" fill="#ffffff" stroke="#93c5fd" stroke-width="1.2" />
+  <rect x="525" y="210" width="180" height="18" rx="6" fill="#e0f2fe" />
+  <text x="615" y="223" fill="#0369a1" font-size="8" font-weight="800" text-anchor="middle">📱 estudemy_mobile</text>
+  <text x="615" y="240" fill="#0f172a" font-size="7.5" font-weight="700" text-anchor="middle">Expo Web SPA (Nginx Alpine)</text>
+  <text x="615" y="253" fill="#64748b" font-size="7" text-anchor="middle">Porta Interna: 8081 / Roteamento SPA</text>
+  <rect x="537" y="260" width="156" height="16" rx="3" fill="#eff6ff" />
+  <text x="615" y="271" fill="#1d4ed8" font-size="6.8" font-weight="700" text-anchor="middle">Multi-stage Build • Cache Gzip</text>
+
+  <!-- Container 2: Backend API -->
+  <rect x="718" y="210" width="180" height="75" rx="6" fill="#ffffff" stroke="#a7f3d0" stroke-width="1.2" />
+  <rect x="718" y="210" width="180" height="18" rx="6" fill="#d1fae5" />
+  <text x="808" y="223" fill="#065f46" font-size="8" font-weight="800" text-anchor="middle">⚙️ estudemy_backend</text>
+  <text x="808" y="240" fill="#0f172a" font-size="7.5" font-weight="700" text-anchor="middle">Node 22 + Express 5 (TypeScript)</text>
+  <text x="808" y="253" fill="#64748b" font-size="7" text-anchor="middle">Porta Interna: 5000 • JWT / Bcrypt</text>
+  <rect x="730" y="260" width="156" height="16" rx="3" fill="#ecfdf5" />
+  <text x="808" y="271" fill="#047857" font-size="6.8" font-weight="700" text-anchor="middle">Swagger /api-docs • Healthcheck /</text>
+
+  <!-- Container 3: MongoDB -->
+  <rect x="525" y="293" width="180" height="75" rx="6" fill="#ffffff" stroke="#6ee7b7" stroke-width="1.2" />
+  <rect x="525" y="293" width="180" height="18" rx="6" fill="#d1fae5" />
+  <text x="615" y="306" fill="#047857" font-size="8" font-weight="800" text-anchor="middle">🍃 estudemy_mongo</text>
+  <text x="615" y="323" fill="#0f172a" font-size="7.5" font-weight="700" text-anchor="middle">MongoDB 7.0 Community Edition</text>
+  <text x="615" y="336" fill="#64748b" font-size="7" text-anchor="middle">Porta Interna: 27017 (Isolada)</text>
+  <rect x="537" y="343" width="156" height="16" rx="3" fill="#ecfdf5" />
+  <text x="615" y="354" fill="#065f46" font-size="6.8" font-weight="700" text-anchor="middle">Auth Ativa • NoSQL BSON Docs</text>
+
+  <!-- Container 4: Observabilidade -->
+  <rect x="718" y="293" width="180" height="75" rx="6" fill="#ffffff" stroke="#fed7aa" stroke-width="1.2" />
+  <rect x="718" y="293" width="180" height="18" rx="6" fill="#ffedd5" />
+  <text x="808" y="306" fill="#9a3412" font-size="8" font-weight="800" text-anchor="middle">📊 Observabilidade</text>
+  <text x="808" y="323" fill="#0f172a" font-size="7.5" font-weight="700" text-anchor="middle">Prometheus (9090) + Grafana (3001)</text>
+  <text x="808" y="336" fill="#64748b" font-size="7" text-anchor="middle">cAdvisor (Métricas de Containers)</text>
+  <rect x="730" y="343" width="156" height="16" rx="3" fill="#fff7ed" />
+  <text x="808" y="354" fill="#c2410c" font-size="6.8" font-weight="700" text-anchor="middle">Logs JSON Morgan ➔ Better Stack</text>
+
+  <!-- Camada de Armazenamento Físico e Nuvem -->
+  <!-- Block Storage -->
+  <rect x="507" y="396" width="200" height="80" rx="6" fill="#ffffff" stroke="#c4b5fd" filter="url(#shadow)" />
+  <text x="607" y="415" fill="#5b21b6" font-size="8.5" font-weight="800" text-anchor="middle">💾 Block Volume Persistente</text>
+  <text x="607" y="430" fill="#475569" font-size="7.5" text-anchor="middle">200 GB SSD NVMe (Always Free)</text>
+  <text x="607" y="443" fill="#6b21a8" font-size="7" font-weight="700" text-anchor="middle">Montado em /data/db (Dados Mongo)</text>
+  <text x="607" y="456" fill="#64748b" font-size="7" text-anchor="middle">Persistência tolerante a restart</text>
+  <rect x="517" y="461" width="180" height="12" rx="3" fill="#ede9fe" />
+  <text x="607" y="470" fill="#6d28d9" font-size="6.5" font-weight="700" text-anchor="middle">Backups locais diários /backups</text>
+
+  <!-- Object Storage -->
+  <rect x="718" y="396" width="200" height="80" rx="6" fill="#ffffff" stroke="#c4b5fd" filter="url(#shadow)" />
+  <text x="818" y="415" fill="#5b21b6" font-size="8.5" font-weight="800" text-anchor="middle">📦 Object Storage Bucket</text>
+  <text x="818" y="430" fill="#475569" font-size="7.5" text-anchor="middle">S3 / OCI Bucket (Standard)</text>
+  <text x="818" y="443" fill="#6b21a8" font-size="7" font-weight="700" text-anchor="middle">Uploads de Avatares &amp; Mídia RPG</text>
+  <text x="818" y="456" fill="#64748b" font-size="7" text-anchor="middle">Dumps compactados .gz (Retenção 7d)</text>
+  <rect x="728" y="461" width="180" height="12" rx="3" fill="#ede9fe" />
+  <text x="818" y="470" fill="#6d28d9" font-size="6.5" font-weight="700" text-anchor="middle">Disaster Recovery (RTO 15m / RPO 24h)</text>
+
+  <!-- ========================================================= -->
+  <!-- SETAS E FLUXOS DE COMUNICAÇÃO                             -->
+  <!-- ========================================================= -->
+  <!-- Clientes -> Borda -->
+  <line x1="165" y1="157" x2="183" y2="157" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow)" />
+  <line x1="165" y1="260" x2="183" y2="260" stroke="#0284c7" stroke-width="2" marker-end="url(#arrow)" />
+  <text x="175" y="150" fill="#0284c7" font-size="6" font-weight="700" text-anchor="middle">HTTPS</text>
+  <text x="175" y="253" fill="#0284c7" font-size="6" font-weight="700" text-anchor="middle">HTTPS</text>
+
+  <!-- Borda -> Load Balancer -->
+  <line x1="290" y1="280" x2="326" y2="280" stroke="#059669" stroke-width="2" marker-end="url(#arrowGreen)" />
+  <text x="307" y="274" fill="#059669" font-size="6.5" font-weight="800" text-anchor="middle">TCP 443</text>
+
+  <!-- DevOps SSH -> Subnet Pública -->
+  <line x1="165" y1="360" x2="326" y2="360" stroke="#334155" stroke-width="1.8" stroke-dasharray="4,2" marker-end="url(#arrow)" />
+  <text x="240" y="375" fill="#334155" font-size="6.5" font-weight="700" text-anchor="middle">SSH 22 (VPN)</text>
+
+  <!-- Load Balancer -> Mobile Web -->
+  <path d="M 473 250 L 499 250 L 499 235 L 523 235" fill="none" stroke="#0284c7" stroke-width="1.8" marker-end="url(#arrow)" />
+  <text x="498" y="228" fill="#0284c7" font-size="6.2" font-weight="700">Porta 8081</text>
+
+  <!-- Load Balancer -> Backend API -->
+  <path d="M 473 290 L 710 290 L 710 250 L 716 250" fill="none" stroke="#059669" stroke-width="1.8" marker-end="url(#arrowGreen)" />
+  <text x="590" y="285" fill="#059669" font-size="6.2" font-weight="700">Proxy /api ➔ Porta 5000</text>
+
+  <!-- Backend API -> MongoDB -->
+  <path d="M 760 285 L 760 330 L 707 330" fill="none" stroke="#047857" stroke-width="1.8" marker-end="url(#arrowGreen)" />
+  <text x="745" y="323" fill="#047857" font-size="6.2" font-weight="700">Porta 27017</text>
+
+  <!-- MongoDB -> Block Storage -->
+  <line x1="615" y1="368" x2="615" y2="394" stroke="#6366f1" stroke-width="1.8" marker-end="url(#arrowPurple)" />
+  <text x="625" y="385" fill="#6366f1" font-size="6" font-weight="700">Mount /data/db</text>
+
+  <!-- Backend -> Object Storage -->
+  <line x1="818" y1="285" x2="818" y2="394" stroke="#6366f1" stroke-width="1.8" stroke-dasharray="3,2" marker-end="url(#arrowPurple)" />
+  <text x="828" y="380" fill="#6366f1" font-size="6" font-weight="700">Uploads / S3 API</text>
+</svg>

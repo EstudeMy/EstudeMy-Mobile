@@ -1,0 +1,90 @@
+# ==============================================================================
+# Docker Compose - EstudeMy Mobile & Backend Stack
+# ==============================================================================
+# Sobe MongoDB 7 + API Backend (EstudeMy-BackEnd-TS) + App Mobile Web (Nginx)
+#
+# Uso:
+#   docker compose up --build
+#
+# Para rodar em background (modo daemon):
+#   docker compose up -d --build
+# ==============================================================================
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. Banco de Dados NoSQL - MongoDB
+  # ----------------------------------------------------------------------------
+  mongo:
+    image: mongo:7
+    container_name: estudemy_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_DATABASE: estudemy
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    networks:
+      - estudemy_network
+
+  # ----------------------------------------------------------------------------
+  # 2. API Backend (Node.js + Express + TypeScript)
+  # ----------------------------------------------------------------------------
+  backend:
+    build:
+      context: ../EstudeMy-BackEnd-TS
+      dockerfile: Dockerfile
+    container_name: estudemy_backend
+    restart: unless-stopped
+    ports:
+      - "${PORT:-5000}:${PORT:-5000}"
+    environment:
+      PORT: "${PORT:-5000}"
+      NODE_ENV: ${NODE_ENV:-development}
+      APP_ENV: ${APP_ENV:-dev}
+      MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/estudemy}
+      JWT_SECRET: ${JWT_SECRET:-estudemy_super_secret_jwt_key_2026_dev}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8081}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:5000}
+      BETTER_STACK_SOURCE_TOKEN: ${BETTER_STACK_SOURCE_TOKEN:-}
+      BETTER_STACK_SERVICE_NAME: ${BETTER_STACK_SERVICE_NAME:-estudemy-backend}
+      BETTER_STACK_INGEST_URL: ${BETTER_STACK_INGEST_URL:-}
+    depends_on:
+      mongo:
+        condition: service_healthy
+    networks:
+      - estudemy_network
+
+  # ----------------------------------------------------------------------------
+  # 3. Mobile App (Expo Web / Servido via Nginx de Alta Performance)
+  # ----------------------------------------------------------------------------
+  mobile:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: runner
+      args:
+        EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-http://localhost:5000}
+    container_name: estudemy_mobile
+    restart: unless-stopped
+    ports:
+      - "${MOBILE_PORT:-8081}:80"
+    depends_on:
+      - backend
+    networks:
+      - estudemy_network
+
+volumes:
+  mongo_data:
+    name: estudemy_mongo_data
+
+networks:
+  estudemy_network:
+    name: estudemy_network
+    driver: bridge

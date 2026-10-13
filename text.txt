@@ -1,0 +1,74 @@
+Critério de Avaliação e Escalas Utilizadas
+Impacto ($I$): $1$ (Muito baixo), $2$ (Baixo), $5$ (Médio), $8$ (Alto), $10$ (Muito alto).
+Probabilidade ($P$): $1$ (Muito baixa), $2$ (Baixa), $5$ (Média), $8$ (Alta), $10$ (Muito alta).
+Nível de Risco Inerente ($R = I \times P$):
+$1$ a $10$ — Baixo (ex.: $8 \times 1 = 8$, já presente na sua planilha)
+$11$ a $30$ — Médio
+$31$ a $64$ — Alto
+$65$ a $100$ — Muito Alto / Crítico
+2. Planilha de Análise de Riscos Preenchida
+Abaixo está a tabela completa com todas as colunas preenchidas, pronta para ser copiada para a sua planilha:
+
+Vulnerabilidade	Tratamento	Ação	Responsável	Cód.	Descrição do Risco-Chave	Impacto ($I$)	Probabilidade ($P$)	Nível de Risco	Classificação
+SQL Injection	Mitigado	Uso de ORM / Prepared Statements e tipagem estrita via DTO em 100% das rotas.	Dev	RC01	Manipulação de consultas SQL permitindo extração, alteração ou deleção não autorizada de dados cadastrais e de progresso no banco.	8	1	8	Baixo
+Cross-Site Scripting (XSS)	Em Mitigação	Sanitização de dados de entrada, encoding nas saídas e implementação de cabeçalhos de Content-Security-Policy (CSP).	Dev	RC02	Injeção de scripts maliciosos em campos livres (ex.: nome, biografia, fórum) que executam no cliente, permitindo roubo de sessões ou ações em nome do usuário.	5	5	25	Médio
+Session Hijacking	Mitigado	Utilização de JWT (expiração curta) + Refresh Tokens com rotação, MFA e armazenamento seguro (expo-secure-store).	Dev	RC03	Interceptação ou clonagem do token de autenticação de um usuário legítimo, concedendo controle total sobre a conta sem a necessidade de senha.	8	2	16	Médio
+Brute Force & Credential Stuffing	Em Mitigação	Rate Limiting progressivo por IP/conta nas rotas de login/registro, CAPTCHA adaptativo e hash forte (Bcrypt/Argon2).	Dev / Infra	RC04	Ataques automatizados massivos testando senhas comuns ou vazadas contra os endpoints de autenticação, gerando sequestro de contas e sobrecarga do servidor.	5	8	40	Alto
+Phishing e Engenharia Social	Pendente	Treinamento de conscientização de equipe/professores, implementação de SPF/DKIM/DMARC nos e-mails institucionais e canal de denúncia.	SecOps / RH	RC05	Indução fraudulenta de alunos, professores ou administradores a fornecer credenciais de acesso ou códigos MFA por meio de canais falsos.	8	5	40	Alto
+IDOR (Insecure Direct Object References)	Pendente	Verificação estrita de autorização a nível de objeto no backend (validar se o recurso pertence ao usuário autenticado) e uso de UUIDs.	Dev	RC06	Acesso ou modificação não autorizada de dados de terceiros (ex.: notas, histórico, lições, dados de pagamento) manipulando IDs em parâmetros de requisição.	8	8	64	Alto
+Privilege Escalation	Pendente	Implementação de RBAC rigoroso no backend, validação de perfis (Aluno/Professor/Admin) por middleware e bloqueio de mass assignment.	Dev	RC07	Elevação indevida de privilégios de usuário comum para perfis de Professor ou Administrador, possibilitando alteração de cursos e exclusão de contas.	10	2	20	Médio
+DDoS (Distributed Denial of Service)	Em Mitigação	Borda com WAF e proteção anti-DDoS (ex.: Cloudflare), Rate Limiting em proxy reverso e autoscaling da infraestrutura.	Infra	RC08	Inundação volumétrica ou de camada de aplicação tornando as APIs e os serviços móveis indisponíveis para alunos durante provas ou horários de pico.	5	5	25	Médio
+Race Condition	Em Mitigação	Utilização de transações ACID com locks (FOR UPDATE), restrições de unicidade (UNIQUE) e filas atômicas (Redis/BullMQ) para recompensas.	Dev	RC09	Envio concorrente de requisições explorando latência do banco para duplicar recompensas (moedas, vidas, XP) ou burlar limites de conclusão de fases.	2	5	10	Baixo
+Data Exposure	Pendente	Criptografia em repouso e trânsito (TLS 1.3), DTOs para filtrar atributos sensíveis na resposta da API e supressão de stack traces em produção.	Dev / SecOps	RC10	Vazamento acidental de dados pessoais de alunos/professores via respostas de API com excesso de dados, logs de erro ou ausência de criptografia, violando a LGPD.	8	5	40	Alto
+Directory Traversal	Pendente	Validação estrita de parâmetros de upload/download de arquivos com path.basename e armazenamento de mídia em bucket seguro na nuvem (ex.: S3).	Dev	RC11	Manipulação de caminhos de arquivos (ex.: ../../etc/passwd ou .env) permitindo leitura de arquivos internos do servidor ou sobrescrita maliciosa.	10	2	20	Médio
+3. Detalhamento e Justificativas Técnicas
+1. SQL Injection (RC01)
+Justificativa da Nota: O impacto é Alto (8) porque o acesso direto ao banco de dados pode comprometer a integridade e confidencialidade de todo o sistema. A probabilidade é Muito Baixa (1) caso já estejam em uso ORM e queries parametrizadas.
+Ação Prática: Proibir concatenação de strings em consultas SQL; habilitar linter para identificar queries cruas no código.
+2. Cross-Site Scripting — XSS (RC02)
+Justificativa da Nota: O impacto é Médio (5) (roubo de tokens de usuários que acessem a interface web ou defacement de páginas). A probabilidade é Média (5) caso existam campos de texto livre (chat, comentários de fórum ou bio de usuários).
+Ação Prática: Sanitizar entradas com bibliotecas consolidadas (ex.: DOMPurify) e configurar Content-Security-Policy bloqueando scripts inline.
+3. Session Hijacking (RC03)
+Justificativa da Nota: O impacto é Alto (8) devido à personificação de usuários sem necessidade de credenciais. A probabilidade é Baixa (2) graças ao uso de conexões seguras HTTPS/TLS e armazenamento seguro nos dispositivos móveis (expo-secure-store).
+Ação Prática: Implementar revogação de tokens via token blacklist ou rotação de Refresh Tokens e invalidar sessões anteriores na troca de senha.
+4. Brute Force & Credential Stuffing (RC04)
+Justificativa da Nota: O impacto é Médio (5) (sequestro de contas pontuais e consumo excessivo de recursos do servidor). A probabilidade é Alta (8), pois qualquer API pública com rotas /login e /register é alvo constante de botnets rodando dicionários de senhas vazadas.
+Ação Prática: Aplicar limite estrito de tentativas (ex.: 5 tentativas incorretas por IP/usuário a cada 15 minutos) e exigir senhas com entropia mínima.
+5. Phishing e Engenharia Social (RC05)
+Justificativa da Nota: O impacto é Alto (8) (potencial roubo de contas privilegiadas de professores e administradores). A probabilidade é Média (5), sendo uma das portas de entrada mais recorrentes explorando o fator humano.
+Ação Prática: Campanhas periódicas de conscientização com a equipe interna, autenticação em dois fatores obrigatória para administradores e configuração de registros DNS seguros (DMARC, DKIM, SPF).
+6. IDOR — Insecure Direct Object References (RC06)
+Justificativa da Nota: O impacto é Alto (8) (violação direta da privacidade e da LGPD, expondo registros de outros usuários). A probabilidade é Alta (8) em sistemas que usam IDs sequenciais sem validação de propriedade (ownership check) nos controladores da API.
+Ação Prática: Garantir que em toda rota protegida (ex.: GET /cursos/:id/progresso ou PUT /perfil/:id) o backend verifique se o ID solicitado pertence ao userId decodificado do token JWT da requisição.
+7. Privilege Escalation (RC07)
+Justificativa da Nota: O impacto é Muito Alto (10) (um aluno transformar-se em administrador causa paralisação ou dano catastrófico às operações e integridade acadêmica). A probabilidade é Baixa (2) caso as permissões sejam centralizadas em middlewares bem testados.
+Ação Prática: Garantir que o payload de registro ou atualização de perfil ignore campos sensíveis como role, isAdmin ou isProfessor (prevenção contra mass assignment).
+8. DDoS — Distributed Denial of Service (RC08)
+Justificativa da Nota: O impacto é Médio (5) (interrupção temporária e recuperável de acesso às aulas). A probabilidade é Média (5) devido à facilidade de contratação de serviços de estresse de rede contra servidores expostos.
+Ação Prática: Roteamento do tráfego através de redes CDN com proteção contra ataques de camada 3, 4 e 7 (ex.: Cloudflare).
+9. Race Condition (RC09)
+Justificativa da Nota: O impacto é Baixo (2) (afeta apenas a integridade da pontuação gamificada de moedas, vidas e XP). A probabilidade é Média (5) se scripts automatizados dispararem requisições paralelas para rotas de recompensa.
+Ação Prática: Utilizar transações atômicas com bloqueio no banco de dados (SELECT ... FOR UPDATE) ou filas redis para garantir o processamento sequencial de premiações.
+10. Data Exposure (RC10)
+Justificativa da Nota: O impacto é Alto (8) (risco de sanções administrativas da ANPD e danos reputacionais severos sob a LGPD). A probabilidade é Média (5) caso queries do backend retornem entidades completas contendo dados desnecessários ou sensíveis para o frontend.
+Ação Prática: Uso obrigatório de DTOs e serializadores (ex.: class-transformer ou schemas Zod) para filtrar atributos sensíveis como hashes de senha, CPFs e dados de contato não públicos.
+11. Directory Traversal (RC11)
+Justificativa da Nota: O impacto é Muito Alto (10) (leitura de arquivos como .env, chaves de assinatura JWT ou código-fonte do servidor). A probabilidade é Baixa (2) quando o manuseio de arquivos é delegado a serviços de armazenamento gerenciados.
+Ação Prática: Não permitir caminhos relativos fornecidos pelo cliente; sanitizar nomes de arquivos com path.basename() e priorizar o armazenamento de uploads em buckets na nuvem (AWS S3, Google Cloud Storage, Cloudinary).
+4. Priorização de Tratamento Recomendada (Plano de Resposta)
+Para organizar o cronograma de trabalho da equipe de desenvolvimento e segurança, priorize os riscos com base no Nível de Risco Inerente:
+
+[CRÍTICO / ALTO] ----------------------------------------------------
+  1º. IDOR (64 - Alto)                       -> Tratar Imediatamente
+  2º. Data Exposure (40 - Alto)              -> Tratar no Sprint Atual
+  3º. Brute Force (40 - Alto)                -> Tratar no Sprint Atual
+  4º. Phishing e Eng. Social (40 - Alto)     -> Estabelecer Políticas/MFA
+[MÉDIO] -------------------------------------------------------------
+  5º. Cross-Site Scripting (25 - Médio)      -> Tratar no Próximo Sprint
+  6º. DDoS (25 - Médio)                      -> Tratar no Próximo Sprint
+  7º. Privilege Escalation (20 - Médio)      -> Revisar Regras RBAC
+  8º. Directory Traversal (20 - Médio)       -> Revisar Rotas de Arquivos
+  9º. Session Hijacking (16 - Médio)         -> Manter Monitoramento
+[BAIXO] -------------------------------------------------------------
+  10º. Race Condition (10 - Baixo)           -> Backlog de Melhoria
+  11º. SQL Injection (8 - Baixo)             -> Manter Controles Ativos

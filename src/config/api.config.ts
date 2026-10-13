@@ -20,12 +20,19 @@ const getBaseUrl = (): string => {
     }
   }
 
-  // 3. Emulador Android em dev local
+  // 3. Web local no navegador (localhost / 127.0.0.1)
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost:5000';
+    }
+  }
+
+  // 4. Emulador Android em dev local
   if (Platform.OS === 'android') {
     return 'http://10.0.2.2:5000';
   }
 
-  // 4. Padrão Nuvem Render
+  // 5. Padrão Nuvem Render
   return 'https://estudemydocker.onrender.com';
 };
 

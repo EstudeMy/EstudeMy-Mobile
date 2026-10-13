@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <title>Relatório de Análise de Riscos de Segurança da Informação - EstudeMy</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600&display=swap');
+
+    :root {
+      --primary: #4338ca;
+      --primary-dark: #312e81;
+      --primary-light: #e0e7ff;
+      --slate-900: #0f172a;
+      --slate-800: #1e293b;
+      --slate-700: #334155;
+      --slate-600: #475569;
+      --slate-500: #64748b;
+      --slate-200: #e2e8f0;
+      --slate-100: #f1f5f9;
+      --slate-50: #f8fafc;
+      --risk-high-bg: #fef2f2;
+      --risk-high-text: #b91c1c;
+      --risk-high-border: #fca5a5;
+      --risk-med-bg: #fffbeb;
+      --risk-med-text: #b45309;
+      --risk-med-border: #fcd34d;
+      --risk-low-bg: #f0fdf4;
+      --risk-low-text: #15803d;
+      --risk-low-border: #86efac;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: var(--slate-800);
+      background-color: #ffffff;
+      line-height: 1.45;
+      font-size: 9.5pt;
+      -webkit-print-color-adjust: exact;
+      print-color-adjust: exact;
+    }
+
+    @page {
+      size: A4 portrait;
+      margin: 10mm 10mm 12mm 10mm;
+    }
+
+    .page-break {
+      page-break-before: always;
+      break-before: page;
+    }
+
+    .avoid-break {
+      page-break-inside: avoid;
+      break-inside: avoid;
+    }
+
+    /* HEADER & COVER */
+    .header-banner {
+      background: linear-gradient(135deg, #1e1b4b 0%, #312e81 45%, #4338ca 100%);
+      color: white;
+      padding: 20px 24px;
+      border-radius: 10px;
+      margin-bottom: 16px;
+      position: relative;
+      box-shadow: 0 4px 12px rgba(30, 27, 75, 0.15);
+    }
+
+    .header-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.15);
+      padding-bottom: 8px;
+    }
+
+    .brand-tag {
+      font-size: 8pt;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      background: rgba(255, 255, 255, 0.18);
+      padding: 4px 10px;
+      border-radius: 20px;
+      display: inline-block;
+    }
+
+    .meta-badge {
+      font-size: 8pt;
+      color: #c7d2fe;
+    }
+
+    .header-banner h1 {
+      font-size: 19pt;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      margin-bottom: 4px;
+    }
+
+    .header-banner p {
+      font-size: 9.5pt;
+      color: #e0e7ff;
+      max-width: 90%;
+    }
+
+    /* SECTION TITLES */
+    .section-title {
+      font-size: 12pt;
+      font-weight: 800;
+      color: var(--slate-900);
+      margin: 14px 0 8px 0;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      border-left: 4px solid var(--primary);
+      padding-left: 8px;
+    }
+
+    .section-desc {
+      font-size: 8.5pt;
+      color: var(--slate-600);
+      margin-bottom: 10px;
+    }
+
+    /* CRITERIA CARDS */
+    .scales-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin-bottom: 12px;
+    }
+
+    .scale-card {
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: 8px;
+      padding: 10px 12px;
+    }
+
+    .scale-card h3 {
+      font-size: 9.5pt;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .scale-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 7.8pt;
+    }
+
+    .scale-table th {
+      text-align: left;
+      color: var(--slate-500);
+      font-weight: 600;
+      padding: 3px 4px;
+      border-bottom: 1px solid var(--slate-200);
+    }
+
+    .scale-table td {
+      padding: 3px 4px;
+      border-bottom: 1px solid #eef2f6;
+    }
+
+    .val-pill {
+      font-weight: 700;
+      padding: 1px 6px;
+      border-radius: 4px;
+      display: inline-block;
+      text-align: center;
+      min-width: 18px;
+      background: #e2e8f0;
+      color: #1e293b;
+    }
+
+    .formula-banner {
+      background: #eff6ff;
+      border: 1px solid #bfdbfe;
+      border-radius: 8px;
+      padding: 8px 12px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 14px;
+      font-size: 8.5pt;
+    }
+
+    .formula-badge {
+      background: #1e40af;
+      color: white;
+      font-weight: 800;
+      padding: 3px 8px;
+      border-radius: 6px;
+      font-family: 'JetBrains Mono', monospace;
+    }
+
+    .level-pills {
+      display: flex;
+      gap: 6px;
+    }
+
+    .level-indicator {
+      font-size: 7.5pt;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 4px;
+      border: 1px solid transparent;
+    }
+
+    .level-low { background: var(--risk-low-bg); color: var(--risk-low-text); border-color: var(--risk-low-border); }
+    .level-med { background: var(--risk-med-bg); color: var(--risk-med-text); border-color: var(--risk-med-border); }
+    .level-high { background: var(--risk-high-bg); color: var(--risk-high-text); border-color: var(--risk-high-border); }
+    .level-crit { background: #450a0a; color: #fecaca; border-color: #991b1b; }
+
+    /* STATUS PILLS */
+    .status-pill {
+      font-size: 7pt;
+      font-weight: 700;
+      padding: 2px 6px;
+      border-radius: 12px;
+      display: inline-block;
+      white-space: nowrap;
+      text-align: center;
+    }
+    .status-mitigado { background: #dcfce7; color: #166534; border: 1px solid #86efac; }
+    .status-em-mitigacao { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+    .status-pendente { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+
+    /* MAIN TABLE */
+    .risk-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 7.5pt;
+      margin-top: 6px;
+      margin-bottom: 12px;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+      border: 1px solid var(--slate-200);
+    }
+
+    .risk-table thead {
+      background: #1e293b;
+      color: white;
+    }
+
+    .risk-table th {
+      padding: 6px 5px;
+      font-weight: 700;
+      text-align: left;
+      font-size: 7.2pt;
+      text-transform: uppercase;
+      letter-spacing: 0.3px;
+      border-right: 1px solid rgba(255,255,255,0.1);
+    }
+
+    .risk-table th:last-child {
+      border-right: none;
+    }
+
+    .risk-table td {
+      padding: 5px 5px;
+      border-bottom: 1px solid var(--slate-200);
+      border-right: 1px solid #f1f5f9;
+      vertical-align: middle;
+      line-height: 1.3;
+    }
+
+    .risk-table td:last-child {
+      border-right: none;
+    }
+
+    .risk-table tbody tr:nth-child(even) {
+      background-color: var(--slate-50);
+    }
+
+    .risk-table .code-cell {
+      font-family: 'JetBrains Mono', monospace;
+      font-weight: 700;
+      color: var(--primary);
+      text-align: center;
+    }
+
+    .risk-table .center-cell {
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .vuln-name {
+      font-weight: 700;
+      color: var(--slate-900);
+    }
+
+    .action-text {
+      color: #334155;
+      font-size: 7.2pt;
+    }
+
+    .desc-text {
+      color: var(--slate-600);
+      font-size: 7.2pt;
+    }
+
+    /* DETAIL CARDS */
+    .details-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-top: 8px;
+    }
+
+    .detail-card {
+      border: 1px solid var(--slate-200);
+      border-radius: 6px;
+      padding: 8px 10px;
+      background: white;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+
+    .detail-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 6px;
+      padding-bottom: 4px;
+      border-bottom: 1px solid var(--slate-100);
+    }
+
+    .detail-title {
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: var(--slate-900);
+    }
+
+    .detail-body {
+      font-size: 7.6pt;
+      color: var(--slate-700);
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .detail-row {
+      display: flex;
+      gap: 4px;
+    }
+
+    .detail-label {
+      font-weight: 700;
+      color: var(--slate-800);
+      min-width: 78px;
+    }
+
+    .detail-val {
+      color: var(--slate-600);
+      flex: 1;
+    }
+
+    /* PRIORITIZATION ROADMAP */
+    .priority-container {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .priority-block {
+      border-radius: 8px;
+      border: 1px solid;
+      padding: 10px 12px;
+    }
+
+    .priority-block.high {
+      background: #fef2f2;
+      border-color: #fca5a5;
+    }
+
+    .priority-block.med {
+      background: #fffbeb;
+      border-color: #fcd34d;
+    }
+
+    .priority-block.low {
+      background: #f0fdf4;
+      border-color: #86efac;
+    }
+
+    .priority-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-weight: 800;
+      font-size: 9pt;
+      margin-bottom: 6px;
+    }
+
+    .priority-items {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 8pt;
+    }
+
+    .priority-item-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 3px 8px;
+      background: rgba(255,255,255,0.7);
+      border-radius: 4px;
+    }
+
+    .footer {
+      margin-top: 14px;
+      padding-top: 8px;
+      border-top: 1px solid var(--slate-200);
+      display: flex;
+      justify-content: space-between;
+      font-size: 7pt;
+      color: var(--slate-500);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- PAGE 1: HEADER, METODOLOGIA E ESCALAS -->
+  <div class="header-banner">
+    <div class="header-top">
+      <span class="brand-tag">EstudeMy • Segurança da Informação</span>
+      <span class="meta-badge">Documento Técnico • Confidencial</span>
+    </div>
+    <h1>Relatório de Análise de Riscos de Segurança</h1>
+    <p>Avaliação técnica de vulnerabilidades de software, mapeamento de impacto x probabilidade, inventário de controles e plano de mitigação para a plataforma EstudeMy.</p>
+  </div>
+
+  <div class="section-title">1. Critério de Avaliação e Metodologia de Riscos</div>
+  <div class="section-desc">A avaliação adota o modelo de matriz quantitativa padrão (ISO 31000 / OWASP Top 10), mensurando a severidade através do produto entre Impacto e Probabilidade.</div>
+
+  <div class="formula-banner">
+    <div><strong>Fórmula do Risco Inerente:</strong> <span class="formula-badge">Risco = Impacto (I) × Probabilidade (P)</span></div>
+    <div class="level-pills">
+      <span class="level-indicator level-low">1 a 10: Baixo</span>
+      <span class="level-indicator level-med">11 a 30: Médio</span>
+      <span class="level-indicator level-high">31 a 64: Alto</span>
+      <span class="level-indicator level-crit">65 a 100: Crítico</span>
+    </div>
+  </div>
+
+  <div class="scales-grid">
+    <!-- ESCALA DE IMPACTOS -->
+    <div class="scale-card">
+      <h3>Escala de Impactos <span>(Magnitude de Severidade)</span></h3>
+      <table class="scale-table">
+        <thead>
+          <tr>
+            <th>Magnitude</th>
+            <th>Descrição do Impacto Operacional / Negócio</th>
+            <th style="text-align: center;">I</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Muito baixo</strong></td>
+            <td>Degradação com impactos mínimos nos objetivos, prazos e metas.</td>
+            <td style="text-align: center;"><span class="val-pill">1</span></td>
+          </tr>
+          <tr>
+            <td><strong>Baixo</strong></td>
+            <td>Degradação causando impactos pequenos e toleráveis nos objetivos.</td>
+            <td style="text-align: center;"><span class="val-pill">2</span></td>
+          </tr>
+          <tr>
+            <td><strong>Médio</strong></td>
+            <td>Interrupção causando impactos significativos nos objetivos, porém recuperáveis.</td>
+            <td style="text-align: center;"><span class="val-pill">5</span></td>
+          </tr>
+          <tr>
+            <td><strong>Alto</strong></td>
+            <td>Interrupção causando impactos de reversão muito difícil nos objetivos e reputação.</td>
+            <td style="text-align: center;"><span class="val-pill">8</span></td>
+          </tr>
+          <tr>
+            <td><strong>Muito alto</strong></td>
+            <td>Paralisação geral causando impactos irreversíveis ou catastróficos.</td>
+            <td style="text-align: center;"><span class="val-pill">10</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ESCALA DE PROBABILIDADES -->
+    <div class="scale-card">
+      <h3>Escala de Probabilidades <span>(Frequência / Ocorrência)</span></h3>
+      <table class="scale-table">
+        <thead>
+          <tr>
+            <th>Magnitude</th>
+            <th>Descrição da Possibilidade de Ocorrência</th>
+            <th style="text-align: center;">P</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Muito baixa</strong></td>
+            <td>Evento improvável de ocorrer; sem indícios conhecidos de exploração.</td>
+            <td style="text-align: center;"><span class="val-pill">1</span></td>
+          </tr>
+          <tr>
+            <td><strong>Baixa</strong></td>
+            <td>Evento raro de ocorrer, podendo ocorrer de forma imprevista.</td>
+            <td style="text-align: center;"><span class="val-pill">2</span></td>
+          </tr>
+          <tr>
+            <td><strong>Média</strong></td>
+            <td>Evento possível de ocorrer; dados apontam possibilidade moderada.</td>
+            <td style="text-align: center;"><span class="val-pill">5</span></td>
+          </tr>
+          <tr>
+            <td><strong>Alta</strong></td>
+            <td>Evento provável de ocorrer; informações indicam de forma consistente.</td>
+            <td style="text-align: center;"><span class="val-pill">8</span></td>
+          </tr>
+          <tr>
+            <td><strong>Muito alta</strong></td>
+            <td>Evento praticamente certo de ocorrer; indícios claros e inequívocos.</td>
+            <td style="text-align: center;"><span class="val-pill">10</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- PAGE BREAK FOR CONSOLIDATED TABLE -->
+  <div class="page-break"></div>
+
+  <!-- PAGE 2: PLANILHA CONSOLIDADA -->
+  <div class="section-title">2. Matriz Consolidada de Riscos e Vulnerabilidades</div>
+  <div class="section-desc">Mapeamento completo dos 11 pontos de atenção, respectivos status de tratamento, ações mitigatórias e cálculo do Risco Inerente.</div>
+
+  <table class="risk-table">
+    <thead>
+      <tr>
+        <th style="width: 14%;">Vulnerabilidade</th>
+        <th style="width: 9%;">Tratamento</th>
+        <th style="width: 20%;">Ação Mitigatória</th>
+        <th style="width: 6%;">Resp.</th>
+        <th style="width: 5%; text-align: center;">Cód.</th>
+        <th style="width: 26%;">Descrição do Risco-Chave</th>
+        <th style="width: 4%; text-align: center;">I</th>
+        <th style="width: 4%; text-align: center;">P</th>
+        <th style="width: 5%; text-align: center;">Risco</th>
+        <th style="width: 7%; text-align: center;">Nível</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="vuln-name">SQL Injection</td>
+        <td><span class="status-pill status-mitigado">Mitigado</span></td>
+        <td class="action-text">ORM, Prepared Statements e tipagem estrita via DTO em 100% das rotas.</td>
+        <td style="font-weight: 600;">Dev</td>
+        <td class="code-cell">RC01</td>
+        <td class="desc-text">Injeção SQL permitindo extração, alteração ou deleção de dados cadastrais/progresso.</td>
+        <td class="center-cell">8</td>
+        <td class="center-cell">1</td>
+        <td class="center-cell">8</td>
+        <td class="center-cell"><span class="level-indicator level-low">Baixo</span></td>
+      </tr>
+      <tr>
+        <td class="vuln-name">Cross-Site Scripting (XSS)</td>
+        <td><span class="status-pill status-em-mitigacao">Em Mitigação</span></td>
+        <td class="action-text">Sanitização de inputs, encoding nas saídas e política CSP ativa.</td>
+        <td style="font-weight: 600;">Dev</td>
+        <td class="code-cell">RC02</td>
+        <td class="desc-text">Scripts maliciosos em campos livres (perfil/fórum) executando no cliente para roubo de sessão.</td>
+        <td class="center-cell">5</td>
+        <td class="center-cell">5</td>
+        <td class="center-cell">25</td>
+        <td class="center-cell"><span class="level-indicator level-med">Médio</span></td>
+      </tr>
+      <tr>
+        <td class="vuln-name">Session Hijacking</td>
+        <td><span class="status-pill status-mitigado">Mitigado</span></td>
+        <td class="action-text">JWT de curta duração + Refresh Tokens com rotação, MFA e expo-secure-store.</td>
+        <td style="font-weight: 600;">Dev</td>
+        <td class="code-cell">RC03</td>
+        <td class="desc-text">Interceptação de token JWT concedendo controle total sobre a conta sem senha.</td>
+        <td class="center-cell">8</td>
+        <td class="center-cell">2</td>
+        <td class="center-cell">16</td>
+        <td class="center-cell"><span class="level-indicator level-med">Médio</span></td>
+      </tr>
+      <tr>
+        <td class="vuln-name">Brute Force & Credential Stuffing</td>
+        <td><span class="status-pill status-em-mitigacao">Em Mitigação</span></td>
+        <td class="action-text">Rate Limiting progressivo por IP/conta, CAPTCHA adaptativo e hash forte (Bcrypt/Argon2).</td>
+        <td style="font-weight: 600;">Dev / Infra</td>
+        <td class="code-cell">RC04</td>
+        <td class="desc-text">Testes em massa de senhas comuns/vazadas na rota de login, causando invasões e sobrecarga.</td>
+        <td class="center-cell">5</td>
+        <td class="center-cell">8</td>
+        <td class="center-cell">40</td>
+        <td class="center-cell"><span class="level-indicator level-high">Alto</span></td>
+      </tr>
+      <tr>
+        <td class="vuln-name">Phishing e Eng. Social</td>
+        <td><span class="status-pill status-pendente">Pendente</span></td>
+        <td class="action-text">Treinamento corporativo, SPF/DKIM/DMARC no domínio e canal de denúncia.</td>
+        <td style="font-weight: 600;">SecOps / RH</td>
+        <td class="code-cell">RC05</td>
+        <td class="desc-text">Indução de alunos, professores ou admins a entregar credenciais por e-mails clonados.</td>
+        <td class="center-cell">8</td>
+        <td class="center-cell">5</td>
+        <td class="center-cell">40</td>
+        <td class="center-cell"><span class="level-indicator level-high">Alto</span></td>
+      </tr>
+      <tr>
+        <td class="vuln-name">IDOR (Insecure Direct Object Ref.)</td>
+        <td><span class="status-pill status-pendente">Pendente</span></td>
+        <td class="action-text">Validação de ownership (autorização a nível de objeto) no backend e adoção de UUIDs.</td>
+        <td style="font-weight: 600;">Dev</td>
+        <td class="code-cell">RC06</td>
+        <td class="desc-text">Acesso ou edição indevida de dados de terceiros alterando IDs na URL sem checagem de posse.</td>
+        <td class="center-cell">8</td>
+        <td class="center-cell">8</td>
+        <td class="center-cell">64</td>
+        <td class="center-cell"><span class="level-indicator level-high">Alto</span></td>
+      </tr>
+      <tr>
+        <td class="vuln-name">Privilege Escalation</td>
+        <td><span class="status-pill status-pendente">Pendente</span></td>
+        <td class="action-text">RBAC rigoroso no backend, validação por middleware e bloqueio de mass assignment.</td>
+        <td style="font-weight: 600;">Dev</td>
+        <td class="code-cell">RC07</td>
+        <td class="desc-text">Aluno alterando perfil para obter privilégios de Professor ou Administrador do sistema.</td>
+        <td class="center-cell">10</td>
+        <td class="center-cell">2</td>
+        <td class="center-cell">20</td>
+        <td class="center-cell"><span class="level-indicator level-med">Médio</span></td>
+      </tr>
+      <tr>
+        <td class="vuln-name">DDoS (Denial of Service)</td>
+        <td><span class="status-pill status-em-mitigacao">Em Mitigação</span></td>
+        <td class="action-text">WAF com mitigação anti-DDoS (Cloudflare), rate limiting e autoscaling de containers.</td>
+        <td style="font-weight: 600;">Infra</td>
+        <td class="code-cell">RC08</td>
+        <td class="desc-text">Inundação de tráfego tornando os serviços indisponíveis em provas e horários de pico.</td>
+        <td class="center-cell">5</td>
+        <td class="center-cell">5</td>
+        <td class="center-cell">25</td>
+        <td class="center-cell"><span class="level-indicator level-med">Médio</span></td>
+      </tr>
+      <tr>
+        <td class="vuln-name">Race Condition</td>
+        <td><span class="status-pill status-em-mitigacao">Em Mitigação</span></td>
+        <td class="action-text">Transações ACID com lock pessimista (FOR UPDATE) e restrições de unicidade (UNIQUE).</td>
+        <td style="font-weight: 600;">Dev</td>
+        <td class="code-cell">RC09</td>
+        <td class="desc-text">Requisições paralelas simultâneas duplicando moedas, vidas ou recompensas de gamificação.</td>
+        <td class="center-cell">2</td>
+        <td class="center-cell">5</td>
+        <td class="center-cell">10</td>
+        <td class="center-cell"><span class="level-indicator level-low">Baixo</span></td>
+      </tr>
+      <tr>
+        <td class="vuln-name">Data Exposure</td>
+        <td><span class="status-pill status-pendente">Pendente</span></td>
+        <td class="action-text">TLS 1.3, filtragem de DTOs nas respostas e supressão de stack traces em produção.</td>
+        <td style="font-weight: 600;">Dev / SecOps</td>
+        <td class="code-cell">RC10</td>
+        <td class="desc-text">Vazamento acidental de dados pessoais (PII) em logs de erro ou payloads da API (LGPD).</td>
+        <td class="center-cell">8</td>
+        <td class="center-cell">5</td>
+        <td class="center-cell">40</td>
+        <td class="center-cell"><span class="level-indicator level-high">Alto</span></td>
+      </tr>
+      <tr>
+        <td class="vuln-name">Directory Traversal</td>
+        <td><span class="status-pill status-pendente">Pendente</span></td>
+        <td class="action-text">Sanitização estrita com path.basename() e armazenamento em bucket seguro na nuvem (S3).</td>
+        <td style="font-weight: 600;">Dev</td>
+        <td class="code-cell">RC11</td>
+        <td class="desc-text">Manipulação de caminhos (../../) para leitura não autorizada de arquivos .env ou código-fonte.</td>
+        <td class="center-cell">10</td>
+        <td class="center-cell">2</td>
+        <td class="center-cell">20</td>
+        <td class="center-cell"><span class="level-indicator level-med">Médio</span></td>
+      </tr>
+    </tbody>
+  </table>
+
+  <!-- PAGE BREAK FOR DETAILS -->
+  <div class="page-break"></div>
+
+  <!-- PAGE 3: DETALHAMENTO TÉCNICO PARTE 1 -->
+  <div class="section-title">3. Detalhamento e Justificativas Técnicas (Itens 1 a 6)</div>
+  <div class="section-desc">Análise profunda de cada vetor de ataque, justificativa de notas de impacto/probabilidade e plano de mitigação.</div>
+
+  <div class="details-grid">
+    <!-- 1. SQL Injection -->
+    <div class="detail-card avoid-break">
+      <div class="detail-header">
+        <span class="detail-title">1. SQL Injection (RC01)</span>
+        <span class="level-indicator level-low">Risco: 8 (Baixo)</span>
+      </div>
+      <div class="detail-body">
+        <div class="detail-row"><span class="detail-label">Justificativa:</span> <span class="detail-val">Impacto Alto (8) devido à capacidade de comprometimento massivo do banco de dados. Probabilidade Muito Baixa (1) com o uso consistente de ORMs e prepared statements.</span></div>
+        <div class="detail-row"><span class="detail-label">Ação Prática:</span> <span class="detail-val">Proibir concatenação manual de SQL; aplicar validação de tipos via DTO/Zod e manter linter de segurança ativo no CI/CD.</span></div>
+      </div>
+    </div>
+
+    <!-- 2. XSS -->
+    <div class="detail-card avoid-break">
+      <div class="detail-header">
+        <span class="detail-title">2. Cross-Site Scripting — XSS (RC02)</span>
+        <span class="level-indicator level-med">Risco: 25 (Médio)</span>
+      </div>
+      <div class="detail-body">
+        <div class="detail-row"><span class="detail-label">Justificativa:</span> <span class="detail-val">Impacto Médio (5) causando roubo de sessão ou defacement. Probabilidade Média (5) comum em campos de texto livre (chat, comentários ou bio).</span></div>
+        <div class="detail-row"><span class="detail-label">Ação Prática:</span> <span class="detail-val">Sanitizar entradas com DOMPurify; aplicar escape automático nas views e reforçar cabeçalhos Content-Security-Policy (CSP).</span></div>
+      </div>
+    </div>
+
+    <!-- 3. Session Hijacking -->
+    <div class="detail-card avoid-break">
+      <div class="detail-header">
+        <span class="detail-title">3. Session Hijacking (RC03)</span>
+        <span class="level-indicator level-med">Risco: 16 (Médio)</span>
+      </div>
+      <div class="detail-body">
+        <div class="detail-row"><span class="detail-label">Justificativa:</span> <span class="detail-val">Impacto Alto (8) por permitir personificação total sem conhecimento de senha. Probabilidade Baixa (2) devido a HTTPS compulsório e expo-secure-store.</span></div>
+        <div class="detail-row"><span class="detail-label">Ação Prática:</span> <span class="detail-val">Rotação ativa de Refresh Tokens, revogação de tokens em blacklist no logout e suporte a MFA em contas administrativas.</span></div>
+      </div>
+    </div>
+
+    <!-- 4. Brute Force -->
+    <div class="detail-card avoid-break">
+      <div class="detail-header">
+        <span class="detail-title">4. Brute Force & Stuffing (RC04)</span>
+        <span class="level-indicator level-high">Risco: 40 (Alto)</span>
+      </div>
+      <div class="detail-body">
+        <div class="detail-row"><span class="detail-label">Justificativa:</span> <span class="detail-val">Impacto Médio (5) com sequestro de contas e sobrecarga. Probabilidade Alta (8), visto que rotas de autenticação públicas sofrem varredura automatizada 24/7.</span></div>
+        <div class="detail-row"><span class="detail-label">Ação Prática:</span> <span class="detail-val">Aplicar Rate Limiting rigoroso (ex.: 5 tentativas incorretas a cada 15 min), CAPTCHA progressivo e algoritmo Bcrypt/Argon2 com salt.</span></div>
+      </div>
+    </div>
+
+    <!-- 5. Phishing -->
+    <div class="detail-card avoid-break">
+      <div class="detail-header">
+        <span class="detail-title">5. Phishing & Eng. Social (RC05)</span>
+        <span class="level-indicator level-high">Risco: 40 (Alto)</span>
+      </div>
+      <div class="detail-body">
+        <div class="detail-row"><span class="detail-label">Justificativa:</span> <span class="detail-val">Impacto Alto (8) se comprometer credenciais de administradores ou professores. Probabilidade Média (5), explorando o elo humano frágil.</span></div>
+        <div class="detail-row"><span class="detail-label">Ação Prática:</span> <span class="detail-val">Campanhas internas de simulação e conscientização; configuração estrita de SPF, DKIM e DMARC no DNS do domínio corporativo.</span></div>
+      </div>
+    </div>
+
+    <!-- 6. IDOR -->
+    <div class="detail-card avoid-break">
+      <div class="detail-header">
+        <span class="detail-title">6. IDOR (RC06)</span>
+        <span class="level-indicator level-high">Risco: 64 (Alto - Crítico)</span>
+      </div>
+      <div class="detail-body">
+        <div class="detail-row"><span class="detail-label">Justificativa:</span> <span class="detail-val">Impacto Alto (8) violando a LGPD ao expor dados e notas de terceiros. Probabilidade Alta (8) em APIs que recebem IDs sem checar posse do recurso.</span></div>
+        <div class="detail-row"><span class="detail-label">Ação Prática:</span> <span class="detail-val">Validar que `req.user.id === resource.ownerId` em todo endpoint antes de responder; migrar IDs sequenciais para UUID v4.</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PAGE BREAK FOR DETAILS PART 2 & PRIORITIZATION -->
+  <div class="page-break"></div>
+
+  <!-- PAGE 4: DETALHAMENTO TÉCNICO PARTE 2 -->
+  <div class="section-title">3. Detalhamento e Justificativas Técnicas (Itens 7 a 11)</div>
+  <div class="section-desc">Continuação da análise técnica de vulnerabilidades e seus respectivos controles.</div>
+
+  <div class="details-grid">
+    <!-- 7. Privilege Escalation -->
+    <div class="detail-card avoid-break">
+      <div class="detail-header">
+        <span class="detail-title">7. Privilege Escalation (RC07)</span>
+        <span class="level-indicator level-med">Risco: 20 (Médio)</span>
+      </div>
+      <div class="detail-body">
+        <div class="detail-row"><span class="detail-label">Justificativa:</span> <span class="detail-val">Impacto Muito Alto (10) caso um aluno adquira permissões de administrador. Probabilidade Baixa (2) com RBAC centralizado no servidor.</span></div>
+        <div class="detail-row"><span class="detail-label">Ação Prática:</span> <span class="detail-val">Proibir `mass assignment` (bloquear envio de campos `role` ou `isAdmin` no body) e validar papéis em middleware backend seguro.</span></div>
+      </div>
+    </div>
+
+    <!-- 8. DDoS -->
+    <div class="detail-card avoid-break">
+      <div class="detail-header">
+        <span class="detail-title">8. DDoS (RC08)</span>
+        <span class="level-indicator level-med">Risco: 25 (Médio)</span>
+      </div>
+      <div class="detail-body">
+        <div class="detail-row"><span class="detail-label">Justificativa:</span> <span class="detail-val">Impacto Médio (5) com indisponibilidade recuperável. Probabilidade Média (5) devido à disponibilidade de ferramentas públicas de estresse.</span></div>
+        <div class="detail-row"><span class="detail-label">Ação Prática:</span> <span class="detail-val">Proteger DNS e borda com Cloudflare/WAF, ativar rate limit por IP e habilitar autoscaling de instâncias nos servidores.</span></div>
+      </div>
+    </div>
+
+    <!-- 9. Race Condition -->
+    <div class="detail-card avoid-break">
+      <div class="detail-header">
+        <span class="detail-title">9. Race Condition (RC09)</span>
+        <span class="level-indicator level-low">Risco: 10 (Baixo)</span>
+      </div>
+      <div class="detail-body">
+        <div class="detail-row"><span class="detail-label">Justificativa:</span> <span class="detail-val">Impacto Baixo (2) atingindo pontuações gamificadas (moedas/XP). Probabilidade Média (5) se não houver trava concorrente nos endpoints.</span></div>
+        <div class="detail-row"><span class="detail-label">Ação Prática:</span> <span class="detail-val">Utilizar transações ACID com locks pessimistas no banco de dados (`FOR UPDATE`) ou filas redis atômicas para entrega de premiações.</span></div>
+      </div>
+    </div>
+
+    <!-- 10. Data Exposure -->
+    <div class="detail-card avoid-break">
+      <div class="detail-header">
+        <span class="detail-title">10. Data Exposure (RC10)</span>
+        <span class="level-indicator level-high">Risco: 40 (Alto)</span>
+      </div>
+      <div class="detail-body">
+        <div class="detail-row"><span class="detail-label">Justificativa:</span> <span class="detail-val">Impacto Alto (8) devido a multas da LGPD e quebra de sigilo. Probabilidade Média (5) comum em APIs que serializam entidades cruas.</span></div>
+        <div class="detail-row"><span class="detail-label">Ação Prática:</span> <span class="detail-val">Aplicar DTOs para excluir senhas/dados sensíveis do JSON de resposta; desativar stack traces de erro detalhados em ambiente produtivo.</span></div>
+      </div>
+    </div>
+
+    <!-- 11. Directory Traversal -->
+    <div class="detail-card avoid-break">
+      <div class="detail-header">
+        <span class="detail-title">11. Directory Traversal (RC11)</span>
+        <span class="level-indicator level-med">Risco: 20 (Médio)</span>
+      </div>
+      <div class="detail-body">
+        <div class="detail-row"><span class="detail-label">Justificativa:</span> <span class="detail-val">Impacto Muito Alto (10) por exposição potencial de variáveis de ambiente (.env). Probabilidade Baixa (2) com storage em nuvem.</span></div>
+        <div class="detail-row"><span class="detail-label">Ação Prática:</span> <span class="detail-val">Sanitizar caminhos com `path.basename()`; proibir parâmetros de arquivo que contenham `../` e priorizar buckets gerenciados (S3).</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEÇÃO 4: PLANO DE PRIORIZAÇÃO -->
+  <div class="section-title" style="margin-top: 14px;">4. Priorização de Tratamento Recomendada (Plano de Resposta)</div>
+  <div class="section-desc">Classificação cronológica das ações mitigatórias baseada no Nível de Risco Inerente para alocação de equipe.</div>
+
+  <div class="priority-container avoid-break">
+    <div class="priority-block high">
+      <div class="priority-header" style="color: #991b1b;">
+        <span>🔥 RISCO ALTO (Tratar Imediatamente / Sprint Atual)</span>
+        <span>Pontuação: 31 a 64</span>
+      </div>
+      <div class="priority-items">
+        <div class="priority-item-row">
+          <span><strong>1º. IDOR (RC06)</strong> — Insecure Direct Object References</span>
+          <span class="val-pill" style="background: #fecaca; color: #991b1b;">Score: 64</span>
+        </div>
+        <div class="priority-item-row">
+          <span><strong>2º. Data Exposure (RC10)</strong> — Exposição Indevida de Dados Pessoais</span>
+          <span class="val-pill" style="background: #fecaca; color: #991b1b;">Score: 40</span>
+        </div>
+        <div class="priority-item-row">
+          <span><strong>3º. Brute Force & Stuffing (RC04)</strong> — Ataques Automatizados de Credenciais</span>
+          <span class="val-pill" style="background: #fecaca; color: #991b1b;">Score: 40</span>
+        </div>
+        <div class="priority-item-row">
+          <span><strong>4º. Phishing e Engenharia Social (RC05)</strong> — Vetores Sociais e Clonagem</span>
+          <span class="val-pill" style="background: #fecaca; color: #991b1b;">Score: 40</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="priority-block med">
+      <div class="priority-header" style="color: #92400e;">
+        <span>⚠️ RISCO MÉDIO (Planejar para Próximos Sprints / Monitorar)</span>
+        <span>Pontuação: 11 a 30</span>
+      </div>
+      <div class="priority-items">
+        <div class="priority-item-row">
+          <span><strong>5º. Cross-Site Scripting - XSS (RC02)</strong> — Sanitização e CSP</span>
+          <span class="val-pill" style="background: #fef3c7; color: #92400e;">Score: 25</span>
+        </div>
+        <div class="priority-item-row">
+          <span><strong>6º. DDoS (RC08)</strong> — Proteção de Infraestrutura e Borda</span>
+          <span class="val-pill" style="background: #fef3c7; color: #92400e;">Score: 25</span>
+        </div>
+        <div class="priority-item-row">
+          <span><strong>7º. Privilege Escalation (RC07)</strong> — RBAC e Proteção Mass Assignment</span>
+          <span class="val-pill" style="background: #fef3c7; color: #92400e;">Score: 20</span>
+        </div>
+        <div class="priority-item-row">
+          <span><strong>8º. Directory Traversal (RC11)</strong> — Sanitização de Caminhos de Arquivo</span>
+          <span class="val-pill" style="background: #fef3c7; color: #92400e;">Score: 20</span>
+        </div>
+        <div class="priority-item-row">
+          <span><strong>9º. Session Hijacking (RC03)</strong> — Rotação de Tokens e Armazenamento Seguro</span>
+          <span class="val-pill" style="background: #fef3c7; color: #92400e;">Score: 16</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="priority-block low">
+      <div class="priority-header" style="color: #166534;">
+        <span>✅ RISCO BAIXO (Manter Controles Ativos / Backlog de Melhoria)</span>
+        <span>Pontuação: 1 a 10</span>
+      </div>
+      <div class="priority-items">
+        <div class="priority-item-row">
+          <span><strong>10º. Race Condition (RC09)</strong> — Transações e Bloqueio Concorrente</span>
+          <span class="val-pill" style="background: #dcfce7; color: #166534;">Score: 10</span>
+        </div>
+        <div class="priority-item-row">
+          <span><strong>11º. SQL Injection (RC01)</strong> — ORM e Queries Parametrizadas</span>
+          <span class="val-pill" style="background: #dcfce7; color: #166534;">Score: 8</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <span>EstudeMy • Segurança da Informação & AppSec</span>
+    <span>Emissão: Setembro / 2026 • Documento Gerado Automaticamente</span>
+    <span>Página 4 de 4</span>
+  </div>
+
+</body>
+</html>

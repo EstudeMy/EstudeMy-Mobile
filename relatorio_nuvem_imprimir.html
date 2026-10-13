@@ -1,0 +1,1222 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Planejamento de Implantação em Nuvem - EstudeMy (Entrega 1)</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;700&display=swap');
+
+    :root {
+      --primary: #0284c7;
+      --primary-dark: #0369a1;
+      --primary-light: #e0f2fe;
+      --accent: #4f46e5;
+      --slate-900: #0f172a;
+      --slate-800: #1e293b;
+      --slate-700: #334155;
+      --slate-600: #475569;
+      --slate-500: #64748b;
+      --slate-300: #cbd5e1;
+      --slate-200: #e2e8f0;
+      --slate-100: #f1f5f9;
+      --slate-50: #f8fafc;
+      --tag-green-bg: #ecfdf5;
+      --tag-green-text: #047857;
+      --tag-blue-bg: #eff6ff;
+      --tag-blue-text: #1d4ed8;
+      --tag-amber-bg: #fffbeb;
+      --tag-amber-text: #b45309;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+      color: var(--slate-800);
+      line-height: 1.35;
+      font-size: 8.7pt;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    /* TOOLBAR EM TELA */
+    .screen-toolbar {
+      position: sticky;
+      top: 15px;
+      z-index: 9999;
+      max-width: 210mm;
+      margin: 0 auto 20px auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: #0f172a;
+      color: white;
+      padding: 12px 20px;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+    }
+
+    .toolbar-info h2 {
+      font-size: 11pt;
+      font-weight: 700;
+      color: #f8fafc;
+    }
+
+    .toolbar-info p {
+      font-size: 8pt;
+      color: #94a3b8;
+    }
+
+    .btn-print {
+      background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+      color: white;
+      border: none;
+      padding: 10px 18px;
+      font-size: 9pt;
+      font-weight: 700;
+      border-radius: 8px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: 0 4px 12px rgba(2, 132, 199, 0.4);
+      transition: all 0.2s ease;
+    }
+
+    .btn-print:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 6px 16px rgba(2, 132, 199, 0.6);
+      background: linear-gradient(135deg, #0ea5e9 0%, #0284c7 100%);
+    }
+
+    /* ESTRUTURA DAS PÁGINAS A4 */
+    @media screen {
+      body {
+        background-color: #0b0f19;
+        padding: 20px 10px 60px 10px;
+      }
+      .print-page {
+        background: #ffffff;
+        width: 210mm;
+        height: 297mm;
+        max-height: 297mm;
+        padding: 13mm 14mm 13mm 14mm;
+        margin: 0 auto 30px auto;
+        border-radius: 6px;
+        box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
+        position: relative;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        overflow: hidden;
+      }
+    }
+
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 12mm 12mm 12mm 12mm;
+      }
+      body {
+        background: transparent;
+        color: #1e293b;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+      .screen-toolbar {
+        display: none !important;
+      }
+      .print-page {
+        width: 100%;
+        height: 273mm;
+        max-height: 273mm;
+        padding: 0;
+        margin: 0;
+        box-shadow: none;
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        page-break-after: always;
+        break-after: page;
+        overflow: hidden;
+      }
+      .print-page:last-child {
+        page-break-after: avoid;
+        break-after: avoid;
+      }
+    }
+
+    /* CABEÇALHOS E ELEMENTOS VISUAIS */
+    .header-inst {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      border-bottom: 2px solid var(--slate-200);
+      padding-bottom: 7px;
+      margin-bottom: 10px;
+    }
+
+    .inst-logos {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    .inst-badge {
+      font-size: 8pt;
+      font-weight: 800;
+      color: var(--primary-dark);
+      background: var(--primary-light);
+      padding: 3px 7px;
+      border-radius: 4px;
+      letter-spacing: 0.5px;
+    }
+
+    .inst-titles h1 {
+      font-size: 8.8pt;
+      font-weight: 800;
+      color: var(--slate-900);
+      text-transform: uppercase;
+      letter-spacing: -0.2px;
+    }
+
+    .inst-titles p {
+      font-size: 7.2pt;
+      color: var(--slate-500);
+      font-weight: 600;
+    }
+
+    .doc-meta {
+      text-align: right;
+      font-size: 7.2pt;
+      color: var(--slate-500);
+    }
+
+    .doc-meta strong {
+      color: var(--slate-800);
+      font-weight: 700;
+    }
+
+    /* TÍTULOS DE SEÇÃO */
+    .section-title {
+      font-size: 9.8pt;
+      font-weight: 800;
+      color: var(--slate-900);
+      margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+      border-left: 3.5px solid var(--primary);
+      padding-left: 7px;
+    }
+
+    .section-subtitle {
+      font-size: 8.5pt;
+      font-weight: 700;
+      color: var(--primary-dark);
+      margin: 7px 0 4px 0;
+    }
+
+    p, li {
+      font-size: 8.3pt;
+      color: var(--slate-700);
+      line-height: 1.35;
+      text-align: justify;
+    }
+
+    ul {
+      margin-left: 14px;
+      margin-bottom: 6px;
+    }
+
+    li {
+      margin-bottom: 3px;
+    }
+
+    /* CARDS & CONTAINERS */
+    .grid-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .grid-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .card {
+      background: var(--slate-50);
+      border: 1px solid var(--slate-200);
+      border-radius: 6px;
+      padding: 7px 9px;
+    }
+
+    .card h4 {
+      font-size: 8.2pt;
+      font-weight: 700;
+      color: var(--slate-900);
+      margin-bottom: 4px;
+      display: flex;
+      align-items: center;
+      gap: 5px;
+    }
+
+    .card p {
+      font-size: 7.8pt;
+      color: var(--slate-600);
+      line-height: 1.3;
+    }
+
+    /* TABELAS */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 7.8pt;
+      margin: 6px 0;
+    }
+
+    th {
+      background: #0f172a;
+      color: white;
+      text-align: left;
+      padding: 5px 7px;
+      font-weight: 700;
+      font-size: 7.6pt;
+    }
+
+    td {
+      padding: 4.5px 7px;
+      border-bottom: 1px solid var(--slate-200);
+      color: var(--slate-700);
+    }
+
+    tr:nth-child(even) td {
+      background-color: var(--slate-50);
+    }
+
+    /* BADGES */
+    .badge {
+      display: inline-block;
+      font-size: 6.8pt;
+      font-weight: 700;
+      padding: 1.5px 5.5px;
+      border-radius: 4px;
+      text-transform: uppercase;
+    }
+    .badge-blue { background: var(--tag-blue-bg); color: var(--tag-blue-text); border: 1px solid #bfdbfe; }
+    .badge-green { background: var(--tag-green-bg); color: var(--tag-green-text); border: 1px solid #a7f3d0; }
+    .badge-amber { background: var(--tag-amber-bg); color: var(--tag-amber-text); border: 1px solid #fde68a; }
+
+    /* CÓDIGO E TERMINAL */
+    .code-box {
+      background: #0f172a;
+      color: #f8fafc;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 7.2pt;
+      padding: 6px 9px;
+      border-radius: 5px;
+      margin: 5px 0;
+      line-height: 1.3;
+    }
+
+    /* DIAGRAMA BOX */
+    .diagram-container {
+      background: #f8fafc;
+      border: 1px solid #cbd5e1;
+      border-radius: 6px;
+      padding: 8px 10px;
+      margin: 6px 0;
+    }
+
+    .diagram-title {
+      font-size: 7.8pt;
+      font-weight: 700;
+      color: #334155;
+      text-align: center;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.4px;
+    }
+
+    /* CALLOUT */
+    .callout {
+      background: #f0fdf4;
+      border-left: 3px solid #16a34a;
+      padding: 6px 9px;
+      border-radius: 0 5px 5px 0;
+      margin: 6px 0;
+      font-size: 7.8pt;
+      color: #166534;
+    }
+
+    .callout-info {
+      background: #f0f9ff;
+      border-left: 3px solid #0284c7;
+      color: #0369a1;
+    }
+
+    /* RODAPÉ */
+    .footer-page {
+      border-top: 1px solid var(--slate-200);
+      padding-top: 5px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 7pt;
+      color: var(--slate-500);
+      margin-top: 5px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- BARRA DE CONTROLE NA TELA -->
+  <div class="screen-toolbar">
+    <div class="toolbar-info">
+      <h2>Planejamento de Implantação em Nuvem — EstudeMy</h2>
+      <p>Projeto Integrador V • Fatec Votorantim • Entrega 1 (até 20/10) • Pronto para gerar PDF A4</p>
+    </div>
+    <button class="btn-print" onclick="window.print()">
+      <svg width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
+        <path d="M2.5 8a.5.5 0 1 0 0-1 .5.5 0 0 0 0 1z"/>
+        <path d="M5 1a2 2 0 0 0-2 2v2H2a2 2 0 0 0-2 2v3a2 2 0 0 0 2 2h1v1a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2v-1h1a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-1V3a2 2 0 0 0-2-2H5zm1 2a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1v2H6V3zm6 9H4v-2h8v2zm-8-3H2a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h12a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1h-2v-1H4v1z"/>
+      </svg>
+      Imprimir / Salvar PDF
+    </button>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PÁGINA 1: IDENTIFICAÇÃO, SUMÁRIO & SITUAÇÃO ATUAL (AS-IS)                -->
+  <!-- ========================================================================= -->
+  <div class="print-page">
+    <div>
+      <div class="header-inst">
+        <div class="inst-logos">
+          <div class="inst-badge">FATEC VOTORANTIM</div>
+          <div class="inst-titles">
+            <h1>Projeto Integrador V • DSM</h1>
+            <p>Disciplina-Satélite: Computação em Nuvem I • Prof. Me. Benir Falcão Pistille</p>
+          </div>
+        </div>
+        <div class="doc-meta">
+          <strong>Entrega 1: Planejamento de Nuvem</strong><br>
+          Data Limite: 20/10/2026 | Versão 1.0
+        </div>
+      </div>
+
+      <div style="background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: white; padding: 9px 12px; border-radius: 6px; margin-bottom: 9px;">
+        <h2 style="font-size: 11pt; font-weight: 800; margin-bottom: 2px;">Planejamento e Análise do Ambiente de Nuvem</h2>
+        <p style="font-size: 8pt; color: #e0f2fe; text-align: left;">
+          Documento técnico-acadêmico de especificação de arquitetura, componentes de infraestrutura, conteinerização, rede, observabilidade e pipeline de deploy para a plataforma gamificada <strong>EstudeMy</strong>.
+        </p>
+      </div>
+
+      <div class="section-title">1. Resumo Executivo e Contexto do Projeto</div>
+      <p style="margin-bottom: 6px;">
+        O <strong>EstudeMy</strong> é uma plataforma gamificada de ensino voltada ao aprendizado dinâmico inspirado em dinâmicas de RPG (estilo Duolingo). O sistema integra três frentes: um <strong>Aplicativo Móvel em React Native (Expo)</strong>, uma <strong>API RESTful em Node.js (TypeScript)</strong> e um <strong>Banco de Dados NoSQL MongoDB</strong>. O objetivo deste documento é apresentar o planejamento rigoroso da migração da arquitetura para a nuvem, garantindo alta disponibilidade, segurança perimetral, observabilidade em tempo real e entrega contínua.
+      </p>
+
+      <div class="grid-3" style="margin-bottom: 7px;">
+        <div class="card">
+          <h4>📱 Mobile App (Frontend)</h4>
+          <p>React Native (Expo SDK 57), Expo Router, navegação por abas e trilhas em zigzag. Compilado para SPA estático para execução em contêiner Nginx e emuladores nativos.</p>
+        </div>
+        <div class="card">
+          <h4>⚙️ API REST (Backend)</h4>
+          <p>Node.js 22 LTS + Express 5 em TypeScript, autenticação JWT com expiração segura, hashing Bcrypt e documentação OpenAPI/Swagger.</p>
+        </div>
+        <div class="card">
+          <h4>🍃 Banco de Dados</h4>
+          <p>MongoDB 7.0 Community Edition, modelagem orientada a documentos BSON para armazenamento ágil de perfis RPG, fases polimórficas e trilhas.</p>
+        </div>
+      </div>
+
+      <div class="section-title">2. Diagnóstico da Situação Atual do Projeto (Cenário AS-IS)</div>
+      <p style="margin-bottom: 6px;">
+        Atualmente, a plataforma opera em regime de desenvolvimento distribuído com dependência de serviços gratuitos em nuvem (PaaS) para testes pontuais:
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 20%;">Componente</th>
+            <th style="width: 32%;">Implementação Atual</th>
+            <th style="width: 48%;">Gaps, Gargalos e Riscos Técnicos</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>API Backend</strong></td>
+            <td>Instância gratuita no Render (<code>estudemydocker.onrender.com</code>).</td>
+            <td><strong>Cold Start severo:</strong> O serviço entra em suspensão após 15 minutos ocioso, gerando atraso de ~50s na primeira requisição móvel. Falta IP estático e controle de recursos.</td>
+          </tr>
+          <tr>
+            <td><strong>App Mobile</strong></td>
+            <td>Expo Go local via Wi-Fi e build web manual.</td>
+            <td>Depende da máquina local do desenvolvedor ativa para pareamento de testes; sem servidor de borda permanente com cache e CDN.</td>
+          </tr>
+          <tr>
+            <td><strong>Banco de Dados</strong></td>
+            <td>Cluster compartilhado MongoDB Atlas (Tier M0 gratuito) / Mongo local.</td>
+            <td>Limite de 512 MB de dados, ausência de backup automatizado pontual e comunicação exposta à internet pública sem VPC privada dedicada.</td>
+          </tr>
+          <tr>
+            <td><strong>Rede & Segurança</strong></td>
+            <td>Sem isolamento de rede virtual (VPC/VCN).</td>
+            <td>Endpoints da API acessíveis publicamente sem firewall perimetral, sem VPN para gerência e sem política restritiva de CORS por sub-rede.</td>
+          </tr>
+          <tr>
+            <td><strong>Deploy & CI/CD</strong></td>
+            <td>Gatilhos de Git automáticos e builds manuais.</td>
+            <td>Sem testes automatizados antes do deploy, sem versionamento de imagens Docker e sem estratégia de <i>rollback</i> imediato em produção.</td>
+          </tr>
+          <tr>
+            <td><strong>Observabilidade</strong></td>
+            <td>Logs de console voláteis e Better Stack básico.</td>
+            <td>Sem métricas em tempo real de infraestrutura (CPU/RAM/disco), sem painéis centralizados (Grafana) e sem alarmes de saturação de hardware.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout callout-info">
+        <strong>Conclusão do Diagnóstico AS-IS:</strong> A infraestrutura atual atende apenas à fase de prototipagem funcional. Para a disponibilização sustentável e segura em ambiente de nuvem, é mandatória a transição para um modelo estruturado com isolamento de rede (VCN), conteinerização padronizada (Docker), proxy de terminação TLS e automação de deploy via GitHub Actions.
+      </div>
+    </div>
+
+    <div class="footer-page">
+      <span>EstudeMy • Planejamento e Análise do Ambiente de Nuvem (Entrega 1)</span>
+      <span>Página 1 de 5</span>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PÁGINA 2: ARQUITETURA PROPOSTA (TO-BE) & INFRAESTRUTURA                   -->
+  <!-- ========================================================================= -->
+  <div class="print-page">
+    <div>
+      <div class="header-inst">
+        <div class="inst-logos">
+          <div class="inst-badge">FATEC VOTORANTIM</div>
+          <div class="inst-titles">
+            <h1>Projeto Integrador V • DSM</h1>
+            <p>Disciplina-Satélite: Computação em Nuvem I • Prof. Me. Benir Falcão Pistille</p>
+          </div>
+        </div>
+        <div class="doc-meta">
+          <strong>Arquitetura Proposta & Infraestrutura</strong><br>
+          Entrega 1 (20/10) | Versão 1.0
+        </div>
+      </div>
+
+      <div class="section-title">3. Arquitetura Proposta em Nuvem (Cenário TO-BE)</div>
+      <p style="margin-bottom: 6px;">
+        A arquitetura de nuvem proposta adota o padrão <strong>Cloud-Agnostic baseado em Contêineres Docker (CaaS sobre IaaS)</strong>. Esse modelo foi selecionado para viabilizar tanto a execução no <strong>Oracle Cloud Infrastructure (OCI Free Tier)</strong> — em consonância com as práticas da disciplina do Prof. Benir — quanto na <strong>AWS</strong> — conforme a ementa central do PI —, sem qualquer acoplamento de código.
+      </p>
+
+      <!-- DIAGRAMA VISUAL DE ALTA RESOLUÇÃO -->
+      <div class="diagram-container" style="padding: 4px; margin: 4px 0 8px 0;">
+        <div class="diagram-title" style="margin-bottom: 3px;">Figura 1 — Diagrama Arquitetural de Implantação em Nuvem: Componentes, Redes e Fluxos (TO-BE)</div>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 960 515" style="width: 100%; height: auto; max-height: 98mm; display: block; margin: 0 auto; background: #ffffff; border-radius: 6px;">
+          <defs>
+            <linearGradient id="headerGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#0284c7" />
+              <stop offset="100%" stop-color="#0369a1" />
+            </linearGradient>
+            <linearGradient id="edgeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#f59e0b" />
+              <stop offset="100%" stop-color="#d97706" />
+            </linearGradient>
+            <linearGradient id="dmzGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#10b981" />
+              <stop offset="100%" stop-color="#059669" />
+            </linearGradient>
+            <linearGradient id="privGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+              <stop offset="0%" stop-color="#6366f1" />
+              <stop offset="100%" stop-color="#4f46e5" />
+            </linearGradient>
+            <filter id="shadow" x="-5%" y="-5%" width="110%" height="115%">
+              <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="#0f172a" flood-opacity="0.08" />
+            </filter>
+            <marker id="arrow" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#0284c7" />
+            </marker>
+            <marker id="arrowGreen" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#059669" />
+            </marker>
+            <marker id="arrowPurple" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M 0 1.5 L 8 5 L 0 8.5 z" fill="#6366f1" />
+            </marker>
+          </defs>
+
+          <!-- Banner Superior -->
+          <rect x="20" y="10" width="920" height="38" rx="7" fill="url(#headerGrad)" />
+          <text x="35" y="28" fill="#ffffff" font-size="12" font-weight="800">ESTUDEMY • ARQUITETURA DE IMPLANTAÇÃO EM NUVEM (ENTREGA 1 - PI V)</text>
+          <text x="35" y="41" fill="#e0f2fe" font-size="8.5" font-weight="500">Padrão Cloud-Agnostic baseado em Contêineres Docker (CaaS sobre IaaS) • OCI Free Tier / AWS</text>
+          <rect x="800" y="18" width="125" height="22" rx="11" fill="#ffffff" fill-opacity="0.2" />
+          <text x="862" y="33" fill="#ffffff" font-size="8.5" font-weight="700" text-anchor="middle">FATEC VOTORANTIM</text>
+
+          <!-- 1. Clientes -->
+          <rect x="20" y="58" width="145" height="442" rx="8" fill="#f8fafc" stroke="#cbd5e1" stroke-width="1.3" filter="url(#shadow)" />
+          <rect x="20" y="58" width="145" height="26" rx="8" fill="#f1f5f9" />
+          <text x="92" y="75" fill="#0f172a" font-size="9.5" font-weight="800" text-anchor="middle">1. CLIENTES &amp; ACESSO</text>
+
+          <!-- Mobile App -->
+          <rect x="30" y="94" width="125" height="88" rx="6" fill="#ffffff" stroke="#93c5fd" />
+          <text x="92" y="112" fill="#0369a1" font-size="10.5" font-weight="800" text-anchor="middle">📱 App Mobile</text>
+          <text x="92" y="126" fill="#334155" font-size="8" font-weight="600" text-anchor="middle">React Native / Expo</text>
+          <text x="92" y="139" fill="#64748b" font-size="7" text-anchor="middle">Android &amp; iOS nativos</text>
+          <rect x="42" y="148" width="101" height="18" rx="4" fill="#eff6ff" />
+          <text x="92" y="160" fill="#1d4ed8" font-size="7" font-weight="700" text-anchor="middle">API Client (Axios)</text>
+
+          <!-- Web Browser -->
+          <rect x="30" y="192" width="125" height="88" rx="6" fill="#ffffff" stroke="#93c5fd" />
+          <text x="92" y="210" fill="#0369a1" font-size="10.5" font-weight="800" text-anchor="middle">🌐 Navegador Web</text>
+          <text x="92" y="224" fill="#334155" font-size="8" font-weight="600" text-anchor="middle">Mobile Web (SPA)</text>
+          <text x="92" y="237" fill="#64748b" font-size="7" text-anchor="middle">Portal do Aluno / Prof.</text>
+          <rect x="42" y="246" width="101" height="18" rx="4" fill="#eff6ff" />
+          <text x="92" y="258" fill="#1d4ed8" font-size="7" font-weight="700" text-anchor="middle">HTTP / SPA Router</text>
+
+          <!-- DevOps Admin -->
+          <rect x="30" y="290" width="125" height="85" rx="6" fill="#ffffff" stroke="#cbd5e1" />
+          <text x="92" y="308" fill="#334155" font-size="10" font-weight="800" text-anchor="middle">👨‍💻 DevOps / Admin</text>
+          <text x="92" y="322" fill="#475569" font-size="7.5" font-weight="600" text-anchor="middle">Gerência Segura</text>
+          <rect x="42" y="336" width="101" height="18" rx="4" fill="#f1f5f9" />
+          <text x="92" y="348" fill="#0f172a" font-size="7" font-weight="700" text-anchor="middle">SSH (Porta 22 / Chave)</text>
+
+          <!-- GitHub CI/CD -->
+          <rect x="30" y="385" width="125" height="98" rx="6" fill="#ffffff" stroke="#cbd5e1" />
+          <text x="92" y="403" fill="#334155" font-size="10" font-weight="800" text-anchor="middle">🐙 GitHub Actions</text>
+          <text x="92" y="417" fill="#64748b" font-size="7" text-anchor="middle">Pipeline CI/CD</text>
+          <rect x="40" y="425" width="105" height="16" rx="3" fill="#eff6ff" />
+          <text x="92" y="436" fill="#1e40af" font-size="6.8" font-weight="700" text-anchor="middle">Lint + Jest + Build</text>
+          <rect x="40" y="445" width="105" height="16" rx="3" fill="#ecfdf5" />
+          <text x="92" y="456" fill="#065f46" font-size="6.8" font-weight="700" text-anchor="middle">Deploy SSH Automatizado</text>
+
+          <!-- 2. Borda / Edge -->
+          <rect x="185" y="58" width="105" height="442" rx="8" fill="#fffbeb" stroke="#fcd34d" stroke-width="1.3" filter="url(#shadow)" />
+          <rect x="185" y="58" width="105" height="26" rx="8" fill="url(#edgeGrad)" />
+          <text x="237" y="75" fill="#ffffff" font-size="9" font-weight="800" text-anchor="middle">2. BORDA (EDGE)</text>
+
+          <rect x="193" y="95" width="89" height="60" rx="5" fill="#ffffff" stroke="#fde68a" />
+          <text x="237" y="112" fill="#b45309" font-size="8" font-weight="800" text-anchor="middle">🛡️ WAF &amp; DDoS</text>
+          <text x="237" y="125" fill="#78350f" font-size="6.8" text-anchor="middle">Filtro de Ataques</text>
+          <text x="237" y="136" fill="#78350f" font-size="6.8" text-anchor="middle">L3 / L4 / L7</text>
+
+          <rect x="193" y="165" width="89" height="60" rx="5" fill="#ffffff" stroke="#fde68a" />
+          <text x="237" y="182" fill="#b45309" font-size="8" font-weight="800" text-anchor="middle">🔒 SSL / TLS 1.3</text>
+          <text x="237" y="195" fill="#78350f" font-size="6.8" text-anchor="middle">Terminação Borda</text>
+          <text x="237" y="206" fill="#78350f" font-size="6.8" text-anchor="middle">HTTPS Forçado</text>
+
+          <rect x="193" y="235" width="89" height="60" rx="5" fill="#ffffff" stroke="#fde68a" />
+          <text x="237" y="252" fill="#b45309" font-size="8" font-weight="800" text-anchor="middle">⚡ CDN Cache</text>
+          <text x="237" y="265" fill="#78350f" font-size="6.8" text-anchor="middle">Cache Estático</text>
+          <text x="237" y="276" fill="#78350f" font-size="6.8" text-anchor="middle">Assets / JS / SVG</text>
+
+          <rect x="193" y="305" width="89" height="60" rx="5" fill="#ffffff" stroke="#fde68a" />
+          <text x="237" y="322" fill="#b45309" font-size="8" font-weight="800" text-anchor="middle">🌍 Anycast DNS</text>
+          <text x="237" y="335" fill="#78350f" font-size="6.8" text-anchor="middle">estudemy.site</text>
+          <text x="237" y="346" fill="#78350f" font-size="6.8" text-anchor="middle">api.estudemy.site</text>
+
+          <rect x="193" y="375" width="89" height="110" rx="5" fill="#ffffff" stroke="#fde68a" />
+          <text x="237" y="393" fill="#b45309" font-size="7.8" font-weight="800" text-anchor="middle">Rate Limiting</text>
+          <text x="237" y="407" fill="#78350f" font-size="6.8" text-anchor="middle">Anti-Brute Force</text>
+          <text x="237" y="419" fill="#78350f" font-size="6.8" text-anchor="middle">Bloqueio por IP</text>
+          <rect x="198" y="430" width="79" height="15" rx="3" fill="#fef3c7" />
+          <text x="237" y="441" fill="#92400e" font-size="6.5" font-weight="700" text-anchor="middle">/api/auth/*</text>
+          <text x="237" y="458" fill="#78350f" font-size="6.5" text-anchor="middle">5 tentativas/15m</text>
+
+          <!-- 3. Nuvem Privada (VCN) -->
+          <rect x="305" y="58" width="635" height="442" rx="10" fill="#f8fafc" stroke="#0284c7" stroke-width="1.8" stroke-dasharray="5,3" />
+          <rect x="305" y="58" width="635" height="26" rx="8" fill="#0f172a" />
+          <text x="320" y="75" fill="#38bdf8" font-size="9.5" font-weight="800">REDE VIRTUAL DE NUVEM (VCN / VPC) • CIDR 10.0.0.0/16</text>
+          <text x="830" y="75" fill="#94a3b8" font-size="8" font-weight="600">OCI Free Tier / AWS</text>
+
+          <!-- Subnet Pública (DMZ) -->
+          <rect x="318" y="94" width="160" height="395" rx="7" fill="#f0fdf4" stroke="#86efac" stroke-width="1.3" />
+          <rect x="318" y="94" width="160" height="22" rx="7" fill="url(#dmzGrad)" />
+          <text x="398" y="109" fill="#ffffff" font-size="8.5" font-weight="800" text-anchor="middle">SUBNET PÚBLICA (DMZ)</text>
+          <text x="398" y="128" fill="#166534" font-size="7" font-weight="700" text-anchor="middle">10.0.1.0/24 • Internet Gateway</text>
+
+          <!-- IGW -->
+          <rect x="326" y="136" width="144" height="46" rx="5" fill="#ffffff" stroke="#bbf7d0" />
+          <text x="398" y="152" fill="#15803d" font-size="8.5" font-weight="800" text-anchor="middle">🌐 Internet Gateway</text>
+          <text x="398" y="165" fill="#166534" font-size="6.8" text-anchor="middle">Ponto de Entrada/Saída Público</text>
+          <text x="398" y="175" fill="#047857" font-size="6.5" font-weight="700" text-anchor="middle">0.0.0.0/0 ➔ WAN</text>
+
+          <!-- Load Balancer -->
+          <rect x="326" y="190" width="144" height="150" rx="5" fill="#ffffff" stroke="#86efac" stroke-width="1.3" filter="url(#shadow)" />
+          <rect x="326" y="190" width="144" height="20" rx="5" fill="#dcfce7" />
+          <text x="398" y="204" fill="#166534" font-size="8" font-weight="800" text-anchor="middle">⚖️ LOAD BALANCER / NGINX</text>
+          
+          <rect x="333" y="217" width="130" height="20" rx="4" fill="#f0fdf4" stroke="#bbf7d0" />
+          <text x="398" y="231" fill="#15803d" font-size="7.2" font-weight="700" text-anchor="middle">Porta 80 (HTTP) ➔ Redir 301</text>
+          
+          <rect x="333" y="243" width="130" height="20" rx="4" fill="#ecfdf5" stroke="#86efac" />
+          <text x="398" y="257" fill="#047857" font-size="7.2" font-weight="800" text-anchor="middle">Porta 443 (HTTPS / TLS 1.3)</text>
+
+          <text x="398" y="277" fill="#334155" font-size="6.8" text-anchor="middle">• Certificado Let's Encrypt</text>
+          <text x="398" y="289" fill="#334155" font-size="6.8" text-anchor="middle">• Reverse Proxy / SPA Fallback</text>
+          <text x="398" y="301" fill="#334155" font-size="6.8" text-anchor="middle">• Proxy /api ➔ Porta 5000</text>
+          <text x="398" y="313" fill="#334155" font-size="6.8" text-anchor="middle">• Mobile Web ➔ Porta 8081</text>
+          <text x="398" y="325" fill="#334155" font-size="6.8" text-anchor="middle">• Compressão Gzip Ativa</text>
+
+          <!-- NAT Gateway -->
+          <rect x="326" y="348" width="144" height="46" rx="5" fill="#ffffff" stroke="#bbf7d0" />
+          <text x="398" y="364" fill="#15803d" font-size="8.5" font-weight="800" text-anchor="middle">🔄 NAT Gateway</text>
+          <text x="398" y="377" fill="#166534" font-size="6.8" text-anchor="middle">Saída Segura sem IP Público</text>
+          <text x="398" y="387" fill="#047857" font-size="6.5" font-weight="700" text-anchor="middle">Updates &amp; APIs de IA (Gemini)</text>
+
+          <!-- Security List DMZ -->
+          <rect x="326" y="402" width="144" height="75" rx="5" fill="#f8fafc" stroke="#cbd5e1" />
+          <text x="398" y="416" fill="#0f172a" font-size="6.8" font-weight="700" text-anchor="middle">🛡️ Security List Pública</text>
+          <text x="398" y="429" fill="#475569" font-size="6.3" text-anchor="middle">In: 80, 443 (0.0.0.0/0)</text>
+          <text x="398" y="440" fill="#475569" font-size="6.3" text-anchor="middle">In: 22 (SSH via VPN)</text>
+          <text x="398" y="452" fill="#475569" font-size="6.3" text-anchor="middle">Out: Roteamento p/ Privada</text>
+          <text x="398" y="464" fill="#475569" font-size="6.3" text-anchor="middle">Stateful Tracking</text>
+
+          <!-- Subnet Privada -->
+          <rect x="490" y="94" width="440" height="395" rx="7" fill="#f5f3ff" stroke="#c4b5fd" stroke-width="1.3" />
+          <rect x="490" y="94" width="440" height="22" rx="7" fill="url(#privGrad)" />
+          <text x="710" y="109" fill="#ffffff" font-size="8.5" font-weight="800" text-anchor="middle">SUBNET PRIVADA (APLICAÇÃO &amp; DADOS - SEM IP PÚBLICO)</text>
+          <text x="710" y="128" fill="#5b21b6" font-size="7" font-weight="700" text-anchor="middle">10.0.2.0/24 • Isolamento Total L3/L4 • Comunicação Interna Docker Bridge</text>
+
+          <!-- Host VM -->
+          <rect x="500" y="136" width="420" height="240" rx="7" fill="#ffffff" stroke="#ddd6fe" stroke-width="1.2" filter="url(#shadow)" />
+          <rect x="500" y="136" width="420" height="20" rx="7" fill="#ede9fe" />
+          <text x="512" y="150" fill="#4c1d95" font-size="7.8" font-weight="800">🖥️ HOST VM: Ubuntu Server 24.04 LTS (4 OCPUs ARM / 24 GB RAM / Docker Engine 26)</text>
+          
+          <!-- Docker Compose Box -->
+          <rect x="508" y="163" width="404" height="203" rx="6" fill="#f8fafc" stroke="#818cf8" stroke-dasharray="4,2" />
+          <text x="520" y="177" fill="#4338ca" font-size="7.2" font-weight="800">🐳 DOCKER COMPOSE NETWORK (estudemy_network • Driver Bridge)</text>
+
+          <!-- Container 1: Mobile -->
+          <rect x="516" y="186" width="188" height="78" rx="5" fill="#ffffff" stroke="#93c5fd" />
+          <rect x="516" y="186" width="188" height="18" rx="5" fill="#e0f2fe" />
+          <text x="610" y="199" fill="#0369a1" font-size="7.8" font-weight="800" text-anchor="middle">📱 estudemy_mobile</text>
+          <text x="610" y="215" fill="#0f172a" font-size="7.2" font-weight="700" text-anchor="middle">Expo Web SPA (Nginx Alpine)</text>
+          <text x="610" y="227" fill="#64748b" font-size="6.8" text-anchor="middle">Porta Interna: 8081 / Roteamento SPA</text>
+          <rect x="526" y="235" width="168" height="15" rx="3" fill="#eff6ff" />
+          <text x="610" y="246" fill="#1d4ed8" font-size="6.5" font-weight="700" text-anchor="middle">Multi-stage Build • Cache Gzip</text>
+
+          <!-- Container 2: Backend -->
+          <rect x="714" y="186" width="188" height="78" rx="5" fill="#ffffff" stroke="#a7f3d0" />
+          <rect x="714" y="186" width="188" height="18" rx="5" fill="#d1fae5" />
+          <text x="808" y="199" fill="#065f46" font-size="7.8" font-weight="800" text-anchor="middle">⚙️ estudemy_backend</text>
+          <text x="808" y="215" fill="#0f172a" font-size="7.2" font-weight="700" text-anchor="middle">Node 22 + Express 5 (TypeScript)</text>
+          <text x="808" y="227" fill="#64748b" font-size="6.8" text-anchor="middle">Porta Interna: 5000 • JWT / Bcrypt</text>
+          <rect x="724" y="235" width="168" height="15" rx="3" fill="#ecfdf5" />
+          <text x="808" y="246" fill="#047857" font-size="6.5" font-weight="700" text-anchor="middle">Swagger /api-docs • Healthcheck /</text>
+
+          <!-- Container 3: Mongo -->
+          <rect x="516" y="274" width="188" height="78" rx="5" fill="#ffffff" stroke="#6ee7b7" />
+          <rect x="516" y="274" width="188" height="18" rx="5" fill="#d1fae5" />
+          <text x="610" y="287" fill="#047857" font-size="7.8" font-weight="800" text-anchor="middle">🍃 estudemy_mongo</text>
+          <text x="610" y="303" fill="#0f172a" font-size="7.2" font-weight="700" text-anchor="middle">MongoDB 7.0 Community Edition</text>
+          <text x="610" y="315" fill="#64748b" font-size="6.8" text-anchor="middle">Porta Interna: 27017 (Isolada)</text>
+          <rect x="526" y="323" width="168" height="15" rx="3" fill="#ecfdf5" />
+          <text x="610" y="334" fill="#065f46" font-size="6.5" font-weight="700" text-anchor="middle">Auth Ativa • NoSQL BSON Docs</text>
+
+          <!-- Container 4: Observabilidade -->
+          <rect x="714" y="274" width="188" height="78" rx="5" fill="#ffffff" stroke="#fed7aa" />
+          <rect x="714" y="274" width="188" height="18" rx="5" fill="#ffedd5" />
+          <text x="808" y="287" fill="#9a3412" font-size="7.8" font-weight="800" text-anchor="middle">📊 Observabilidade</text>
+          <text x="808" y="303" fill="#0f172a" font-size="7.2" font-weight="700" text-anchor="middle">Prometheus (9090) + Grafana (3001)</text>
+          <text x="808" y="315" fill="#64748b" font-size="6.8" text-anchor="middle">cAdvisor (Métricas de Containers)</text>
+          <rect x="724" y="323" width="168" height="15" rx="3" fill="#fff7ed" />
+          <text x="808" y="334" fill="#c2410c" font-size="6.5" font-weight="700" text-anchor="middle">Logs JSON ➔ Better Stack</text>
+
+          <!-- Storage Layer -->
+          <!-- Block Storage -->
+          <rect x="500" y="388" width="204" height="88" rx="6" fill="#ffffff" stroke="#c4b5fd" filter="url(#shadow)" />
+          <text x="602" y="405" fill="#5b21b6" font-size="8" font-weight="800" text-anchor="middle">💾 Block Volume Persistente</text>
+          <text x="602" y="419" fill="#475569" font-size="7.2" text-anchor="middle">200 GB SSD NVMe (Always Free)</text>
+          <text x="602" y="432" fill="#6b21a8" font-size="6.8" font-weight="700" text-anchor="middle">Montado em /data/db (Dados Mongo)</text>
+          <text x="602" y="445" fill="#64748b" font-size="6.8" text-anchor="middle">Persistência tolerante a restart</text>
+          <rect x="510" y="453" width="184" height="14" rx="3" fill="#ede9fe" />
+          <text x="602" y="463" fill="#6d28d9" font-size="6.5" font-weight="700" text-anchor="middle">Backups locais diários /backups</text>
+
+          <!-- Object Storage -->
+          <rect x="716" y="388" width="204" height="88" rx="6" fill="#ffffff" stroke="#c4b5fd" filter="url(#shadow)" />
+          <text x="818" y="405" fill="#5b21b6" font-size="8" font-weight="800" text-anchor="middle">📦 Object Storage Bucket</text>
+          <text x="818" y="419" fill="#475569" font-size="7.2" text-anchor="middle">S3 / OCI Bucket (Standard)</text>
+          <text x="818" y="432" fill="#6b21a8" font-size="6.8" font-weight="700" text-anchor="middle">Uploads de Avatares &amp; Mídia RPG</text>
+          <text x="818" y="445" fill="#64748b" font-size="6.8" text-anchor="middle">Dumps compactados .gz (Retenção 7d)</text>
+          <rect x="726" y="453" width="184" height="14" rx="3" fill="#ede9fe" />
+          <text x="818" y="463" fill="#6d28d9" font-size="6.5" font-weight="700" text-anchor="middle">Disaster Recovery (RTO 15m / RPO 24h)</text>
+
+          <!-- Setas de Conexão -->
+          <line x1="165" y1="138" x2="183" y2="138" stroke="#0284c7" stroke-width="1.8" marker-end="url(#arrow)" />
+          <line x1="165" y1="236" x2="183" y2="236" stroke="#0284c7" stroke-width="1.8" marker-end="url(#arrow)" />
+          <line x1="290" y1="250" x2="324" y2="250" stroke="#059669" stroke-width="2" marker-end="url(#arrowGreen)" />
+          <line x1="165" y1="332" x2="324" y2="332" stroke="#334155" stroke-width="1.5" stroke-dasharray="3,2" marker-end="url(#arrow)" />
+          
+          <path d="M 470 230 L 493 230 L 493 210 L 514 210" fill="none" stroke="#0284c7" stroke-width="1.6" marker-end="url(#arrow)" />
+          <path d="M 470 260 L 706 260 L 706 220 L 712 220" fill="none" stroke="#059669" stroke-width="1.6" marker-end="url(#arrowGreen)" />
+          <path d="M 750 264 L 750 310 L 704 310" fill="none" stroke="#047857" stroke-width="1.6" marker-end="url(#arrowGreen)" />
+          <line x1="605" y1="352" x2="605" y2="386" stroke="#6366f1" stroke-width="1.8" marker-end="url(#arrowPurple)" />
+          <line x1="818" y1="264" x2="818" y2="386" stroke="#6366f1" stroke-width="1.8" stroke-dasharray="3,2" marker-end="url(#arrowPurple)" />
+        </svg>
+      </div>
+
+      <div class="section-title">4. Componentes de Infraestrutura Necessários</div>
+      <p style="margin-bottom: 6px;">
+        A tabela a seguir consolida os componentes de infraestrutura física e lógica, acompanhados de seu dimensionamento técnico e do respectivo mapeamento no <strong>Oracle Cloud (OCI)</strong> e na <strong>AWS</strong>:
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 18%;">Componente</th>
+            <th style="width: 32%;">Função Técnica</th>
+            <th style="width: 25%;">OCI (Guia Prof. Benir)</th>
+            <th style="width: 25%;">AWS (Ementa PI V)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Instância Host (Compute)</strong></td>
+            <td>Hospeda o Docker Engine para execução dos contêineres de aplicação, banco e observabilidade.</td>
+            <td><strong>VM.Standard.A1.Flex</strong><br>4 OCPUs ARM, 24 GB RAM (Always Free)</td>
+            <td><strong>EC2 t4g.medium / t3.small</strong><br>2 vCPUs, 4 GB RAM</td>
+          </tr>
+          <tr>
+            <td><strong>Rede Virtual</strong></td>
+            <td>Garante o isolamento lógico da infraestrutura em camada de rede (L3/L4).</td>
+            <td><strong>Virtual Cloud Network (VCN)</strong><br>CIDR <code>10.0.0.0/16</code></td>
+            <td><strong>Virtual Private Cloud (VPC)</strong><br>CIDR <code>10.0.0.0/16</code></td>
+          </tr>
+          <tr>
+            <td><strong>Subnet Pública (DMZ)</strong></td>
+            <td>Hospeda o ponto de entrada (Load Balancer / Nginx) conectado ao Internet Gateway.</td>
+            <td>Public Subnet (CIDR <code>10.0.1.0/24</code>) + Internet Gateway</td>
+            <td>Public Subnet (CIDR <code>10.0.1.0/24</code>) + Internet Gateway</td>
+          </tr>
+          <tr>
+            <td><strong>Subnet Privada</strong></td>
+            <td>Executa a API e o banco de dados sem IP público, comunicando externamente via NAT.</td>
+            <td>Private Subnet (CIDR <code>10.0.2.0/24</code>) + NAT Gateway</td>
+            <td>Private Subnet (CIDR <code>10.0.2.0/24</code>) + NAT Gateway</td>
+          </tr>
+          <tr>
+            <td><strong>Firewall / ACL</strong></td>
+            <td>Filtra tráfego de entrada e saída por portas, protocolos e faixas de IP.</td>
+            <td>Security Lists & Network Security Groups (NSG)</td>
+            <td>AWS Security Groups & Network ACLs</td>
+          </tr>
+          <tr>
+            <td><strong>Armazenamento em Bloco</strong></td>
+            <td>Persistência de alta velocidade para o banco MongoDB e volumes de logs do Docker.</td>
+            <td><strong>Block Volume</strong> de 100 GB a 200 GB (Always Free)</td>
+            <td><strong>Amazon EBS (gp3)</strong> de 50 GB a 100 GB</td>
+          </tr>
+          <tr>
+            <td><strong>Armazenamento de Objetos</strong></td>
+            <td>Armazenamento de mídias das trilhas (imagens, avatares RPG) e dumps de backup.</td>
+            <td><strong>OCI Object Storage</strong> (Bucket Standard Always Free)</td>
+            <td><strong>Amazon S3 Bucket</strong> (Standard Storage)</td>
+          </tr>
+          <tr>
+            <td><strong>Balanceador de Carga</strong></td>
+            <td>Distribui requisições, efetua offload SSL/TLS e redireciona HTTP (80) para HTTPS (443).</td>
+            <td>OCI Flexible Load Balancer (10 Mbps Always Free)</td>
+            <td>AWS Application Load Balancer (ALB)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="callout">
+        <strong>Vantagem da Abordagem OCI Always Free:</strong> A configuração homologada na Oracle Cloud oferece até 4 OCPUs ARM e 24 GB de memória RAM de forma gratuita permanente, permitindo alocar 2 OCPUs e 8 GB para os contêineres de aplicação e 2 OCPUs e 8 GB para o MongoDB e observabilidade com excelente folga operacional.
+      </div>
+    </div>
+
+    <div class="footer-page">
+      <span>EstudeMy • Planejamento e Análise do Ambiente de Nuvem (Entrega 1)</span>
+      <span>Página 2 de 5</span>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PÁGINA 3: AMBIENTE, MÁQUINAS VIRTUAIS/CONTAINERS & BANCO DE DADOS         -->
+  <!-- ========================================================================= -->
+  <div class="print-page">
+    <div>
+      <div class="header-inst">
+        <div class="inst-logos">
+          <div class="inst-badge">FATEC VOTORANTIM</div>
+          <div class="inst-titles">
+            <h1>Projeto Integrador V • DSM</h1>
+            <p>Disciplina-Satélite: Computação em Nuvem I • Prof. Me. Benir Falcão Pistille</p>
+          </div>
+        </div>
+        <div class="doc-meta">
+          <strong>Ambiente, Contêineres & Banco de Dados</strong><br>
+          Entrega 1 (20/10) | Versão 1.0
+        </div>
+      </div>
+
+      <div class="section-title">5. Definição do Ambiente de Execução</div>
+      <div class="grid-2" style="margin-bottom: 7px;">
+        <div class="card">
+          <h4>🐧 Sistema Operacional do Host</h4>
+          <p><strong>Ubuntu Server 24.04 LTS (Noble Numbat) 64-bit</strong>. Escolhido por ser o padrão de mercado para nuvem corporativa, com ciclo de suporte estendido até 2029, kernel 6.8 moderno, AppArmor nativo e total compatibilidade com Docker Engine e KVM.</p>
+        </div>
+        <div class="card">
+          <h4>📦 Runtimes e Utilitários</h4>
+          <p><strong>Docker Engine 26.x + Docker Compose Plugin v2</strong>. Isolamento em contêineres OCI com cgroups v2. Node.js 22 LTS para builds TypeScript e Nginx 1.26 Alpine para entrega web estática ultrarrápida.</p>
+        </div>
+      </div>
+
+      <div class="section-title">6. Estratégia de Utilização de Máquinas Virtuais e Containers</div>
+      <p style="margin-bottom: 6px;">
+        A equipe optou pelo modelo de <strong>Contêineres sobre Máquinas Virtuais (CaaS sobre IaaS)</strong>. Esse arranjo combina o isolamento de hardware e rede da máquina virtual com a flexibilidade, portabilidade e densidade dos contêineres Docker:
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th>Critério</th>
+            <th>Máquina Virtual Pura (VM)</th>
+            <th>Contêineres Docker sobre VM (Adotado)</th>
+            <th>Serviço Serverless Puro</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>Paridade Dev/Prod</strong></td>
+            <td>Baixa (depende de scripts manuais no SO).</td>
+            <td><strong>Total (o mesmo container roda local e na nuvem).</strong></td>
+            <td>Média (depende de emuladores de nuvem).</td>
+          </tr>
+          <tr>
+            <td><strong>Consumo de Recursos</strong></td>
+            <td>Alto (cada serviço requer um SO completo).</td>
+            <td><strong>Otimizado (compartilhamento de kernel e bibliotecas).</strong></td>
+            <td>Variável (sujeito a cold starts).</td>
+          </tr>
+          <tr>
+            <td><strong>Tempo de Inicialização</strong></td>
+            <td>Lento (1 a 3 minutos para boot do SO).</td>
+            <td><strong>Instantâneo (1 a 3 segundos por contêiner).</strong></td>
+            <td>Médio (cold starts de 10 a 50s no tier gratuito).</td>
+          </tr>
+          <tr>
+            <td><strong>Portabilidade Multi-Cloud</strong></td>
+            <td>Média (formatos de imagem de VM variam).</td>
+            <td><strong>Máxima (padrão OCI executável em OCI, AWS, GCP ou KVM).</strong></td>
+            <td>Baixa (alto acoplamento com o provedor).</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="section-title">7. Definição do Banco de Dados</div>
+      <div class="section-subtitle">7.1 Escolha Tecnológica: MongoDB Community Edition 7.0 (NoSQL)</div>
+      <p style="margin-bottom: 6px;">
+        O MongoDB foi escolhido como banco de dados primário do EstudeMy com base em justificativas técnicas de negócio:
+      </p>
+      <ul>
+        <li><strong>Fases e Lições Polimórficas:</strong> No RPG do EstudeMy, existem fases teóricas (textos, imagens e dicas) e fases de quiz (questões de múltipla escolha com 4 alternativas, código-fonte e justificativas). O modelo NoSQL em documentos BSON acomoda essas variações em uma única coleção (<code>fases</code>) sem necessidade de tabelas associativas complexas de SQL.</li>
+        <li><strong>Progresso Dinâmico do Aluno:</strong> O estado de cada usuário (vidas ❤️, moedas 🪙, experiência XP ✨, trilhas concluídas e respostas gravadas) é armazenado como subdocumentos aninhados, permitindo leituras e atualizações atômicas instantâneas.</li>
+        <li><strong>Desempenho e Agilidade Mobile:</strong> Consultas de ranking global e busca de trilhas ordenadas são processadas diretamente na memória via índices compostos.</li>
+      </ul>
+
+      <div class="section-subtitle">7.2 Topologia de Armazenamento e Rotinas de Backup</div>
+      <div class="grid-2">
+        <div class="card">
+          <h4>💾 Persistência em Bloco</h4>
+          <p>O diretório de dados <code>/data/db</code> do contêiner MongoDB é montado sobre um volume de bloco persistente (Block Volume de 100 GB). Isso assegura que reinicializações ou recriações do contêiner não causem nenhuma perda de dados.</p>
+        </div>
+        <div class="card">
+          <h4>🛡️ Rotinas de Backup & Disaster Recovery</h4>
+          <p>Backup lógico diário automatizado via <code>mongodump</code> com compactação gzip. Os arquivos <code>.gz</code> são sincronizados com o <strong>Object Storage Bucket</strong> com retenção de 7 dias. RPO estabelecido em 24h e RTO em 15 minutos.</p>
+        </div>
+      </div>
+
+      <div class="code-box">
+# Script automatizado de backup (Cron Job executado diariamente às 03:00 UTC):
+docker exec estudemy_mongo mongodump --db estudemy --gzip --archive=/tmp/backup_estudemy_$(date +%F).gz
+oci os object put -bn backup-estudemy --file /tmp/backup_estudemy_$(date +%F).gz
+      </div>
+    </div>
+
+    <div class="footer-page">
+      <span>EstudeMy • Planejamento e Análise do Ambiente de Nuvem (Entrega 1)</span>
+      <span>Página 3 de 5</span>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PÁGINA 4: FRONTEND/BACKEND, REDE/ACESSO & MONITORAMENTO                   -->
+  <!-- ========================================================================= -->
+  <div class="print-page">
+    <div>
+      <div class="header-inst">
+        <div class="inst-logos">
+          <div class="inst-badge">FATEC VOTORANTIM</div>
+          <div class="inst-titles">
+            <h1>Projeto Integrador V • DSM</h1>
+            <p>Disciplina-Satélite: Computação em Nuvem I • Prof. Me. Benir Falcão Pistille</p>
+          </div>
+        </div>
+        <div class="doc-meta">
+          <strong>Disponibilização, Rede & Observabilidade</strong><br>
+          Entrega 1 (20/10) | Versão 1.0
+        </div>
+      </div>
+
+      <div class="section-title">8. Estratégia de Disponibilização do Frontend e Backend</div>
+      <div class="grid-2" style="margin-bottom: 7px;">
+        <div class="card">
+          <h4>⚙️ Backend API (Node.js + Express + TypeScript)</h4>
+          <ul>
+            <li>Compilação multi-stage com Node 22 Alpine gerando artefatos JS em <code>/dist</code>.</li>
+            <li>Execução em contêiner na Subnet Privada na porta <code>5000</code>.</li>
+            <li>Comunicação exclusiva com o MongoDB na rede Docker interna.</li>
+            <li>Documentação interativa Swagger exposta em <code>/api-docs</code>.</li>
+            <li>Healthcheck ativo na rota raiz <code>GET /</code> para sondas do balanceador.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h4>📱 Frontend Mobile Web (Expo SPA / Nginx)</h4>
+          <ul>
+            <li>Exportação estática das rotas com <code>npx expo export -p web</code>.</li>
+            <li>Hospedagem em contêiner Nginx Alpine servindo na porta interna <code>8081</code>.</li>
+            <li>SPA Fallback: <code>try_files $uri $uri.html $uri/ /index.html;</code>.</li>
+            <li>Cache com cabeçalhos <code>immutable</code> para bundles JS, fontes e imagens.</li>
+            <li>Proxy reverso <code>/api/</code> apontando para a API (sem problemas de CORS).</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="section-title">9. Definição dos Mecanismos de Rede e Acesso</div>
+      <p style="margin-bottom: 5px;">
+        O perímetro de rede é protegido através de regras rígidas de <strong>Security Lists / Security Groups</strong>, garantindo que apenas as portas essenciais fiquem visíveis para o público externo:
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 12%;">Direção</th>
+            <th style="width: 12%;">Protocolo</th>
+            <th style="width: 14%;">Porta</th>
+            <th style="width: 26%;">Origem / Destino</th>
+            <th style="width: 36%;">Objetivo e Justificativa</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="badge badge-green">Entrada</span></td>
+            <td>TCP</td>
+            <td><code>443</code> (HTTPS)</td>
+            <td><code>0.0.0.0/0</code> (Internet)</td>
+            <td>Acesso público seguro à aplicação web e requisições do app móvel.</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-amber">Entrada</span></td>
+            <td>TCP</td>
+            <td><code>80</code> (HTTP)</td>
+            <td><code>0.0.0.0/0</code> (Internet)</td>
+            <td>Redirecionamento automático obrigatório para HTTPS (código HTTP 301).</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-blue">Entrada</span></td>
+            <td>TCP</td>
+            <td><code>22</code> (SSH)</td>
+            <td>IP do Administrador / VPN</td>
+            <td>Acesso administrativo exclusivo via chave criptográfica (sem login por senha).</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-blue">Interna</span></td>
+            <td>TCP</td>
+            <td><code>5000</code></td>
+            <td>Apenas Rede Docker</td>
+            <td>Comunicação entre Nginx Gateway e a API Backend (bloqueada externamente).</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-blue">Interna</span></td>
+            <td>TCP</td>
+            <td><code>27017</code></td>
+            <td>Apenas Contêiner Backend</td>
+            <td>Comunicação direta entre Mongoose e MongoDB (sem exposição pública).</td>
+          </tr>
+          <tr>
+            <td><span class="badge badge-green">Saída</span></td>
+            <td>TCP</td>
+            <td><code>443</code> / <code>80</code></td>
+            <td><code>0.0.0.0/0</code></td>
+            <td>Downloads de dependências, atualizações do SO e chamadas à API Gemini.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="section-title">10. Estratégia de Monitoramento e Observabilidade</div>
+      <p style="margin-bottom: 6px;">
+        A observabilidade é estruturada sob os <strong>Três Pilares da Engenharia de Confiabilidade</strong>:
+      </p>
+
+      <div class="grid-3">
+        <div class="card">
+          <h4>📊 1. Métricas (Prometheus + Grafana)</h4>
+          <p>
+            Coleta contínua de métricas de host (CPU, memória RAM, I/O de disco) via <strong>node_exporter</strong> e métricas de contêineres via <strong>cAdvisor</strong>. Painéis no Grafana alertam caso o uso de CPU exceda 80% por 5 min.
+          </p>
+        </div>
+        <div class="card">
+          <h4>📝 2. Logs Estruturados (Better Stack)</h4>
+          <p>
+            Logs gerados pelo Morgan/Winston no backend em formato padronizado JSON (timestamp, rota, método, status HTTP e duração). Ingestão no <strong>Better Stack Logs</strong> para auditoria e rastreamento de falhas.
+          </p>
+        </div>
+        <div class="card">
+          <h4>🚨 3. Uptime & Alarmes Automáticos</h4>
+          <p>
+            Sonda externa verificando o endpoint de saúde a cada 60s. Em caso de 3 falhas consecutivas ou tempo de resposta superior a 2500ms, notificações automáticas são disparadas para o canal da equipe no Discord/E-mail.
+          </p>
+        </div>
+      </div>
+
+      <div class="callout">
+        <strong>Conformidade com a Disciplina:</strong> Esta arquitetura atende integralmente ao requisito de demonstrar métricas de disponibilidade, logs centralizados e monitoramento de saúde do ambiente, conforme estipulado nos itens 10 e 13 das diretrizes de Computação em Nuvem.
+      </div>
+    </div>
+
+    <div class="footer-page">
+      <span>EstudeMy • Planejamento e Análise do Ambiente de Nuvem (Entrega 1)</span>
+      <span>Página 4 de 5</span>
+    </div>
+  </div>
+
+  <!-- ========================================================================= -->
+  <!-- PÁGINA 5: DEPLOY (CI/CD), CRONOGRAMA DE ALTERAÇÕES & REFERÊNCIAS          -->
+  <!-- ========================================================================= -->
+  <div class="print-page">
+    <div>
+      <div class="header-inst">
+        <div class="inst-logos">
+          <div class="inst-badge">FATEC VOTORANTIM</div>
+          <div class="inst-titles">
+            <h1>Projeto Integrador V • DSM</h1>
+            <p>Disciplina-Satélite: Computação em Nuvem I • Prof. Me. Benir Falcão Pistille</p>
+          </div>
+        </div>
+        <div class="doc-meta">
+          <strong>Deploy CI/CD, Cronograma & Referências</strong><br>
+          Entrega 1 (20/10) | Versão 1.0
+        </div>
+      </div>
+
+      <div class="section-title">11. Planejamento do Processo de Deploy (Pipeline CI/CD)</div>
+      <p style="margin-bottom: 6px;">
+        A automação de deploy utiliza o <strong>GitHub Actions</strong> integrado diretamente ao repositório Git do projeto, operando em um ciclo automatizado de 5 fases:
+      </p>
+
+      <div class="diagram-container">
+        <div class="diagram-title">Pipeline de Integração e Entrega Contínua (CI/CD)</div>
+        <div style="display: flex; gap: 5px; align-items: center; justify-content: space-between; font-size: 7.2pt;">
+          <div style="background: #e2e8f0; padding: 5px 8px; border-radius: 4px; text-align: center; flex: 1;">
+            <strong>1. Push Git</strong><br>Branch <code>main</code>
+          </div>
+          <div>➔</div>
+          <div style="background: #eff6ff; border: 1px solid #bfdbfe; padding: 5px 8px; border-radius: 4px; text-align: center; flex: 1.2;">
+            <strong>2. Validação CI</strong><br>Lint + Jest + TypeCheck
+          </div>
+          <div>➔</div>
+          <div style="background: #fef3c7; border: 1px solid #fde68a; padding: 5px 8px; border-radius: 4px; text-align: center; flex: 1.2;">
+            <strong>3. Build Docker</strong><br>Multi-stage Caching
+          </div>
+          <div>➔</div>
+          <div style="background: #ede9fe; border: 1px solid #ddd6fe; padding: 5px 8px; border-radius: 4px; text-align: center; flex: 1.2;">
+            <strong>4. Push Registry</strong><br>GHCR / Docker Hub
+          </div>
+          <div>➔</div>
+          <div style="background: #ecfdf5; border: 1px solid #a7f3d0; padding: 5px 8px; border-radius: 4px; text-align: center; flex: 1.2;">
+            <strong>5. Deploy CD</strong><br>SSH + Compose Up
+          </div>
+        </div>
+      </div>
+
+      <p style="font-size: 7.8pt; color: var(--slate-600); margin-bottom: 7px;">
+        <strong>Gestão de Segredos:</strong> Todas as credenciais de produção (<code>SSH_PRIVATE_KEY</code>, <code>JWT_SECRET</code>, <code>MONGO_URI</code>) residem exclusivamente no cofre criptografado do <strong>GitHub Actions Secrets</strong>, sem exposição em arquivos de configuração ou commits.
+      </p>
+
+      <div class="section-title">12. Planejamento das Alterações Necessárias (Cronograma até 17/11)</div>
+      <p style="margin-bottom: 6px;">
+        Para transformar o planejamento da <strong>Entrega 1 (20/10)</strong> no ambiente funcionando da <strong>Entrega 2 (17/11)</strong>, o seguinte cronograma de atividades foi definido:
+      </p>
+
+      <table>
+        <thead>
+          <tr>
+            <th style="width: 17%;">Período</th>
+            <th style="width: 43%;">Atividade / Meta Técnica</th>
+            <th style="width: 20%;">Responsável</th>
+            <th style="width: 20%;">Status / Entregável</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>07/10 a 14/10</strong></td>
+            <td>Criação da VCN, Subnets públicas/privadas, Internet Gateway e Security Lists na nuvem.</td>
+            <td>Equipe Infra/Cloud</td>
+            <td><span class="badge badge-green">Concluído</span> (Rede pronta)</td>
+          </tr>
+          <tr>
+            <td><strong>15/10 a 20/10</strong></td>
+            <td>Submissão do documento e relatório de planejamento (Entrega 1).</td>
+            <td>Toda a Equipe</td>
+            <td><span class="badge badge-blue">Em Validação</span> (Entrega 1)</td>
+          </tr>
+          <tr>
+            <td><strong>21/10 a 30/10</strong></td>
+            <td>Instalação do Docker na VM host, configuração de volumes persistentes e deploy do MongoDB.</td>
+            <td>Equipe Backend / DB</td>
+            <td><span class="badge badge-amber">Planejado</span> (Banco Ativo)</td>
+          </tr>
+          <tr>
+            <td><strong>31/10 a 08/11</strong></td>
+            <td>Deploy dos contêineres Backend e Mobile Web, Nginx com proxy reverso e SSL Let's Encrypt.</td>
+            <td>Equipe Mobile / Web</td>
+            <td><span class="badge badge-amber">Planejado</span> (App Online)</td>
+          </tr>
+          <tr>
+            <td><strong>09/11 a 14/11</strong></td>
+            <td>Ativação do pipeline CI/CD no GitHub Actions e dashboards do Prometheus/Grafana.</td>
+            <td>Equipe DevOps</td>
+            <td><span class="badge badge-amber">Planejado</span> (CI/CD Ativo)</td>
+          </tr>
+          <tr>
+            <td><strong>15/11 a 17/11</strong></td>
+            <td>Testes de carga, validação de resiliência e gravação de demonstração da Entrega 2.</td>
+            <td>Toda a Equipe</td>
+            <td><span class="badge badge-amber">Planejado</span> (Entrega Final)</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="section-title" style="margin-top: 8px;">13. Referências Bibliográficas (Normas ABNT)</div>
+      <div style="font-size: 7.2pt; color: var(--slate-600); line-height: 1.35;">
+        <p>[1] APACHE SOFTWARE FOUNDATION. <strong>Apache CloudStack Documentation (Release 4.22 LTS)</strong>. Disponível em: &lt;https://docs.cloudstack.apache.org/&gt;. Acesso em: out. 2026.</p>
+        <p>[2] ORACLE CORPORATION. <strong>Oracle Cloud Infrastructure Documentation — Compute & Networking Always Free</strong>. Disponível em: &lt;https://docs.oracle.com/en-us/iaas/&gt;. Acesso em: out. 2026.</p>
+        <p>[3] AMAZON WEB SERVICES. <strong>AWS Well-Architected Framework: Reliability and Security Pillars</strong>. Seattle: AWS, 2025. Disponível em: &lt;https://aws.amazon.com/architecture/well-architected/&gt;. Acesso em: out. 2026.</p>
+        <p>[4] MONGODB INC. <strong>MongoDB Production Notes and Security Hardening Guide</strong>. 2026. Disponível em: &lt;https://www.mongodb.com/docs/manual/administration/production-notes/&gt;. Acesso em: out. 2026.</p>
+        <p>[5] FATEC VOTORANTIM. <strong>Manual de Diretrizes do Projeto Interdisciplinar V — DSM</strong>. Votorantim: Centro Paula Souza, 2026.</p>
+      </div>
+    </div>
+
+    <div class="footer-page">
+      <span>EstudeMy • Planejamento e Análise do Ambiente de Nuvem (Entrega 1)</span>
+      <span>Página 5 de 5</span>
+    </div>
+  </div>
+
+</body>
+</html>

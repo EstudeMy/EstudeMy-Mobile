@@ -1,0 +1,26 @@
+# ==============================================================================
+# Docker Compose - Modo Desenvolvimento (Live Reload / Metro)
+# ==============================================================================
+# Executa o serviço mobile utilizando o Metro Bundler com suporte a hot reload.
+#
+# Uso:
+#   docker compose -f docker-compose.yml -f docker-compose.dev.yml up --build
+# ==============================================================================
+
+services:
+  mobile:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      target: dev
+    container_name: estudemy_mobile_dev
+    ports:
+      - "8081:8081"
+    environment:
+      - NODE_ENV=development
+      - EXPO_PUBLIC_API_URL=http://localhost:5000
+    volumes:
+      - ./src:/app/src
+      - ./assets:/app/assets
+      - ./app.json:/app/app.json
+    command: ["npx", "expo", "start", "--web", "--host", "0.0.0.0"]
