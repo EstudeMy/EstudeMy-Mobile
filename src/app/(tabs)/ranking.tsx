@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     gap: 12,
-    paddingBottom: 40,
+    paddingBottom: 60,
   },
   rowCard: {
     flexDirection: 'row',

@@ -489,7 +489,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
   },
   scrollQuiz: {
-    paddingVertical: 16,
+    paddingTop: 16,
+    paddingBottom: 48,
     gap: 16,
   },
   questionCard: {

@@ -302,7 +302,7 @@ export default function HomeScreen() {
       )}
 
       {/* Margem inferior extra */}
-      <View style={{ height: 40 }} />
+      <View style={{ height: 60 }} />
     </ScrollView>
   );
 }
