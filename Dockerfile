@@ -34,7 +34,7 @@ COPY nginx.conf /etc/nginx/conf.d/default.conf
 # Copia os artefatos compilados do estágio builder
 COPY --from=builder /app/dist ./
 
-EXPOSE 80
+EXPOSE 80 443
 
 CMD ["nginx", "-g", "daemon off;"]
 

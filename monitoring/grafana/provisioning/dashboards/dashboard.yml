@@ -1,0 +1,15 @@
+# ==============================================================================
+# Grafana Dashboard Provider Configuration - EstudeMy
+# ==============================================================================
+
+apiVersion: 1
+
+providers:
+  - name: 'EstudeMy Dashboards'
+    orgId: 1
+    folder: 'EstudeMy Cloud'
+    type: file
+    disableDeletion: false
+    editable: true
+    options:
+      path: /etc/grafana/provisioning/dashboards

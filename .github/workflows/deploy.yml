@@ -1,0 +1,134 @@
+name: EstudeMy Cloud CI/CD Pipeline
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+
+jobs:
+  # ============================================================================
+  # 1. Validação Estática (Lint, Typecheck e Build da SPA Web)
+  # ============================================================================
+  validate:
+    name: 🔍 Lint, Typecheck & Testes
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Instalar Dependências
+        run: npm ci
+
+      - name: Verificação de Linting
+        run: npm run lint
+
+      - name: Verificação de Tipos TypeScript (TypeCheck)
+        run: npx tsc --noEmit
+
+      - name: Validação do Build SPA Expo Web
+        run: npx expo export -p web
+
+  # ============================================================================
+  # 2. Build Multi-stage & Publicação de Imagens Docker no GHCR (Seção 10)
+  # ============================================================================
+  build-and-push:
+    name: 🐳 Build Docker Multi-stage & GHCR Push
+    needs: validate
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login no GitHub Container Registry (GHCR)
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Extrair Metadados e Tags Docker
+        id: meta
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=raw,value=latest
+            type=sha,format=short
+
+      - name: Build e Push da Imagem Mobile Nginx
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          target: runner
+          push: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          build-args: |
+            EXPO_PUBLIC_API_URL=https://api.estudemy.site
+
+  # ============================================================================
+  # 3. Deploy Remoto na Nuvem OCI Free Tier / AWS via SSH (Seção 10)
+  # ============================================================================
+  deploy:
+    name: 🚀 Deploy Remoto na Nuvem (OCI / AWS)
+    needs: build-and-push
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Executar Deploy no Servidor Host via SSH
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.CLOUD_SERVER_HOST }}
+          username: ${{ secrets.CLOUD_SERVER_USER || 'ubuntu' }}
+          key: ${{ secrets.CLOUD_SSH_PRIVATE_KEY }}
+          port: ${{ secrets.CLOUD_SSH_PORT || 22 }}
+          script_stop: true
+          script: |
+            echo "Conectado ao servidor host em nuvem: $(hostname)"
+            cd /opt/estudemy
+
+            # Login no registry para baixar nova imagem
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+            # Atualiza imagens e recria contêineres sem downtime perceptível
+            echo "Puxando versão mais recente dos contêineres..."
+            docker compose -f docker-compose.prod.yml pull mobile
+
+            echo "Atualizando stack de produção..."
+            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+
+            # Healthcheck automatizado de confirmação pós-deploy
+            echo "Aguardando inicialização para verificação de saúde..."
+            sleep 15
+            if curl -s -f http://127.0.0.1:80/ > /dev/null; then
+              echo "✅ Deploy concluído com sucesso! Serviços operacionais e saudáveis."
+            else
+              echo "❌ Falha no healthcheck pós-deploy! Iniciando investigação..."
+              docker compose -f docker-compose.prod.yml logs --tail=50
+              exit 1
+            fi

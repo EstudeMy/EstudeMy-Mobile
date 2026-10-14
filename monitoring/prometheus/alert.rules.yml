@@ -1,0 +1,40 @@
+# ==============================================================================
+# Prometheus Alerting Rules - EstudeMy Cloud Infrastructure
+# Alerta automático para CPU > 80% e Queda de Serviços (Seção 9)
+# ==============================================================================
+
+groups:
+  - name: estudemy_alerts
+    rules:
+      # Alerta 1: CPU acima de 80% por mais de 2 minutos
+      - alert: HighCpuUsage
+        expr: (sum(rate(container_cpu_usage_seconds_total{name=~"estudemy.*"}[1m])) by (name) / sum(machine_cpu_cores) by (name)) * 100 > 80
+        for: 2m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "Uso elevado de CPU no contêiner {{ $labels.name }}"
+          description: "O contêiner {{ $labels.name }} está com consumo de CPU acima de 80% (Valor atual: {{ $value }}%)."
+
+      # Alerta 2: Memória acima de 85%
+      - alert: HighMemoryUsage
+        expr: (container_memory_usage_bytes{name=~"estudemy.*"} / container_spec_memory_limit_bytes{name=~"estudemy.*"}) * 100 > 85
+        for: 2m
+        labels:
+          severity: warning
+          team: devops
+        annotations:
+          summary: "Uso elevado de memória no contêiner {{ $labels.name }}"
+          description: "O contêiner {{ $labels.name }} está utilizando mais de 85% do limite de RAM."
+
+      # Alerta 3: Queda de contêiner da stack EstudeMy
+      - alert: ServiceDown
+        expr: up == 0
+        for: 1m
+        labels:
+          severity: critical
+          team: devops
+        annotations:
+          summary: "Serviço {{ $labels.job }} fora do ar"
+          description: "O endpoint do serviço {{ $labels.job }} parou de responder há mais de 1 minuto."

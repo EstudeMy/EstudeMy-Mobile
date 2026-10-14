@@ -1,0 +1,38 @@
+# ==============================================================================
+# Prometheus Configuration - EstudeMy Cloud Monitoring
+# Coleta métricas de infraestrutura, contêineres e aplicação (Seção 9)
+# ==============================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  scrape_timeout: 10s
+
+# Regras de Alerta (CPU > 80% conforme especificado no documento de nuvem)
+rule_files:
+  - "alert.rules.yml"
+
+scrape_configs:
+  # 1. Métricas do próprio Prometheus
+  - job_name: "prometheus"
+    static_configs:
+      - targets: ["localhost:9090"]
+
+  # 2. Métricas de Contêineres via cAdvisor (Uso de CPU, RAM, I/O e Rede por contêiner)
+  - job_name: "cadvisor"
+    static_configs:
+      - targets: ["cadvisor:8080"]
+
+  # 3. Métricas da API Backend (Node.js / Express 5)
+  - job_name: "estudemy_backend"
+    metrics_path: "/metrics"
+    scrape_interval: 10s
+    static_configs:
+      - targets: ["backend:5000"]
+
+  # 4. Métricas do Servidor Nginx (Mobile Web SPA)
+  - job_name: "estudemy_nginx"
+    metrics_path: "/stub_status"
+    scrape_interval: 15s
+    static_configs:
+      - targets: ["mobile:80"]
