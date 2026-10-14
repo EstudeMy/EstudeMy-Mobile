@@ -748,7 +748,7 @@
           <tr>
             <td class="vuln-name">SQL Injection</td>
             <td><span class="status-pill status-mitigado">Mitigado</span></td>
-            <td class="action-text">ORM, Prepared Statements e tipagem estrita via DTO em 100% das rotas.</td>
+            <td class="action-text">ORM, Prepared Statements, validação de formato seguro (isValidId) e sanitização de query parameters.</td>
             <td style="font-weight: 600;">Dev</td>
             <td class="code-cell">RC01</td>
             <td class="desc-text">Injeção SQL permitindo extração, alteração ou deleção de dados cadastrais/progresso.</td>
@@ -759,123 +759,123 @@
           </tr>
           <tr>
             <td class="vuln-name">Cross-Site Scripting (XSS)</td>
-            <td><span class="status-pill status-em-mitigacao">Em Mitigação</span></td>
-            <td class="action-text">Sanitização de dados de entrada, encoding nas saídas e política CSP ativa.</td>
+            <td><span class="status-pill status-mitigado">Mitigado</span></td>
+            <td class="action-text">Sanitização de inputs via sanitizeInput(), encode de entidades HTML e política CSP estrita no Nginx.</td>
             <td style="font-weight: 600;">Dev</td>
             <td class="code-cell">RC02</td>
             <td class="desc-text">Scripts maliciosos em campos livres executando no cliente para roubo de sessão.</td>
             <td class="center-cell">5</td>
+            <td class="center-cell">1</td>
             <td class="center-cell">5</td>
-            <td class="center-cell">25</td>
-            <td class="center-cell"><span class="level-indicator level-med">Médio</span></td>
+            <td class="center-cell"><span class="level-indicator level-low">Baixo</span></td>
           </tr>
           <tr>
             <td class="vuln-name">Session Hijacking</td>
             <td><span class="status-pill status-mitigado">Mitigado</span></td>
-            <td class="action-text">JWT de curta duração + Refresh Tokens com rotação, MFA e expo-secure-store.</td>
+            <td class="action-text">Verificação proativa de expiração de JWT (isJwtExpired), suporte a Refresh Token e expo-secure-store.</td>
             <td style="font-weight: 600;">Dev</td>
             <td class="code-cell">RC03</td>
             <td class="desc-text">Interceptação de token JWT concedendo controle total sobre a conta sem a senha.</td>
             <td class="center-cell">8</td>
-            <td class="center-cell">2</td>
-            <td class="center-cell">16</td>
-            <td class="center-cell"><span class="level-indicator level-med">Médio</span></td>
+            <td class="center-cell">1</td>
+            <td class="center-cell">8</td>
+            <td class="center-cell"><span class="level-indicator level-low">Baixo</span></td>
           </tr>
           <tr>
             <td class="vuln-name">Brute Force & Credential Stuffing</td>
-            <td><span class="status-pill status-em-mitigacao">Em Mitigação</span></td>
-            <td class="action-text">Rate Limiting progressivo por IP/conta, CAPTCHA adaptativo e hash Bcrypt/Argon2.</td>
+            <td><span class="status-pill status-mitigado">Mitigado</span></td>
+            <td class="action-text">Rate Limiting no Nginx (auth_limit 5r/m), cooldown progressivo de 60s no app e política de senhas fortes.</td>
             <td style="font-weight: 600;">Dev / Infra</td>
             <td class="code-cell">RC04</td>
             <td class="desc-text">Testes em massa de senhas comuns/vazadas na rota de login, causando invasões e sobrecarga.</td>
             <td class="center-cell">5</td>
-            <td class="center-cell">8</td>
-            <td class="center-cell">40</td>
-            <td class="center-cell"><span class="level-indicator level-high">Alto</span></td>
-          </tr>
-          <tr>
-            <td class="vuln-name">Phishing e Eng. Social</td>
-            <td><span class="status-pill status-pendente">Pendente</span></td>
-            <td class="action-text">Treinamento corporativo, SPF/DKIM/DMARC no domínio e canal de denúncia.</td>
-            <td style="font-weight: 600;">SecOps / RH</td>
-            <td class="code-cell">RC05</td>
-            <td class="desc-text">Indução de alunos, professores ou admins a entregar credenciais por e-mails clonados.</td>
-            <td class="center-cell">8</td>
-            <td class="center-cell">5</td>
-            <td class="center-cell">40</td>
-            <td class="center-cell"><span class="level-indicator level-high">Alto</span></td>
-          </tr>
-          <tr>
-            <td class="vuln-name">IDOR (Insecure Direct Object Ref.)</td>
-            <td><span class="status-pill status-pendente">Pendente</span></td>
-            <td class="action-text">Validação de ownership (autorização a nível de objeto) no backend e adoção de UUIDs.</td>
-            <td style="font-weight: 600;">Dev</td>
-            <td class="code-cell">RC06</td>
-            <td class="desc-text">Acesso ou edição indevida de dados de terceiros alterando IDs na URL sem checagem de posse.</td>
-            <td class="center-cell">8</td>
-            <td class="center-cell">8</td>
-            <td class="center-cell">64</td>
-            <td class="center-cell"><span class="level-indicator level-high">Alto</span></td>
-          </tr>
-          <tr>
-            <td class="vuln-name">Privilege Escalation</td>
-            <td><span class="status-pill status-pendente">Pendente</span></td>
-            <td class="action-text">RBAC rigoroso no backend, validação por middleware e bloqueio de mass assignment.</td>
-            <td style="font-weight: 600;">Dev</td>
-            <td class="code-cell">RC07</td>
-            <td class="desc-text">Aluno alterando perfil para obter privilégios de Professor ou Administrador do sistema.</td>
-            <td class="center-cell">10</td>
             <td class="center-cell">2</td>
-            <td class="center-cell">20</td>
-            <td class="center-cell"><span class="level-indicator level-med">Médio</span></td>
-          </tr>
-          <tr>
-            <td class="vuln-name">DDoS (Denial of Service)</td>
-            <td><span class="status-pill status-em-mitigacao">Em Mitigação</span></td>
-            <td class="action-text">WAF com mitigação anti-DDoS (Cloudflare), rate limiting e autoscaling de containers.</td>
-            <td style="font-weight: 600;">Infra</td>
-            <td class="code-cell">RC08</td>
-            <td class="desc-text">Inundação de tráfego tornando os serviços indisponíveis em provas e horários de pico.</td>
-            <td class="center-cell">5</td>
-            <td class="center-cell">5</td>
-            <td class="center-cell">25</td>
-            <td class="center-cell"><span class="level-indicator level-med">Médio</span></td>
-          </tr>
-          <tr>
-            <td class="vuln-name">Race Condition</td>
-            <td><span class="status-pill status-em-mitigacao">Em Mitigação</span></td>
-            <td class="action-text">Transações ACID com lock pessimista (FOR UPDATE) e restrições de unicidade (UNIQUE).</td>
-            <td style="font-weight: 600;">Dev</td>
-            <td class="code-cell">RC09</td>
-            <td class="desc-text">Requisições paralelas simultâneas duplicando moedas, vidas ou recompensas de gamificação.</td>
-            <td class="center-cell">2</td>
-            <td class="center-cell">5</td>
             <td class="center-cell">10</td>
             <td class="center-cell"><span class="level-indicator level-low">Baixo</span></td>
           </tr>
           <tr>
+            <td class="vuln-name">Phishing e Eng. Social</td>
+            <td><span class="status-pill status-mitigado">Mitigado</span></td>
+            <td class="action-text">Validação de domínios seguros (isSafeUrl), alertas anti-phishing nas telas e canal oficial de denúncia.</td>
+            <td style="font-weight: 600;">Dev / SecOps</td>
+            <td class="code-cell">RC05</td>
+            <td class="desc-text">Indução de alunos, professores ou admins a entregar credenciais por e-mails clonados.</td>
+            <td class="center-cell">8</td>
+            <td class="center-cell">1</td>
+            <td class="center-cell">8</td>
+            <td class="center-cell"><span class="level-indicator level-low">Baixo</span></td>
+          </tr>
+          <tr>
+            <td class="vuln-name">IDOR (Insecure Direct Object Ref.)</td>
+            <td><span class="status-pill status-mitigado">Mitigado</span></td>
+            <td class="action-text">Validação de posse (isResourceOwner), tipagem estrita de identificadores (isValidId) e proteção de rotas privadas.</td>
+            <td style="font-weight: 600;">Dev</td>
+            <td class="code-cell">RC06</td>
+            <td class="desc-text">Acesso ou edição indevida de dados de terceiros alterando IDs na URL sem checagem de posse.</td>
+            <td class="center-cell">8</td>
+            <td class="center-cell">1</td>
+            <td class="center-cell">8</td>
+            <td class="center-cell"><span class="level-indicator level-low">Baixo</span></td>
+          </tr>
+          <tr>
+            <td class="vuln-name">Privilege Escalation</td>
+            <td><span class="status-pill status-mitigado">Mitigado</span></td>
+            <td class="action-text">RBAC via componente RoleGuard / useRoleCheck, whitelist de papéis e sanitização contra Mass Assignment.</td>
+            <td style="font-weight: 600;">Dev</td>
+            <td class="code-cell">RC07</td>
+            <td class="desc-text">Aluno alterando perfil para obter privilégios de Professor ou Administrador do sistema.</td>
+            <td class="center-cell">10</td>
+            <td class="center-cell">1</td>
+            <td class="center-cell">10</td>
+            <td class="center-cell"><span class="level-indicator level-low">Baixo</span></td>
+          </tr>
+          <tr>
+            <td class="vuln-name">DDoS (Denial of Service)</td>
+            <td><span class="status-pill status-mitigado">Mitigado</span></td>
+            <td class="action-text">Limitação de taxa e conexões no Nginx (general_limit 30r/s, conn_limit 30), anti-Slowloris e tratamento 429 no cliente.</td>
+            <td style="font-weight: 600;">Infra / Dev</td>
+            <td class="code-cell">RC08</td>
+            <td class="desc-text">Inundação de tráfego tornando os serviços indisponíveis em provas e horários de pico.</td>
+            <td class="center-cell">5</td>
+            <td class="center-cell">2</td>
+            <td class="center-cell">10</td>
+            <td class="center-cell"><span class="level-indicator level-low">Baixo</span></td>
+          </tr>
+          <tr>
+            <td class="vuln-name">Race Condition</td>
+            <td><span class="status-pill status-mitigado">Mitigado</span></td>
+            <td class="action-text">Trava atômica exclusiva (asyncLock.runExclusive) nas finalizações de fase e cabeçalho Idempotency-Key.</td>
+            <td style="font-weight: 600;">Dev</td>
+            <td class="code-cell">RC09</td>
+            <td class="desc-text">Requisições paralelas simultâneas duplicando moedas, vidas ou recompensas de gamificação.</td>
+            <td class="center-cell">2</td>
+            <td class="center-cell">1</td>
+            <td class="center-cell">2</td>
+            <td class="center-cell"><span class="level-indicator level-low">Baixo</span></td>
+          </tr>
+          <tr>
             <td class="vuln-name">Data Exposure</td>
-            <td><span class="status-pill status-pendente">Pendente</span></td>
-            <td class="action-text">TLS 1.3, filtragem de DTOs nas respostas e supressão de stack traces em produção.</td>
+            <td><span class="status-pill status-mitigado">Mitigado</span></td>
+            <td class="action-text">Módulo secureLogger com mascaramento de PII e tokens, supressão de stack traces em produção e HSTS.</td>
             <td style="font-weight: 600;">Dev / SecOps</td>
             <td class="code-cell">RC10</td>
             <td class="desc-text">Vazamento acidental de dados pessoais (PII) em logs de erro ou payloads da API (LGPD).</td>
             <td class="center-cell">8</td>
-            <td class="center-cell">5</td>
-            <td class="center-cell">40</td>
-            <td class="center-cell"><span class="level-indicator level-high">Alto</span></td>
+            <td class="center-cell">1</td>
+            <td class="center-cell">8</td>
+            <td class="center-cell"><span class="level-indicator level-low">Baixo</span></td>
           </tr>
           <tr>
             <td class="vuln-name">Directory Traversal</td>
-            <td><span class="status-pill status-pendente">Pendente</span></td>
-            <td class="action-text">Sanitização estrita com path.basename() e armazenamento em bucket seguro na nuvem (S3).</td>
-            <td style="font-weight: 600;">Dev</td>
+            <td><span class="status-pill status-mitigado">Mitigado</span></td>
+            <td class="action-text">Bloqueio Nginx para ../ e %2e%2e, bloqueio de arquivos .env/.git e sanitização com sanitizeFilePath/FileName.</td>
+            <td style="font-weight: 600;">Dev / Infra</td>
             <td class="code-cell">RC11</td>
             <td class="desc-text">Manipulação de caminhos (../../) para leitura não autorizada de arquivos .env ou código-fonte.</td>
             <td class="center-cell">10</td>
-            <td class="center-cell">2</td>
-            <td class="center-cell">20</td>
-            <td class="center-cell"><span class="level-indicator level-med">Médio</span></td>
+            <td class="center-cell">1</td>
+            <td class="center-cell">10</td>
+            <td class="center-cell"><span class="level-indicator level-low">Baixo</span></td>
           </tr>
         </tbody>
       </table>

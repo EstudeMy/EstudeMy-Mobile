@@ -5,12 +5,13 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme, ThemePreference } from '../contexts/ThemeContext';
-import { ArrowLeft, LogOut, Globe, Shield, Sun, Moon, Smartphone } from 'lucide-react-native';
+import { ArrowLeft, LogOut, Globe, Shield, Sun, Moon, Smartphone, ShieldCheck, AlertTriangle } from 'lucide-react-native';
 
 const LANGUAGES = [
   { code: 'pt-BR', label: 'Português (Brasil)', flag: '🇧🇷' },
@@ -128,10 +129,10 @@ export default function ConfiguracoesScreen() {
         </View>
       </View>
 
-      {/* Seção: Informações Gerais */}
+      {/* Seção: Segurança & Conformidade LGPD (RC05 Anti-Phishing & RC10 LGPD) */}
       <View style={styles.section}>
         <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          <Shield size={18} color={colors.textMuted} style={styles.sectionIcon} /> {t('settings.securityAccount') || 'Segurança & Conta'}
+          <ShieldCheck size={18} color="#10B981" style={styles.sectionIcon} /> {t('settings.securityAccount') || 'Segurança & Conta'}
         </Text>
         <View style={styles.optionsList}>
           <View style={[styles.infoRow, { backgroundColor: colors.card }]}>
@@ -146,6 +147,52 @@ export default function ConfiguracoesScreen() {
               {user?.isVerified ? (t('profilePage.statusVerified') || 'VERIFICADO') : (t('profilePage.statusActive') || 'ATIVO')}
             </Text>
           </View>
+          <View style={[styles.infoRow, { backgroundColor: colors.card }]}>
+            <Text style={[styles.infoKey, { color: colors.textMuted }]}>Protocolo de Criptografia:</Text>
+            <Text style={[styles.infoValue, { color: '#3B82F6', fontWeight: '800' }]}>
+              TLS 1.3 / AES-256 (Ativo)
+            </Text>
+          </View>
+
+          {/* Botão Canal de Denúncia Antiphishing (RC05) */}
+          <TouchableOpacity
+            style={[styles.optionRow, { backgroundColor: colors.card, borderColor: '#F59E0B' }]}
+            onPress={() => {
+              Alert.alert(
+                'Canal de Segurança & Denúncia',
+                '🛡️ Diretrizes de Proteção EstudeMy:\n\n1. Nosso domínio oficial é estudemy.com / onrender.com.\n2. Nunca pedimos sua senha por e-mail ou mensagens externas.\n3. Suspeita de e-mail falso ou golpe? Comunique imediatamente nossa equipe em seguranca@estudemy.com.',
+                [{ text: 'Entendido', style: 'default' }]
+              );
+            }}
+            activeOpacity={0.8}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <AlertTriangle size={18} color="#F59E0B" />
+              <Text style={[styles.optionLabel, { color: colors.text }]}>
+                Canal Anti-Phishing & Denúncia
+              </Text>
+            </View>
+          </TouchableOpacity>
+
+          {/* Termos & Privacidade LGPD (RC10) */}
+          <TouchableOpacity
+            style={[styles.optionRow, { backgroundColor: colors.card }]}
+            onPress={() => {
+              Alert.alert(
+                'Privacidade e Proteção de Dados (LGPD)',
+                'Seus dados pessoais (PII) estão protegidos conforme a Lei Geral de Proteção de Dados (Lei nº 13.709/2018). As senhas são protegidas com algoritmos de derivação forte (Bcrypt) com salt individual, e dados de sessão são cifrados no SecureStore.',
+                [{ text: 'OK', style: 'default' }]
+              );
+            }}
+            activeOpacity={0.8}
+          >
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+              <Shield size={18} color="#10B981" />
+              <Text style={[styles.optionLabel, { color: colors.text }]}>
+                Termos de Privacidade & LGPD
+              </Text>
+            </View>
+          </TouchableOpacity>
         </View>
       </View>
 

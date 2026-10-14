@@ -16,6 +16,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { FASE_BACKGROUNDS } from '../../constants/assets';
 import { ArrowLeft, Check, X, ShieldAlert, Sparkles, Heart } from 'lucide-react-native';
+import asyncLock from '../../utils/asyncLock';
+import logger from '../../utils/logger';
 
 
 const screenWidth = Dimensions.get('window').width;
@@ -197,24 +199,28 @@ export default function GameScreen() {
   };
 
   const handleFinishPhase = async () => {
-    if (!faseId) return;
-    setSavingProgress(true);
-    try {
-      await concluirFase({
-        faseId: faseId,
-        pontuacao: acertos,
-        totalPerguntas: totalQuestions,
-        acertos: acertos,
-        erros: erros,
-      });
-      await refreshUser(); // Atualiza XP do usuário
-      router.back();
-    } catch (e) {
-      console.error('Erro ao salvar progresso:', e);
-      router.back(); // Volta de qualquer forma para não travar
-    } finally {
-      setSavingProgress(false);
-    }
+    if (!faseId || savingProgress) return;
+
+    // RC09: Prevenção de Race Condition usando trava atômica no cliente
+    await asyncLock.runExclusive(`finish_phase_${faseId}`, async () => {
+      setSavingProgress(true);
+      try {
+        await concluirFase({
+          faseId: String(faseId),
+          pontuacao: acertos,
+          totalPerguntas: totalQuestions,
+          acertos: acertos,
+          erros: erros,
+        });
+        await refreshUser(); // Atualiza XP do usuário atomicamente
+        router.back();
+      } catch (e) {
+        logger.error('Erro ao salvar progresso');
+        router.back(); // Volta de qualquer forma para não travar
+      } finally {
+        setSavingProgress(false);
+      }
+    });
   };
 
   // Determinar asset do jogador e inimigo

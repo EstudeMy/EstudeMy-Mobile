@@ -15,6 +15,8 @@ import { getCharacterImage } from '../constants/assets';
 import api from '../services/api';
 import { ArrowLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import logger from '../utils/logger';
+import { sanitizeInput } from '../utils/security';
 
 const CHARACTERS = ['Samurai', 'Mago', 'Guerreiro'];
 
@@ -27,15 +29,16 @@ export default function PerfilScreen() {
   const [loadingChar, setLoadingChar] = useState<string | null>(null);
 
   const handleUpdateCharacter = async (charName: string) => {
-    if (user?.personagem === charName) return;
-    setLoadingChar(charName);
+    const cleanCharName = sanitizeInput(charName);
+    if (user?.personagem === cleanCharName || !cleanCharName) return;
+    setLoadingChar(cleanCharName);
     try {
       await api.put('/api/users/atualizar-personagem', {
-        personagem: charName,
+        personagem: cleanCharName,
       });
       await refreshUser();
     } catch (e) {
-      console.error('Erro ao atualizar personagem:', e);
+      logger.error('Erro ao atualizar personagem:', e);
     } finally {
       setLoadingChar(null);
     }

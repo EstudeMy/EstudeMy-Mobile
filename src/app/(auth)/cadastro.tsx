@@ -17,6 +17,8 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getCharacterImage, BACKGROUND_IMAGES } from '../../constants/assets';
 import api from '../../services/api';
 import { ArrowLeft } from 'lucide-react-native';
+import { sanitizeInput, validatePasswordStrength } from '../../utils/security';
+import logger from '../../utils/logger';
 
 const CHARACTERS_LIST = [
   { id: 'Samurai', name: 'Samurai', description: 'Guerreiro de honra com ataques rápidos de espada.' },
@@ -53,12 +55,27 @@ export default function CadastroScreen() {
   ];
 
   const handleCadastro = async () => {
-    if (!nome || !username || !email || !senha || !dataNascimento) {
+    // RC02: Sanitização de entradas do usuário
+    const cleanNome = sanitizeInput(nome).trim();
+    const cleanUsername = sanitizeInput(username).trim().toLowerCase();
+    const cleanEmail = sanitizeInput(email).trim().toLowerCase();
+
+    if (!cleanNome || !cleanUsername || !cleanEmail || !senha || !dataNascimento) {
       setErrorMsg('Por favor, preencha todos os campos obrigatórios.');
       return;
     }
 
-    if (tipoUsuario === 'PROFESSOR' && (!registroProfissional || !titulacao)) {
+    // RC04: Validação estrita de política de senhas fortes
+    const passwordCheck = validatePasswordStrength(senha);
+    if (!passwordCheck.isValid) {
+      setErrorMsg(passwordCheck.feedback[0] || 'Senha fraca. Utilize no mínimo 8 caracteres com maiúsculas, minúsculas e números.');
+      return;
+    }
+
+    // RC07: Whitelist estrita de tipoUsuario para prevenir Privilege Escalation
+    const safeTipoUsuario: 'ALUNO' | 'PROFESSOR' = tipoUsuario === 'PROFESSOR' ? 'PROFESSOR' : 'ALUNO';
+
+    if (safeTipoUsuario === 'PROFESSOR' && (!registroProfissional || !titulacao)) {
       setErrorMsg('Por favor, preencha seu Registro Profissional e Titulação.');
       return;
     }
@@ -77,22 +94,22 @@ export default function CadastroScreen() {
     try {
       // 1. Registrar o usuário com o personagem escolhido
       await api.post('/api/auth/register', {
-        nome: nome.trim(),
-        email: email.trim(),
+        nome: cleanNome,
+        email: cleanEmail,
         senha: senha,
-        username: username.trim().toLowerCase(),
+        username: cleanUsername,
         dataNascimento: formattedDate,
-        tipoUsuario: tipoUsuario,
+        tipoUsuario: safeTipoUsuario,
         personagem: selectedChar,
         aceiteTermos: true,
-        registroProfissional: tipoUsuario === 'PROFESSOR' ? registroProfissional.trim() : undefined,
-        titulacao: tipoUsuario === 'PROFESSOR' ? titulacao : undefined,
+        registroProfissional: safeTipoUsuario === 'PROFESSOR' ? sanitizeInput(registroProfissional).trim() : undefined,
+        titulacao: safeTipoUsuario === 'PROFESSOR' ? sanitizeInput(titulacao) : undefined,
       });
 
       // 2. Realizar login automático logo em seguida
       const loginRes = await api.post('/api/auth/login', {
-        email: email.trim(),
-        identifier: email.trim(),
+        email: cleanEmail,
+        identifier: cleanEmail,
         senha: senha,
       });
 
@@ -107,7 +124,7 @@ export default function CadastroScreen() {
           headers: { Authorization: `Bearer ${token}` }
         });
       } catch (charError) {
-        console.warn('Personagem já atribuído no cadastro:', charError);
+        logger.warn('Personagem já atribuído no cadastro');
       }
 
       // 4. Logar a sessão localmente
@@ -115,7 +132,7 @@ export default function CadastroScreen() {
       router.replace('/(tabs)/home');
 
     } catch (error: any) {
-      console.error('Erro no cadastro:', error);
+      logger.error('Erro no cadastro');
       const msg = error.response?.data?.message || 'Erro ao realizar cadastro. Tente outro e-mail ou usuário.';
       setErrorMsg(msg);
     } finally {

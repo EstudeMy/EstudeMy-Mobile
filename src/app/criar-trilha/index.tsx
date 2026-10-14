@@ -15,6 +15,9 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { criarTrilhaManual } from '../../services/trilhaService';
 import { FASE_BACKGROUNDS } from '../../constants/assets';
 import { ArrowLeft, BookOpen, PlusCircle, ShieldAlert } from 'lucide-react-native';
+import { sanitizeInput } from '../../utils/security';
+import asyncLock from '../../utils/asyncLock';
+import logger from '../../utils/logger';
 
 const MATERIAS = [
   'Matemática',
@@ -80,39 +83,44 @@ export default function CriarTrilhaScreen() {
   }
 
   const handleCriarTrilha = async () => {
-    if (!titulo.trim() || !descricao.trim()) {
+    const cleanTitulo = sanitizeInput(titulo).trim();
+    const cleanDescricao = sanitizeInput(descricao).trim();
+
+    if (!cleanTitulo || !cleanDescricao) {
       setErrorMsg('Título e descrição são obrigatórios.');
       return;
     }
 
-    setLoading(true);
-    setErrorMsg(null);
+    await asyncLock.runExclusive('criar_trilha_manual', async () => {
+      setLoading(true);
+      setErrorMsg(null);
 
-    try {
-      const novaTrilha = await criarTrilhaManual({
-        titulo: titulo.trim(),
-        descricao: descricao.trim(),
-        materia,
-        dificuldade,
-        disponibilidade,
-        pagamento,
-        faseSelecionada,
-        imagem: cenarioPath,
-        idioma,
-      });
+      try {
+        const novaTrilha = await criarTrilhaManual({
+          titulo: cleanTitulo,
+          descricao: cleanDescricao,
+          materia: sanitizeInput(materia),
+          dificuldade,
+          disponibilidade,
+          pagamento,
+          faseSelecionada,
+          imagem: cenarioPath,
+          idioma,
+        });
 
-      if (novaTrilha && novaTrilha._id) {
-        router.replace(`/trilha/${novaTrilha._id}`);
-      } else {
-        router.replace('/(tabs)/home');
+        if (novaTrilha && novaTrilha._id) {
+          router.replace(`/trilha/${novaTrilha._id}`);
+        } else {
+          router.replace('/(tabs)/home');
+        }
+      } catch (err: any) {
+        logger.error('Erro ao criar trilha manual');
+        const msg = err.response?.data?.message || 'Erro ao salvar a trilha. Tente novamente.';
+        setErrorMsg(msg);
+      } finally {
+        setLoading(false);
       }
-    } catch (err: any) {
-      console.error('Erro ao criar trilha manual:', err);
-      const msg = err.response?.data?.message || 'Erro ao salvar a trilha. Tente novamente.';
-      setErrorMsg(msg);
-    } finally {
-      setLoading(false);
-    }
+    });
   };
 
   return (

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -16,7 +16,14 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { BACKGROUND_IMAGES } from '../../constants/assets';
 import api from '../../services/api';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, ShieldCheck, Lock } from 'lucide-react-native';
+import {
+  sanitizeInput,
+  checkLoginRateLimit,
+  recordFailedLogin,
+  resetLoginAttempts,
+} from '../../utils/security';
+import logger from '../../utils/logger';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -27,10 +34,37 @@ export default function LoginScreen() {
   const [senha, setSenha] = useState('');
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [cooldownSeconds, setCooldownSeconds] = useState(0);
+
+  // Monitora cooldown de proteção contra força bruta (RC04)
+  useEffect(() => {
+    if (cooldownSeconds <= 0) return;
+    const timer = setInterval(() => {
+      setCooldownSeconds((prev) => {
+        if (prev <= 1) {
+          clearInterval(timer);
+          return 0;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldownSeconds]);
 
   const handleLogin = async () => {
-    if (!identifier || !senha) {
+    // RC02 & RC01: Sanitização de entrada
+    const cleanIdentifier = sanitizeInput(identifier).trim();
+
+    if (!cleanIdentifier || !senha) {
       setErrorMsg('Por favor, preencha todos os campos.');
+      return;
+    }
+
+    // RC04: Checagem de Rate Limit / Brute Force
+    const rateCheck = checkLoginRateLimit(cleanIdentifier.toLowerCase());
+    if (rateCheck.isBlocked) {
+      setCooldownSeconds(rateCheck.remainingSeconds);
+      setErrorMsg(`Muitas tentativas incorretas. Aguarde ${rateCheck.remainingSeconds}s por segurança.`);
       return;
     }
 
@@ -38,14 +72,15 @@ export default function LoginScreen() {
     setErrorMsg(null);
 
     try {
-      const cleanEmail = identifier.trim();
       const response = await api.post('/api/auth/login', {
-        email: cleanEmail,
-        identifier: cleanEmail,
+        email: cleanIdentifier,
+        identifier: cleanIdentifier,
         senha: senha,
       });
 
       if (response.data && response.data.token) {
+        // Login bem sucedido: reseta contador de tentativas falhas (RC04)
+        resetLoginAttempts(cleanIdentifier.toLowerCase());
         const userObj = response.data.usuario || response.data.user;
         await login(response.data.token, userObj);
         router.replace('/(tabs)/home');
@@ -53,13 +88,22 @@ export default function LoginScreen() {
         setErrorMsg('Erro inesperado ao realizar login.');
       }
     } catch (error: any) {
-      console.error('Erro na requisição de login:', error);
-      const msg = error.response?.data?.message || 'Email ou senha incorretos.';
-      setErrorMsg(msg);
+      // Registra tentativa falha e ativa cooldown se atingir o limite (RC04)
+      const failState = recordFailedLogin(cleanIdentifier.toLowerCase());
+      if (failState.isBlocked) {
+        setCooldownSeconds(failState.remainingSeconds);
+        setErrorMsg(`Múltiplas falhas detectadas. Bloqueio temporário de ${failState.remainingSeconds}s ativado.`);
+      } else {
+        const msg = error.response?.data?.message || 'Email ou senha incorretos.';
+        setErrorMsg(msg);
+      }
+      logger.error('Falha na autenticação');
     } finally {
       setLoading(false);
     }
   };
+
+  const isButtonDisabled = loading || cooldownSeconds > 0;
 
   return (
     <ImageBackground
@@ -67,7 +111,6 @@ export default function LoginScreen() {
       style={styles.container}
       resizeMode="cover"
     >
-
       <View style={styles.overlay}>
         {/* Botão Voltar */}
         <TouchableOpacity
@@ -85,6 +128,12 @@ export default function LoginScreen() {
           <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
             <View style={styles.card}>
               <Text style={styles.title}>Entrar</Text>
+
+              {/* Aviso de Segurança & Anti-Phishing (RC05) */}
+              <View style={styles.securityBadge}>
+                <ShieldCheck size={16} color="#10B981" />
+                <Text style={styles.securityBadgeText}>Ambiente Seguro EstudeMy (TLS 1.3)</Text>
+              </View>
 
               {errorMsg && (
                 <View style={styles.errorContainer}>
@@ -121,15 +170,20 @@ export default function LoginScreen() {
                 />
               </View>
 
-              {/* Botão de Submit */}
+              {/* Botão de Submit com Proteção contra Brute Force */}
               <TouchableOpacity
-                style={[styles.button, loading && styles.buttonDisabled]}
+                style={[styles.button, isButtonDisabled && styles.buttonDisabled]}
                 onPress={handleLogin}
-                disabled={loading}
+                disabled={isButtonDisabled}
                 activeOpacity={0.9}
               >
                 {loading ? (
                   <ActivityIndicator color="#ffffff" />
+                ) : cooldownSeconds > 0 ? (
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                    <Lock size={18} color="#ffffff" />
+                    <Text style={styles.buttonText}>Aguarde {cooldownSeconds}s</Text>
+                  </View>
                 ) : (
                   <Text style={styles.buttonText}>Entrar na Conta</Text>
                 )}
@@ -142,6 +196,11 @@ export default function LoginScreen() {
                   <Text style={styles.footerLink}> Cadastre-se</Text>
                 </TouchableOpacity>
               </View>
+
+              {/* Lembrete Anti-Phishing (RC05) */}
+              <Text style={styles.phishingDisclaimer}>
+                🔒 Nunca compartilhe sua senha. O EstudeMy não pede senhas por e-mail ou redes sociais.
+              </Text>
             </View>
           </ScrollView>
         </KeyboardAvoidingView>
@@ -188,10 +247,29 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     color: '#ffffff',
     textAlign: 'center',
-    marginBottom: 24,
+    marginBottom: 12,
     textShadowColor: 'rgba(0, 0, 0, 0.3)',
     textShadowOffset: { width: 2, height: 2 },
     textShadowRadius: 4,
+  },
+  securityBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(16, 185, 129, 0.12)',
+    paddingVertical: 5,
+    paddingHorizontal: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.4)',
+    marginBottom: 16,
+    alignSelf: 'center',
+  },
+  securityBadgeText: {
+    color: '#34D399',
+    fontSize: 11,
+    fontWeight: '700',
   },
   errorContainer: {
     backgroundColor: '#EF4444',
@@ -265,6 +343,13 @@ const styles = StyleSheet.create({
     color: '#CA8A04',
     fontSize: 14,
     fontWeight: '800',
+  },
+  phishingDisclaimer: {
+    color: '#94A3B8',
+    fontSize: 10,
+    marginTop: 16,
+    textAlign: 'center',
+    lineHeight: 14,
   },
   backBtn: {
     position: 'absolute',

@@ -8,7 +8,7 @@ import {
 import { useRouter } from 'expo-router';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { User, Settings, ChevronRight, BookOpen, Bookmark } from 'lucide-react-native';
+import { User, Settings, ChevronRight, BookOpen, Bookmark, ShieldCheck } from 'lucide-react-native';
 
 export default function MaisScreen() {
   const router = useRouter();
@@ -87,6 +87,23 @@ export default function MaisScreen() {
             </View>
             <Text style={[styles.menuItemLabel, { color: colors.text }]}>
               {t('savedLessons.title') || 'Lições Salvas'}
+            </Text>
+          </View>
+          <ChevronRight size={20} color={colors.textMuted} />
+        </TouchableOpacity>
+
+        {/* Opção Segurança & Privacidade (RC05 Anti-Phishing & RC10 LGPD) */}
+        <TouchableOpacity
+          style={[styles.menuItem, { backgroundColor: colors.card }]}
+          onPress={() => router.push('/configuracoes' as any)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.menuItemLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: '#10B981' }]}>
+              <ShieldCheck size={22} color="#ffffff" />
+            </View>
+            <Text style={[styles.menuItemLabel, { color: colors.text }]}>
+              Segurança & Privacidade
             </Text>
           </View>
           <ChevronRight size={20} color={colors.textMuted} />

@@ -2,6 +2,8 @@ import React, { createContext, useContext, useState, useEffect, useCallback, Rea
 import { getToken, removeToken, setToken } from '../services/authHelpers';
 import api from '../services/api';
 import { useRouter } from 'expo-router';
+import logger from '../utils/logger';
+import { sanitizeUserPayload } from '../utils/security';
 
 export interface User {
   id?: string;
@@ -71,7 +73,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await logout();
         }
       } catch (error) {
-        console.error('Erro ao carregar sessão inicial do usuário:', error);
+        logger.error('Erro ao carregar sessão inicial do usuário:', error);
         // Em caso de falha de rede/servidor offline, mantemos o token local para permitir uso
       } finally {
         setLoading(false);
@@ -100,14 +102,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         }
       }
     } catch (error) {
-      console.error('Erro no login:', error);
+      logger.error('Erro no login:', error);
       setUser(null);
     } finally {
       setLoading(false);
     }
   };
-
-
 
   const refreshUser = async () => {
     if (!token) return;
@@ -117,7 +117,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(res.data);
       }
     } catch (error) {
-      console.error('Erro ao dar refresh no usuário:', error);
+      logger.error('Erro ao dar refresh no usuário:', error);
     }
   };
 
@@ -127,9 +127,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser({ ...user, tema: novoTema });
     
     try {
-      await api.put('/api/users/tema', { tema: novoTema });
+      // RC07: Mass assignment protection
+      const safePayload = sanitizeUserPayload({ tema: novoTema });
+      await api.put('/api/users/tema', safePayload);
     } catch (error) {
-      console.error('Erro ao salvar tema no backend:', error);
+      logger.error('Erro ao salvar tema no backend:', error);
     }
   };
 
