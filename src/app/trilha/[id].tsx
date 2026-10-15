@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,8 @@ import {
   Image,
   Modal,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -25,6 +26,7 @@ import * as SecureStore from 'expo-secure-store';
 export default function TrilhaDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
   const { user } = useAuth();
   const { t } = useLanguage();
@@ -44,6 +46,7 @@ export default function TrilhaDetailScreen() {
   const [guideTab, setGuideTab] = useState<'trail' | 'game' | 'tips'>('trail');
 
   const SAVED_TRAILS_KEY = 'saved_trails_list';
+  const isInitialLoadRef = useRef(true);
 
   // Carrega se a trilha está salva
   useEffect(() => {
@@ -84,7 +87,10 @@ export default function TrilhaDetailScreen() {
 
   const fetchTrilhaDetails = useCallback(async () => {
     if (!id) return;
-    setLoading(true);
+    // Só exibe spinner de tela cheia no primeiro carregamento
+    if (isInitialLoadRef.current) {
+      setLoading(true);
+    }
     try {
       const [trilhaData, secoesData, fasesData] = await Promise.all([
         buscarTrilhaPorId(id),
@@ -105,9 +111,9 @@ export default function TrilhaDetailScreen() {
       });
       setFases(sortedFases);
 
-      // Buscar progresso
+      // Buscar progresso atualizado (com timestamp para evitar cache)
       try {
-        const progressoRes = await api.get(`/api/progresso/trilha/${id}`);
+        const progressoRes = await api.get(`/api/progresso/trilha/${id}?_t=${Date.now()}`);
         if (progressoRes.data) {
           setIniciada(true);
           const progMap = progressoRes.data.progresso;
@@ -130,13 +136,16 @@ export default function TrilhaDetailScreen() {
       console.error('Erro ao carregar detalhes da trilha:', e);
     } finally {
       setLoading(false);
+      isInitialLoadRef.current = false;
     }
   }, [id]);
 
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    fetchTrilhaDetails();
-  }, [fetchTrilhaDetails]);
+  // useFocusEffect recarrega os dados e o progresso sempre que o usuário volta da tela do jogo!
+  useFocusEffect(
+    useCallback(() => {
+      fetchTrilhaDetails();
+    }, [fetchTrilhaDetails])
+  );
 
   // Determina se esta é a fase onde o avatar do personagem deve ficar
   const isPhaseActive = (fase: Fase) => {
@@ -195,7 +204,19 @@ export default function TrilhaDetailScreen() {
   }
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          paddingTop: Math.max(insets.top + 8, 48),
+        },
+      ]}
+      contentContainerStyle={{
+        paddingBottom: Math.max(insets.bottom + 16, 16),
+      }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Top Header Buttons */}
       <View style={styles.headerButtonsRow}>
         <TouchableOpacity style={styles.headerCircleBtn} onPress={() => router.back()} activeOpacity={0.8}>
@@ -377,7 +398,7 @@ export default function TrilhaDetailScreen() {
         onRequestClose={() => setShowGuide(false)}
       >
         <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background, borderTopColor: isDark ? '#1b1b1b' : '#E5E7EB' }]}>
+          <View style={[styles.modalContent, { backgroundColor: colors.background, borderTopColor: isDark ? '#1b1b1b' : '#E5E7EB', paddingBottom: Math.max(insets.bottom + 16, 16) }]}>
             {/* Header do Modal */}
             <View style={styles.modalHeader}>
               <Text style={[styles.modalTitle, { color: colors.text }]}>{t('trail.guideTitle') || 'Guia da Trilha'}</Text>
@@ -593,7 +614,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 52,
   },
   loadingContainer: {
     flex: 1,

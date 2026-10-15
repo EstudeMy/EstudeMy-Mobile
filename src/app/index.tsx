@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ImageBackground } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { BACKGROUND_IMAGES } from '../constants/assets';
@@ -9,15 +10,29 @@ import { ESTUDE_MY_LOGO_XML } from '../constants/svgs';
 
 export default function LandingPage() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, user } = useAuth();
   const { isDark } = useTheme();
+  const insets = useSafeAreaInsets();
 
-  // Se já estiver logado, redireciona diretamente para o painel principal (tabs)/home
+  // Redireciona na LandingPage apenas uma única vez na inicialização
+  const hasNavigatedRef = React.useRef(false);
   useEffect(() => {
-    if (isAuthenticated) {
-      router.replace('/(tabs)/home');
-    }
-  }, [isAuthenticated, router]);
+    const checkNavigation = async () => {
+      if (isAuthenticated && user && !hasNavigatedRef.current) {
+        hasNavigatedRef.current = true;
+        const { isProfileCompleted } = await import('../services/authHelpers');
+        const userKey = user.email || user.id || user._id;
+        const completed = await isProfileCompleted(userKey);
+        
+        if ((!user.username || !user.personagem) && !completed) {
+          router.replace('/(auth)/completar-perfil' as any);
+        } else {
+          router.replace('/(tabs)/home');
+        }
+      }
+    };
+    checkNavigation();
+  }, [isAuthenticated, user, router]);
 
 
   return (
@@ -27,7 +42,7 @@ export default function LandingPage() {
       resizeMode="cover"
     >
 
-      <View style={styles.overlay}>
+      <View style={[styles.overlay, { paddingTop: Math.max(insets.top, 24), paddingBottom: Math.max(insets.bottom, 16) }]}>
         {/* Logo/Título */}
         <View style={styles.header}>
           <View style={{ marginBottom: 10 }}>

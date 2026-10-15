@@ -4,19 +4,34 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
+  ScrollView,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { User, Settings, ChevronRight, BookOpen, Bookmark, ShieldCheck } from 'lucide-react-native';
 
 export default function MaisScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { colors } = useTheme();
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          paddingTop: Math.max(insets.top + 8, 52),
+        },
+      ]}
+      contentContainerStyle={{
+        paddingBottom: Math.max(insets.bottom + 16, 16),
+      }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Título */}
       <View style={styles.header}>
         <Text style={[styles.title, { color: colors.text }]}>{t('common.more') || 'Mais'} ⚙️</Text>
@@ -109,14 +124,13 @@ export default function MaisScreen() {
           <ChevronRight size={20} color={colors.textMuted} />
         </TouchableOpacity>
       </View>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 52,
     paddingHorizontal: 16,
   },
   header: {

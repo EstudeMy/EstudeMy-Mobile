@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useCallback, useRef } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -23,10 +24,11 @@ import {
   Trilha,
 } from '../../services/trilhaService';
 import { getCharacterImage, getTrackImage, EXTRA_IMAGES } from '../../constants/assets';
-import { Search, Zap, Sparkles, BookOpen, PlusCircle } from 'lucide-react-native';
+import { Search, Zap, Sparkles, BookOpen, PlusCircle, X } from 'lucide-react-native';
 
 export default function HomeScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, token } = useAuth();
   const { isDark, colors } = useTheme();
   const { language, t } = useLanguage();
@@ -37,6 +39,8 @@ export default function HomeScreen() {
     user?.tipoUsuario === 'OWNER';
 
   const [searchQuery, setSearchQuery] = useState('');
+  const latestSearchQueryRef = useRef('');
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const [loading, setLoading] = useState(true);
   const [continueTrilhas, setContinueTrilhas] = useState<Trilha[]>([]);
@@ -80,16 +84,24 @@ export default function HomeScreen() {
 
 
 
-
   const handleSearch = async (text: string) => {
     setSearchQuery(text);
+    latestSearchQueryRef.current = text;
+
     if (!text.trim()) {
       setSearchResults(null);
+      setSearchLoading(false);
       return;
     }
 
+    setSearchLoading(true);
     try {
       const results = await buscarTrilhas(text);
+      // Descarta requisições obsoletas se o usuário já digitou outra coisa ou apagou
+      if (latestSearchQueryRef.current !== text) {
+        return;
+      }
+
       const mappedIdioma = getMappedIdioma(language);
       const filteredResults = results.filter((t) => {
         const trilhaIdioma = t.idioma || 'Português';
@@ -97,7 +109,13 @@ export default function HomeScreen() {
       });
       setSearchResults(filteredResults);
     } catch (e) {
-      console.error('Erro ao pesquisar trilhas:', e);
+      if (latestSearchQueryRef.current === text) {
+        console.error('Erro ao pesquisar trilhas:', e);
+      }
+    } finally {
+      if (latestSearchQueryRef.current === text) {
+        setSearchLoading(false);
+      }
     }
   };
 
@@ -106,6 +124,7 @@ export default function HomeScreen() {
   const level = Math.floor(xp / 100) + 1;
   const xpInLevel = xp % 100;
 
+  // Card para os carrosséis horizontais
   const renderTrackCard = ({ item }: { item: Trilha }) => {
     const trackImage = getTrackImage(item);
     const diff = item.dificuldade || item.nivelDificuldade || 'Fácil';
@@ -138,6 +157,45 @@ export default function HomeScreen() {
     );
   };
 
+  // Card para o grid de pesquisa (2 trilhas por linha)
+  const renderGridCard = (item: Trilha) => {
+    const trackImage = getTrackImage(item);
+    const diff = item.dificuldade || item.nivelDificuldade || 'Fácil';
+
+    return (
+      <TouchableOpacity
+        key={item._id}
+        style={[styles.gridCard, { backgroundColor: colors.card }]}
+        onPress={() => router.push(`/trilha/${item._id}`)}
+        activeOpacity={0.85}
+      >
+        <Image
+          source={trackImage}
+          style={styles.gridCoverImage}
+          resizeMode="cover"
+        />
+        <View style={styles.gridCardContent}>
+          <Text style={[styles.gridCardTitle, { color: colors.text }]} numberOfLines={2}>
+            {item.titulo}
+          </Text>
+          {item.descricao ? (
+            <Text style={[styles.gridCardDesc, { color: colors.textSecondary }]} numberOfLines={2}>
+              {item.descricao}
+            </Text>
+          ) : null}
+          <Text style={[styles.gridCardMeta, { color: colors.textMuted }]} numberOfLines={1}>
+            Matéria: <Text style={{ fontWeight: '800', color: colors.text }}>{item.materia}</Text>
+          </Text>
+          <View style={styles.gridBadgeContainer}>
+            <View style={[styles.diffBadge, { backgroundColor: isDark ? '#374151' : '#E5E7EB' }]}>
+              <Text style={[styles.diffBadgeText, { color: colors.text }]}>{diff}</Text>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    );
+  };
+
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
@@ -146,8 +204,22 @@ export default function HomeScreen() {
     );
   }
 
+  const isSearching = searchQuery.trim().length > 0;
+
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          paddingTop: Math.max(insets.top + 16, 16),
+        },
+      ]}
+      contentContainerStyle={{
+        paddingBottom: Math.max(insets.bottom + 16, 16),
+      }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Header do Usuário */}
       <View style={[styles.headerCard, { backgroundColor: colors.card }]}>
         <View style={styles.userRow}>
@@ -177,7 +249,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Caixa de Pesquisa */}
+      {/* Caixa de Pesquisa com Botão de Limpar */}
       <View style={styles.searchContainer}>
         <Search size={20} color={colors.textMuted} style={styles.searchIcon} />
         <TextInput
@@ -186,7 +258,19 @@ export default function HomeScreen() {
           placeholderTextColor={colors.textMuted}
           value={searchQuery}
           onChangeText={handleSearch}
+          returnKeyType="search"
+          autoCorrect={false}
         />
+        {searchQuery.trim().length > 0 && (
+          <TouchableOpacity
+            style={styles.clearSearchBtn}
+            onPress={() => handleSearch('')}
+            activeOpacity={0.7}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <X size={18} color={colors.textMuted} />
+          </TouchableOpacity>
+        )}
       </View>
 
       {/* Ações Exclusivas para Professor / Administrador / Owner */}
@@ -224,27 +308,31 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* Resultados da Pesquisa */}
-      {searchResults !== null ? (
+      {/* Se estiver pesquisando, exibe em Grid de 2 trilhas por linha; se limpar a pesquisa, volta para os Carrosséis */}
+      {isSearching ? (
         <View style={styles.section}>
           <View style={[styles.sectionHeaderPill, { backgroundColor: isDark ? '#262626' : '#E5E7EB' }]}>
-            <Text style={[styles.sectionHeaderPillText, { color: colors.text }]}>{t('common.searchResults') || 'Resultados da Pesquisa'}</Text>
+            <Text style={[styles.sectionHeaderPillText, { color: colors.text }]}>
+              {t('common.searchResults') || 'Resultados da Pesquisa'}
+            </Text>
           </View>
-          {searchResults.length === 0 ? (
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('search.noResults') || 'Nenhuma trilha encontrada.'}</Text>
+          {searchLoading ? (
+            <View style={{ paddingVertical: 24, alignItems: 'center' }}>
+              <ActivityIndicator size="small" color="#4F46E5" />
+            </View>
+          ) : searchResults && searchResults.length === 0 ? (
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>
+              {t('search.noResults') || 'Nenhuma trilha encontrada.'}
+            </Text>
           ) : (
-            <FlatList
-              data={searchResults}
-              renderItem={renderTrackCard}
-              keyExtractor={(item) => item._id}
-              scrollEnabled={false}
-              contentContainerStyle={{ gap: 16 }}
-            />
+            <View style={styles.gridContainer}>
+              {searchResults?.map(renderGridCard)}
+            </View>
           )}
         </View>
       ) : (
         <>
-          {/* Trilhas em Andamento */}
+          {/* Carrossel Trilhas em Andamento */}
           {continueTrilhas.length > 0 && (
             <View style={styles.section}>
               <View style={[styles.sectionHeaderPill, { backgroundColor: isDark ? '#262626' : '#E5E7EB' }]}>
@@ -252,16 +340,17 @@ export default function HomeScreen() {
               </View>
               <FlatList
                 horizontal
+                nestedScrollEnabled
                 showsHorizontalScrollIndicator={false}
                 data={continueTrilhas}
                 renderItem={renderTrackCard}
-                keyExtractor={(item) => item._id}
+                keyExtractor={(item, index) => item._id || String(index)}
                 contentContainerStyle={styles.carouselContainer}
               />
             </View>
           )}
 
-          {/* Trilhas Populares */}
+          {/* Carrossel Trilhas Populares */}
           <View style={styles.section}>
             <View style={[styles.sectionHeaderPill, { backgroundColor: isDark ? '#262626' : '#E5E7EB' }]}>
               <Text style={[styles.sectionHeaderPillText, { color: colors.text }]}>{t('home.popularTrails') || 'Melhores para você 🔥'}</Text>
@@ -271,16 +360,17 @@ export default function HomeScreen() {
             ) : (
               <FlatList
                 horizontal
+                nestedScrollEnabled
                 showsHorizontalScrollIndicator={false}
                 data={populares}
                 renderItem={renderTrackCard}
-                keyExtractor={(item) => item._id}
+                keyExtractor={(item, index) => item._id || String(index)}
                 contentContainerStyle={styles.carouselContainer}
               />
             )}
           </View>
 
-          {/* Novidades */}
+          {/* Carrossel Novidades */}
           <View style={styles.section}>
             <View style={[styles.sectionHeaderPill, { backgroundColor: isDark ? '#262626' : '#E5E7EB' }]}>
               <Text style={[styles.sectionHeaderPillText, { color: colors.text }]}>{t('home.newTrails') || 'Novidades 🌟'}</Text>
@@ -290,10 +380,11 @@ export default function HomeScreen() {
             ) : (
               <FlatList
                 horizontal
+                nestedScrollEnabled
                 showsHorizontalScrollIndicator={false}
                 data={novidades}
                 renderItem={renderTrackCard}
-                keyExtractor={(item) => item._id}
+                keyExtractor={(item, index) => item._id || String(index)}
                 contentContainerStyle={styles.carouselContainer}
               />
             )}
@@ -302,7 +393,7 @@ export default function HomeScreen() {
       )}
 
       {/* Margem inferior extra */}
-      <View style={{ height: 60 }} />
+
     </ScrollView>
   );
 }
@@ -311,7 +402,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 48,
   },
   loadingContainer: {
     flex: 1,
@@ -407,9 +497,15 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#1b1b1b',
     paddingLeft: 48,
-    paddingRight: 16,
+    paddingRight: 44,
     fontSize: 15,
     fontWeight: '700',
+  },
+  clearSearchBtn: {
+    position: 'absolute',
+    right: 14,
+    zIndex: 2,
+    padding: 6,
   },
   inputDark: {
     backgroundColor: '#2D2D44',
@@ -555,11 +651,73 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: '700',
   },
+  gridContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    rowGap: 14,
+    width: '100%',
+  },
+  gridCard: {
+    width: '48%',
+    borderRadius: 14,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    overflow: 'hidden',
+    shadowColor: '#000000',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+  },
+  gridCoverImage: {
+    width: '100%',
+    height: 105,
+    borderBottomWidth: 2,
+    borderBottomColor: '#1b1b1b',
+  },
+  gridCardContent: {
+    padding: 10,
+  },
+  gridCardTitle: {
+    fontSize: 13,
+    fontWeight: '900',
+    marginBottom: 4,
+    lineHeight: 18,
+  },
+  gridCardDesc: {
+    fontSize: 11,
+    fontWeight: '600',
+    lineHeight: 15,
+    marginBottom: 6,
+  },
+  gridCardMeta: {
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  gridBadgeContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 6,
+  },
+  diffBadge: {
+    borderRadius: 6,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderWidth: 1.5,
+    borderColor: '#1b1b1b',
+  },
+  diffBadgeText: {
+    fontSize: 9,
+    fontWeight: '800',
+  },
   emptyText: {
     color: '#9CA3AF',
     fontSize: 14,
     fontWeight: '600',
     fontStyle: 'italic',
     textAlign: 'center',
+    marginVertical: 12,
   },
 });

@@ -65,7 +65,7 @@ api.interceptors.response.use(
     const status = error.response?.status;
 
     if (status === 401) {
-      logger.warn('Sessão expirada ou não autorizada (401). Removendo token...');
+      logger.warn(`Sessão expirada ou não autorizada (401) na URL: ${error.config?.url}. Removendo token...`);
       await removeToken();
     } else if (status === 429) {
       // RC08: DDoS & Rate Limiting

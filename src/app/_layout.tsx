@@ -1,6 +1,7 @@
 import React from 'react';
 import { Stack } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { LanguageProvider } from '../contexts/LanguageContext';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
@@ -23,10 +24,12 @@ function RootLayoutContent() {
       <StatusBar style={isDark ? 'light' : 'dark'} />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: colors.background } }}>
 
-        {/* Telas Públicas */}
+        {/* Telas Públicas / Autenticação */}
         <Stack.Screen name="index" />
         <Stack.Screen name="(auth)/login" />
         <Stack.Screen name="(auth)/cadastro" />
+        <Stack.Screen name="(auth)/esqueci-senha" />
+        <Stack.Screen name="(auth)/completar-perfil" />
         
         {/* Telas Protegidas (Abas principais e detalhes) */}
         <Stack.Screen name="(tabs)" />
@@ -45,13 +48,16 @@ function RootLayoutContent() {
 
 export default function RootLayout() {
   return (
-    <AuthProvider>
-      <ThemeProvider>
-        <LanguageProvider>
-          <RootLayoutContent />
-        </LanguageProvider>
-      </ThemeProvider>
-    </AuthProvider>
+    <SafeAreaProvider>
+      <AuthProvider>
+        <ThemeProvider>
+          <LanguageProvider>
+            <RootLayoutContent />
+          </LanguageProvider>
+        </ThemeProvider>
+      </AuthProvider>
+    </SafeAreaProvider>
   );
 }
+
 

@@ -9,6 +9,7 @@ import {
   FlatList,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getTrackImage } from '../constants/assets';
@@ -17,6 +18,7 @@ import { ArrowLeft, BookOpen, CheckCircle } from 'lucide-react-native';
 
 export default function MeusCursosScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { colors, isDark } = useTheme();
 
@@ -116,7 +118,15 @@ export default function MeusCursosScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          paddingTop: Math.max(insets.top + 8, 48),
+        },
+      ]}
+    >
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
@@ -176,7 +186,11 @@ export default function MeusCursosScreen() {
           data={activeTab === 'progress' ? inProgress : completed}
           renderItem={renderTrackCard}
           keyExtractor={(item) => item._id}
-          contentContainerStyle={styles.listContainer}
+          contentContainerStyle={[
+            styles.listContainer,
+            { paddingBottom: Math.max(insets.bottom + 16, 16) },
+          ]}
+          showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               {activeTab === 'progress' ? (
@@ -209,7 +223,6 @@ export default function MeusCursosScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 52,
     paddingHorizontal: 16,
   },
   headerRow: {

@@ -10,6 +10,7 @@ import {
   Image,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { criarTrilhaManual } from '../../services/trilhaService';
@@ -44,6 +45,7 @@ const IDIOMAS = ['Português', 'Inglês', 'Espanhol'];
 
 export default function CriarTrilhaScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { colors } = useTheme();
 
@@ -69,7 +71,18 @@ export default function CriarTrilhaScreen() {
 
   if (!isAuthorized) {
     return (
-      <View style={[styles.container, { backgroundColor: colors.background, justifyContent: 'center', alignItems: 'center', padding: 24 }]}>
+      <SafeAreaView
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingHorizontal: 16,
+          },
+        ]}
+        edges={['top', 'bottom']}
+      >
         <ShieldAlert size={64} color="#EF4444" style={{ marginBottom: 16 }} />
         <Text style={[styles.deniedTitle, { color: colors.text }]}>Acesso Restrito</Text>
         <Text style={[styles.deniedDesc, { color: colors.textMuted }]}>
@@ -78,7 +91,7 @@ export default function CriarTrilhaScreen() {
         <TouchableOpacity style={styles.backHomeBtn} onPress={() => router.replace('/(tabs)/home')} activeOpacity={0.8}>
           <Text style={styles.backHomeBtnText}>Voltar para a Home</Text>
         </TouchableOpacity>
-      </View>
+      </SafeAreaView>
     );
   }
 
@@ -124,11 +137,21 @@ export default function CriarTrilhaScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]} contentContainerStyle={{ paddingBottom: 60 }}>
-      {/* Botão Voltar */}
-      <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
-        <ArrowLeft size={24} color="#ffffff" />
-      </TouchableOpacity>
+    <SafeAreaView style={{ flex: 1, backgroundColor: colors.background }} edges={['top', 'bottom']}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{
+          paddingHorizontal: 16,
+          paddingTop: 16,
+          paddingBottom: Math.max(insets.bottom, 16),
+        }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Botão Voltar */}
+        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
+          <ArrowLeft size={24} color="#ffffff" />
+        </TouchableOpacity>
 
       {/* Header */}
       <View style={[styles.headerCard, { backgroundColor: colors.card }]}>
@@ -304,6 +327,7 @@ export default function CriarTrilhaScreen() {
         </TouchableOpacity>
       </View>
     </ScrollView>
+  </SafeAreaView>
   );
 }
 
@@ -311,7 +335,6 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     paddingHorizontal: 16,
-    paddingTop: 52,
   },
   backBtn: {
     backgroundColor: '#1b1b1b',

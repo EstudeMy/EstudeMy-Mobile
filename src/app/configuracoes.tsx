@@ -8,6 +8,7 @@ import {
   Alert,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme, ThemePreference } from '../contexts/ThemeContext';
@@ -29,6 +30,7 @@ type LanguageCode = 'pt-BR' | 'en-US' | 'es-ES';
 
 export default function ConfiguracoesScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, logout, refreshUser } = useAuth();
   const { language, setLanguage, t } = useLanguage();
   const { themePreference, setThemePreference, colors } = useTheme();
@@ -52,7 +54,19 @@ export default function ConfiguracoesScreen() {
   };
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          paddingTop: Math.max(insets.top + 8, 48),
+        },
+      ]}
+      contentContainerStyle={{
+        paddingBottom: Math.max(insets.bottom + 16, 16),
+      }}
+      showsVerticalScrollIndicator={false}
+    >
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}

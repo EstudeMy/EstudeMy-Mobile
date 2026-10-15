@@ -15,6 +15,7 @@ import { getCharacterImage } from '../constants/assets';
 import api from '../services/api';
 import { ArrowLeft } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import logger from '../utils/logger';
 import { sanitizeInput } from '../utils/security';
 
@@ -22,6 +23,7 @@ const CHARACTERS = ['Samurai', 'Mago', 'Guerreiro'];
 
 export default function PerfilScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, refreshUser } = useAuth();
   const { t } = useLanguage();
   const { colors } = useTheme();
@@ -49,7 +51,19 @@ export default function PerfilScreen() {
   const level = Math.floor(xp / 100) + 1;
 
   return (
-    <ScrollView style={[styles.container, { backgroundColor: colors.background }]}>
+    <ScrollView
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          paddingTop: Math.max(insets.top + 8, 48),
+        },
+      ]}
+      contentContainerStyle={{
+        paddingBottom: Math.max(insets.bottom + 16, 16),
+      }}
+      showsVerticalScrollIndicator={false}
+    >
       {/* Título */}
       <View style={styles.headerRow}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
@@ -122,7 +136,6 @@ export default function PerfilScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 52,
     paddingHorizontal: 16,
   },
   headerRow: {

@@ -8,6 +8,7 @@ import {
   ActivityIndicator,
   Image,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -27,6 +28,7 @@ interface LeaderboardUser {
 }
 
 export default function RankingScreen() {
+  const insets = useSafeAreaInsets();
   const { colors } = useTheme();
   const { t } = useLanguage();
   const { user } = useAuth();
@@ -119,7 +121,15 @@ export default function RankingScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          paddingTop: Math.max(insets.top + 8, 52),
+        },
+      ]}
+    >
       {/* Título */}
       <View style={styles.header}>
         <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
@@ -164,7 +174,11 @@ export default function RankingScreen() {
           data={usersList}
           renderItem={renderUserRow}
           keyExtractor={(item) => item._id}
-          contentContainerStyle={styles.listContainer}
+          contentContainerStyle={[
+            styles.listContainer,
+            { paddingBottom: Math.max(insets.bottom + 8, 8) },
+          ]}
+          showsVerticalScrollIndicator={false}
         />
       )}
     </View>
@@ -174,7 +188,6 @@ export default function RankingScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 52,
     paddingHorizontal: 16,
   },
   header: {
@@ -238,7 +251,7 @@ const styles = StyleSheet.create({
   },
   listContainer: {
     gap: 12,
-    paddingBottom: 60,
+    paddingBottom: 10,
   },
   rowCard: {
     flexDirection: 'row',

@@ -9,6 +9,7 @@ import {
   FlatList,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getTrackImage } from '../constants/assets';
@@ -18,6 +19,7 @@ import { ArrowLeft, Bookmark, Trash2 } from 'lucide-react-native';
 
 export default function LicoesSalvasScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { colors } = useTheme();
 
@@ -115,7 +117,15 @@ export default function LicoesSalvasScreen() {
   };
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: colors.background,
+          paddingTop: Math.max(insets.top + 8, 48),
+        },
+      ]}
+    >
       <Stack.Screen options={{ headerShown: false }} />
 
       {/* Header */}
@@ -136,7 +146,11 @@ export default function LicoesSalvasScreen() {
           data={savedTrails}
           renderItem={renderTrackCard}
           keyExtractor={(item) => item._id}
-          contentContainerStyle={styles.listContainer}
+          contentContainerStyle={[
+            styles.listContainer,
+            { paddingBottom: Math.max(insets.bottom + 16, 16) },
+          ]}
+          showsVerticalScrollIndicator={false}
           ListEmptyComponent={
             <View style={styles.emptyContainer}>
               <Bookmark size={48} color={colors.textMuted} />
@@ -163,7 +177,6 @@ export default function LicoesSalvasScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 52,
     paddingHorizontal: 16,
   },
   headerRow: {

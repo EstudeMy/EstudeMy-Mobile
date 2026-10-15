@@ -12,6 +12,7 @@ import {
   ImageBackground,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { BACKGROUND_IMAGES } from '../../constants/assets';
@@ -27,6 +28,7 @@ import logger from '../../utils/logger';
 
 export default function LoginScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { login } = useAuth();
   const { isDark } = useTheme();
 
@@ -83,7 +85,17 @@ export default function LoginScreen() {
         resetLoginAttempts(cleanIdentifier.toLowerCase());
         const userObj = response.data.usuario || response.data.user;
         await login(response.data.token, userObj);
-        router.replace('/(tabs)/home');
+        
+        const { isProfileCompleted } = await import('../../services/authHelpers');
+        const userKey = userObj?.email || userObj?.id || userObj?._id || cleanIdentifier;
+        const completed = await isProfileCompleted(userKey);
+
+        // Se o usuário ainda não completou username ou personagem e não completou antes, vai para completar-perfil
+        if ((!userObj?.username || !userObj?.personagem) && !completed) {
+          router.replace('/(auth)/completar-perfil' as any);
+        } else {
+          router.replace('/(tabs)/home');
+        }
       } else {
         setErrorMsg('Erro inesperado ao realizar login.');
       }
@@ -114,7 +126,7 @@ export default function LoginScreen() {
       <View style={styles.overlay}>
         {/* Botão Voltar */}
         <TouchableOpacity
-          style={styles.backBtn}
+          style={[styles.backBtn, { top: Math.max(insets.top + 10, 48) }]}
           onPress={() => router.back()}
           activeOpacity={0.8}
         >
@@ -125,15 +137,18 @@ export default function LoginScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardContainer}
         >
-          <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerStyle={[
+              styles.scrollContainer,
+              {
+                paddingTop: Math.max(insets.top + 60, 60),
+                paddingBottom: Math.max(insets.bottom + 16, 16),
+              },
+            ]}
+            keyboardShouldPersistTaps="handled"
+          >
             <View style={styles.card}>
               <Text style={styles.title}>Entrar</Text>
-
-              {/* Aviso de Segurança & Anti-Phishing (RC05) */}
-              <View style={styles.securityBadge}>
-                <ShieldCheck size={16} color="#10B981" />
-                <Text style={styles.securityBadgeText}>Ambiente Seguro EstudeMy (TLS 1.3)</Text>
-              </View>
 
               {errorMsg && (
                 <View style={styles.errorContainer}>
@@ -146,7 +161,7 @@ export default function LoginScreen() {
                 <Text style={styles.label}>E-mail ou Usuário</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Seu e-mail ou nome de usuário"
+                  placeholder="Seu e-mail "
                   placeholderTextColor="#9CA3AF"
                   value={identifier}
                   onChangeText={setIdentifier}
@@ -160,7 +175,7 @@ export default function LoginScreen() {
                 <Text style={styles.label}>Senha</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Sua senha secreta"
+                  placeholder="Sua senha"
                   placeholderTextColor="#9CA3AF"
                   value={senha}
                   onChangeText={setSenha}
@@ -169,6 +184,17 @@ export default function LoginScreen() {
                   autoCorrect={false}
                 />
               </View>
+
+              {/* Link Esqueci Minha Senha */}
+              <TouchableOpacity
+                onPress={() => router.push('/(auth)/esqueci-senha' as any)}
+                style={{ alignSelf: 'flex-end', marginBottom: 14, marginTop: -8 }}
+                activeOpacity={0.7}
+              >
+                <Text style={{ color: '#FBBF24', fontSize: 13, fontWeight: '700' }}>
+                  Esqueceu a senha?
+                </Text>
+              </TouchableOpacity>
 
               {/* Botão de Submit com Proteção contra Brute Force */}
               <TouchableOpacity

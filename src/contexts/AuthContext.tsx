@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect, useCallback, ReactNode } from 'react';
-import { getToken, removeToken, setToken } from '../services/authHelpers';
+import { getToken, removeToken, setToken, getLocalUser, saveLocalUser } from '../services/authHelpers';
 import api from '../services/api';
 import { useRouter } from 'expo-router';
 import logger from '../utils/logger';
@@ -27,6 +27,7 @@ interface AuthContextType {
   login: (token: string, userData?: User) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateUserState: (partial: Partial<User>) => void;
   loading: boolean;
   updateUserTheme: (novoTema: string) => Promise<void>;
 }
@@ -68,13 +69,19 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
 
         if (res.data) {
-          setUser(res.data);
+          const localUser = await getLocalUser();
+          const mergedUser = localUser ? { ...localUser, ...res.data, username: localUser.username || res.data.username || '' } : res.data;
+          setUser(mergedUser);
+          await saveLocalUser(mergedUser);
         } else {
           await logout();
         }
       } catch (error) {
         logger.error('Erro ao carregar sessão inicial do usuário:', error);
-        // Em caso de falha de rede/servidor offline, mantemos o token local para permitir uso
+        const localUser = await getLocalUser();
+        if (localUser) {
+          setUser(localUser);
+        }
       } finally {
         setLoading(false);
       }
@@ -91,6 +98,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
       if (userData) {
         setUser(userData);
+        await saveLocalUser(userData);
       } else {
         const res = await api.get('/api/users/me', {
           headers: {
@@ -99,6 +107,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         });
         if (res.data) {
           setUser(res.data);
+          await saveLocalUser(res.data);
         }
       }
     } catch (error) {
@@ -114,7 +123,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     try {
       const res = await api.get('/api/users/me');
       if (res.data) {
-        setUser(res.data);
+        const localUser = await getLocalUser();
+        const mergedUser = localUser ? { ...localUser, ...res.data, username: localUser.username || res.data.username || '' } : res.data;
+        setUser(mergedUser);
+        await saveLocalUser(mergedUser);
       }
     } catch (error) {
       logger.error('Erro ao dar refresh no usuário:', error);
@@ -135,8 +147,16 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const updateUserState = (partial: Partial<User>) => {
+    setUser((prev) => {
+      const updated = prev ? { ...prev, ...partial } : (partial as User);
+      saveLocalUser(updated);
+      return updated;
+    });
+  };
+
   return (
-    <AuthContext.Provider value={{ isAuthenticated: !!token, user, token, login, logout, refreshUser, loading, updateUserTheme }}>
+    <AuthContext.Provider value={{ isAuthenticated: !!token, user, token, login, logout, refreshUser, updateUserState, loading, updateUserTheme }}>
       {children}
     </AuthContext.Provider>
   );

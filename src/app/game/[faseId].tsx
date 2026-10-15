@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { Image } from 'expo-image';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { buscarFasePorId, concluirFase, Fase } from '../../services/faseService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -27,33 +28,52 @@ const screenWidth = Dimensions.get('window').width;
 const CHAR_ASSETS: Record<string, any> = {
   Samurai: {
     idle: require('../../../assets/assests/samurai/samurai_idle.gif'),
+    attack: require('../../../assets/assests/samurai/samurai_Golpe_1 .gif'),
   },
   Guerreiro: {
-    idle: require('../../../assets/assests/samurai/samurai_idle.gif'), // Usando samurai como base
+    idle: require('../../../assets/assests/samurai/samurai_idle.gif'),
+    attack: require('../../../assets/assests/samurai/samurai_Golpe_1 .gif'),
   },
   Mago: {
-    idle: require('../../../assets/assests/samurai/samurai_idle.gif'), // Usando samurai como base
+    idle: require('../../../assets/assests/samurai/samurai_idle.gif'),
+    attack: require('../../../assets/assests/samurai/samurai_Golpe_1 .gif'),
   },
   spectre: {
     idle: require('../../../assets/assests/castelo/spectre/Spectre_Parado.gif'),
+    attack: require('../../../assets/assests/castelo/spectre/Spectre_Golpe_1.gif'),
   },
   arqueira: {
     idle: require('../../../assets/assests/castelo/Arqueira/Arqueira/Arqueira Parada.gif'),
+    attack: require('../../../assets/assests/castelo/Arqueira/Arqueira/Arqueira Golpe 1.gif'),
   },
   magoCorrompido: {
     idle: require('../../../assets/assests/castelo/Mago Corrompido/Mago Corrompido/Mago Corrompido Parado.gif'),
+    attack: require('../../../assets/assests/castelo/Mago Corrompido/Mago Corrompido/Mago Corrompido Golpe 1.gif'),
   },
   cavaleiroDecaido: {
     idle: require('../../../assets/assests/castelo/Cavaleiro Decaido/Cavaleiro Decaido/Cavaleiro Decadente Parado.gif'),
+    attack: require('../../../assets/assests/castelo/Cavaleiro Decaido/Cavaleiro Decaido/Cavaleiro Decadente Golpe 1.gif'),
   },
 };
 
-// Mapeamento auxiliar de inimigo por ordem da fase
-const ENEMY_MAPPING = ['spectre', 'arqueira', 'magoCorrompido', 'cavaleiroDecaido'];
+// Mapeamento auxiliar de inimigos com nome correto e HP base
+interface EnemyInfo {
+  id: string;
+  name: string;
+  maxHP: number;
+}
+
+const ENEMY_MAPPING: EnemyInfo[] = [
+  { id: 'spectre', name: 'Spectre', maxHP: 100 },
+  { id: 'arqueira', name: 'Arqueira', maxHP: 150 },
+  { id: 'magoCorrompido', name: 'Mago Corrompido', maxHP: 200 },
+  { id: 'cavaleiroDecaido', name: 'Cavaleiro Decaído', maxHP: 250 },
+];
 
 export default function GameScreen() {
   const { faseId } = useLocalSearchParams<{ faseId: string }>();
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { user, refreshUser } = useAuth();
   const { isDark, colors } = useTheme();
 
@@ -75,9 +95,43 @@ export default function GameScreen() {
   const [gameState, setGameState] = useState<'PLAYING' | 'VICTORY' | 'DEFEAT'>('PLAYING');
   const [savingProgress, setSavingProgress] = useState(false);
 
-  // Animação de ataque/dano (visual flash)
+  // Animação de ataque e dano (visual flash + troca de sprites)
   const [playerHit, setPlayerHit] = useState(false);
   const [enemyHit, setEnemyHit] = useState(false);
+  const [isPlayerAttacking, setIsPlayerAttacking] = useState(false);
+  const [isEnemyAttacking, setIsEnemyAttacking] = useState(false);
+
+  // Helper para resolver o índice da resposta correta (seja string ou número no banco)
+  const getCorrectAnswerIndex = useCallback((question: any): number => {
+    if (!question) return 0;
+    const dbCorrect = question.respostaCorreta;
+    if (typeof dbCorrect === 'number') {
+      return dbCorrect;
+    }
+    if (typeof dbCorrect === 'string') {
+      // 1. Tenta achar o texto exato da alternativa
+      const idx = question.alternativas?.findIndex(
+        (alt: string) => alt.trim().toLowerCase() === dbCorrect.trim().toLowerCase()
+      );
+      if (idx !== undefined && idx !== -1) return idx;
+
+      // 2. Tenta parsear número '0', '1', '2'
+      const parsedNum = parseInt(dbCorrect, 10);
+      if (!isNaN(parsedNum) && parsedNum >= 0 && parsedNum < (question.alternativas?.length || 4)) {
+        return parsedNum;
+      }
+
+      // 3. Tenta letra 'A', 'B', 'C', 'D'
+      const trimmed = dbCorrect.trim().toUpperCase();
+      if (trimmed.length === 1) {
+        const code = trimmed.charCodeAt(0);
+        if (code >= 65 && code <= 68) {
+          return code - 65;
+        }
+      }
+    }
+    return 0;
+  }, []);
 
   useEffect(() => {
     const fetchGameData = async () => {
@@ -88,8 +142,8 @@ export default function GameScreen() {
         
         // Define o HP do inimigo baseado na ordem da fase
         const enemyIndex = (faseData.ordem - 1) % ENEMY_MAPPING.length;
-        const enemyId = ENEMY_MAPPING[enemyIndex];
-        const initialEnemyHP = enemyId === 'spectre' ? 100 : enemyId === 'arqueira' ? 150 : 200;
+        const currentEnemy = ENEMY_MAPPING[enemyIndex >= 0 ? enemyIndex : 0];
+        const initialEnemyHP = currentEnemy.maxHP;
         
         setEnemyMaxHP(initialEnemyHP);
         setEnemyHP(initialEnemyHP);
@@ -133,49 +187,48 @@ export default function GameScreen() {
   const handleSubmitAnswer = () => {
     if (selectedAnswer === null || answered) return;
 
-    // A respostaCorreta no banco pode ser string ou número, validamos aqui
-    let correctIdx = 0;
-    const dbCorrect = currentQuestion.respostaCorreta;
-    if (typeof dbCorrect === 'number') {
-      correctIdx = dbCorrect;
-    } else {
-      correctIdx = currentQuestion.alternativas.indexOf(dbCorrect);
-      if (correctIdx === -1) {
-        correctIdx = parseInt(dbCorrect) || 0;
-      }
-    }
-
+    const correctIdx = getCorrectAnswerIndex(currentQuestion);
     const checkCorrect = selectedAnswer === correctIdx;
     setIsCorrect(checkCorrect);
     setAnswered(true);
 
     if (checkCorrect) {
       setAcertos((prev) => prev + 1);
-      // Animação de dano no inimigo
+
+      // Animação de ataque do jogador e dano no inimigo
+      setIsPlayerAttacking(true);
       setEnemyHit(true);
-      setTimeout(() => setEnemyHit(false), 600);
+      setTimeout(() => {
+        setIsPlayerAttacking(false);
+        setEnemyHit(false);
+      }, 750);
 
       // Causa dano proporcional no inimigo
       const damage = Math.ceil(enemyMaxHP / totalQuestions);
       setEnemyHP((prev) => {
         const nextHP = Math.max(0, prev - damage);
         if (nextHP <= 0) {
-          setTimeout(() => setGameState('VICTORY'), 800);
+          setTimeout(() => setGameState('VICTORY'), 850);
         }
         return nextHP;
       });
     } else {
       setErros((prev) => prev + 1);
-      // Animação de dano no jogador
+
+      // Animação de ataque do inimigo e dano no jogador
+      setIsEnemyAttacking(true);
       setPlayerHit(true);
-      setTimeout(() => setPlayerHit(false), 600);
+      setTimeout(() => {
+        setIsEnemyAttacking(false);
+        setPlayerHit(false);
+      }, 750);
 
       // Inimigo ataca jogador
       const damage = 20; // 5 erros e você perde
       setPlayerHP((prev) => {
         const nextHP = Math.max(0, prev - damage);
         if (nextHP <= 0) {
-          setTimeout(() => setGameState('DEFEAT'), 800);
+          setTimeout(() => setGameState('DEFEAT'), 850);
         }
         return nextHP;
       });
@@ -223,17 +276,32 @@ export default function GameScreen() {
     });
   };
 
-  // Determinar asset do jogador e inimigo
+  // Determinar asset e nome do jogador e inimigo (idle vs attack)
   const playerClassName = user?.personagem || 'Samurai';
-  const playerAsset = CHAR_ASSETS[playerClassName]?.idle || CHAR_ASSETS.Samurai.idle;
+  const playerDisplayName = user?.username || user?.nome || playerClassName || 'Jogador';
+  const playerAsset = isPlayerAttacking
+    ? (CHAR_ASSETS[playerClassName]?.attack || CHAR_ASSETS.Samurai.attack)
+    : (CHAR_ASSETS[playerClassName]?.idle || CHAR_ASSETS.Samurai.idle);
 
   const enemyIndex = (fase.ordem - 1) % ENEMY_MAPPING.length;
-  const enemyId = ENEMY_MAPPING[enemyIndex];
-  const enemyAsset = CHAR_ASSETS[enemyId]?.idle || CHAR_ASSETS.spectre.idle;
+  const currentEnemy = ENEMY_MAPPING[enemyIndex >= 0 ? enemyIndex : 0];
+  const enemyAsset = isEnemyAttacking
+    ? (CHAR_ASSETS[currentEnemy.id]?.attack || CHAR_ASSETS.spectre.attack)
+    : (CHAR_ASSETS[currentEnemy.id]?.idle || CHAR_ASSETS.spectre.idle);
+  const bossDisplayName = currentEnemy.name;
 
   if (gameState === 'VICTORY') {
     return (
-      <View style={[styles.endContainer, { backgroundColor: '#1a1a2a' }]}>
+      <View
+        style={[
+          styles.endContainer,
+          {
+            backgroundColor: '#1a1a2a',
+            paddingTop: Math.max(insets.top + 20, 24),
+            paddingBottom: Math.max(insets.bottom + 16, 16),
+          },
+        ]}
+      >
         <View style={styles.victoryCard}>
           <Sparkles size={48} color="#FBBF24" />
           <Text style={styles.victoryTitle}>Vitória!</Text>
@@ -259,7 +327,16 @@ export default function GameScreen() {
 
   if (gameState === 'DEFEAT') {
     return (
-      <View style={[styles.endContainer, { backgroundColor: '#1a1a2a' }]}>
+      <View
+        style={[
+          styles.endContainer,
+          {
+            backgroundColor: '#1a1a2a',
+            paddingTop: Math.max(insets.top + 20, 24),
+            paddingBottom: Math.max(insets.bottom + 16, 16),
+          },
+        ]}
+      >
         <View style={styles.defeatCard}>
           <ShieldAlert size={48} color="#EF4444" />
           <Text style={styles.defeatTitle}>Derrota...</Text>
@@ -283,7 +360,15 @@ export default function GameScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: isDark ? '#11111f' : '#f3f4f6' }]}>
+    <View
+      style={[
+        styles.container,
+        {
+          backgroundColor: isDark ? '#11111f' : '#f3f4f6',
+          paddingTop: Math.max(insets.top + 8, 48),
+        },
+      ]}
+    >
       {/* Botão de Fechar */}
       <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()} activeOpacity={0.8}>
         <ArrowLeft size={20} color="#ffffff" />
@@ -297,8 +382,8 @@ export default function GameScreen() {
       >
         <View style={styles.combatOverlay}>
           {/* Jogador */}
-          <View style={[styles.characterBox, playerHit && styles.hitActive]}>
-            <Text style={styles.characterName}>{playerClassName}</Text>
+          <View style={[styles.characterBox, isPlayerAttacking && styles.playerAttacking, playerHit && styles.hitActive]}>
+            <Text style={styles.characterName} numberOfLines={1}>{playerDisplayName}</Text>
             <Image source={playerAsset} style={styles.characterGif} contentFit="contain" />
             <View style={styles.hpContainer}>
               <Heart size={12} color="#EF4444" fill="#EF4444" style={{ marginRight: 4 }} />
@@ -312,9 +397,9 @@ export default function GameScreen() {
           {/* VS */}
           <Text style={styles.vsText}>VS</Text>
 
-          {/* Inimigo */}
-          <View style={[styles.characterBox, enemyHit && styles.hitActive]}>
-            <Text style={styles.characterName}>{fase.titulo.split(' ')[0]}</Text>
+          {/* Inimigo / Boss */}
+          <View style={[styles.characterBox, isEnemyAttacking && styles.enemyAttacking, enemyHit && styles.hitActive]}>
+            <Text style={styles.characterName} numberOfLines={1}>{bossDisplayName}</Text>
             <Image source={enemyAsset} style={styles.characterGif} contentFit="contain" />
             <View style={styles.hpContainer}>
               <Heart size={12} color="#EF4444" fill="#EF4444" style={{ marginRight: 4 }} />
@@ -328,7 +413,14 @@ export default function GameScreen() {
       </ImageBackground>
 
       {/* PERGUNTA E ALTERNATIVAS */}
-      <ScrollView contentContainerStyle={styles.scrollQuiz} style={[styles.quizArea, { backgroundColor: colors.background }]}>
+      <ScrollView
+        contentContainerStyle={[
+          styles.scrollQuiz,
+          { paddingBottom: Math.max(insets.bottom + 16, 16) },
+        ]}
+        style={[styles.quizArea, { backgroundColor: colors.background }]}
+        showsVerticalScrollIndicator={false}
+      >
         {/* Enunciado */}
         <View style={[styles.questionCard, { backgroundColor: colors.card }]}>
           <Text style={styles.questionIndexText}>Pergunta {currentQuestionIdx + 1} de {totalQuestions}</Text>
@@ -339,22 +431,25 @@ export default function GameScreen() {
         <View style={styles.optionsContainer}>
           {currentQuestion.alternativas.map((opcao: string, index: number) => {
             const isSelected = selectedAnswer === index;
+            const correctIdx = getCorrectAnswerIndex(currentQuestion);
+            const isThisCorrect = index === correctIdx;
+
             return (
               <TouchableOpacity
                 key={index}
                 style={[
                   styles.optionBtn,
                   { backgroundColor: colors.card },
-                  isSelected && styles.optionBtnSelected,
-                  answered && index === currentQuestion.respostaCorreta && styles.optionBtnCorrect,
-                  answered && isSelected && index !== currentQuestion.respostaCorreta && styles.optionBtnIncorrect,
+                  isSelected && !answered && styles.optionBtnSelected,
+                  answered && isThisCorrect && styles.optionBtnCorrect,
+                  answered && isSelected && !isThisCorrect && styles.optionBtnIncorrect,
                 ]}
                 onPress={() => handleSelectAnswer(index)}
                 disabled={answered}
                 activeOpacity={0.8}
               >
-                <Text style={[styles.optionLetter, { color: colors.textMuted }]}>{String.fromCharCode(65 + index)})</Text>
-                <Text style={[styles.optionText, { color: answered ? '#ffffff' : colors.text }]}>{opcao}</Text>
+                <Text style={[styles.optionLetter, { color: answered && (isThisCorrect || isSelected) ? '#ffffff' : colors.textMuted }]}>{String.fromCharCode(65 + index)})</Text>
+                <Text style={[styles.optionText, { color: answered && (isThisCorrect || isSelected) ? '#ffffff' : colors.text }]}>{opcao}</Text>
               </TouchableOpacity>
             );
           })}
@@ -407,7 +502,6 @@ export default function GameScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    paddingTop: 52,
   },
   loadingContainer: {
     flex: 1,
@@ -444,17 +538,25 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   hitActive: {
-    backgroundColor: 'rgba(239, 68, 68, 0.4)', // Flash de dano vermelho
+    backgroundColor: 'rgba(239, 68, 68, 0.45)', // Flash de dano vermelho
+    transform: [{ scale: 0.96 }],
+  },
+  playerAttacking: {
+    transform: [{ translateX: 12 }, { scale: 1.06 }],
+  },
+  enemyAttacking: {
+    transform: [{ translateX: -12 }, { scale: 1.06 }],
   },
   characterName: {
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '900',
     marginBottom: 6,
+    textAlign: 'center',
   },
   characterGif: {
-    width: 90,
-    height: 90,
+    width: 96,
+    height: 96,
   },
   hpContainer: {
     flexDirection: 'row',
@@ -538,11 +640,11 @@ const styles = StyleSheet.create({
   },
   optionBtnCorrect: {
     backgroundColor: '#10B981', // Fundo verde para a correta
-    borderColor: '#1b1b1b',
+    borderColor: '#059669',
   },
   optionBtnIncorrect: {
     backgroundColor: '#EF4444', // Fundo vermelho se escolheu errado
-    borderColor: '#1b1b1b',
+    borderColor: '#B91C1C',
   },
   optionLetter: {
     color: '#9CA3AF',

@@ -10,34 +10,117 @@ import {
   Platform,
   ScrollView,
   ImageBackground,
-  Image,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
-import { getCharacterImage, BACKGROUND_IMAGES } from '../../constants/assets';
+import { BACKGROUND_IMAGES } from '../../constants/assets';
 import api from '../../services/api';
-import { ArrowLeft } from 'lucide-react-native';
+import { ArrowLeft, Calendar } from 'lucide-react-native';
+import DateTimePicker, { DateTimePickerChangeEvent } from '@react-native-community/datetimepicker';
 import { sanitizeInput, validatePasswordStrength } from '../../utils/security';
 import logger from '../../utils/logger';
 
-const CHARACTERS_LIST = [
-  { id: 'Samurai', name: 'Samurai', description: 'Guerreiro de honra com ataques rápidos de espada.' },
-  { id: 'Mago', name: 'Mago', description: 'Conjurador de feitiços com alto poder de mana.' },
-  { id: 'Guerreiro', name: 'Guerreiro', description: 'Combatente forte e resistente com alto HP.' },
-];
-
-
 export default function CadastroScreen() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const { login } = useAuth();
 
   const [nome, setNome] = useState('');
-  const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
+  const [confirmarSenha, setConfirmarSenha] = useState('');
   const [dataNascimento, setDataNascimento] = useState(''); // Formato DD/MM/AAAA
+  const [showDatePicker, setShowDatePicker] = useState(false);
   const [tipoUsuario, setTipoUsuario] = useState<'ALUNO' | 'PROFESSOR'>('ALUNO');
-  const [selectedChar, setSelectedChar] = useState('Samurai');
+
+  // Máscara e conversão automática de data de nascimento (ex: 01042000 -> 01/04/2000)
+  const handleDataNascimentoChange = (text: string) => {
+    // Bloqueia qualquer entrada além dos 10 caracteres da data (DD/MM/AAAA)
+    if (text.length > 10) return;
+
+    const isDeleting = text.length < dataNascimento.length;
+    // Apenas números e restrito a no máximo 8 dígitos (DDMMAAAA)
+    const numbers = text.replace(/\D/g, '').slice(0, 8);
+
+    // Se já estiver com a quantidade máxima de caracteres e não estiver apagando, não aceita
+    if (!isDeleting && dataNascimento.length >= 10 && numbers.length >= 8) {
+      return;
+    }
+
+    if (numbers.length === 0) {
+      setDataNascimento('');
+      return;
+    }
+
+    if (isDeleting) {
+      // Se apagou a barra diretamente (ex: tinha '01/' e agora tem '01')
+      if (dataNascimento.endsWith('/') && text === dataNascimento.slice(0, -1)) {
+        const trimmed = numbers.slice(0, -1);
+        if (trimmed.length <= 2) {
+          setDataNascimento(trimmed);
+        } else if (trimmed.length <= 4) {
+          setDataNascimento(`${trimmed.slice(0, 2)}/${trimmed.slice(2)}`);
+        } else {
+          setDataNascimento(`${trimmed.slice(0, 2)}/${trimmed.slice(2, 4)}/${trimmed.slice(4)}`);
+        }
+        return;
+      }
+
+      if (numbers.length <= 2) {
+        setDataNascimento(numbers);
+      } else if (numbers.length <= 4) {
+        setDataNascimento(`${numbers.slice(0, 2)}/${numbers.slice(2)}`);
+      } else {
+        setDataNascimento(`${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4)}`);
+      }
+      return;
+    }
+
+    // Digitando novos dígitos
+    if (numbers.length < 2) {
+      setDataNascimento(numbers);
+    } else if (numbers.length === 2) {
+      setDataNascimento(`${numbers}/`);
+    } else if (numbers.length < 4) {
+      setDataNascimento(`${numbers.slice(0, 2)}/${numbers.slice(2)}`);
+    } else if (numbers.length === 4) {
+      setDataNascimento(`${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/`);
+    } else {
+      setDataNascimento(`${numbers.slice(0, 2)}/${numbers.slice(2, 4)}/${numbers.slice(4, 8)}`);
+    }
+  };
+
+  const parseDate = (dateStr: string): Date => {
+    if (dateStr && dateStr.length === 10) {
+      const parts = dateStr.split('/');
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parseInt(parts[2], 10);
+        const parsed = new Date(year, month, day);
+        if (!isNaN(parsed.getTime())) {
+          return parsed;
+        }
+      }
+    }
+    return new Date(2005, 0, 1);
+  };
+
+  const handleDateValueChange = (_event: DateTimePickerChangeEvent, selectedDate: Date) => {
+    if (Platform.OS === 'android') {
+      setShowDatePicker(false);
+    }
+    const day = String(selectedDate.getDate()).padStart(2, '0');
+    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
+    const year = selectedDate.getFullYear();
+    setDataNascimento(`${day}/${month}/${year}`);
+  };
+
+  const handleDateDismiss = () => {
+    setShowDatePicker(false);
+  };
 
   // Campos adicionais para professor
   const [registroProfissional, setRegistroProfissional] = useState('');
@@ -57,11 +140,16 @@ export default function CadastroScreen() {
   const handleCadastro = async () => {
     // RC02: Sanitização de entradas do usuário
     const cleanNome = sanitizeInput(nome).trim();
-    const cleanUsername = sanitizeInput(username).trim().toLowerCase();
     const cleanEmail = sanitizeInput(email).trim().toLowerCase();
 
-    if (!cleanNome || !cleanUsername || !cleanEmail || !senha || !dataNascimento) {
+    if (!cleanNome || !cleanEmail || !senha || !confirmarSenha || !dataNascimento) {
       setErrorMsg('Por favor, preencha todos os campos obrigatórios.');
+      return;
+    }
+
+    // Validação de confirmação de senha
+    if (senha !== confirmarSenha) {
+      setErrorMsg('As senhas não coincidem. Verifique e tente novamente.');
       return;
     }
 
@@ -81,9 +169,23 @@ export default function CadastroScreen() {
     }
 
     // Converter data de nascimento DD/MM/AAAA para ISO Date string
+    // Só aceita exatamente a quantidade correta de caracteres da data (10 caracteres: DD/MM/AAAA)
+    if (dataNascimento.trim().length !== 10) {
+      setErrorMsg('A data de nascimento deve ter exatamente 10 caracteres no formato DD/MM/AAAA.');
+      return;
+    }
+
     const dateParts = dataNascimento.split('/');
-    if (dateParts.length !== 3) {
-      setErrorMsg('Data de nascimento deve estar no formato DD/MM/AAAA.');
+    if (dateParts.length !== 3 || dateParts[0].length !== 2 || dateParts[1].length !== 2 || dateParts[2].length !== 4) {
+      setErrorMsg('Data de nascimento deve estar no formato DD/MM/AAAA completo.');
+      return;
+    }
+    const day = parseInt(dateParts[0], 10);
+    const month = parseInt(dateParts[1], 10);
+    const year = parseInt(dateParts[2], 10);
+    const currentYear = new Date().getFullYear();
+    if (isNaN(day) || isNaN(month) || isNaN(year) || day < 1 || day > 31 || month < 1 || month > 12 || year < 1920 || year > currentYear) {
+      setErrorMsg('Por favor, informe uma data de nascimento válida.');
       return;
     }
     const formattedDate = `${dateParts[2]}-${dateParts[1]}-${dateParts[0]}`; // AAAA-MM-DD
@@ -92,15 +194,13 @@ export default function CadastroScreen() {
     setErrorMsg(null);
 
     try {
-      // 1. Registrar o usuário com o personagem escolhido
+      // 1. Registrar o usuário no backend (sem username e personagem, definidos na próxima tela)
       await api.post('/api/auth/register', {
         nome: cleanNome,
         email: cleanEmail,
         senha: senha,
-        username: cleanUsername,
         dataNascimento: formattedDate,
         tipoUsuario: safeTipoUsuario,
-        personagem: selectedChar,
         aceiteTermos: true,
         registroProfissional: safeTipoUsuario === 'PROFESSOR' ? sanitizeInput(registroProfissional).trim() : undefined,
         titulacao: safeTipoUsuario === 'PROFESSOR' ? sanitizeInput(titulacao) : undefined,
@@ -116,24 +216,15 @@ export default function CadastroScreen() {
       const token = loginRes.data.token;
       const userObj = loginRes.data.usuario || loginRes.data.user;
 
-      // 3. Garantir a atualização do personagem selecionado
-      try {
-        await api.put('/api/users/atualizar-personagem', {
-          personagem: selectedChar,
-        }, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-      } catch (charError) {
-        logger.warn('Personagem já atribuído no cadastro');
-      }
-
-      // 4. Logar a sessão localmente
+      // 3. Logar a sessão localmente
       await login(token, userObj);
-      router.replace('/(tabs)/home');
+
+      // 4. Redireciona para a tela pós-login para escolher username e personagem
+      router.replace('/(auth)/completar-perfil' as any);
 
     } catch (error: any) {
       logger.error('Erro no cadastro');
-      const msg = error.response?.data?.message || 'Erro ao realizar cadastro. Tente outro e-mail ou usuário.';
+      const msg = error.response?.data?.message || 'Erro ao realizar cadastro. Tente outro e-mail.';
       setErrorMsg(msg);
     } finally {
       setLoading(false);
@@ -149,7 +240,7 @@ export default function CadastroScreen() {
       <View style={styles.overlay}>
         {/* Botão Voltar */}
         <TouchableOpacity
-          style={styles.backBtn}
+          style={[styles.backBtn, { top: Math.max(insets.top + 10, 48) }]}
           onPress={() => router.back()}
           activeOpacity={0.8}
         >
@@ -160,7 +251,16 @@ export default function CadastroScreen() {
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardContainer}
         >
-          <ScrollView contentContainerStyle={styles.scrollContainer} keyboardShouldPersistTaps="handled">
+          <ScrollView
+            contentContainerStyle={[
+              styles.scrollContainer,
+              {
+                paddingTop: Math.max(insets.top + 60, 60),
+                paddingBottom: Math.max(insets.bottom + 16, 16),
+              },
+            ]}
+            keyboardShouldPersistTaps="handled"
+          >
             <View style={styles.card}>
               <Text style={styles.title}>Criar Conta</Text>
 
@@ -179,20 +279,6 @@ export default function CadastroScreen() {
                   placeholderTextColor="#9CA3AF"
                   value={nome}
                   onChangeText={setNome}
-                />
-              </View>
-
-              {/* Nome de Usuário */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Nome de Usuário (username)</Text>
-                <TextInput
-                  style={styles.input}
-                  placeholder="Ex: joaodev"
-                  placeholderTextColor="#9CA3AF"
-                  value={username}
-                  onChangeText={setUsername}
-                  autoCapitalize="none"
-                  autoCorrect={false}
                 />
               </View>
 
@@ -215,7 +301,7 @@ export default function CadastroScreen() {
                 <Text style={styles.label}>Senha</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Senha forte"
+                  placeholder="Senha forte (mínimo 8 caracteres)"
                   placeholderTextColor="#9CA3AF"
                   secureTextEntry
                   value={senha}
@@ -224,19 +310,99 @@ export default function CadastroScreen() {
                 />
               </View>
 
-              {/* Data de Nascimento */}
+              {/* Confirmar Senha */}
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>Data de Nascimento (DD/MM/AAAA)</Text>
+                <Text style={styles.label}>Confirme sua Senha</Text>
                 <TextInput
                   style={styles.input}
-                  placeholder="Ex: 15/08/2000"
+                  placeholder="Repita sua senha"
                   placeholderTextColor="#9CA3AF"
-                  value={dataNascimento}
-                  onChangeText={setDataNascimento}
-                  keyboardType="number-pad"
-                  maxLength={10}
+                  secureTextEntry
+                  value={confirmarSenha}
+                  onChangeText={setConfirmarSenha}
+                  autoCapitalize="none"
                 />
               </View>
+
+              {/* Data de Nascimento */}
+              <View style={styles.inputContainer}>
+                <View style={styles.labelRow}>
+                  <Text style={styles.label}>Data de Nascimento (DD/MM/AAAA)</Text>
+                  {dataNascimento.length > 0 && (
+                    <Text
+                      style={[
+                        styles.charCounter,
+                        dataNascimento.length === 10 ? styles.charCounterComplete : null,
+                      ]}
+                    >
+                      {dataNascimento.length}/10
+                    </Text>
+                  )}
+                </View>
+                <View style={styles.dateInputWrapper}>
+                  <TextInput
+                    style={styles.dateTextInput}
+                    placeholder="Ex: 15/08/2000"
+                    placeholderTextColor="#9CA3AF"
+                    value={dataNascimento}
+                    onChangeText={handleDataNascimentoChange}
+                    keyboardType="number-pad"
+                    maxLength={10}
+                  />
+                  <TouchableOpacity
+                    style={styles.calendarButton}
+                    onPress={() => setShowDatePicker(true)}
+                    activeOpacity={0.7}
+                  >
+                    <Calendar size={22} color="#CA8A04" />
+                  </TouchableOpacity>
+                </View>
+              </View>
+
+              {/* DateTimePicker para iOS (Modal) e Android (Nativo) */}
+              {Platform.OS === 'ios' ? (
+                <Modal
+                  visible={showDatePicker}
+                  transparent
+                  animationType="fade"
+                  onRequestClose={() => setShowDatePicker(false)}
+                >
+                  <View style={styles.modalOverlay}>
+                    <View style={styles.modalCard}>
+                      <Text style={styles.modalTitle}>Selecione sua Data</Text>
+                      <DateTimePicker
+                        value={parseDate(dataNascimento)}
+                        mode="date"
+                        display="inline"
+                        maximumDate={new Date()}
+                        minimumDate={new Date(1920, 0, 1)}
+                        onValueChange={handleDateValueChange}
+                        onDismiss={handleDateDismiss}
+                        themeVariant="dark"
+                      />
+                      <TouchableOpacity
+                        style={styles.modalCloseButton}
+                        onPress={() => setShowDatePicker(false)}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.modalCloseButtonText}>Confirmar</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                </Modal>
+              ) : (
+                showDatePicker && (
+                  <DateTimePicker
+                    value={parseDate(dataNascimento)}
+                    mode="date"
+                    display="default"
+                    maximumDate={new Date()}
+                    minimumDate={new Date(1920, 0, 1)}
+                    onValueChange={handleDateValueChange}
+                    onDismiss={handleDateDismiss}
+                  />
+                )
+              )}
 
               {/* Papel do Usuário */}
               <View style={styles.inputContainer}>
@@ -301,32 +467,6 @@ export default function CadastroScreen() {
                 </>
               )}
 
-              {/* Seleção de Personagem */}
-              <View style={styles.inputContainer}>
-                <Text style={styles.label}>Escolha seu Personagem Inicial</Text>
-                {CHARACTERS_LIST.map((char) => (
-                  <TouchableOpacity
-                    key={char.id}
-                    style={[
-                      styles.charCard,
-                      selectedChar === char.id && styles.charCardActive,
-                    ]}
-                    onPress={() => setSelectedChar(char.id)}
-                    activeOpacity={0.8}
-                  >
-                    <Image
-                      source={getCharacterImage(char.id)}
-                      style={styles.charAvatarImg}
-                      resizeMode="contain"
-                    />
-                    <View style={{ flex: 1 }}>
-                      <Text style={styles.charName}>{char.name}</Text>
-                      <Text style={styles.charDescription}>{char.description}</Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
-
               {/* Botão de Registro */}
               <TouchableOpacity
                 style={[styles.button, loading && styles.buttonDisabled]}
@@ -337,7 +477,7 @@ export default function CadastroScreen() {
                 {loading ? (
                   <ActivityIndicator color="#ffffff" />
                 ) : (
-                  <Text style={styles.buttonText}>Cadastrar e Jogar!</Text>
+                  <Text style={styles.buttonText}>Continuar Cadastro 🚀</Text>
                 )}
               </TouchableOpacity>
 
@@ -414,11 +554,25 @@ const styles = StyleSheet.create({
     width: '100%',
     marginBottom: 18,
   },
+  labelRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
   label: {
     color: '#F3F4F6',
     fontSize: 14,
     fontWeight: '700',
     marginBottom: 6,
+  },
+  charCounter: {
+    fontSize: 12,
+    fontWeight: '800',
+    color: '#9CA3AF',
+  },
+  charCounterComplete: {
+    color: '#22C55E',
   },
   input: {
     backgroundColor: '#1E1E2F',
@@ -429,6 +583,67 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 3,
     borderColor: '#1b1b1b',
+  },
+  dateInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#1E1E2F',
+    borderRadius: 8,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+  },
+  dateTextInput: {
+    flex: 1,
+    color: '#ffffff',
+    fontSize: 15,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+  },
+  calendarButton: {
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 340,
+    backgroundColor: '#2D2D44',
+    borderRadius: 16,
+    padding: 20,
+    borderWidth: 4,
+    borderColor: '#1b1b1b',
+    alignItems: 'center',
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '800',
+    color: '#ffffff',
+    marginBottom: 16,
+    textAlign: 'center',
+  },
+  modalCloseButton: {
+    marginTop: 16,
+    backgroundColor: '#16A34A',
+    paddingVertical: 12,
+    paddingHorizontal: 32,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+    width: '100%',
+    alignItems: 'center',
+  },
+  modalCloseButtonText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '800',
   },
   roleContainer: {
     flexDirection: 'row',
@@ -450,36 +665,6 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontWeight: '800',
     fontSize: 14,
-  },
-  charCard: {
-    backgroundColor: '#1E1E2F',
-    borderRadius: 8,
-    borderWidth: 3,
-    borderColor: '#1b1b1b',
-    padding: 12,
-    marginBottom: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-  },
-  charAvatarImg: {
-    width: 44,
-    height: 44,
-  },
-  charCardActive: {
-    borderColor: '#16A34A', // green-600 border for active character
-    backgroundColor: '#1F2937',
-  },
-  charName: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '900',
-    marginBottom: 2,
-  },
-  charDescription: {
-    color: '#9CA3AF',
-    fontSize: 12,
-    fontWeight: '600',
   },
   button: {
     width: '100%',
