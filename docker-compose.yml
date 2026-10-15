@@ -34,11 +34,37 @@ services:
       - estudemy_network
 
   # ----------------------------------------------------------------------------
-  # 2. API Backend (Node.js + Express + TypeScript)
+  # 2. Banco de Dados Relacional SQL de Emergência / Backup - PostgreSQL 16
+  # ----------------------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: estudemy_postgres
+    restart: unless-stopped
+    ports:
+      # Exposto estritamente em localhost (127.0.0.1) para ferramentas de admin locais (DBeaver/pgAdmin)
+      - "127.0.0.1:${POSTGRES_PORT:-5432}:5432"
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-estudemy_emergencia}
+      POSTGRES_USER: ${POSTGRES_USER:-estudemy_admin}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-estudemy_sql_secure_pass_2026}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./scripts/sql/init-emergency-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER:-estudemy_admin} -d $${POSTGRES_DB:-estudemy_emergencia}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - estudemy_network
+
+  # ----------------------------------------------------------------------------
+  # 3. API Backend (Node.js + Express + TypeScript)
   # ----------------------------------------------------------------------------
   backend:
     build:
-      context: ../EstudeMy-BackEnd-TS
+      context: ../Back-End-TS
       dockerfile: Dockerfile
     container_name: estudemy_backend
     restart: unless-stopped
@@ -49,6 +75,8 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       APP_ENV: ${APP_ENV:-dev}
       MONGO_URI: ${MONGO_URI:-mongodb://mongo:27017/estudemy}
+      POSTGRES_URI: ${POSTGRES_URI:-postgresql://estudemy_app:estudemy_app_secure_pass_2026@postgres:5432/estudemy_emergencia}
+      EMERGENCY_DB_ENABLED: ${EMERGENCY_DB_ENABLED:-true}
       JWT_SECRET: ${JWT_SECRET:-estudemy_super_secret_jwt_key_2026_dev}
       FRONTEND_URL: ${FRONTEND_URL:-http://localhost:8081}
       BACKEND_URL: ${BACKEND_URL:-http://localhost:5000}
@@ -58,11 +86,13 @@ services:
     depends_on:
       mongo:
         condition: service_healthy
+      postgres:
+        condition: service_healthy
     networks:
       - estudemy_network
 
   # ----------------------------------------------------------------------------
-  # 3. Mobile App (Expo Web / Servido via Nginx de Alta Performance)
+  # 4. Mobile App (Expo Web / Servido via Nginx de Alta Performance)
   # ----------------------------------------------------------------------------
   mobile:
     build:
@@ -83,8 +113,11 @@ services:
 volumes:
   mongo_data:
     name: estudemy_mongo_data
+  postgres_data:
+    name: estudemy_postgres_data
 
 networks:
   estudemy_network:
     name: estudemy_network
     driver: bridge
+

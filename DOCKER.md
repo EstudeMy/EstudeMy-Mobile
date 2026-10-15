@@ -34,9 +34,11 @@ graph TD
 
 | Serviço | Contêiner | Porta Mapeada | Descrição |
 | :--- | :--- | :--- | :--- |
-| **mongo** | `estudemy_mongo` | `27017:27017` | Banco de dados NoSQL oficial com volume persistente. |
-| **backend** | `estudemy_backend` | `5000:5000` | API REST em Node.js / Express a partir de `../EstudeMy-BackEnd-TS`. |
+| **mongo** | `estudemy_mongo` | `27017:27017` | Banco de dados NoSQL primário oficial com volume persistente. |
+| **postgres** | `estudemy_postgres` | `127.0.0.1:5432:5432` | Banco relacional SQL de emergência/backup com script DDL automático (`emerg_db`). |
+| **backend** | `estudemy_backend` | `5000:5000` | API REST em Node.js / Express com watchdog e failover automático. |
 | **mobile** | `estudemy_mobile` | `8081:80` | Aplicativo compilado estaticamente servido via **Nginx** de alta performance. |
+
 
 ---
 
