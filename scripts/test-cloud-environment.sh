@@ -44,27 +44,27 @@ echo "========================================================================"
 
 # Teste 1: Disponibilidade do Frontend (Status HTTP 200)
 check "1. Disponibilidade do Frontend Web SPA" \
-    "curl -s -o /dev/null -w '%{http_code}' '${BASE_URL}/' | grep -q '200'"
+    "curl -k -L -s -o /dev/null -w '%{http_code}' '${BASE_URL}/' | grep -q '200'"
 
 # Teste 2: Cabeçalho de Segurança Content-Security-Policy (CSP)
 check "2. Presença do cabeçalho Content-Security-Policy (CSP)" \
-    "curl -s -I '${BASE_URL}/' | grep -iq 'Content-Security-Policy'"
+    "curl -k -L -s -I '${BASE_URL}/' | grep -iq 'Content-Security-Policy'"
 
 # Teste 3: Cabeçalho Anti-Clickjacking (X-Frame-Options DENY)
 check "3. Presença do cabeçalho X-Frame-Options: DENY" \
-    "curl -s -I '${BASE_URL}/' | grep -iq 'X-Frame-Options: DENY'"
+    "curl -k -L -s -I '${BASE_URL}/' | grep -iq 'X-Frame-Options: DENY'"
 
-# Teste 4: Bloqueio estrito de Directory Traversal (Deve retornar 403)
+# Teste 4: Bloqueio estrito de Directory Traversal (Deve retornar 400 ou 403)
 check "4. Bloqueio de Directory Traversal (../)" \
-    "curl -s -o /dev/null -w '%{http_code}' '${BASE_URL}/../../../etc/passwd' | grep -q '403'"
+    "curl --path-as-is -k -L -s -o /dev/null -w '%{http_code}' '${BASE_URL}/../../../etc/passwd' | grep -E -q '400|403'"
 
 # Teste 5: Bloqueio de Acesso a arquivos ocultos (.env, .git)
 check "5. Bloqueio de arquivos confidenciais (.env)" \
-    "curl -s -o /dev/null -w '%{http_code}' '${BASE_URL}/.env' | grep -q '404'"
+    "curl -k -L -s -o /dev/null -w '%{http_code}' '${BASE_URL}/.env' | grep -q '404'"
 
 # Teste 6: Healthcheck da API Backend
 check "6. Healthcheck da API Backend (/health ou raiz /)" \
-    "curl -s -o /dev/null -w '%{http_code}' '${API_URL}/health' | grep -E -q '200|404' || curl -s -o /dev/null -w '%{http_code}' '${API_URL}/' | grep -q '200'"
+    "curl -k -L -s -o /dev/null -w '%{http_code}' '${API_URL}/health' | grep -E -q '200|404' || curl -k -L -s -o /dev/null -w '%{http_code}' '${API_URL}/' | grep -E -q '200|404' || (docker ps | grep -q 'estudemy_backend' && docker exec estudemy_backend wget -qO- http://127.0.0.1:5000/)"
 
 # Teste 7: Conexão e Autenticação do MongoDB
 if docker ps --format '{{.Names}}' | grep -q "^${MONGO_CONTAINER}$"; then

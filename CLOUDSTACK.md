@@ -23,7 +23,7 @@ graph TD
             VRSourceNAT["Source NAT (Saída de Pacotes / Internet)"]
         end
 
-        subgraph IsolatedNet["🔒 Rede Convidada Isolada (Guest Network: 10.0.0.0/16)"]
+        subgraph IsolatedNet["🔒 Rede Convidada Isolada (Guest Network: 10.0.0.0/16)"] 
             
             subgraph HostVM["🖥️ VM EstudeMy (Ubuntu Server 24.04 LTS)<br/>Compute Offering: 4 vCPUs, 24 GB RAM"]
                 subgraph DockerEngine["🐳 Docker Engine 26.x & Compose Plugin"]
