@@ -1,4 +1,4 @@
-# ==============================================================================
+# ============================================================================
 # Docker Compose - EstudeMy Produção em Nuvem (Arquitetura TO-BE)
 # Ambiente de Execução Homologado: Ubuntu Server 24.04 LTS (OCI Free Tier / AWS)
 #
@@ -11,8 +11,10 @@
 # 6. estudemy_grafana   - Dashboards visuais e monitoramento contínuo
 #
 # Uso:
-#   docker compose -f docker-compose.prod.yml up -d --build
-# ==============================================================================
+#   docker compose -f docker-compose.prod.yml up -d
+# ============================================================================
+
+version: "3.9"
 
 services:
   # ----------------------------------------------------------------------------
@@ -27,7 +29,6 @@ services:
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-estudemy_root_superpass_2026}
       MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-estudemy}
     volumes:
-      # Block Volume Persistente de 200 GB SSD NVMe (Montado no host em /mnt/estudemy-data/mongo)
       - mongo_data:/data/db
       - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     healthcheck:
@@ -51,9 +52,6 @@ services:
   # 2. API Backend RESTful - Node.js 22 LTS + Express 5 (Subnet Privada)
   # ----------------------------------------------------------------------------
   backend:
-    build:
-      context: ../EstudeMy-BackEnd-TS
-      dockerfile: Dockerfile
     image: ghcr.io/estudemy/backend:latest
     container_name: estudemy_backend
     restart: unless-stopped
@@ -92,17 +90,10 @@ services:
   # 3. Mobile Web SPA + Nginx Proxy Reverso & SSL (Borda / Subnet Pública DMZ)
   # ----------------------------------------------------------------------------
   mobile:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      target: runner
-      args:
-        EXPO_PUBLIC_API_URL: ${EXPO_PUBLIC_API_URL:-https://api.estudemy.site}
     image: ghcr.io/estudemy/mobile:latest
     container_name: estudemy_mobile
     restart: unless-stopped
     ports:
-      # Portas públicas liberadas na DMZ / Security List
       - "80:80"
       - "443:443"
     volumes:
@@ -154,7 +145,6 @@ services:
     container_name: estudemy_prometheus
     restart: unless-stopped
     ports:
-      # Porta interna/VPN restrita
       - "127.0.0.1:9090:9090"
     volumes:
       - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
@@ -178,7 +168,6 @@ services:
     container_name: estudemy_grafana
     restart: unless-stopped
     ports:
-      # Acesso ao painel administrativo (porta 3000)
       - "3000:3000"
     environment:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
@@ -194,9 +183,9 @@ services:
     networks:
       - estudemy_net
 
-# ==============================================================================
+# ============================================================================
 # Volumes Persistentes (Mapeados no Block Volume de 200 GB SSD NVMe)
-# ==============================================================================
+# ============================================================================
 volumes:
   mongo_data:
     name: estudemy_prod_mongo_data
@@ -205,9 +194,9 @@ volumes:
   grafana_data:
     name: estudemy_prod_grafana_data
 
-# ==============================================================================
+# ============================================================================
 # Rede Interna Isolada (Docker Bridge Network)
-# ==============================================================================
+# ============================================================================
 networks:
   estudemy_net:
     name: estudemy_net
