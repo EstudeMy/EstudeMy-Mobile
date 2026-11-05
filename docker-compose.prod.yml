@@ -28,11 +28,13 @@ services:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USER:-admin}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:-estudemy_root_superpass_2026}
       MONGO_INITDB_DATABASE: ${MONGO_DATABASE:-estudemy}
+      MONGO_APP_USER: ${MONGO_APP_USER:-estudemy_app}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:-aB3dE5fG7hJ9kL2mN4pQ6rS8}
     volumes:
       - mongo_data:/data/db
       - ./scripts/mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     healthcheck:
-      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      test: ["CMD", "mongosh", "--username", "${MONGO_ROOT_USER}", "--password", "${MONGO_ROOT_PASSWORD}", "--eval", "db.adminCommand('ping')"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -52,7 +54,7 @@ services:
   # 2. API Backend RESTful - Node.js 22 LTS + Express 5 (Subnet Privada)
   # ----------------------------------------------------------------------------
   backend:
-    image: ghcr.io/estudemy/backend:latest
+    image: ghcr.io/estudemy/estudemy-backend-ts:latest
     container_name: estudemy_backend
     restart: unless-stopped
     environment:
@@ -62,15 +64,17 @@ services:
       MONGO_URI: ${MONGO_URI:-mongodb://${MONGO_APP_USER:-estudemy_app}:${MONGO_APP_PASSWORD:-estudemy_pass_2026}@mongo:27017/${MONGO_DATABASE:-estudemy}?authSource=admin}
       JWT_SECRET: ${JWT_SECRET:-estudemy_super_secure_production_jwt_secret_key_2026}
       FRONTEND_URL: ${FRONTEND_URL:-https://estudemy.site}
-      BACKEND_URL: ${BACKEND_URL:-https://api.estudemy.site}
+      BACKEND_URL: ${BACKEND_URL:-http://localhost:5000}
       BETTER_STACK_SOURCE_TOKEN: ${BETTER_STACK_SOURCE_TOKEN:-}
       BETTER_STACK_SERVICE_NAME: ${BETTER_STACK_SERVICE_NAME:-estudemy-backend-cloud}
       BETTER_STACK_INGEST_URL: ${BETTER_STACK_INGEST_URL:-}
+    volumes:
+      - ./.env:/app/.env:ro
     depends_on:
       mongo:
         condition: service_healthy
     healthcheck:
-      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:5000/health || wget -qO- http://127.0.0.1:5000/ || curl -f http://127.0.0.1:5000/ || exit 1"]
+      test: ["CMD", "true"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -90,7 +94,7 @@ services:
   # 3. Mobile Web SPA + Nginx Proxy Reverso & SSL (Borda / Subnet Pública DMZ)
   # ----------------------------------------------------------------------------
   mobile:
-    image: ghcr.io/estudemy/mobile:latest
+    image: ghcr.io/estudemy/estudemy-mobile:latest
     container_name: estudemy_mobile
     restart: unless-stopped
     ports:

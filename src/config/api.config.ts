@@ -32,8 +32,8 @@ const getBaseUrl = (): string => {
     return 'http://10.0.2.2:5000';
   }
 
-  // 5. Padrão Nuvem Render
-  return 'https://estudemydocker.onrender.com';
+  // 5. API publica na instancia AWS
+  return 'http://18.222.3.101:5000';
 };
 
 export const API_BASE_URL = getBaseUrl();

@@ -10,6 +10,7 @@ web-build
 .vscode
 .idea
 *.log
+.env
 .env*.local
 *.pdf
 .DS_Store
