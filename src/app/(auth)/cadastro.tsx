@@ -17,10 +17,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { BACKGROUND_IMAGES } from '../../constants/assets';
 import api from '../../services/api';
-import { ArrowLeft, Calendar } from 'lucide-react-native';
-import DateTimePicker, { DateTimePickerChangeEvent } from '@react-native-community/datetimepicker';
+import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react-native';
 import { sanitizeInput, validatePasswordStrength } from '../../utils/security';
 import logger from '../../utils/logger';
+
+const MONTHS_PT = [
+  'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+  'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'
+];
+const WEEKDAYS_PT = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+const CURRENT_YEAR = new Date().getFullYear();
+const YEARS_LIST = Array.from({ length: CURRENT_YEAR - 1930 + 1 }, (_, i) => (CURRENT_YEAR - 4) - i);
 
 export default function CadastroScreen() {
   const router = useRouter();
@@ -33,6 +40,8 @@ export default function CadastroScreen() {
   const [confirmarSenha, setConfirmarSenha] = useState('');
   const [dataNascimento, setDataNascimento] = useState(''); // Formato DD/MM/AAAA
   const [showDatePicker, setShowDatePicker] = useState(false);
+  const [calendarDate, setCalendarDate] = useState(() => new Date(2005, 0, 1));
+  const [calendarViewMode, setCalendarViewMode] = useState<'days' | 'months' | 'years'>('days');
   const [tipoUsuario, setTipoUsuario] = useState<'ALUNO' | 'PROFESSOR'>('ALUNO');
 
   // Máscara e conversão automática de data de nascimento (ex: 01042000 -> 01/04/2000)
@@ -108,18 +117,48 @@ export default function CadastroScreen() {
     return new Date(2005, 0, 1);
   };
 
-  const handleDateValueChange = (_event: DateTimePickerChangeEvent, selectedDate: Date) => {
-    if (Platform.OS === 'android') {
-      setShowDatePicker(false);
+  const handleOpenCalendar = () => {
+    if (dataNascimento.length === 10) {
+      setCalendarDate(parseDate(dataNascimento));
     }
-    const day = String(selectedDate.getDate()).padStart(2, '0');
-    const month = String(selectedDate.getMonth() + 1).padStart(2, '0');
-    const year = selectedDate.getFullYear();
-    setDataNascimento(`${day}/${month}/${year}`);
+    setCalendarViewMode('days');
+    setShowDatePicker(true);
   };
 
-  const handleDateDismiss = () => {
+  const handlePrevMonth = () => {
+    setCalendarDate((prev) => {
+      const m = prev.getMonth();
+      const y = prev.getFullYear();
+      if (m === 0) return new Date(y - 1, 11, 1);
+      return new Date(y, m - 1, 1);
+    });
+  };
+
+  const handleNextMonth = () => {
+    setCalendarDate((prev) => {
+      const m = prev.getMonth();
+      const y = prev.getFullYear();
+      if (m === 11) return new Date(y + 1, 0, 1);
+      return new Date(y, m + 1, 1);
+    });
+  };
+
+  const handleSelectDay = (day: number) => {
+    const dayStr = String(day).padStart(2, '0');
+    const monthStr = String(calendarDate.getMonth() + 1).padStart(2, '0');
+    const yearStr = calendarDate.getFullYear();
+    setDataNascimento(`${dayStr}/${monthStr}/${yearStr}`);
     setShowDatePicker(false);
+  };
+
+  const handleSelectMonth = (monthIdx: number) => {
+    setCalendarDate((prev) => new Date(prev.getFullYear(), monthIdx, 1));
+    setCalendarViewMode('days');
+  };
+
+  const handleSelectYear = (yearNum: number) => {
+    setCalendarDate((prev) => new Date(yearNum, prev.getMonth(), 1));
+    setCalendarViewMode('days');
   };
 
   // Campos adicionais para professor
@@ -351,7 +390,7 @@ export default function CadastroScreen() {
                   />
                   <TouchableOpacity
                     style={styles.calendarButton}
-                    onPress={() => setShowDatePicker(true)}
+                    onPress={handleOpenCalendar}
                     activeOpacity={0.7}
                   >
                     <Calendar size={22} color="#CA8A04" />
@@ -359,50 +398,164 @@ export default function CadastroScreen() {
                 </View>
               </View>
 
-              {/* DateTimePicker para iOS (Modal) e Android (Nativo) */}
-              {Platform.OS === 'ios' ? (
-                <Modal
-                  visible={showDatePicker}
-                  transparent
-                  animationType="fade"
-                  onRequestClose={() => setShowDatePicker(false)}
-                >
-                  <View style={styles.modalOverlay}>
-                    <View style={styles.modalCard}>
-                      <Text style={styles.modalTitle}>Selecione sua Data</Text>
-                      <DateTimePicker
-                        value={parseDate(dataNascimento)}
-                        mode="date"
-                        display="inline"
-                        maximumDate={new Date()}
-                        minimumDate={new Date(1920, 0, 1)}
-                        onValueChange={handleDateValueChange}
-                        onDismiss={handleDateDismiss}
-                        themeVariant="dark"
-                      />
+              {/* Modal de Calendário Interativo Universal (Web, Android, iOS) */}
+              <Modal
+                visible={showDatePicker}
+                transparent
+                animationType="fade"
+                onRequestClose={() => setShowDatePicker(false)}
+              >
+                <View style={styles.modalOverlay}>
+                  <View style={styles.calendarModalCard}>
+                    {/* Header do Calendário: Navegação e Seletores */}
+                    <View style={styles.calendarHeaderRow}>
                       <TouchableOpacity
-                        style={styles.modalCloseButton}
+                        onPress={handlePrevMonth}
+                        style={styles.calNavBtn}
+                        activeOpacity={0.7}
+                      >
+                        <ChevronLeft size={22} color="#ffffff" />
+                      </TouchableOpacity>
+
+                      <View style={styles.calMonthYearButtons}>
+                        <TouchableOpacity
+                          style={[styles.calPillBtn, calendarViewMode === 'months' && styles.calPillBtnActive]}
+                          onPress={() => setCalendarViewMode(calendarViewMode === 'months' ? 'days' : 'months')}
+                          activeOpacity={0.75}
+                        >
+                          <Text style={styles.calPillBtnText}>{MONTHS_PT[calendarDate.getMonth()]}</Text>
+                        </TouchableOpacity>
+
+                        <TouchableOpacity
+                          style={[styles.calPillBtn, calendarViewMode === 'years' && styles.calPillBtnActive]}
+                          onPress={() => setCalendarViewMode(calendarViewMode === 'years' ? 'days' : 'years')}
+                          activeOpacity={0.75}
+                        >
+                          <Text style={styles.calPillBtnText}>{calendarDate.getFullYear()}</Text>
+                        </TouchableOpacity>
+                      </View>
+
+                      <TouchableOpacity
+                        onPress={handleNextMonth}
+                        style={styles.calNavBtn}
+                        activeOpacity={0.7}
+                      >
+                        <ChevronRight size={22} color="#ffffff" />
+                      </TouchableOpacity>
+                    </View>
+
+                    {/* Visualização 1: Seleção de Mês */}
+                    {calendarViewMode === 'months' && (
+                      <View style={styles.calMonthsGrid}>
+                        {MONTHS_PT.map((mName, idx) => {
+                          const isSelected = calendarDate.getMonth() === idx;
+                          return (
+                            <TouchableOpacity
+                              key={mName}
+                              style={[styles.calMonthGridItem, isSelected && styles.calGridItemSelected]}
+                              onPress={() => handleSelectMonth(idx)}
+                              activeOpacity={0.8}
+                            >
+                              <Text style={[styles.calMonthGridText, isSelected && styles.calGridItemTextSelected]}>
+                                {mName.slice(0, 3)}
+                              </Text>
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+                    )}
+
+                    {/* Visualização 2: Seleção de Ano */}
+                    {calendarViewMode === 'years' && (
+                      <ScrollView style={styles.calYearsScroll} showsVerticalScrollIndicator={true}>
+                        <View style={styles.calYearsGrid}>
+                          {YEARS_LIST.map((yNum) => {
+                            const isSelected = calendarDate.getFullYear() === yNum;
+                            return (
+                              <TouchableOpacity
+                                key={yNum}
+                                style={[styles.calYearGridItem, isSelected && styles.calGridItemSelected]}
+                                onPress={() => handleSelectYear(yNum)}
+                                activeOpacity={0.8}
+                              >
+                                <Text style={[styles.calYearGridText, isSelected && styles.calGridItemTextSelected]}>
+                                  {yNum}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+                      </ScrollView>
+                    )}
+
+                    {/* Visualização 3: Grade Mensal de Dias */}
+                    {calendarViewMode === 'days' && (
+                      <View style={styles.calDaysContainer}>
+                        {/* Dias da semana */}
+                        <View style={styles.calWeekdaysRow}>
+                          {WEEKDAYS_PT.map((wd) => (
+                            <Text key={wd} style={styles.calWeekdayText}>{wd}</Text>
+                          ))}
+                        </View>
+
+                        {/* Grade dos dias */}
+                        <View style={styles.calDaysGrid}>
+                          {Array.from({ length: new Date(calendarDate.getFullYear(), calendarDate.getMonth(), 1).getDay() }).map((_, i) => (
+                            <View key={`empty-${i}`} style={styles.calDayCell} />
+                          ))}
+
+                          {Array.from({
+                            length: new Date(calendarDate.getFullYear(), calendarDate.getMonth() + 1, 0).getDate(),
+                          }).map((_, i) => {
+                            const dayNumber = i + 1;
+                            const parsedCurrent = dataNascimento.length === 10 ? parseDate(dataNascimento) : null;
+                            const isSelected =
+                              parsedCurrent !== null &&
+                              parsedCurrent.getDate() === dayNumber &&
+                              parsedCurrent.getMonth() === calendarDate.getMonth() &&
+                              parsedCurrent.getFullYear() === calendarDate.getFullYear();
+
+                            return (
+                              <TouchableOpacity
+                                key={`day-${dayNumber}`}
+                                style={[styles.calDayCell, isSelected && styles.calDayCellSelected]}
+                                onPress={() => handleSelectDay(dayNumber)}
+                                activeOpacity={0.7}
+                              >
+                                <Text style={[styles.calDayNumberText, isSelected && styles.calDayNumberSelected]}>
+                                  {dayNumber}
+                                </Text>
+                              </TouchableOpacity>
+                            );
+                          })}
+                        </View>
+                      </View>
+                    )}
+
+                    {/* Rodapé do Modal */}
+                    <View style={styles.calFooterRow}>
+                      <TouchableOpacity
+                        style={styles.calFooterBtnSecondary}
+                        onPress={() => {
+                          setDataNascimento('');
+                          setShowDatePicker(false);
+                        }}
+                        activeOpacity={0.8}
+                      >
+                        <Text style={styles.calFooterBtnSecondaryText}>Limpar</Text>
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.calFooterBtnPrimary}
                         onPress={() => setShowDatePicker(false)}
                         activeOpacity={0.8}
                       >
-                        <Text style={styles.modalCloseButtonText}>Confirmar</Text>
+                        <Text style={styles.calFooterBtnPrimaryText}>Fechar</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
-                </Modal>
-              ) : (
-                showDatePicker && (
-                  <DateTimePicker
-                    value={parseDate(dataNascimento)}
-                    mode="date"
-                    display="default"
-                    maximumDate={new Date()}
-                    minimumDate={new Date(1920, 0, 1)}
-                    onValueChange={handleDateValueChange}
-                    onDismiss={handleDateDismiss}
-                  />
-                )
-              )}
+                </View>
+              </Modal>
 
               {/* Papel do Usuário */}
               <View style={styles.inputContainer}>
@@ -610,40 +763,186 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
   },
-  modalCard: {
+  calendarModalCard: {
     width: '100%',
-    maxWidth: 340,
+    maxWidth: 350,
     backgroundColor: '#2D2D44',
-    borderRadius: 16,
-    padding: 20,
+    borderRadius: 18,
+    padding: 18,
     borderWidth: 4,
     borderColor: '#1b1b1b',
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+  },
+  calendarHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'center',
+    marginBottom: 14,
   },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: '800',
-    color: '#ffffff',
-    marginBottom: 16,
-    textAlign: 'center',
+  calNavBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#1E1E2F',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
   },
-  modalCloseButton: {
-    marginTop: 16,
-    backgroundColor: '#16A34A',
-    paddingVertical: 12,
-    paddingHorizontal: 32,
+  calMonthYearButtons: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  calPillBtn: {
+    backgroundColor: '#1E1E2F',
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     borderRadius: 8,
     borderWidth: 2,
     borderColor: '#1b1b1b',
-    width: '100%',
-    alignItems: 'center',
   },
-  modalCloseButtonText: {
+  calPillBtnActive: {
+    backgroundColor: '#CA8A04',
+  },
+  calPillBtnText: {
     color: '#ffffff',
-    fontSize: 15,
     fontWeight: '800',
+    fontSize: 14,
+  },
+  calDaysContainer: {
+    paddingVertical: 4,
+  },
+  calWeekdaysRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+    paddingHorizontal: 4,
+  },
+  calWeekdayText: {
+    width: 40,
+    textAlign: 'center',
+    color: '#9CA3AF',
+    fontWeight: '800',
+    fontSize: 12,
+  },
+  calDaysGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'flex-start',
+    paddingHorizontal: 4,
+  },
+  calDayCell: {
+    width: 40,
+    height: 38,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginVertical: 2,
+    borderRadius: 8,
+  },
+  calDayCellSelected: {
+    backgroundColor: '#CA8A04',
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  calDayNumberText: {
+    color: '#E2E8F0',
+    fontSize: 14,
+    fontWeight: '700',
+  },
+  calDayNumberSelected: {
+    color: '#ffffff',
+    fontWeight: '900',
+  },
+  calMonthsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+    paddingVertical: 10,
+  },
+  calMonthGridItem: {
+    width: '30%',
+    paddingVertical: 12,
+    alignItems: 'center',
+    borderRadius: 10,
+    backgroundColor: '#1E1E2F',
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  calMonthGridText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  calYearsScroll: {
+    maxHeight: 220,
+    marginVertical: 8,
+  },
+  calYearsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+    justifyContent: 'center',
+  },
+  calYearGridItem: {
+    width: '22%',
+    paddingVertical: 10,
+    alignItems: 'center',
+    borderRadius: 8,
+    backgroundColor: '#1E1E2F',
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  calYearGridText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  calGridItemSelected: {
+    backgroundColor: '#CA8A04',
+  },
+  calGridItemTextSelected: {
+    color: '#ffffff',
+    fontWeight: '900',
+  },
+  calFooterRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 14,
+    width: '100%',
+  },
+  calFooterBtnSecondary: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#1E1E2F',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  calFooterBtnSecondaryText: {
+    color: '#9CA3AF',
+    fontWeight: '800',
+    fontSize: 13,
+  },
+  calFooterBtnPrimary: {
+    flex: 2,
+    paddingVertical: 10,
+    borderRadius: 8,
+    backgroundColor: '#16A34A',
+    alignItems: 'center',
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  calFooterBtnPrimaryText: {
+    color: '#ffffff',
+    fontWeight: '900',
+    fontSize: 13,
   },
   roleContainer: {
     flexDirection: 'row',
