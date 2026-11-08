@@ -18,6 +18,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { criarTrilhaManual, Trilha } from '../../services/trilhaService';
 import { generateAccessCode, copyToClipboard } from '../../services/trilhaAcessoService';
 import { FASE_BACKGROUNDS } from '../../constants/assets';
+import QRCodeModal from '../../components/QRCodeModal';
 import {
   ArrowLeft,
   BookOpen,
@@ -32,6 +33,7 @@ import {
   Check,
   RefreshCw,
   Sparkles,
+  QrCode,
 } from 'lucide-react-native';
 import { sanitizeInput } from '../../utils/security';
 import asyncLock from '../../utils/asyncLock';
@@ -79,6 +81,7 @@ export default function CriarTrilhaScreen() {
   const [codeCopied, setCodeCopied] = useState(false);
   const [createdModalVisible, setCreatedModalVisible] = useState(false);
   const [createdTrilha, setCreatedTrilha] = useState<Trilha | null>(null);
+  const [qrModalVisible, setQrModalVisible] = useState(false);
   const [idioma, setIdioma] = useState('Português');
 
   const [loading, setLoading] = useState(false);
@@ -477,6 +480,15 @@ export default function CriarTrilhaScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
+                  style={[styles.codeActionBtn, styles.qrBtn]}
+                  onPress={() => setQrModalVisible(true)}
+                  activeOpacity={0.85}
+                >
+                  <QrCode size={16} color="#ffffff" style={{ marginRight: 6 }} />
+                  <Text style={styles.codeActionBtnText}>Ver QR Code</Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
                   style={[styles.codeActionBtn, styles.regenerateBtn]}
                   onPress={handleRegenerateCode}
                   activeOpacity={0.85}
@@ -577,6 +589,15 @@ export default function CriarTrilhaScreen() {
           </TouchableOpacity>
 
           <TouchableOpacity
+            style={styles.modalQrBtn}
+            onPress={() => setQrModalVisible(true)}
+            activeOpacity={0.85}
+          >
+            <QrCode size={18} color="#ffffff" style={{ marginRight: 8 }} />
+            <Text style={styles.modalQrBtnText}>Ver QR Code da Trilha 📱</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
             style={styles.modalProceedBtn}
             onPress={() => {
               setCreatedModalVisible(false);
@@ -593,6 +614,14 @@ export default function CriarTrilhaScreen() {
         </View>
       </View>
     </Modal>
+
+    {/* Modal para Visualização do QR Code da Trilha */}
+    <QRCodeModal
+      visible={qrModalVisible}
+      onClose={() => setQrModalVisible(false)}
+      trilha={createdTrilha || ({ _id: 'preview', titulo: titulo || 'Nova Trilha', materia } as any)}
+      codigoAcesso={createdTrilha?.codigoAcesso || codigoAcesso}
+    />
   </SafeAreaView>
   );
 }
@@ -925,6 +954,9 @@ const styles = StyleSheet.create({
   copyBtn: {
     backgroundColor: '#4F46E5',
   },
+  qrBtn: {
+    backgroundColor: '#8B5CF6',
+  },
   regenerateBtn: {
     backgroundColor: '#27272A',
   },
@@ -1009,6 +1041,23 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   modalCopyBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  modalQrBtn: {
+    backgroundColor: '#8B5CF6',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    marginBottom: 10,
+  },
+  modalQrBtnText: {
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '900',

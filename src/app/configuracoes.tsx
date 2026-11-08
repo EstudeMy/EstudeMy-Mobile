@@ -35,6 +35,7 @@ import {
   ExternalLink,
 } from 'lucide-react-native';
 import api from '../services/api';
+import { APP_FULL_VERSION_STRING, APP_ENVIRONMENT } from '../constants/version';
 
 const LANGUAGES = [
   { code: 'pt-BR', label: 'Português (Brasil)', flag: '🇧🇷' },
@@ -432,6 +433,17 @@ export default function ConfiguracoesScreen() {
         <LogOut size={20} color="#ffffff" style={styles.logoutIcon} />
         <Text style={styles.logoutText}>{t('common.logout') || 'Sair da Conta'}</Text>
       </TouchableOpacity>
+
+      {/* Versão do Aplicativo Visível ao Usuário */}
+      <View style={styles.versionFooter}>
+        <Text style={[styles.versionFooterTitle, { color: colors.text }]}>EstudeMy Mobile</Text>
+        <Text style={[styles.versionFooterText, { color: colors.textMuted }]}>
+          Versão {APP_FULL_VERSION_STRING}
+        </Text>
+        <Text style={[styles.versionFooterSub, { color: colors.textMuted }]}>
+          {APP_ENVIRONMENT} • Conectado e Seguro
+        </Text>
+      </View>
 
       <View style={{ height: 40 }} />
 
@@ -1048,5 +1060,24 @@ const styles = StyleSheet.create({
     fontSize: 13,
     lineHeight: 19,
     marginBottom: 6,
+  },
+  versionFooter: {
+    alignItems: 'center',
+    marginTop: 20,
+    paddingVertical: 10,
+  },
+  versionFooterTitle: {
+    fontSize: 13,
+    fontWeight: '900',
+    marginBottom: 2,
+  },
+  versionFooterText: {
+    fontSize: 13,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  versionFooterSub: {
+    fontSize: 11,
+    fontWeight: '500',
   },
 });

@@ -28,6 +28,8 @@ import {
 import { buscarSecoesPorTrilha, Secao } from '../../services/secaoService';
 import { buscarFasesPorTrilha, Fase } from '../../services/faseService';
 import api from '../../services/api';
+import QRCodeModal from '../../components/QRCodeModal';
+import QRScannerModal from '../../components/QRScannerModal';
 import {
   Lock,
   Star,
@@ -41,11 +43,13 @@ import {
   DollarSign,
   Globe,
   ShieldAlert,
+  QrCode,
+  Camera,
 } from 'lucide-react-native';
 import * as SecureStore from 'expo-secure-store';
 
 export default function TrilhaDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, code: urlCode } = useLocalSearchParams<{ id: string; code?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
@@ -69,6 +73,10 @@ export default function TrilhaDetailScreen() {
   const [studentCodeError, setStudentCodeError] = useState<string | null>(null);
   const [studentUnlocking, setStudentUnlocking] = useState(false);
   const [teacherCodeCopied, setTeacherCodeCopied] = useState(false);
+
+  // Modais de QR Code
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [scannerModalVisible, setScannerModalVisible] = useState(false);
 
   const [isSaved, setIsSaved] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -287,6 +295,31 @@ export default function TrilhaDetailScreen() {
     setStudentUnlocking(false);
   };
 
+  // Se o aluno entrou via link direto de QR Code com parâmetro ?code=
+  useEffect(() => {
+    if (urlCode && trilha && !isUnlocked) {
+      validateAndUnlockTrail(trilha, urlCode).then((ok) => {
+        if (ok) {
+          setIsUnlocked(true);
+        }
+      });
+    }
+  }, [urlCode, trilha, isUnlocked]);
+
+  const handleScannerResult = async (parsed: { trilhaId?: string; code?: string; raw: string }) => {
+    setScannerModalVisible(false);
+    if (!trilha) return;
+
+    const codeToTest = parsed.code || parsed.raw;
+    const ok = await validateAndUnlockTrail(trilha, codeToTest);
+    if (ok) {
+      setIsUnlocked(true);
+      setStudentCodeError(null);
+    } else {
+      setStudentCodeError('QR Code inválido para esta trilha.');
+    }
+  };
+
   if (loading) {
     return (
       <View style={[styles.loadingContainer, { backgroundColor: colors.background }]}>
@@ -420,23 +453,34 @@ export default function TrilhaDetailScreen() {
             <Text style={styles.teacherCodeText}>{effectiveCode}</Text>
           </View>
 
-          <TouchableOpacity
-            style={styles.teacherCopyBtn}
-            onPress={() => handleTeacherCopy(effectiveCode)}
-            activeOpacity={0.85}
-          >
-            {teacherCodeCopied ? (
-              <>
-                <Check size={18} color="#ffffff" style={{ marginRight: 6 }} />
-                <Text style={styles.teacherCopyBtnText}>Código Copiado!</Text>
-              </>
-            ) : (
-              <>
-                <Copy size={18} color="#ffffff" style={{ marginRight: 6 }} />
-                <Text style={styles.teacherCopyBtnText}>Copiar Código para Alunos</Text>
-              </>
-            )}
-          </TouchableOpacity>
+          <View style={styles.teacherActionsRow}>
+            <TouchableOpacity
+              style={styles.teacherCopyBtn}
+              onPress={() => handleTeacherCopy(effectiveCode)}
+              activeOpacity={0.85}
+            >
+              {teacherCodeCopied ? (
+                <>
+                  <Check size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                  <Text style={styles.teacherCopyBtnText}>Código Copiado!</Text>
+                </>
+              ) : (
+                <>
+                  <Copy size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                  <Text style={styles.teacherCopyBtnText}>Copiar Código</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.teacherQrBtn}
+              onPress={() => setQrModalVisible(true)}
+              activeOpacity={0.85}
+            >
+              <QrCode size={18} color="#ffffff" style={{ marginRight: 6 }} />
+              <Text style={styles.teacherQrBtnText}>Ver QR Code 📱</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
 
@@ -473,21 +517,32 @@ export default function TrilhaDetailScreen() {
             autoCorrect={false}
           />
 
-          <TouchableOpacity
-            style={styles.lockedSubmitBtn}
-            onPress={handleStudentUnlock}
-            disabled={studentUnlocking}
-            activeOpacity={0.85}
-          >
-            {studentUnlocking ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <>
-                <Key size={18} color="#ffffff" style={{ marginRight: 8 }} />
-                <Text style={styles.lockedSubmitBtnText}>Desbloquear Trilha</Text>
-              </>
-            )}
-          </TouchableOpacity>
+          <View style={styles.lockedButtonsCol}>
+            <TouchableOpacity
+              style={styles.lockedSubmitBtn}
+              onPress={handleStudentUnlock}
+              disabled={studentUnlocking}
+              activeOpacity={0.85}
+            >
+              {studentUnlocking ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <>
+                  <Key size={18} color="#ffffff" style={{ marginRight: 8 }} />
+                  <Text style={styles.lockedSubmitBtnText}>Desbloquear com Código</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.lockedScanQrBtn}
+              onPress={() => setScannerModalVisible(true)}
+              activeOpacity={0.85}
+            >
+              <Camera size={18} color="#ffffff" style={{ marginRight: 8 }} />
+              <Text style={styles.lockedScanQrBtnText}>Ler QR Code da Trilha 📷</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       ) : (
         <>
@@ -817,6 +872,24 @@ export default function TrilhaDetailScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Modal de Exibição de QR Code da Trilha */}
+      {trilha && (
+        <QRCodeModal
+          visible={qrModalVisible}
+          onClose={() => setQrModalVisible(false)}
+          trilhaId={trilha._id}
+          trilhaTitulo={trilha.titulo}
+          codigoAcesso={effectiveCode}
+        />
+      )}
+
+      {/* Modal de Leitura de QR Code pelo Aluno */}
+      <QRScannerModal
+        visible={scannerModalVisible}
+        onClose={() => setScannerModalVisible(false)}
+        onScanSuccess={handleScannerResult}
+      />
 
       <View style={{ height: 60 }} />
     </ScrollView>
@@ -1319,6 +1392,47 @@ const styles = StyleSheet.create({
   lockedSubmitBtnText: {
     color: '#ffffff',
     fontSize: 15,
+    fontWeight: '900',
+  },
+  teacherActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+  },
+  teacherQrBtn: {
+    flex: 1,
+    backgroundColor: '#8B5CF6',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 2.5,
+    borderColor: '#1b1b1b',
+  },
+  teacherQrBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  lockedButtonsCol: {
+    width: '100%',
+    gap: 10,
+  },
+  lockedScanQrBtn: {
+    backgroundColor: '#10B981',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+  },
+  lockedScanQrBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
     fontWeight: '900',
   },
 });

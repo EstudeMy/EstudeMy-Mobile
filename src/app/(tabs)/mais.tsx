@@ -10,7 +10,8 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { User, Settings, ChevronRight, BookOpen, Bookmark, ShieldCheck, HelpCircle } from 'lucide-react-native';
+import { APP_VERSION, APP_BUILD, APP_ENVIRONMENT } from '../../constants/version';
+import { User, Settings, ChevronRight, BookOpen, Bookmark, ShieldCheck, HelpCircle, Info } from 'lucide-react-native';
 
 export default function MaisScreen() {
   const router = useRouter();
@@ -140,6 +141,20 @@ export default function MaisScreen() {
           </View>
           <ChevronRight size={20} color={colors.textMuted} />
         </TouchableOpacity>
+
+        {/* Informações de Versão do Aplicativo */}
+        <View style={[styles.versionCard, { backgroundColor: colors.cardSecondary }]}>
+          <View style={styles.versionHeaderRow}>
+            <Info size={16} color="#4F46E5" />
+            <Text style={[styles.versionAppName, { color: colors.text }]}>EstudeMy Mobile</Text>
+          </View>
+          <Text style={[styles.versionNumber, { color: colors.text }]}>
+            Versão {APP_VERSION} <Text style={{ color: colors.textMuted, fontWeight: '700' }}>(Build {APP_BUILD})</Text>
+          </Text>
+          <Text style={[styles.versionEnv, { color: colors.textMuted }]}>
+            Ambiente: {APP_ENVIRONMENT} • Sistema Atualizado
+          </Text>
+        </View>
       </View>
     </ScrollView>
   );
@@ -195,5 +210,32 @@ const styles = StyleSheet.create({
   menuItemLabel: {
     fontSize: 16,
     fontWeight: '800',
+  },
+  versionCard: {
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: '#374151',
+    alignItems: 'center',
+    marginTop: 8,
+  },
+  versionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  versionAppName: {
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  versionNumber: {
+    fontSize: 14,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  versionEnv: {
+    fontSize: 11,
+    fontWeight: '600',
   },
 });

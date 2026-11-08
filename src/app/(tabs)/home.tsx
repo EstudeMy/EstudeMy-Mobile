@@ -48,7 +48,12 @@ import {
   Copy,
   Check,
   ShieldCheck,
+  Camera,
+  QrCode,
 } from 'lucide-react-native';
+import QRCodeModal from '../../components/QRCodeModal';
+import QRScannerModal from '../../components/QRScannerModal';
+import { APP_FULL_VERSION_STRING } from '../../constants/version';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -93,6 +98,11 @@ export default function HomeScreen() {
   const [viewCodeModalVisible, setViewCodeModalVisible] = useState(false);
   const [viewCodeTrail, setViewCodeTrail] = useState<Trilha | null>(null);
   const [codeCopied, setCodeCopied] = useState(false);
+
+  // Modais de QR Code
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [scannerModalVisible, setScannerModalVisible] = useState(false);
+  const [qrTargetTrail, setQrTargetTrail] = useState<Trilha | null>(null);
 
   const refreshAccessState = useCallback(async () => {
     try {
@@ -270,6 +280,70 @@ export default function HomeScreen() {
       setDirectCodeError('Erro ao buscar trilha pelo código. Tente novamente.');
     } finally {
       setDirectCodeLoading(false);
+    }
+  };
+
+  const handleScannerResult = async (parsed: { trilhaId?: string; code?: string; raw: string }) => {
+    setScannerModalVisible(false);
+    setSearchLoading(true);
+
+    try {
+      const targetTrilhaId = parsed.trilhaId;
+      const cleanCode = (parsed.code || parsed.raw || '').trim().toUpperCase();
+
+      if (targetTrilhaId) {
+        await unlockTrail(targetTrilhaId);
+        await refreshAccessState();
+        setSearchLoading(false);
+        router.push(`/trilha/${targetTrilhaId}`);
+        return;
+      }
+
+      if (cleanCode) {
+        const allLoaded = [...continueTrilhas, ...populares, ...novidades];
+        let match = allLoaded.find((t) => {
+          const c = (t.codigoAcesso || knownCodes[t._id])?.toUpperCase();
+          return c === cleanCode;
+        });
+
+        if (!match) {
+          const foundId = Object.keys(knownCodes).find(
+            (id) => knownCodes[id]?.toUpperCase() === cleanCode
+          );
+          if (foundId) {
+            try {
+              match = await buscarTrilhaPorId(foundId);
+            } catch (e) {
+              // Silencioso
+            }
+          }
+        }
+
+        if (!match) {
+          try {
+            const results = await buscarTrilhas(cleanCode);
+            match = results.find((t) => (t.codigoAcesso || knownCodes[t._id])?.toUpperCase() === cleanCode) || results[0];
+          } catch (e) {
+            // Silencioso
+          }
+        }
+
+        if (match) {
+          await unlockTrail(match._id);
+          await refreshAccessState();
+          setSearchLoading(false);
+          router.push(`/trilha/${match._id}`);
+          return;
+        }
+      }
+
+      setSearchLoading(false);
+      setDirectCode(cleanCode);
+      setDirectCodeError('QR Code lido, mas nenhuma trilha correspondente foi encontrada.');
+      setEnterCodeModalVisible(true);
+    } catch (e) {
+      setSearchLoading(false);
+      console.error('Erro ao processar scanner:', e);
     }
   };
 
@@ -589,29 +663,41 @@ export default function HomeScreen() {
         )}
       </View>
 
-      {/* Atalho para Aluno: Entrar com Código de Trilha Privada */}
-      <TouchableOpacity
-        style={[styles.enterCodeBanner, { backgroundColor: colors.card }]}
-        onPress={() => {
-          setDirectCode('');
-          setDirectCodeError(null);
-          setEnterCodeModalVisible(true);
-        }}
-        activeOpacity={0.85}
-      >
+      {/* Atalho para Aluno: Entrar com Código ou QR Code de Trilha Privada */}
+      <View style={[styles.enterCodeBanner, { backgroundColor: colors.card }]}>
         <View style={styles.enterCodeIconWrap}>
           <Key size={18} color="#ffffff" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.enterCodeTitle, { color: colors.text }]}>Entrar com Código de Trilha</Text>
+          <Text style={[styles.enterCodeTitle, { color: colors.text }]}>Trilha com Código ou QR Code</Text>
           <Text style={[styles.enterCodeDesc, { color: colors.textMuted }]}>
-            Recebeu um código do professor? Toque aqui para desbloquear.
+            Recebeu um código de acesso ou QR Code do seu professor?
           </Text>
+          <View style={styles.enterCodeButtonsRow}>
+            <TouchableOpacity
+              style={styles.enterCodePill}
+              onPress={() => {
+                setDirectCode('');
+                setDirectCodeError(null);
+                setEnterCodeModalVisible(true);
+              }}
+              activeOpacity={0.85}
+            >
+              <Key size={13} color="#F59E0B" style={{ marginRight: 4 }} />
+              <Text style={styles.enterCodePillText}>Inserir Código</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.enterQrPill}
+              onPress={() => setScannerModalVisible(true)}
+              activeOpacity={0.85}
+            >
+              <Camera size={13} color="#ffffff" style={{ marginRight: 4 }} />
+              <Text style={styles.enterQrPillText}>Ler QR Code 📷</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-        <View style={styles.enterCodePill}>
-          <Text style={styles.enterCodePillText}>Inserir 🔑</Text>
-        </View>
-      </TouchableOpacity>
+      </View>
 
       {/* Ações Exclusivas para Professor / Administrador / Owner */}
       {canCreateTrack && (
@@ -799,6 +885,18 @@ export default function HomeScreen() {
                 <Text style={styles.modalPrimaryBtnText}>Desbloquear</Text>
               </TouchableOpacity>
             </View>
+
+            <TouchableOpacity
+              style={styles.modalScanQrBtn}
+              onPress={() => {
+                setUnlockModalVisible(false);
+                setScannerModalVisible(true);
+              }}
+              activeOpacity={0.85}
+            >
+              <Camera size={16} color="#ffffff" style={{ marginRight: 6 }} />
+              <Text style={styles.modalScanQrBtnText}>Ler QR Code da Trilha 📷</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -871,6 +969,18 @@ export default function HomeScreen() {
                 )}
               </TouchableOpacity>
             </View>
+
+            <TouchableOpacity
+              style={styles.modalScanQrBtn}
+              onPress={() => {
+                setEnterCodeModalVisible(false);
+                setScannerModalVisible(true);
+              }}
+              activeOpacity={0.85}
+            >
+              <Camera size={16} color="#ffffff" style={{ marginRight: 6 }} />
+              <Text style={styles.modalScanQrBtnText}>Escanear com Câmera (QR Code) 📷</Text>
+            </TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -921,6 +1031,19 @@ export default function HomeScreen() {
             </TouchableOpacity>
 
             <TouchableOpacity
+              style={styles.modalQrBtn}
+              onPress={() => {
+                setQrTargetTrail(viewCodeTrail);
+                setViewCodeModalVisible(false);
+                setQrModalVisible(true);
+              }}
+              activeOpacity={0.85}
+            >
+              <QrCode size={18} color="#ffffff" style={{ marginRight: 8 }} />
+              <Text style={styles.modalQrBtnText}>Exibir QR Code da Trilha 📱</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
               style={[styles.modalCloseBtn, { backgroundColor: colors.cardSecondary }]}
               onPress={() => setViewCodeModalVisible(false)}
               activeOpacity={0.85}
@@ -930,6 +1053,38 @@ export default function HomeScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Modal de Exibição de QR Code da Trilha (Professor) */}
+      {qrTargetTrail && (
+        <QRCodeModal
+          visible={qrModalVisible}
+          onClose={() => {
+            setQrModalVisible(false);
+            setQrTargetTrail(null);
+          }}
+          trilhaId={qrTargetTrail._id}
+          trilhaTitulo={qrTargetTrail.titulo}
+          codigoAcesso={
+            qrTargetTrail.codigoAcesso ||
+            (qrTargetTrail._id && knownCodes[qrTargetTrail._id]) ||
+            'TRL-ACESSO'
+          }
+        />
+      )}
+
+      {/* Modal de Leitura de QR Code (Aluno) */}
+      <QRScannerModal
+        visible={scannerModalVisible}
+        onClose={() => setScannerModalVisible(false)}
+        onScanSuccess={handleScannerResult}
+      />
+
+      {/* Rodapé com Versão Visível da Aplicação */}
+      <View style={styles.homeVersionFooter}>
+        <Text style={[styles.homeVersionText, { color: colors.textMuted }]}>
+          EstudeMy Mobile • {APP_FULL_VERSION_STRING}
+        </Text>
+      </View>
 
     </ScrollView>
   );
@@ -1397,8 +1552,16 @@ const styles = StyleSheet.create({
     fontSize: 11,
     lineHeight: 15,
   },
+  enterCodeButtonsRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginTop: 8,
+    flexWrap: 'wrap',
+  },
   enterCodePill: {
     backgroundColor: '#18181B',
+    flexDirection: 'row',
+    alignItems: 'center',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 8,
@@ -1407,6 +1570,21 @@ const styles = StyleSheet.create({
   },
   enterCodePillText: {
     color: '#F59E0B',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  enterQrPill: {
+    backgroundColor: '#10B981',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  enterQrPillText: {
+    color: '#ffffff',
     fontSize: 12,
     fontWeight: '900',
   },
@@ -1590,5 +1768,51 @@ const styles = StyleSheet.create({
   modalCloseBtnText: {
     fontSize: 14,
     fontWeight: '800',
+  },
+  modalScanQrBtn: {
+    backgroundColor: '#10B981',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 2.5,
+    borderColor: '#1b1b1b',
+    marginTop: 12,
+  },
+  modalScanQrBtnText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  modalQrBtn: {
+    backgroundColor: '#8B5CF6',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 13,
+    borderRadius: 10,
+    borderWidth: 2.5,
+    borderColor: '#1b1b1b',
+    marginBottom: 10,
+  },
+  modalQrBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  homeVersionFooter: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 20,
+    marginTop: 10,
+    marginBottom: 30,
+  },
+  homeVersionText: {
+    fontSize: 12,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 });
