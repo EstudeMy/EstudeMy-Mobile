@@ -140,16 +140,6 @@ export default function QRScannerModal({
       stopCamera();
     };
   }, [visible, activeTab, isWeb, startWebCamera, stopCamera]);
-            if (rawValue) {
-              handleDetectedContent(rawValue);
-            }
-          }
-        } catch {
-          // Frame sem leitura
-        }
-      }, 250);
-    }
-  };
 
   const handleImageUpload = (event: any) => {
     const file = event.target?.files?.[0];
