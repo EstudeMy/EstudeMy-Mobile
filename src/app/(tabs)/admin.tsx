@@ -56,7 +56,6 @@ import {
   User as UserIcon,
   DollarSign,
   TrendingUp,
-  CreditCard,
   Receipt,
 } from 'lucide-react-native';
 
