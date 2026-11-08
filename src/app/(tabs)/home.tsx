@@ -399,7 +399,7 @@ export default function HomeScreen() {
       } else {
         setDirectCodeError('Nenhuma trilha encontrada para este código. Verifique se digitou corretamente.');
       }
-    } catch (e) {
+    } catch {
       setDirectCodeError('Erro ao buscar trilha pelo código. Tente novamente.');
     } finally {
       setDirectCodeLoading(false);

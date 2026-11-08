@@ -197,8 +197,8 @@ export const isProfileCompleted = async (userIdentifier?: string): Promise<boole
         keychainAccessible: SecureStore.WHEN_UNLOCKED_THIS_DEVICE_ONLY,
       });
     }
-    return val === 'true';
-  } catch (error) {
-    return false;
+    return val !== null ? val === 'true' : inMemoryProfileCompleted;
+  } catch {
+    return inMemoryProfileCompleted;
   }
 };

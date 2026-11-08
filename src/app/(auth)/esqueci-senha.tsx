@@ -16,7 +16,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
 import { BACKGROUND_IMAGES } from '../../constants/assets';
 import api from '../../services/api';
-import { ArrowLeft, Mail, CheckCircle2, ShieldCheck } from 'lucide-react-native';
+import { ArrowLeft, Mail, CheckCircle2 } from 'lucide-react-native';
 import { sanitizeInput } from '../../utils/security';
 import logger from '../../utils/logger';
 
@@ -52,11 +52,11 @@ export default function EsqueciSenhaScreen() {
       // 1. Tentar endpoint padrão de recuperação de senha
       try {
         await api.post('/api/users/solicitar-recuperacao', { email: cleanEmail });
-      } catch (e1) {
+      } catch {
         // Fallback para rotas alternativas de autenticação se existirem
         try {
           await api.post('/api/auth/recuperar-senha', { email: cleanEmail });
-        } catch (e2) {
+        } catch {
           await api.post('/api/auth/forgot-password', { email: cleanEmail });
         }
       }

@@ -9,7 +9,6 @@ import {
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import {
   ArrowLeft,
@@ -20,10 +19,6 @@ import {
   Star,
   ShieldCheck,
   Search,
-  Sparkles,
-  Trophy,
-  BookOpen,
-  Lock,
 } from 'lucide-react-native';
 
 interface FaqItem {

@@ -17,7 +17,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { BACKGROUND_IMAGES } from '../../constants/assets';
 import api from '../../services/api';
-import { ArrowLeft, ShieldCheck, Lock } from 'lucide-react-native';
+import { ArrowLeft, Lock } from 'lucide-react-native';
 import {
   sanitizeInput,
   checkLoginRateLimit,

@@ -13,23 +13,18 @@ import {
 import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
-import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import {
   ArrowLeft,
   ShieldCheck,
   ShieldAlert,
   FileText,
-  Lock,
   CheckCircle2,
-  AlertTriangle,
   X,
   ExternalLink,
   Download,
   Trash2,
   Send,
-  HelpCircle,
-  Key,
 } from 'lucide-react-native';
 import api from '../services/api';
 
@@ -37,7 +32,6 @@ export default function SegurancaPrivacidadeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { t } = useLanguage();
   const { colors, isDark } = useTheme();
 
   // Modais

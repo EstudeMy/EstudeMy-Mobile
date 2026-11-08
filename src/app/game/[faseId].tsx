@@ -267,7 +267,7 @@ export default function GameScreen() {
         });
         await refreshUser(); // Atualiza XP do usuário atomicamente
         router.back();
-      } catch (e) {
+      } catch {
         logger.error('Erro ao salvar progresso');
         router.back(); // Volta de qualquer forma para não travar
       } finally {
