@@ -118,7 +118,8 @@ export default function HomeScreen() {
   }, []);
 
   useEffect(() => {
-    refreshAccessState();
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    void refreshAccessState();
   }, [refreshAccessState]);
 
   const fetchDashboardData = useCallback(async () => {

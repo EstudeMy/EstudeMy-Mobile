@@ -17,7 +17,7 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { BACKGROUND_IMAGES } from '../../constants/assets';
 import api from '../../services/api';
-import { ArrowLeft, Calendar, ChevronLeft, ChevronRight, X } from 'lucide-react-native';
+import { ArrowLeft, Calendar, ChevronLeft, ChevronRight } from 'lucide-react-native';
 import { sanitizeInput, validatePasswordStrength } from '../../utils/security';
 import logger from '../../utils/logger';
 

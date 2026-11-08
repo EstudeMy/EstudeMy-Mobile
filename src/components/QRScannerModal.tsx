@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,7 +6,6 @@ import {
   Modal,
   TouchableOpacity,
   TextInput,
-  ActivityIndicator,
   Platform,
 } from 'react-native';
 import { useTheme } from '../contexts/ThemeContext';
@@ -27,7 +26,6 @@ export default function QRScannerModal({
   onScanSuccess,
 }: QRScannerModalProps) {
   const { colors } = useTheme();
-  const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [manualCode, setManualCode] = useState('');
   const [scanSuccess, setScanSuccess] = useState(false);
@@ -41,26 +39,7 @@ export default function QRScannerModal({
 
   const isWeb = Platform.OS === 'web';
 
-  // Iniciar e finalizar câmera no Web
-  useEffect(() => {
-    if (!visible) {
-      stopCamera();
-      setScanSuccess(false);
-      setCameraError(null);
-      setIsProcessing(false);
-      return;
-    }
-
-    if (activeTab === 'camera' && isWeb) {
-      startWebCamera();
-    }
-
-    return () => {
-      stopCamera();
-    };
-  }, [visible, activeTab, isWeb]);
-
-  const stopCamera = () => {
+  const stopCamera = useCallback(() => {
     if (scanIntervalRef.current) {
       clearInterval(scanIntervalRef.current);
       scanIntervalRef.current = null;
@@ -72,39 +51,9 @@ export default function QRScannerModal({
     if (videoRef.current) {
       videoRef.current.srcObject = null;
     }
-  };
+  }, []);
 
-  const startWebCamera = async () => {
-    setCameraError(null);
-    try {
-      if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
-        setHasCameraPermission(false);
-        setCameraError('Câmera não suportada neste navegador.');
-        return;
-      }
-
-      const stream = await navigator.mediaDevices.getUserMedia({
-        video: { facingMode: 'environment' },
-      });
-
-      streamRef.current = stream;
-      setHasCameraPermission(true);
-
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        videoRef.current.play();
-
-        // Inicia detecção contínua de QR Code via BarcodeDetector nativo se disponível
-        startBarcodeDetection();
-      }
-    } catch (err: any) {
-      console.warn('Erro ao acessar câmera:', err);
-      setHasCameraPermission(false);
-      setCameraError('Permissão de câmera negada ou não disponível.');
-    }
-  };
-
-  const handleDetectedContent = (rawText: string) => {
+  const handleDetectedContent = useCallback((rawText: string) => {
     if (!rawText || isProcessing) return;
     setIsProcessing(true);
     setScanSuccess(true);
@@ -117,9 +66,9 @@ export default function QRScannerModal({
         callback({ ...parsed, raw: rawText });
       }
     }, 600);
-  };
+  }, [isProcessing, onCodeScanned, onScanSuccess, stopCamera]);
 
-  const startBarcodeDetection = () => {
+  const startBarcodeDetection = useCallback(() => {
     if (typeof window === 'undefined') return;
 
     if ('BarcodeDetector' in window) {
@@ -133,6 +82,64 @@ export default function QRScannerModal({
           const barcodes = await barcodeDetector.detect(videoRef.current);
           if (barcodes && barcodes.length > 0) {
             const rawValue = barcodes[0].rawValue;
+            if (rawValue) {
+              handleDetectedContent(rawValue);
+            }
+          }
+        } catch {
+          // Frame sem leitura
+        }
+      }, 250);
+    }
+  }, [handleDetectedContent]);
+
+  const startWebCamera = useCallback(async () => {
+    setCameraError(null);
+    try {
+      if (typeof navigator === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+        setCameraError('Câmera não suportada neste navegador.');
+        return;
+      }
+
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+      });
+
+      streamRef.current = stream;
+
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        await videoRef.current.play();
+
+        // Inicia detecção contínua de QR Code via BarcodeDetector nativo se disponível
+        startBarcodeDetection();
+      }
+    } catch (err: any) {
+      console.warn('Erro ao acessar câmera:', err);
+      setCameraError('Permissão de câmera negada ou não disponível.');
+    }
+  }, [startBarcodeDetection]);
+
+  const handleClose = useCallback(() => {
+    stopCamera();
+    setScanSuccess(false);
+    setCameraError(null);
+    setIsProcessing(false);
+    onClose();
+  }, [onClose, stopCamera]);
+
+  // Iniciar e finalizar câmera no Web
+  useEffect(() => {
+    if (!visible) return;
+
+    if (activeTab === 'camera' && isWeb) {
+      void startWebCamera();
+    }
+
+    return () => {
+      stopCamera();
+    };
+  }, [visible, activeTab, isWeb, startWebCamera, stopCamera]);
             if (rawValue) {
               handleDetectedContent(rawValue);
             }
@@ -183,7 +190,7 @@ export default function QRScannerModal({
       visible={visible}
       transparent
       animationType="slide"
-      onRequestClose={onClose}
+      onRequestClose={handleClose}
     >
       <View style={styles.overlay}>
         <View style={[styles.card, { backgroundColor: colors.card }]}>
@@ -197,7 +204,7 @@ export default function QRScannerModal({
             </View>
             <TouchableOpacity
               style={styles.closeBtn}
-              onPress={onClose}
+              onPress={handleClose}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
               activeOpacity={0.7}
             >
@@ -341,7 +348,7 @@ export default function QRScannerModal({
 
           <TouchableOpacity
             style={[styles.cancelBtn, { borderColor: colors.border || '#1b1b1b' }]}
-            onPress={onClose}
+            onPress={handleClose}
             activeOpacity={0.8}
           >
             <Text style={[styles.cancelBtnText, { color: colors.text }]}>Fechar</Text>

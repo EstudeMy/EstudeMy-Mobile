@@ -42,7 +42,9 @@ jobs:
         run: npx expo export
 
       - name: Enviar e-mail em caso de falha
-        if: failure()
+        if: failure() && env.EMAIL_ORIGIN != ''
+        env:
+          EMAIL_ORIGIN: ${{ secrets.EMAIL_ORIGIN }}
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com

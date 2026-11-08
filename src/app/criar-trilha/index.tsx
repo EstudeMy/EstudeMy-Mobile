@@ -87,13 +87,6 @@ export default function CriarTrilhaScreen() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  // Gera código de acesso único ao marcar como privado
-  useEffect(() => {
-    if (disponibilidade === 'Privado' && !codigoAcesso) {
-      setCodigoAcesso(generateAccessCode());
-    }
-  }, [disponibilidade, codigoAcesso]);
-
   const handleRegenerateCode = () => {
     const newCode = generateAccessCode();
     setCodigoAcesso(newCode);
@@ -430,7 +423,12 @@ export default function CriarTrilhaScreen() {
                 { backgroundColor: colors.cardSecondary },
                 disponibilidade === 'Privado' && styles.optionCardActivePurple,
               ]}
-              onPress={() => setDisponibilidade('Privado')}
+              onPress={() => {
+                setDisponibilidade('Privado');
+                if (!codigoAcesso) {
+                  setCodigoAcesso(generateAccessCode());
+                }
+              }}
               activeOpacity={0.85}
             >
               <View style={[styles.optionCardIcon, { backgroundColor: disponibilidade === 'Privado' ? '#8B5CF6' : '#374151' }]}>

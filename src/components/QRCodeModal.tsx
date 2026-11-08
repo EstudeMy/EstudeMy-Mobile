@@ -13,7 +13,7 @@ import { useTheme } from '../contexts/ThemeContext';
 import { Trilha } from '../services/trilhaService';
 import { copyToClipboard } from '../services/trilhaAcessoService';
 import { getTrailQrContent, getQrImageUrl } from '../utils/qrCode';
-import { QrCode, Copy, Check, X, Share2, ExternalLink } from 'lucide-react-native';
+import { QrCode, Copy, Check, X, Share2 } from 'lucide-react-native';
 
 interface QRCodeModalProps {
   visible: boolean;
