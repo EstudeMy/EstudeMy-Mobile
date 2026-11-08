@@ -254,7 +254,7 @@ export default function HomeScreen() {
         if (foundId) {
           try {
             match = await buscarTrilhaPorId(foundId);
-          } catch (e) {
+          } catch {
             // Silencioso
           }
         }
@@ -264,7 +264,7 @@ export default function HomeScreen() {
         try {
           const results = await buscarTrilhas(clean);
           match = results.find((t) => (t.codigoAcesso || knownCodes[t._id])?.toUpperCase() === clean) || results[0];
-        } catch (e) {
+        } catch {
           // Silencioso
         }
       }
@@ -314,7 +314,7 @@ export default function HomeScreen() {
           if (foundId) {
             try {
               match = await buscarTrilhaPorId(foundId);
-            } catch (e) {
+            } catch {
               // Silencioso
             }
           }
@@ -324,7 +324,7 @@ export default function HomeScreen() {
           try {
             const results = await buscarTrilhas(cleanCode);
             match = results.find((t) => (t.codigoAcesso || knownCodes[t._id])?.toUpperCase() === cleanCode) || results[0];
-          } catch (e) {
+          } catch {
             // Silencioso
           }
         }
@@ -393,7 +393,7 @@ export default function HomeScreen() {
               if (fullTrail) {
                 codeMatched.push(fullTrail);
               }
-            } catch (e) {
+            } catch {
               // Silencioso
             }
           }

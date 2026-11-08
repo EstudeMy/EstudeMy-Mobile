@@ -329,7 +329,7 @@ export default function MinhasTrilhasScreen() {
             const isPaid = item.pagamento === 'Paga' || Boolean(item.preco && Number(item.preco) > 0);
             const accessCode =
               item.codigoAcesso || knownCodes[item._id] || 'TRL-GERANDO';
-            const trackImage = getTrackImage(item.imagem || item.image || item.materia);
+            const trackImage = getTrackImage(item);
 
             return (
               <View key={item._id} style={[styles.trailCard, { backgroundColor: colors.card }]}>

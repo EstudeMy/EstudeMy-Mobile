@@ -21,6 +21,7 @@ interface QRCodeModalProps {
   trilha?: Trilha | null;
   trilhaId?: string;
   trilhaTitulo?: string;
+  titulo?: string;
   codigoAcesso?: string;
 }
 
@@ -30,6 +31,7 @@ export default function QRCodeModal({
   trilha,
   trilhaId,
   trilhaTitulo,
+  titulo,
   codigoAcesso,
 }: QRCodeModalProps) {
   const { colors } = useTheme();
@@ -37,7 +39,7 @@ export default function QRCodeModal({
   const [copiedType, setCopiedType] = useState<'code' | 'link' | null>(null);
 
   const effectiveId = trilhaId || trilha?._id || '';
-  const effectiveTitle = trilhaTitulo || trilha?.titulo || 'Trilha EstudeMy';
+  const effectiveTitle = trilhaTitulo || titulo || trilha?.titulo || 'Trilha EstudeMy';
   const effectiveCode = codigoAcesso || trilha?.codigoAcesso || '';
 
   if (!visible) return null;

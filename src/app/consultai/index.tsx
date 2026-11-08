@@ -802,7 +802,7 @@ export default function ConsultAiScreen() {
           visible={qrModalVisible}
           onClose={() => setQrModalVisible(false)}
           trilhaId={createdTrilha._id}
-          titulo={createdTrilha.titulo}
+          trilhaTitulo={createdTrilha.titulo}
           codigoAcesso={createdTrilha.codigoAcesso}
         />
       )}
