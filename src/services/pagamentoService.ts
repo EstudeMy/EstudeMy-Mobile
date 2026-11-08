@@ -336,3 +336,4 @@ export async function obterExtratoGeralAdmin(): Promise<{
     transacoes: concluidas,
   };
 }
+

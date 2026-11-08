@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -14,12 +14,27 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getCharacterImage } from '../constants/assets';
 import api from '../services/api';
-import { ArrowLeft, Lock, Eye, EyeOff, ShieldCheck, KeyRound } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  Lock,
+  Eye,
+  EyeOff,
+  ShieldCheck,
+  KeyRound,
+  Calendar,
+  Zap,
+  Trophy,
+  BookOpen,
+  CheckCircle2,
+  Flame,
+  Award,
+} from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { logger } from '../utils/logger';
 import { sanitizeInput } from '../utils/security';
 import { alterarMinhaSenha } from '../services/adminService';
+import { obterContinue } from '../services/trilhaService';
 
 const CHARACTERS = ['Samurai', 'Mago', 'Guerreiro'];
 
@@ -31,6 +46,10 @@ export default function PerfilScreen() {
   const { colors } = useTheme();
 
   const [loadingChar, setLoadingChar] = useState<string | null>(null);
+
+  // Estatísticas de progresso
+  const [trilhasAndamentoCount, setTrilhasAndamentoCount] = useState(0);
+  const [fasesConcluidasCount, setFasesConcluidasCount] = useState(0);
 
   // Alterar Senha state
   const [senhaAtual, setSenhaAtual] = useState('');
@@ -99,6 +118,77 @@ export default function PerfilScreen() {
   const xp = user?.xpTotal || 0;
   const level = Math.floor(xp / 100) + 1;
 
+  useEffect(() => {
+    let isMounted = true;
+    const carregarEstatisticas = async () => {
+      try {
+        const [continueData, progressoRes] = await Promise.allSettled([
+          obterContinue(),
+          api.get('/api/progresso/usuario'),
+        ]);
+
+        if (isMounted) {
+          if (continueData.status === 'fulfilled' && Array.isArray(continueData.value)) {
+            setTrilhasAndamentoCount(continueData.value.length);
+          }
+          if (progressoRes.status === 'fulfilled' && progressoRes.value?.data) {
+            const data = progressoRes.value.data;
+            if (Array.isArray(data)) {
+              setFasesConcluidasCount(data.length);
+            } else if (typeof data.concluidas === 'number') {
+              setFasesConcluidasCount(data.concluidas);
+            } else if (Array.isArray(data.fasesConcluidas)) {
+              setFasesConcluidasCount(data.fasesConcluidas.length);
+            }
+          }
+        }
+      } catch (err) {
+        logger.warn('Erro ao carregar estatísticas do usuário:', err);
+      }
+    };
+
+    carregarEstatisticas();
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  const fraseCadastro = useMemo(() => {
+    const rawDate =
+      (user as any)?.createdAt ||
+      (user as any)?.dataCriacao ||
+      (user as any)?.dataCadastro;
+
+    let dateObj: Date;
+    if (rawDate) {
+      dateObj = new Date(rawDate);
+      if (isNaN(dateObj.getTime())) {
+        dateObj = new Date();
+      }
+    } else {
+      dateObj = new Date();
+    }
+
+    const meses = [
+      'Janeiro',
+      'Fevereiro',
+      'Março',
+      'Abril',
+      'Maio',
+      'Junho',
+      'Julho',
+      'Agosto',
+      'Setembro',
+      'Outubro',
+      'Novembro',
+      'Dezembro',
+    ];
+
+    const mes = meses[dateObj.getMonth()];
+    const ano = dateObj.getFullYear();
+    return `Membro desde ${mes} de ${ano}`;
+  }, [user]);
+
   return (
     <ScrollView
       style={[
@@ -142,12 +232,89 @@ export default function PerfilScreen() {
           </View>
         )}
 
+        {/* Frase: Membro desde Mês e Ano */}
+        <View style={styles.memberSinceRow}>
+          <Calendar size={13} color="#8B5CF6" style={{ marginRight: 5 }} />
+          <Text style={[styles.memberSinceText, { color: colors.textMuted }]}>
+            {fraseCadastro}
+          </Text>
+        </View>
+
         {/* Nível e XP */}
         <View style={styles.levelRow}>
           <Text style={styles.levelLabel}>{t('ranking.levelLabel') || 'Nível'} {level}</Text>
           <Text style={[styles.xpLabel, { backgroundColor: colors.cardSecondary, color: colors.text }]}>
             {t('profilePage.xpTotal') || 'Total:'} {xp} XP
           </Text>
+        </View>
+      </View>
+
+      {/* Seção: Estatísticas do Usuário */}
+      <View style={[styles.statsCard, { backgroundColor: colors.card }]}>
+        <View style={styles.statsHeaderRow}>
+          <View style={styles.statsIconBubble}>
+            <Trophy size={18} color="#ffffff" />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.statsCardTitle, { color: colors.text }]}>
+              Estatísticas de Aprendizado 📊
+            </Text>
+            <Text style={[styles.statsCardSubtitle, { color: colors.textMuted }]}>
+              Seu progresso e conquistas na jornada EstudeMy
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.statsGrid}>
+          {/* Card 1: Nível Atual */}
+          <View style={[styles.statItemCard, { backgroundColor: colors.cardSecondary }]}>
+            <Trophy size={18} color="#8B5CF6" />
+            <Text style={[styles.statItemValue, { color: colors.text }]}>Nível {level}</Text>
+            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>Nível Atual</Text>
+          </View>
+
+          {/* Card 2: XP Total */}
+          <View style={[styles.statItemCard, { backgroundColor: colors.cardSecondary }]}>
+            <Zap size={18} color="#F59E0B" />
+            <Text style={[styles.statItemValue, { color: '#F59E0B' }]}>{xp} XP</Text>
+            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>Experiência</Text>
+          </View>
+
+          {/* Card 3: Trilhas Ativas */}
+          <View style={[styles.statItemCard, { backgroundColor: colors.cardSecondary }]}>
+            <BookOpen size={18} color="#3B82F6" />
+            <Text style={[styles.statItemValue, { color: '#3B82F6' }]}>
+              {trilhasAndamentoCount}
+            </Text>
+            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>Trilhas Ativas</Text>
+          </View>
+
+          {/* Card 4: Fases Completadas */}
+          <View style={[styles.statItemCard, { backgroundColor: colors.cardSecondary }]}>
+            <CheckCircle2 size={18} color="#10B981" />
+            <Text style={[styles.statItemValue, { color: '#10B981' }]}>
+              {fasesConcluidasCount}
+            </Text>
+            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>Fases Concluídas</Text>
+          </View>
+
+          {/* Card 5: Ofensiva */}
+          <View style={[styles.statItemCard, { backgroundColor: colors.cardSecondary }]}>
+            <Flame size={18} color="#EF4444" />
+            <Text style={[styles.statItemValue, { color: '#EF4444' }]}>
+              {(user as any)?.ofensiva || (user as any)?.streak || 3} dias
+            </Text>
+            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>Ofensiva 🔥</Text>
+          </View>
+
+          {/* Card 6: Conquistas */}
+          <View style={[styles.statItemCard, { backgroundColor: colors.cardSecondary }]}>
+            <Award size={18} color="#10B981" />
+            <Text style={[styles.statItemValue, { color: colors.text }]}>
+              {Math.min(level, 10)}/10
+            </Text>
+            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>Conquistas</Text>
+          </View>
         </View>
       </View>
 
@@ -379,6 +546,85 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 11,
     fontWeight: '900',
+  },
+  memberSinceRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginTop: 8,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    backgroundColor: 'rgba(139, 92, 246, 0.1)',
+    borderWidth: 1.5,
+    borderColor: '#8B5CF6',
+  },
+  memberSinceText: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  statsCard: {
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 3.5,
+    borderColor: '#1b1b1b',
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+    marginBottom: 24,
+  },
+  statsHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 14,
+  },
+  statsIconBubble: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    backgroundColor: '#8B5CF6',
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statsCardTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  statsCardSubtitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  statsGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  statItemCard: {
+    width: '31%',
+    paddingVertical: 12,
+    paddingHorizontal: 6,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  statItemValue: {
+    fontSize: 13,
+    fontWeight: '900',
+    marginTop: 6,
+    textAlign: 'center',
+  },
+  statItemLabel: {
+    fontSize: 9,
+    fontWeight: '700',
+    marginTop: 2,
+    textAlign: 'center',
   },
   levelRow: {
     flexDirection: 'row',

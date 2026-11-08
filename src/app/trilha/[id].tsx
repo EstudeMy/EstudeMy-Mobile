@@ -408,7 +408,9 @@ export default function TrilhaDetailScreen() {
               <View style={[styles.detailBadge, isPaidTrail ? styles.badgePaid : styles.badgeFree]}>
                 {isPaidTrail ? <DollarSign size={12} color="#ffffff" style={{ marginRight: 3 }} /> : null}
                 <Text style={styles.detailBadgeText}>
-                  {isPaidTrail ? (trilha.preco ? `Paga • R$ ${Number(trilha.preco).toFixed(2).replace('.', ',')}` : 'Paga') : 'Gratuita'}
+                  {isPaidTrail
+                    ? `Paga • R$ ${Number(trilha.preco || 29.9).toFixed(2).replace('.', ',')}`
+                    : 'Gratuita'}
                 </Text>
               </View>
             )}

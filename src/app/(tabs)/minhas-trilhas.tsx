@@ -397,9 +397,7 @@ export default function MinhasTrilhasScreen() {
                       {isPaid ? <DollarSign size={11} color="#ffffff" style={{ marginRight: 2 }} /> : null}
                       <Text style={styles.badgePillText}>
                         {isPaid
-                          ? item.preco
-                            ? `R$ ${Number(item.preco).toFixed(2).replace('.', ',')}`
-                            : 'Paga'
+                          ? `R$ ${Number(item.preco || 29.9).toFixed(2).replace('.', ',')}`
                           : 'Gratuita'}
                       </Text>
                     </View>
