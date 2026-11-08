@@ -109,3 +109,4 @@ export function parseQrCodeData(rawData: string): {
     isUrl: false,
   };
 }
+

@@ -833,7 +833,7 @@ export default function HomeScreen() {
 
             <Text style={[styles.modalTitle, { color: colors.text }]}>Trilha Privada 🔒</Text>
             <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
-              A trilha <Text style={{ fontWeight: '800', color: colors.text }}>"{targetTrailForUnlock?.titulo}"</Text> requer um código de acesso fornecido pelo professor para ser liberada.
+              A trilha <Text style={{ fontWeight: '800', color: colors.text }}>&ldquo;{targetTrailForUnlock?.titulo}&rdquo;</Text> requer um código de acesso fornecido pelo professor para ser liberada.
             </Text>
 
             {unlockError && (
@@ -1000,7 +1000,7 @@ export default function HomeScreen() {
 
             <Text style={[styles.modalTitle, { color: colors.text }]}>Código da sua Trilha 🔑</Text>
             <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
-              Trilha: <Text style={{ fontWeight: '800', color: colors.text }}>"{viewCodeTrail?.titulo}"</Text>
+              Trilha: <Text style={{ fontWeight: '800', color: colors.text }}>&ldquo;{viewCodeTrail?.titulo}&rdquo;</Text>
             </Text>
             <Text style={[styles.modalHelperText, { color: colors.textMuted }]}>
               Apenas você (professor criador) e administradores podem ver este código. Compartilhe-o com os alunos para que eles possam ingressar.

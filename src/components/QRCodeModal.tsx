@@ -57,8 +57,6 @@ export default function QRCodeModal({
     setCopiedType('link');
     setTimeout(() => setCopiedType(null), 2500);
   };
-    setTimeout(() => setCopiedType(null), 2500);
-  };
 
   return (
     <Modal
