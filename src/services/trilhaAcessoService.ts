@@ -1,7 +1,7 @@
 import { Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { Trilha } from './trilhaService';
-import logger from '../utils/logger';
+import { logger } from '../utils/logger';
 
 const isWeb = Platform.OS === 'web';
 
@@ -85,6 +85,27 @@ export function generateAccessCode(): string {
 }
 
 /**
+ * Gera um código determinístico exclusivo baseado no ID da trilha.
+ * Garante que cada trilha tenha sempre um código único mesmo que não venha salvo do backend.
+ */
+export function getDeterministicTrailCode(trilhaId: string): string {
+  if (!trilhaId) return generateAccessCode();
+  const chars = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ';
+  let hash = 0;
+  for (let i = 0; i < trilhaId.length; i++) {
+    hash = (hash << 5) - hash + trilhaId.charCodeAt(i);
+    hash |= 0;
+  }
+  let code = '';
+  let num = Math.abs(hash);
+  for (let i = 0; i < 6; i++) {
+    code += chars.charAt(num % chars.length);
+    num = Math.floor(num / chars.length) + (trilhaId.charCodeAt(i % trilhaId.length) || 11);
+  }
+  return `TRL-${code}`;
+}
+
+/**
  * Salva o código de acesso gerado para uma trilha
  */
 export async function saveTrailAccessCode(trilhaId: string, code: string): Promise<void> {
@@ -100,6 +121,27 @@ export async function saveTrailAccessCode(trilhaId: string, code: string): Promi
 export async function getTrailAccessCode(trilhaId: string): Promise<string | null> {
   await initCache();
   return inMemoryCodes[trilhaId] || null;
+}
+
+/**
+ * Garante e retorna o código de acesso ÚNICO da trilha.
+ * Nunca retorna um código compartilhado ou genérico.
+ */
+export async function getOrGenerateTrailAccessCode(trilhaId: string, serverCode?: string): Promise<string> {
+  await initCache();
+  if (serverCode && serverCode.trim() && serverCode.toUpperCase() !== 'TRL-ACESSO') {
+    const clean = serverCode.trim().toUpperCase();
+    inMemoryCodes[trilhaId] = clean;
+    await setStorageItem(STORAGE_CODES_MAP_KEY, JSON.stringify(inMemoryCodes));
+    return clean;
+  }
+  if (inMemoryCodes[trilhaId] && inMemoryCodes[trilhaId] !== 'TRL-ACESSO') {
+    return inMemoryCodes[trilhaId];
+  }
+  const uniqueCode = getDeterministicTrailCode(trilhaId);
+  inMemoryCodes[trilhaId] = uniqueCode;
+  await setStorageItem(STORAGE_CODES_MAP_KEY, JSON.stringify(inMemoryCodes));
+  return uniqueCode;
 }
 
 /**
@@ -146,8 +188,12 @@ export async function validateAndUnlockTrail(trilha: Trilha, inputCode: string):
   const formattedInput = inputCode.trim().toUpperCase();
   const serverCode = trilha.codigoAcesso?.trim().toUpperCase();
   const localCode = inMemoryCodes[trilha._id]?.trim().toUpperCase();
+  const uniqueCode = getDeterministicTrailCode(trilha._id);
 
-  const isMatch = (serverCode && serverCode === formattedInput) || (localCode && localCode === formattedInput);
+  const isMatch =
+    (serverCode && serverCode === formattedInput) ||
+    (localCode && localCode === formattedInput) ||
+    (uniqueCode === formattedInput);
 
   if (isMatch) {
     await unlockTrail(trilha._id);

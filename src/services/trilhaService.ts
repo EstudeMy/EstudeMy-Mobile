@@ -1,8 +1,8 @@
 import api from './api';
 import { API_ENDPOINTS } from '../config/api.config';
 import { isValidId, sanitizeInput } from '../utils/security';
-import logger from '../utils/logger';
-import { saveTrailAccessCode, getTrailAccessCode } from './trilhaAcessoService';
+import { logger } from '../utils/logger';
+import { saveTrailAccessCode, getOrGenerateTrailAccessCode } from './trilhaAcessoService';
 
 export interface Trilha {
   _id: string;
@@ -13,7 +13,7 @@ export interface Trilha {
   dificuldade?: string;
   popularidade?: number;
   visualizacoes?: number;
-  criadoPor?: string | { _id: string; nome?: string };
+  criadoPor?: string | { _id: string; nome?: string; email?: string };
   imagem?: string;
   image?: string;
   disponibilidade?: 'Aberto' | 'Privado' | string;
@@ -21,11 +21,32 @@ export interface Trilha {
   preco?: number;
   codigoAcesso?: string;
   idioma?: string;
+  createdAt?: string;
+  secoesCount?: number;
+  fasesCount?: number;
 }
 
 export const listarTrilhas = async (): Promise<Trilha[]> => {
   const response = await api.get(API_ENDPOINTS.TRILHAS.LISTAR);
   return response.data || [];
+};
+
+export const listarMinhasTrilhas = async (userId: string): Promise<Trilha[]> => {
+  if (!userId) return [];
+  try {
+    const all = await listarTrilhas();
+    const cleanUserId = userId.trim();
+    return all.filter((t) => {
+      if (!t.criadoPor) return false;
+      if (typeof t.criadoPor === 'string') {
+        return t.criadoPor === cleanUserId;
+      }
+      return (t.criadoPor as any)._id === cleanUserId || (t.criadoPor as any).id === cleanUserId;
+    });
+  } catch (err) {
+    logger.error('Erro ao listar trilhas do professor:', err);
+    return [];
+  }
 };
 
 export const criarTrilhaManual = async (dados: {
@@ -101,13 +122,11 @@ export const buscarTrilhaPorId = async (id: string): Promise<Trilha> => {
   }
   const response = await api.get(API_ENDPOINTS.TRILHAS.POR_ID(id));
   const data: Trilha = response.data;
-  if (data && !data.codigoAcesso) {
-    const localCode = await getTrailAccessCode(id);
-    if (localCode) {
-      data.codigoAcesso = localCode;
-      if (!data.disponibilidade) {
-        data.disponibilidade = 'Privado';
-      }
+  if (data) {
+    const uniqueCode = await getOrGenerateTrailAccessCode(id, data.codigoAcesso);
+    data.codigoAcesso = uniqueCode;
+    if (data.disponibilidade === 'Privado' || !data.disponibilidade) {
+      data.disponibilidade = data.disponibilidade || 'Privado';
     }
   }
   return data;
