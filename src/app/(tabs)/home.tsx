@@ -9,6 +9,8 @@ import {
   TextInput,
   ActivityIndicator,
   Image,
+  Modal,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -20,11 +22,33 @@ import {
   obterNovidades,
   obterPopulares,
   buscarTrilhas,
+  buscarTrilhaPorId,
   getMappedIdioma,
   Trilha,
 } from '../../services/trilhaService';
+import {
+  getAllKnownTrailCodes,
+  getUnlockedTrails,
+  validateAndUnlockTrail,
+  unlockTrail,
+  copyToClipboard,
+} from '../../services/trilhaAcessoService';
 import { getCharacterImage, getTrackImage, EXTRA_IMAGES } from '../../constants/assets';
-import { Search, Zap, Sparkles, BookOpen, PlusCircle, X } from 'lucide-react-native';
+import {
+  Search,
+  Zap,
+  Sparkles,
+  BookOpen,
+  PlusCircle,
+  X,
+  Lock,
+  Globe,
+  DollarSign,
+  Key,
+  Copy,
+  Check,
+  ShieldCheck,
+} from 'lucide-react-native';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -47,6 +71,45 @@ export default function HomeScreen() {
   const [populares, setPopulares] = useState<Trilha[]>([]);
   const [novidades, setNovidades] = useState<Trilha[]>([]);
   const [searchResults, setSearchResults] = useState<Trilha[] | null>(null);
+
+  // Estados de controle de acesso e trilhas privadas
+  const [unlockedTrailIds, setUnlockedTrailIds] = useState<string[]>([]);
+  const [knownCodes, setKnownCodes] = useState<Record<string, string>>({});
+
+  // Modal para Aluno desbloquear trilha clicada
+  const [unlockModalVisible, setUnlockModalVisible] = useState(false);
+  const [targetTrailForUnlock, setTargetTrailForUnlock] = useState<Trilha | null>(null);
+  const [inputCode, setInputCode] = useState('');
+  const [unlockError, setUnlockError] = useState<string | null>(null);
+  const [unlockSuccess, setUnlockSuccess] = useState(false);
+
+  // Modal para busca direta por código
+  const [enterCodeModalVisible, setEnterCodeModalVisible] = useState(false);
+  const [directCode, setDirectCode] = useState('');
+  const [directCodeError, setDirectCodeError] = useState<string | null>(null);
+  const [directCodeLoading, setDirectCodeLoading] = useState(false);
+
+  // Modal para Professor visualizar código da sua trilha privada
+  const [viewCodeModalVisible, setViewCodeModalVisible] = useState(false);
+  const [viewCodeTrail, setViewCodeTrail] = useState<Trilha | null>(null);
+  const [codeCopied, setCodeCopied] = useState(false);
+
+  const refreshAccessState = useCallback(async () => {
+    try {
+      const [unlocked, codes] = await Promise.all([
+        getUnlockedTrails(),
+        getAllKnownTrailCodes(),
+      ]);
+      setUnlockedTrailIds(unlocked);
+      setKnownCodes(codes);
+    } catch (e) {
+      console.error('Erro ao carregar estado de acesso de trilhas:', e);
+    }
+  }, []);
+
+  useEffect(() => {
+    refreshAccessState();
+  }, [refreshAccessState]);
 
   const fetchDashboardData = useCallback(async () => {
     setLoading(true);
@@ -82,7 +145,133 @@ export default function HomeScreen() {
     }
   }, [token, fetchDashboardData]);
 
+  const isTeacherOrCreator = (item: Trilha) => {
+    const isCreator =
+      (item.criadoPor && (item.criadoPor === user?._id || item.criadoPor === user?.id)) ||
+      (typeof item.criadoPor === 'object' && (item.criadoPor as any)?._id === user?._id);
+    const isStaff =
+      user?.tipoUsuario === 'PROFESSOR' ||
+      user?.tipoUsuario === 'ADMINISTRADOR' ||
+      user?.tipoUsuario === 'OWNER';
+    return Boolean(isCreator || isStaff);
+  };
 
+  const isTrilhaPrivate = (item: Trilha) => {
+    return item.disponibilidade === 'Privado' || Boolean(item.codigoAcesso) || Boolean(knownCodes[item._id]);
+  };
+
+  const isTrilhaPaid = (item: Trilha) => {
+    return item.pagamento === 'Paga' || Boolean(item.preco && Number(item.preco) > 0);
+  };
+
+  const handleCardPress = (item: Trilha) => {
+    const isPrivate = isTrilhaPrivate(item);
+
+    // Se a trilha for aberta, acessa diretamente
+    if (!isPrivate) {
+      router.push(`/trilha/${item._id}`);
+      return;
+    }
+
+    // Se o usuário for criador, professor ou staff, acesso direto liberado
+    if (isTeacherOrCreator(item)) {
+      router.push(`/trilha/${item._id}`);
+      return;
+    }
+
+    // Se o aluno já desbloqueou esta trilha anteriormente
+    if (unlockedTrailIds.includes(item._id)) {
+      router.push(`/trilha/${item._id}`);
+      return;
+    }
+
+    // Trilha privada bloqueada: abre modal para digitar o código
+    setTargetTrailForUnlock(item);
+    setInputCode('');
+    setUnlockError(null);
+    setUnlockSuccess(false);
+    setUnlockModalVisible(true);
+  };
+
+  const handleCopyCode = async (code: string) => {
+    await copyToClipboard(code);
+    setCodeCopied(true);
+    setTimeout(() => setCodeCopied(false), 2500);
+  };
+
+  const handleUnlockSubmit = async () => {
+    if (!targetTrailForUnlock || !inputCode.trim()) {
+      setUnlockError('Digite o código de acesso fornecido pelo professor.');
+      return;
+    }
+
+    const ok = await validateAndUnlockTrail(targetTrailForUnlock, inputCode);
+    if (ok) {
+      setUnlockSuccess(true);
+      setUnlockError(null);
+      await refreshAccessState();
+      setTimeout(() => {
+        setUnlockModalVisible(false);
+        router.push(`/trilha/${targetTrailForUnlock._id}`);
+      }, 700);
+    } else {
+      setUnlockError('Código de acesso incorreto. Verifique com seu professor.');
+    }
+  };
+
+  const handleDirectCodeSubmit = async () => {
+    const clean = directCode.trim().toUpperCase();
+    if (!clean) {
+      setDirectCodeError('Digite um código de acesso.');
+      return;
+    }
+
+    setDirectCodeLoading(true);
+    setDirectCodeError(null);
+
+    try {
+      const allLoaded = [...continueTrilhas, ...populares, ...novidades];
+      let match = allLoaded.find((t) => {
+        const c = (t.codigoAcesso || knownCodes[t._id])?.toUpperCase();
+        return c === clean;
+      });
+
+      if (!match) {
+        const foundId = Object.keys(knownCodes).find(
+          (id) => knownCodes[id]?.toUpperCase() === clean
+        );
+        if (foundId) {
+          try {
+            match = await buscarTrilhaPorId(foundId);
+          } catch (e) {
+            // Silencioso
+          }
+        }
+      }
+
+      if (!match) {
+        try {
+          const results = await buscarTrilhas(clean);
+          match = results.find((t) => (t.codigoAcesso || knownCodes[t._id])?.toUpperCase() === clean) || results[0];
+        } catch (e) {
+          // Silencioso
+        }
+      }
+
+      if (match) {
+        await unlockTrail(match._id);
+        await refreshAccessState();
+        setEnterCodeModalVisible(false);
+        router.push(`/trilha/${match._id}`);
+      } else {
+        setDirectCodeError('Nenhuma trilha encontrada para este código. Verifique se digitou corretamente.');
+      }
+    } catch (e) {
+      setDirectCodeError('Erro ao buscar trilha pelo código. Tente novamente.');
+    } finally {
+      setDirectCodeLoading(false);
+    }
+  };
 
   const handleSearch = async (text: string) => {
     setSearchQuery(text);
@@ -96,8 +285,8 @@ export default function HomeScreen() {
 
     setSearchLoading(true);
     try {
+      const cleanSearch = text.trim().toUpperCase();
       const results = await buscarTrilhas(text);
-      // Descarta requisições obsoletas se o usuário já digitou outra coisa ou apagou
       if (latestSearchQueryRef.current !== text) {
         return;
       }
@@ -107,7 +296,36 @@ export default function HomeScreen() {
         const trilhaIdioma = t.idioma || 'Português';
         return trilhaIdioma === mappedIdioma;
       });
-      setSearchResults(filteredResults);
+
+      // Busca complementar por código de acesso em todas as trilhas conhecidas
+      const allLoaded = [...continueTrilhas, ...populares, ...novidades];
+      const codeMatched: Trilha[] = [];
+
+      for (const t of allLoaded) {
+        if (filteredResults.some((r) => r._id === t._id) || codeMatched.some((m) => m._id === t._id)) continue;
+        const code = (t.codigoAcesso || knownCodes[t._id])?.toUpperCase();
+        if (code && (code.includes(cleanSearch) || cleanSearch.includes(code))) {
+          codeMatched.push(t);
+        }
+      }
+
+      // Se o usuário digitou um código que está no storage de códigos locais
+      for (const [tId, code] of Object.entries(knownCodes)) {
+        if (code.toUpperCase().includes(cleanSearch) || cleanSearch.includes(code.toUpperCase())) {
+          if (!filteredResults.some((r) => r._id === tId) && !codeMatched.some((m) => m._id === tId)) {
+            try {
+              const fullTrail = await buscarTrilhaPorId(tId);
+              if (fullTrail) {
+                codeMatched.push(fullTrail);
+              }
+            } catch (e) {
+              // Silencioso
+            }
+          }
+        }
+      }
+
+      setSearchResults([...codeMatched, ...filteredResults]);
     } catch (e) {
       if (latestSearchQueryRef.current === text) {
         console.error('Erro ao pesquisar trilhas:', e);
@@ -128,30 +346,82 @@ export default function HomeScreen() {
   const renderTrackCard = ({ item }: { item: Trilha }) => {
     const trackImage = getTrackImage(item);
     const diff = item.dificuldade || item.nivelDificuldade || 'Fácil';
+    const isPrivate = isTrilhaPrivate(item);
+    const isPaid = isTrilhaPaid(item);
+    const isTeacher = isTeacherOrCreator(item);
 
     return (
       <TouchableOpacity
         style={[styles.trackCard, { backgroundColor: colors.card }]}
-        onPress={() => router.push(`/trilha/${item._id}`)}
+        onPress={() => handleCardPress(item)}
         activeOpacity={0.85}
       >
-        <Image
-          source={trackImage}
-          style={styles.trackCoverImage}
-          resizeMode="cover"
-        />
+        <View style={styles.imageWrapper}>
+          <Image
+            source={trackImage}
+            style={styles.trackCoverImage}
+            resizeMode="cover"
+          />
+
+          {/* Badges Flutuantes no Card */}
+          <View style={styles.badgesTopRow}>
+            {/* Pagamento: Gratuita vs Paga */}
+            <View style={[styles.floatingBadge, isPaid ? styles.badgePaid : styles.badgeFree]}>
+              {isPaid ? <DollarSign size={10} color="#ffffff" style={{ marginRight: 2 }} /> : null}
+              <Text style={styles.floatingBadgeText}>
+                {isPaid ? (item.preco ? `R$ ${Number(item.preco).toFixed(2).replace('.', ',')}` : 'Paga') : 'Gratuita'}
+              </Text>
+            </View>
+
+            {/* Disponibilidade: Aberta vs Privada */}
+            <View style={[styles.floatingBadge, isPrivate ? styles.badgePrivate : styles.badgePublic]}>
+              {isPrivate ? (
+                <>
+                  <Lock size={10} color="#ffffff" style={{ marginRight: 2 }} />
+                  <Text style={styles.floatingBadgeText}>Privada</Text>
+                </>
+              ) : (
+                <>
+                  <Globe size={10} color="#ffffff" style={{ marginRight: 2 }} />
+                  <Text style={styles.floatingBadgeText}>Aberta</Text>
+                </>
+              )}
+            </View>
+          </View>
+        </View>
+
         <View style={styles.trackCardContent}>
           <Text style={[styles.trackCardTitle, { color: colors.text }]} numberOfLines={2}>
             {item.titulo}
           </Text>
           {item.descricao ? (
-            <Text style={[styles.trackCardDesc, { color: colors.textSecondary }]} numberOfLines={3}>
+            <Text style={[styles.trackCardDesc, { color: colors.textSecondary }]} numberOfLines={2}>
               {item.descricao}
             </Text>
           ) : null}
-          <Text style={[styles.trackCardMeta, { color: colors.textMuted }]}>
-            Matéria: <Text style={{ fontWeight: '800', color: colors.text }}>{item.materia}</Text> | Dificuldade: <Text style={{ fontWeight: '800', color: colors.text }}>{diff}</Text>
-          </Text>
+
+          <View style={styles.trackCardFooter}>
+            <Text style={[styles.trackCardMeta, { color: colors.textMuted }]} numberOfLines={1}>
+              {item.materia} • <Text style={{ fontWeight: '800', color: colors.text }}>{diff}</Text>
+            </Text>
+
+            {/* Se professor/criador e for privada: botão para ver o código */}
+            {isPrivate && isTeacher && (
+              <TouchableOpacity
+                style={styles.teacherViewCodeBtn}
+                onPress={() => {
+                  setViewCodeTrail(item);
+                  setCodeCopied(false);
+                  setViewCodeModalVisible(true);
+                }}
+                activeOpacity={0.8}
+                hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              >
+                <Key size={12} color="#F59E0B" style={{ marginRight: 3 }} />
+                <Text style={styles.teacherViewCodeBtnText}>Ver Código</Text>
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
       </TouchableOpacity>
     );
@@ -161,19 +431,48 @@ export default function HomeScreen() {
   const renderGridCard = (item: Trilha) => {
     const trackImage = getTrackImage(item);
     const diff = item.dificuldade || item.nivelDificuldade || 'Fácil';
+    const isPrivate = isTrilhaPrivate(item);
+    const isPaid = isTrilhaPaid(item);
+    const isTeacher = isTeacherOrCreator(item);
 
     return (
       <TouchableOpacity
         key={item._id}
         style={[styles.gridCard, { backgroundColor: colors.card }]}
-        onPress={() => router.push(`/trilha/${item._id}`)}
+        onPress={() => handleCardPress(item)}
         activeOpacity={0.85}
       >
-        <Image
-          source={trackImage}
-          style={styles.gridCoverImage}
-          resizeMode="cover"
-        />
+        <View style={styles.imageWrapper}>
+          <Image
+            source={trackImage}
+            style={styles.gridCoverImage}
+            resizeMode="cover"
+          />
+
+          {/* Badges Flutuantes no Grid */}
+          <View style={styles.badgesTopRowGrid}>
+            <View style={[styles.floatingBadgeGrid, isPaid ? styles.badgePaid : styles.badgeFree]}>
+              <Text style={styles.floatingBadgeTextGrid}>
+                {isPaid ? (item.preco ? `R$ ${Number(item.preco).toFixed(2).replace('.', ',')}` : 'Paga') : 'Gratuita'}
+              </Text>
+            </View>
+
+            <View style={[styles.floatingBadgeGrid, isPrivate ? styles.badgePrivate : styles.badgePublic]}>
+              {isPrivate ? (
+                <>
+                  <Lock size={9} color="#ffffff" style={{ marginRight: 2 }} />
+                  <Text style={styles.floatingBadgeTextGrid}>Privada</Text>
+                </>
+              ) : (
+                <>
+                  <Globe size={9} color="#ffffff" style={{ marginRight: 2 }} />
+                  <Text style={styles.floatingBadgeTextGrid}>Aberta</Text>
+                </>
+              )}
+            </View>
+          </View>
+        </View>
+
         <View style={styles.gridCardContent}>
           <Text style={[styles.gridCardTitle, { color: colors.text }]} numberOfLines={2}>
             {item.titulo}
@@ -186,10 +485,27 @@ export default function HomeScreen() {
           <Text style={[styles.gridCardMeta, { color: colors.textMuted }]} numberOfLines={1}>
             Matéria: <Text style={{ fontWeight: '800', color: colors.text }}>{item.materia}</Text>
           </Text>
+
           <View style={styles.gridBadgeContainer}>
             <View style={[styles.diffBadge, { backgroundColor: isDark ? '#374151' : '#E5E7EB' }]}>
               <Text style={[styles.diffBadgeText, { color: colors.text }]}>{diff}</Text>
             </View>
+
+            {isPrivate && isTeacher && (
+              <TouchableOpacity
+                style={styles.teacherGridCodeBtn}
+                onPress={() => {
+                  setViewCodeTrail(item);
+                  setCodeCopied(false);
+                  setViewCodeModalVisible(true);
+                }}
+                activeOpacity={0.8}
+                hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+              >
+                <Key size={11} color="#F59E0B" />
+                <Text style={styles.teacherGridCodeBtnText}>Código</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </TouchableOpacity>
@@ -272,6 +588,30 @@ export default function HomeScreen() {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Atalho para Aluno: Entrar com Código de Trilha Privada */}
+      <TouchableOpacity
+        style={[styles.enterCodeBanner, { backgroundColor: colors.card }]}
+        onPress={() => {
+          setDirectCode('');
+          setDirectCodeError(null);
+          setEnterCodeModalVisible(true);
+        }}
+        activeOpacity={0.85}
+      >
+        <View style={styles.enterCodeIconWrap}>
+          <Key size={18} color="#ffffff" />
+        </View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.enterCodeTitle, { color: colors.text }]}>Entrar com Código de Trilha</Text>
+          <Text style={[styles.enterCodeDesc, { color: colors.textMuted }]}>
+            Recebeu um código do professor? Toque aqui para desbloquear.
+          </Text>
+        </View>
+        <View style={styles.enterCodePill}>
+          <Text style={styles.enterCodePillText}>Inserir 🔑</Text>
+        </View>
+      </TouchableOpacity>
 
       {/* Ações Exclusivas para Professor / Administrador / Owner */}
       {canCreateTrack && (
@@ -392,7 +732,204 @@ export default function HomeScreen() {
         </>
       )}
 
-      {/* Margem inferior extra */}
+      {/* Modal 1: Aluno Desbloqueando Trilha Clicada */}
+      <Modal
+        visible={unlockModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setUnlockModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalIconBubble, { backgroundColor: '#8B5CF6' }]}>
+              <Lock size={32} color="#ffffff" />
+            </View>
+
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Trilha Privada 🔒</Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
+              A trilha <Text style={{ fontWeight: '800', color: colors.text }}>"{targetTrailForUnlock?.titulo}"</Text> requer um código de acesso fornecido pelo professor para ser liberada.
+            </Text>
+
+            {unlockError && (
+              <View style={styles.modalErrorCard}>
+                <Text style={styles.modalErrorText}>{unlockError}</Text>
+              </View>
+            )}
+
+            {unlockSuccess && (
+              <View style={styles.modalSuccessCard}>
+                <Text style={styles.modalSuccessText}>Código Correto! Desbloqueando trilha... 🎉</Text>
+              </View>
+            )}
+
+            <View style={styles.modalInputGroup}>
+              <Text style={[styles.modalInputLabel, { color: colors.text }]}>Código de Acesso</Text>
+              <TextInput
+                style={[
+                  styles.modalCodeInput,
+                  { backgroundColor: colors.cardSecondary, color: colors.text },
+                ]}
+                placeholder="Ex: TRL-8K4M9Q"
+                placeholderTextColor={colors.textMuted}
+                value={inputCode}
+                onChangeText={(text) => {
+                  setInputCode(text.toUpperCase());
+                  setUnlockError(null);
+                }}
+                autoCapitalize="characters"
+                autoCorrect={false}
+              />
+            </View>
+
+            <View style={styles.modalButtonsRow}>
+              <TouchableOpacity
+                style={[styles.modalSecondaryBtn, { borderColor: colors.border || '#1b1b1b' }]}
+                onPress={() => setUnlockModalVisible(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.modalSecondaryBtnText, { color: colors.text }]}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalPrimaryBtn}
+                onPress={handleUnlockSubmit}
+                activeOpacity={0.85}
+              >
+                <ShieldCheck size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                <Text style={styles.modalPrimaryBtnText}>Desbloquear</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal 2: Aluno Entrando Diretamente por Código */}
+      <Modal
+        visible={enterCodeModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEnterCodeModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalIconBubble, { backgroundColor: '#F59E0B' }]}>
+              <Key size={32} color="#ffffff" />
+            </View>
+
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Acessar Trilha por Código 🔑</Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
+              Digite o código fornecido pelo professor da sua turma para localizar e desbloquear a trilha automaticamente.
+            </Text>
+
+            {directCodeError && (
+              <View style={styles.modalErrorCard}>
+                <Text style={styles.modalErrorText}>{directCodeError}</Text>
+              </View>
+            )}
+
+            <View style={styles.modalInputGroup}>
+              <Text style={[styles.modalInputLabel, { color: colors.text }]}>Código da Trilha</Text>
+              <TextInput
+                style={[
+                  styles.modalCodeInput,
+                  { backgroundColor: colors.cardSecondary, color: colors.text },
+                ]}
+                placeholder="Ex: TRL-8K4M9Q"
+                placeholderTextColor={colors.textMuted}
+                value={directCode}
+                onChangeText={(text) => {
+                  setDirectCode(text.toUpperCase());
+                  setDirectCodeError(null);
+                }}
+                autoCapitalize="characters"
+                autoCorrect={false}
+              />
+            </View>
+
+            <View style={styles.modalButtonsRow}>
+              <TouchableOpacity
+                style={[styles.modalSecondaryBtn, { borderColor: colors.border || '#1b1b1b' }]}
+                onPress={() => setEnterCodeModalVisible(false)}
+                activeOpacity={0.8}
+              >
+                <Text style={[styles.modalSecondaryBtnText, { color: colors.text }]}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.modalPrimaryBtn}
+                onPress={handleDirectCodeSubmit}
+                disabled={directCodeLoading}
+                activeOpacity={0.85}
+              >
+                {directCodeLoading ? (
+                  <ActivityIndicator size="small" color="#ffffff" />
+                ) : (
+                  <>
+                    <Key size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                    <Text style={styles.modalPrimaryBtnText}>Buscar e Entrar</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal 3: Professor Visualizando Código da sua Trilha Privada */}
+      <Modal
+        visible={viewCodeModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setViewCodeModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalCard, { backgroundColor: colors.card }]}>
+            <View style={[styles.modalIconBubble, { backgroundColor: '#F59E0B' }]}>
+              <Key size={32} color="#ffffff" />
+            </View>
+
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Código da sua Trilha 🔑</Text>
+            <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
+              Trilha: <Text style={{ fontWeight: '800', color: colors.text }}>"{viewCodeTrail?.titulo}"</Text>
+            </Text>
+            <Text style={[styles.modalHelperText, { color: colors.textMuted }]}>
+              Apenas você (professor criador) e administradores podem ver este código. Compartilhe-o com os alunos para que eles possam ingressar.
+            </Text>
+
+            <View style={styles.modalDashedCodeBox}>
+              <Text style={styles.modalDashedCodeText}>
+                {viewCodeTrail?.codigoAcesso || (viewCodeTrail?._id && knownCodes[viewCodeTrail._id]) || 'TRL-ACESSO'}
+              </Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.modalCopyBtn}
+              onPress={() => handleCopyCode(viewCodeTrail?.codigoAcesso || (viewCodeTrail?._id && knownCodes[viewCodeTrail._id]) || '')}
+              activeOpacity={0.85}
+            >
+              {codeCopied ? (
+                <>
+                  <Check size={18} color="#ffffff" style={{ marginRight: 8 }} />
+                  <Text style={styles.modalCopyBtnText}>Código Copiado!</Text>
+                </>
+              ) : (
+                <>
+                  <Copy size={18} color="#ffffff" style={{ marginRight: 8 }} />
+                  <Text style={styles.modalCopyBtnText}>Copiar Código</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.modalCloseBtn, { backgroundColor: colors.cardSecondary }]}
+              onPress={() => setViewCodeModalVisible(false)}
+              activeOpacity={0.85}
+            >
+              <Text style={[styles.modalCloseBtnText, { color: colors.text }]}>Fechar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
     </ScrollView>
   );
@@ -719,5 +1256,339 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     textAlign: 'center',
     marginVertical: 12,
+  },
+  imageWrapper: {
+    position: 'relative',
+    width: '100%',
+  },
+  badgesTopRow: {
+    position: 'absolute',
+    top: 8,
+    left: 8,
+    right: 8,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    zIndex: 10,
+  },
+  badgesTopRowGrid: {
+    position: 'absolute',
+    top: 6,
+    left: 6,
+    right: 6,
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    zIndex: 10,
+  },
+  floatingBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+    shadowColor: '#000000',
+    shadowOffset: { width: 1.5, height: 1.5 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 2,
+  },
+  floatingBadgeGrid: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#1b1b1b',
+  },
+  floatingBadgeText: {
+    color: '#ffffff',
+    fontSize: 10.5,
+    fontWeight: '900',
+    letterSpacing: 0.3,
+  },
+  floatingBadgeTextGrid: {
+    color: '#ffffff',
+    fontSize: 9,
+    fontWeight: '900',
+  },
+  badgeFree: {
+    backgroundColor: '#10B981',
+  },
+  badgePaid: {
+    backgroundColor: '#F59E0B',
+  },
+  badgePublic: {
+    backgroundColor: '#3B82F6',
+  },
+  badgePrivate: {
+    backgroundColor: '#8B5CF6',
+  },
+  trackCardFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 4,
+  },
+  teacherViewCodeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#18181B',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#F59E0B',
+  },
+  teacherViewCodeBtnText: {
+    color: '#F59E0B',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  teacherGridCodeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#18181B',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#F59E0B',
+    marginLeft: 'auto',
+  },
+  teacherGridCodeBtnText: {
+    color: '#F59E0B',
+    fontSize: 9,
+    fontWeight: '900',
+    marginLeft: 2,
+  },
+  enterCodeBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 14,
+    borderWidth: 3,
+    borderColor: '#F59E0B',
+    marginBottom: 16,
+    shadowColor: '#000000',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+    gap: 12,
+  },
+  enterCodeIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: '#F59E0B',
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  enterCodeTitle: {
+    fontSize: 14,
+    fontWeight: '900',
+    marginBottom: 2,
+  },
+  enterCodeDesc: {
+    fontSize: 11,
+    lineHeight: 15,
+  },
+  enterCodePill: {
+    backgroundColor: '#18181B',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#F59E0B',
+  },
+  enterCodePillText: {
+    color: '#F59E0B',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: 420,
+    borderRadius: 20,
+    borderWidth: 4,
+    borderColor: '#1b1b1b',
+    padding: 22,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 8,
+  },
+  modalIconBubble: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  modalTitle: {
+    fontSize: 19,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  modalSubtitle: {
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginBottom: 14,
+  },
+  modalHelperText: {
+    fontSize: 12,
+    lineHeight: 16,
+    textAlign: 'center',
+    marginBottom: 14,
+  },
+  modalErrorCard: {
+    backgroundColor: '#EF4444',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    width: '100%',
+    marginBottom: 12,
+  },
+  modalErrorText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  modalSuccessCard: {
+    backgroundColor: '#10B981',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    width: '100%',
+    marginBottom: 12,
+  },
+  modalSuccessText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  modalInputGroup: {
+    width: '100%',
+    marginBottom: 16,
+  },
+  modalInputLabel: {
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  modalCodeInput: {
+    width: '100%',
+    borderRadius: 10,
+    borderWidth: 2.5,
+    borderColor: '#1b1b1b',
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 2,
+    textAlign: 'center',
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  modalButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+  },
+  modalSecondaryBtn: {
+    flex: 1,
+    paddingVertical: 13,
+    borderRadius: 10,
+    borderWidth: 2,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalSecondaryBtnText: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  modalPrimaryBtn: {
+    flex: 1.3,
+    backgroundColor: '#4F46E5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 13,
+    borderRadius: 10,
+    borderWidth: 2.5,
+    borderColor: '#1b1b1b',
+  },
+  modalPrimaryBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  modalDashedCodeBox: {
+    backgroundColor: '#09090B',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 2.5,
+    borderColor: '#F59E0B',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 14,
+  },
+  modalDashedCodeText: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#FCD34D',
+    letterSpacing: 4,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  modalCopyBtn: {
+    backgroundColor: '#4F46E5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 13,
+    borderRadius: 10,
+    borderWidth: 2.5,
+    borderColor: '#1b1b1b',
+    marginBottom: 10,
+  },
+  modalCopyBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  modalCloseBtn: {
+    width: '100%',
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modalCloseBtnText: {
+    fontSize: 14,
+    fontWeight: '800',
   },
 });

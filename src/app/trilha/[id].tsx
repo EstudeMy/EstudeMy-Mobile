@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Image,
   Modal,
+  TextInput,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,11 +18,30 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { getTrackImage, getCharacterImage } from '../../constants/assets';
 import { buscarTrilhaPorId, iniciarTrilha, Trilha } from '../../services/trilhaService';
+import {
+  isTrailUnlocked,
+  validateAndUnlockTrail,
+  copyToClipboard,
+  getTrailAccessCode,
+} from '../../services/trilhaAcessoService';
 
 import { buscarSecoesPorTrilha, Secao } from '../../services/secaoService';
 import { buscarFasesPorTrilha, Fase } from '../../services/faseService';
 import api from '../../services/api';
-import { Lock, Star, Check, ArrowLeft, Bookmark, HelpCircle, X } from 'lucide-react-native';
+import {
+  Lock,
+  Star,
+  Check,
+  ArrowLeft,
+  Bookmark,
+  HelpCircle,
+  X,
+  Key,
+  Copy,
+  DollarSign,
+  Globe,
+  ShieldAlert,
+} from 'lucide-react-native';
 import * as SecureStore from 'expo-secure-store';
 
 export default function TrilhaDetailScreen() {
@@ -40,6 +61,14 @@ export default function TrilhaDetailScreen() {
   const [iniciada, setIniciada] = useState(false);
   const [fasesConcluidas, setFasesConcluidas] = useState<string[]>([]);
   const [loadingAction, setLoadingAction] = useState(false);
+
+  // Controle de acesso e código para trilhas privadas
+  const [isUnlocked, setIsUnlocked] = useState(true);
+  const [localAccessCode, setLocalAccessCode] = useState<string | null>(null);
+  const [studentCodeInput, setStudentCodeInput] = useState('');
+  const [studentCodeError, setStudentCodeError] = useState<string | null>(null);
+  const [studentUnlocking, setStudentUnlocking] = useState(false);
+  const [teacherCodeCopied, setTeacherCodeCopied] = useState(false);
 
   const [isSaved, setIsSaved] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -92,12 +121,36 @@ export default function TrilhaDetailScreen() {
       setLoading(true);
     }
     try {
-      const [trilhaData, secoesData, fasesData] = await Promise.all([
+      const [trilhaData, secoesData, fasesData, localCode] = await Promise.all([
         buscarTrilhaPorId(id),
         buscarSecoesPorTrilha(id),
         buscarFasesPorTrilha(id),
+        getTrailAccessCode(id),
       ]);
       setTrilha(trilhaData);
+      setLocalAccessCode(localCode);
+
+      // Verificação de trilha privada e permissões
+      const isPrivate =
+        trilhaData.disponibilidade === 'Privado' ||
+        Boolean(trilhaData.codigoAcesso) ||
+        Boolean(localCode);
+
+      const isCreator =
+        (trilhaData.criadoPor && (trilhaData.criadoPor === user?._id || trilhaData.criadoPor === user?.id)) ||
+        (typeof trilhaData.criadoPor === 'object' && (trilhaData.criadoPor as any)?._id === user?._id);
+      const isStaff =
+        user?.tipoUsuario === 'PROFESSOR' ||
+        user?.tipoUsuario === 'ADMINISTRADOR' ||
+        user?.tipoUsuario === 'OWNER';
+
+      if (!isPrivate || isCreator || isStaff) {
+        setIsUnlocked(true);
+      } else {
+        const unlocked = await isTrailUnlocked(id);
+        setIsUnlocked(unlocked);
+      }
+
       const sortedSecoes = secoesData.sort((a, b) => a.ordem - b.ordem);
       setSecoes(sortedSecoes);
 
@@ -138,7 +191,7 @@ export default function TrilhaDetailScreen() {
       setLoading(false);
       isInitialLoadRef.current = false;
     }
-  }, [id]);
+  }, [id, user]);
 
   // useFocusEffect recarrega os dados e o progresso sempre que o usuário volta da tela do jogo!
   useFocusEffect(
@@ -185,6 +238,53 @@ export default function TrilhaDetailScreen() {
     } finally {
       setLoadingAction(false);
     }
+  };
+
+  const isTeacherOrCreator = Boolean(
+    (trilha?.criadoPor && (trilha.criadoPor === user?._id || trilha.criadoPor === user?.id)) ||
+    (typeof trilha?.criadoPor === 'object' && (trilha?.criadoPor as any)?._id === user?._id) ||
+    user?.tipoUsuario === 'PROFESSOR' ||
+    user?.tipoUsuario === 'ADMINISTRADOR' ||
+    user?.tipoUsuario === 'OWNER'
+  );
+
+  const isPrivateTrail = Boolean(
+    trilha?.disponibilidade === 'Privado' ||
+    Boolean(trilha?.codigoAcesso) ||
+    Boolean(localAccessCode)
+  );
+
+  const isPaidTrail = Boolean(
+    trilha?.pagamento === 'Paga' ||
+    Boolean(trilha?.preco && Number(trilha.preco) > 0)
+  );
+
+  const effectiveCode = trilha?.codigoAcesso || localAccessCode || 'TRL-ACESSO';
+
+  const handleTeacherCopy = async (code: string) => {
+    await copyToClipboard(code);
+    setTeacherCodeCopied(true);
+    setTimeout(() => setTeacherCodeCopied(false), 2500);
+  };
+
+  const handleStudentUnlock = async () => {
+    if (!trilha || !studentCodeInput.trim()) {
+      setStudentCodeError('Digite o código de acesso fornecido pelo professor.');
+      return;
+    }
+
+    setStudentUnlocking(true);
+    setStudentCodeError(null);
+
+    const ok = await validateAndUnlockTrail(trilha, studentCodeInput);
+    if (ok) {
+      setIsUnlocked(true);
+      setStudentCodeInput('');
+      setStudentCodeError(null);
+    } else {
+      setStudentCodeError('Código de acesso incorreto. Verifique com seu professor.');
+    }
+    setStudentUnlocking(false);
   };
 
   if (loading) {
@@ -244,150 +344,263 @@ export default function TrilhaDetailScreen() {
           resizeMode="cover"
         />
         <View style={{ padding: 16 }}>
+          {/* Badges de Pagamento e Disponibilidade */}
+          <View style={styles.detailBadgesRow}>
+            <View style={[styles.detailBadge, isPaidTrail ? styles.badgePaid : styles.badgeFree]}>
+              {isPaidTrail ? <DollarSign size={12} color="#ffffff" style={{ marginRight: 3 }} /> : null}
+              <Text style={styles.detailBadgeText}>
+                {isPaidTrail ? (trilha.preco ? `Paga • R$ ${Number(trilha.preco).toFixed(2).replace('.', ',')}` : 'Paga') : 'Gratuita'}
+              </Text>
+            </View>
+            <View style={[styles.detailBadge, isPrivateTrail ? styles.badgePrivate : styles.badgePublic]}>
+              {isPrivateTrail ? (
+                <>
+                  <Lock size={12} color="#ffffff" style={{ marginRight: 3 }} />
+                  <Text style={styles.detailBadgeText}>Privada</Text>
+                </>
+              ) : (
+                <>
+                  <Globe size={12} color="#ffffff" style={{ marginRight: 3 }} />
+                  <Text style={styles.detailBadgeText}>Aberta</Text>
+                </>
+              )}
+            </View>
+          </View>
+
           <Text style={styles.trackSubject}>{trilha.materia.toUpperCase()}</Text>
           <Text style={[styles.trackTitle, { color: colors.text }]}>{trilha.titulo}</Text>
           {trilha.descricao && <Text style={[styles.trackDesc, { color: colors.textMuted }]}>{trilha.descricao}</Text>}
         </View>
 
-        {/* Botão de Ação / Iniciar */}
-        {!iniciada ? (
-          <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={handleIniciarTrilha}
-            disabled={loadingAction}
-            activeOpacity={0.9}
-          >
-            {loadingAction ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <Text style={styles.actionBtnText}>Iniciar Trilha 🚀</Text>
-            )}
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.progressSummary}>
-            <Text style={[styles.progressSummaryText, { color: colors.text }]}>
-              Progresso: {fasesConcluidas.length} de {fases.length} fases completadas
-            </Text>
-            <View style={[styles.progressBg, { backgroundColor: colors.cardSecondary }]}>
-              <View
-                style={[
-                  styles.progressFill,
-                  { width: `${(fasesConcluidas.length / (fases.length || 1)) * 100}%` },
-                ]}
-              />
+        {/* Botão de Ação / Iniciar (apenas se desbloqueada) */}
+        {isUnlocked && (
+          !iniciada ? (
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={handleIniciarTrilha}
+              disabled={loadingAction}
+              activeOpacity={0.9}
+            >
+              {loadingAction ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text style={styles.actionBtnText}>Iniciar Trilha 🚀</Text>
+              )}
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.progressSummary}>
+              <Text style={[styles.progressSummaryText, { color: colors.text }]}>
+                Progresso: {fasesConcluidas.length} de {fases.length} fases completadas
+              </Text>
+              <View style={[styles.progressBg, { backgroundColor: colors.cardSecondary }]}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    { width: `${(fasesConcluidas.length / (fases.length || 1)) * 100}%` },
+                  ]}
+                />
+              </View>
             </View>
-          </View>
+          )
         )}
       </View>
 
-      {/* Lista de Seções & Fases */}
-      <Text style={[styles.sectionHeading, { color: colors.text }]}>Jornada de Aprendizado</Text>
-      {secoes.length === 0 ? (
-        <Text style={[styles.emptyText, { color: colors.textMuted }]}>Esta trilha ainda não tem seções estruturadas.</Text>
-      ) : (
-        secoes.map((secao, secaoIdx) => {
-          // Filtrar fases pertencentes a esta seção
-          const fasesDaSecao = fases.filter((f) => f.secaoId === secao._id);
-          const bannerColor = BANNER_COLORS[secaoIdx % BANNER_COLORS.length];
+      {/* Box Exclusiva para o Professor ver o Código da Trilha Privada */}
+      {isPrivateTrail && isTeacherOrCreator && (
+        <View style={styles.teacherCodeCard}>
+          <View style={styles.teacherCodeHeader}>
+            <Key size={22} color="#F59E0B" />
+            <Text style={styles.teacherCodeTitle}>Código de Acesso dos Alunos 🔑</Text>
+          </View>
+          <Text style={styles.teacherCodeDesc}>
+            Apenas você (professor criador) e administradores conseguem ver este código. Passe para seus alunos para que eles possam desbloquear esta trilha:
+          </Text>
 
-          return (
-            <View key={secao._id} style={styles.secaoBlock}>
-              {/* Header da Seção estilo Duolingo */}
-              <View style={[styles.secaoHeader, { backgroundColor: bannerColor }]}>
-                <Text style={styles.secaoTitle}>{secao.titulo}</Text>
-                {secao.descricao && <Text style={styles.secaoDesc}>{secao.descricao}</Text>}
-              </View>
+          <View style={styles.teacherCodeBox}>
+            <Text style={styles.teacherCodeText}>{effectiveCode}</Text>
+          </View>
 
-              {/* Fases em zigue-zague */}
-              <View style={styles.fasesContainer}>
-                {fasesDaSecao.length === 0 ? (
-                  <Text style={[styles.emptyFases, { color: colors.textMuted }]}>Nenhuma fase nesta seção.</Text>
-                ) : (
-                  fasesDaSecao.map((fase) => {
-                    const isCompleted = fasesConcluidas.includes(fase._id);
-                    const isActive = isPhaseActive(fase);
-                    
-                    // Lógica para desbloquear a fase
-                    let isUnlocked = false;
-                    if (!iniciada) {
-                      isUnlocked = false;
-                    } else if (fases.indexOf(fase) === 0) {
-                      isUnlocked = true;
-                    } else {
-                      const absoluteIndex = fases.indexOf(fase);
-                      const prevFase = fases[absoluteIndex - 1];
-                      isUnlocked = prevFase && fasesConcluidas.includes(prevFase._id);
-                    }
+          <TouchableOpacity
+            style={styles.teacherCopyBtn}
+            onPress={() => handleTeacherCopy(effectiveCode)}
+            activeOpacity={0.85}
+          >
+            {teacherCodeCopied ? (
+              <>
+                <Check size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                <Text style={styles.teacherCopyBtnText}>Código Copiado!</Text>
+              </>
+            ) : (
+              <>
+                <Copy size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                <Text style={styles.teacherCopyBtnText}>Copiar Código para Alunos</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      )}
 
-                    if (isCompleted) {
-                      isUnlocked = true;
-                    }
+      {/* Conteúdo: Bloqueado (se for privada e aluno não desbloqueou) OU Desbloqueado com Jornada */}
+      {!isUnlocked ? (
+        <View style={[styles.lockedCard, { backgroundColor: colors.card }]}>
+          <View style={styles.lockedIconBubble}>
+            <Lock size={36} color="#ffffff" />
+          </View>
+          <Text style={[styles.lockedTitle, { color: colors.text }]}>Conteúdo Bloqueado 🔒</Text>
+          <Text style={[styles.lockedDesc, { color: colors.textMuted }]}>
+            Esta trilha é privada e requer o código de acesso exclusivo fornecido pelo seu professor para liberar o conteúdo e as lições.
+          </Text>
 
-                    const globalIdx = fases.indexOf(fase);
-
-                    return (
-                      <View key={fase._id} style={[styles.faseNodeContainer, getZigZagStyle(globalIdx)]}>
-                        {/* Avatar do Personagem Flutuante */}
-                        {isActive && (
-                          <View style={styles.avatarContainer}>
-                            <Image
-                              source={getCharacterImage(user?.personagem)}
-                              style={styles.avatarImg}
-                              resizeMode="contain"
-                            />
-                            <View style={styles.avatarPointer} />
-                          </View>
-                        )}
-
-                        {/* Círculo da Fase */}
-                        <TouchableOpacity
-                          style={[
-                            styles.faseCircle,
-                            {
-                              backgroundColor: isCompleted
-                                ? '#10B981' // Verde concluído
-                                : isUnlocked
-                                ? '#4F46E5' // Azul ativo/desbloqueado
-                                : '#374151', // Cinza bloqueado
-                              borderColor: isCompleted
-                                ? '#059669'
-                                : isUnlocked
-                                ? '#3730A3'
-                                : '#1F2937',
-                            },
-                          ]}
-                          disabled={!isUnlocked}
-                          onPress={() => router.push(`/game/${fase._id}`)}
-                          activeOpacity={0.8}
-                        >
-                          {isCompleted ? (
-                            <Check size={30} color="#ffffff" strokeWidth={3} />
-                          ) : isUnlocked ? (
-                            <Star size={30} color="#ffffff" fill="#ffffff" />
-                          ) : (
-                            <Lock size={26} color="#9CA3AF" />
-                          )}
-                        </TouchableOpacity>
-
-                        {/* Rótulo da Fase */}
-                        <Text
-                          style={[
-                            styles.faseLabel,
-                            { color: colors.text },
-                            !isUnlocked && { color: colors.textMuted },
-                          ]}
-                          numberOfLines={2}
-                        >
-                          {fase.titulo}
-                        </Text>
-                      </View>
-                    );
-                  })
-                )}
-              </View>
+          {studentCodeError && (
+            <View style={styles.lockedErrorCard}>
+              <Text style={styles.lockedErrorText}>{studentCodeError}</Text>
             </View>
-          );
-        })
+          )}
+
+          <TextInput
+            style={[
+              styles.lockedCodeInput,
+              { backgroundColor: colors.cardSecondary, color: colors.text },
+            ]}
+            placeholder="Ex: TRL-8K4M9Q"
+            placeholderTextColor={colors.textMuted}
+            value={studentCodeInput}
+            onChangeText={(txt) => {
+              setStudentCodeInput(txt.toUpperCase());
+              setStudentCodeError(null);
+            }}
+            autoCapitalize="characters"
+            autoCorrect={false}
+          />
+
+          <TouchableOpacity
+            style={styles.lockedSubmitBtn}
+            onPress={handleStudentUnlock}
+            disabled={studentUnlocking}
+            activeOpacity={0.85}
+          >
+            {studentUnlocking ? (
+              <ActivityIndicator color="#ffffff" />
+            ) : (
+              <>
+                <Key size={18} color="#ffffff" style={{ marginRight: 8 }} />
+                <Text style={styles.lockedSubmitBtnText}>Desbloquear Trilha</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        </View>
+      ) : (
+        <>
+          {/* Lista de Seções & Fases */}
+          <Text style={[styles.sectionHeading, { color: colors.text }]}>Jornada de Aprendizado</Text>
+          {secoes.length === 0 ? (
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>Esta trilha ainda não tem seções estruturadas.</Text>
+          ) : (
+            secoes.map((secao, secaoIdx) => {
+              // Filtrar fases pertencentes a esta seção
+              const fasesDaSecao = fases.filter((f) => f.secaoId === secao._id);
+              const bannerColor = BANNER_COLORS[secaoIdx % BANNER_COLORS.length];
+
+              return (
+                <View key={secao._id} style={styles.secaoBlock}>
+                  {/* Header da Seção estilo Duolingo */}
+                  <View style={[styles.secaoHeader, { backgroundColor: bannerColor }]}>
+                    <Text style={styles.secaoTitle}>{secao.titulo}</Text>
+                    {secao.descricao && <Text style={styles.secaoDesc}>{secao.descricao}</Text>}
+                  </View>
+
+                  {/* Fases em zigue-zague */}
+                  <View style={styles.fasesContainer}>
+                    {fasesDaSecao.length === 0 ? (
+                      <Text style={[styles.emptyFases, { color: colors.textMuted }]}>Nenhuma fase nesta seção.</Text>
+                    ) : (
+                      fasesDaSecao.map((fase) => {
+                        const isCompleted = fasesConcluidas.includes(fase._id);
+                        const isActive = isPhaseActive(fase);
+                        
+                        // Lógica para desbloquear a fase individual
+                        let isPhaseUnlocked = false;
+                        if (!iniciada) {
+                          isPhaseUnlocked = false;
+                        } else if (fases.indexOf(fase) === 0) {
+                          isPhaseUnlocked = true;
+                        } else {
+                          const absoluteIndex = fases.indexOf(fase);
+                          const prevFase = fases[absoluteIndex - 1];
+                          isPhaseUnlocked = prevFase && fasesConcluidas.includes(prevFase._id);
+                        }
+
+                        if (isCompleted) {
+                          isPhaseUnlocked = true;
+                        }
+
+                        const globalIdx = fases.indexOf(fase);
+
+                        return (
+                          <View key={fase._id} style={[styles.faseNodeContainer, getZigZagStyle(globalIdx)]}>
+                            {/* Avatar do Personagem Flutuante */}
+                            {isActive && (
+                              <View style={styles.avatarContainer}>
+                                <Image
+                                  source={getCharacterImage(user?.personagem)}
+                                  style={styles.avatarImg}
+                                  resizeMode="contain"
+                                />
+                                <View style={styles.avatarPointer} />
+                              </View>
+                            )}
+
+                            {/* Círculo da Fase */}
+                            <TouchableOpacity
+                              style={[
+                                styles.faseCircle,
+                                {
+                                  backgroundColor: isCompleted
+                                    ? '#10B981' // Verde concluído
+                                    : isPhaseUnlocked
+                                    ? '#4F46E5' // Azul ativo/desbloqueado
+                                    : '#374151', // Cinza bloqueado
+                                  borderColor: isCompleted
+                                    ? '#059669'
+                                    : isPhaseUnlocked
+                                    ? '#3730A3'
+                                    : '#1F2937',
+                                },
+                              ]}
+                              disabled={!isPhaseUnlocked}
+                              onPress={() => router.push(`/game/${fase._id}`)}
+                              activeOpacity={0.8}
+                            >
+                              {isCompleted ? (
+                                <Check size={30} color="#ffffff" strokeWidth={3} />
+                              ) : isPhaseUnlocked ? (
+                                <Star size={30} color="#ffffff" fill="#ffffff" />
+                              ) : (
+                                <Lock size={26} color="#9CA3AF" />
+                              )}
+                            </TouchableOpacity>
+
+                            {/* Rótulo da Fase */}
+                            <Text
+                              style={[
+                                styles.faseLabel,
+                                { color: colors.text },
+                                !isPhaseUnlocked && { color: colors.textMuted },
+                              ]}
+                              numberOfLines={2}
+                            >
+                              {fase.titulo}
+                            </Text>
+                          </View>
+                        );
+                      })
+                    )}
+                  </View>
+                </View>
+              );
+            })
+          )}
+        </>
       )}
 
       {/* Modal do Guia de Estudos estilo Duolingo */}
@@ -930,6 +1143,182 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: '#ffffff',
     fontSize: 16,
+    fontWeight: '900',
+  },
+  detailBadgesRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  detailBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  detailBadgeText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 0.3,
+  },
+  badgeFree: {
+    backgroundColor: '#10B981',
+  },
+  badgePaid: {
+    backgroundColor: '#F59E0B',
+  },
+  badgePublic: {
+    backgroundColor: '#3B82F6',
+  },
+  badgePrivate: {
+    backgroundColor: '#8B5CF6',
+  },
+  teacherCodeCard: {
+    backgroundColor: '#18181B',
+    borderRadius: 16,
+    borderWidth: 3,
+    borderColor: '#F59E0B',
+    padding: 18,
+    marginBottom: 20,
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+  },
+  teacherCodeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  teacherCodeTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#F59E0B',
+  },
+  teacherCodeDesc: {
+    fontSize: 12.5,
+    color: '#D4D4D8',
+    lineHeight: 18,
+    marginBottom: 14,
+  },
+  teacherCodeBox: {
+    backgroundColor: '#09090B',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 2.5,
+    borderColor: '#F59E0B',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  teacherCodeText: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#FCD34D',
+    letterSpacing: 4,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  teacherCopyBtn: {
+    backgroundColor: '#4F46E5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 2.5,
+    borderColor: '#1b1b1b',
+  },
+  teacherCopyBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  lockedCard: {
+    padding: 24,
+    borderRadius: 18,
+    borderWidth: 4,
+    borderColor: '#1b1b1b',
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 6,
+    marginVertical: 16,
+  },
+  lockedIconBubble: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#8B5CF6',
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  lockedTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  lockedDesc: {
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  lockedErrorCard: {
+    backgroundColor: '#EF4444',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    width: '100%',
+    marginBottom: 14,
+  },
+  lockedErrorText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  lockedCodeInput: {
+    width: '100%',
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 20,
+    fontWeight: '900',
+    letterSpacing: 3,
+    textAlign: 'center',
+    marginBottom: 14,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  lockedSubmitBtn: {
+    backgroundColor: '#4F46E5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 15,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+  },
+  lockedSubmitBtnText: {
+    color: '#ffffff',
+    fontSize: 15,
     fontWeight: '900',
   },
 });

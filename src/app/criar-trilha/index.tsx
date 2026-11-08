@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -8,14 +8,31 @@ import {
   ScrollView,
   ActivityIndicator,
   Image,
+  Modal,
+  Platform,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { criarTrilhaManual } from '../../services/trilhaService';
+import { criarTrilhaManual, Trilha } from '../../services/trilhaService';
+import { generateAccessCode, copyToClipboard } from '../../services/trilhaAcessoService';
 import { FASE_BACKGROUNDS } from '../../constants/assets';
-import { ArrowLeft, BookOpen, PlusCircle, ShieldAlert } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  BookOpen,
+  PlusCircle,
+  ShieldAlert,
+  Lock,
+  Globe,
+  DollarSign,
+  Gift,
+  Key,
+  Copy,
+  Check,
+  RefreshCw,
+  Sparkles,
+} from 'lucide-react-native';
 import { sanitizeInput } from '../../utils/security';
 import asyncLock from '../../utils/asyncLock';
 import logger from '../../utils/logger';
@@ -55,13 +72,36 @@ export default function CriarTrilhaScreen() {
   const [dificuldade, setDificuldade] = useState<'Facil' | 'Medio' | 'Dificil'>('Facil');
   const [faseSelecionada, setFaseSelecionada] = useState(2); // Montanha default
   const [cenarioPath, setCenarioPath] = useState('/img/fases/montanha.jpg');
-  const [disponibilidade] = useState<'Aberto' | 'Privado'>('Aberto');
-  const [pagamento] = useState<'Gratuita' | 'Paga'>('Gratuita');
+  const [disponibilidade, setDisponibilidade] = useState<'Aberto' | 'Privado'>('Aberto');
+  const [pagamento, setPagamento] = useState<'Gratuita' | 'Paga'>('Gratuita');
+  const [preco, setPreco] = useState('29.90');
+  const [codigoAcesso, setCodigoAcesso] = useState('');
+  const [codeCopied, setCodeCopied] = useState(false);
+  const [createdModalVisible, setCreatedModalVisible] = useState(false);
+  const [createdTrilha, setCreatedTrilha] = useState<Trilha | null>(null);
   const [idioma, setIdioma] = useState('Português');
-
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  // Gera código de acesso único ao marcar como privado
+  useEffect(() => {
+    if (disponibilidade === 'Privado' && !codigoAcesso) {
+      setCodigoAcesso(generateAccessCode());
+    }
+  }, [disponibilidade, codigoAcesso]);
+
+  const handleRegenerateCode = () => {
+    const newCode = generateAccessCode();
+    setCodigoAcesso(newCode);
+    setCodeCopied(false);
+  };
+
+  const handleCopyCode = async (codeToCopy: string) => {
+    await copyToClipboard(codeToCopy);
+    setCodeCopied(true);
+    setTimeout(() => setCodeCopied(false), 2500);
+  };
 
   // Verificação de permissão de acesso
   const isAuthorized =
@@ -109,6 +149,9 @@ export default function CriarTrilhaScreen() {
       setErrorMsg(null);
 
       try {
+        const precoNumerico = pagamento === 'Paga' ? parseFloat(preco.replace(',', '.')) || 0 : 0;
+        const finalCodigo = disponibilidade === 'Privado' ? (codigoAcesso || generateAccessCode()) : undefined;
+
         const novaTrilha = await criarTrilhaManual({
           titulo: cleanTitulo,
           descricao: cleanDescricao,
@@ -116,12 +159,17 @@ export default function CriarTrilhaScreen() {
           dificuldade,
           disponibilidade,
           pagamento,
+          preco: precoNumerico,
+          codigoAcesso: finalCodigo,
           faseSelecionada,
           imagem: cenarioPath,
           idioma,
         });
 
-        if (novaTrilha && novaTrilha._id) {
+        if (disponibilidade === 'Privado' && finalCodigo) {
+          setCreatedTrilha({ ...novaTrilha, codigoAcesso: finalCodigo });
+          setCreatedModalVisible(true);
+        } else if (novaTrilha && novaTrilha._id) {
           router.replace(`/trilha/${novaTrilha._id}`);
         } else {
           router.replace('/(tabs)/home');
@@ -283,6 +331,164 @@ export default function CriarTrilhaScreen() {
           </View>
         </View>
 
+        {/* Modelo de Acesso: Gratuita ou Paga */}
+        <View style={styles.inputGroup}>
+          <Text style={[styles.label, { color: colors.text }]}>Modelo de Acesso (Gratuita ou Paga) *</Text>
+          <Text style={[styles.fieldSublabel, { color: colors.textMuted }]}>
+            Defina se a trilha será de acesso livre ou conteúdo pago/premium.
+          </Text>
+          <View style={styles.optionCardsRow}>
+            <TouchableOpacity
+              style={[
+                styles.optionCard,
+                { backgroundColor: colors.cardSecondary },
+                pagamento === 'Gratuita' && styles.optionCardActiveGreen,
+              ]}
+              onPress={() => setPagamento('Gratuita')}
+              activeOpacity={0.85}
+            >
+              <View style={[styles.optionCardIcon, { backgroundColor: pagamento === 'Gratuita' ? '#10B981' : '#374151' }]}>
+                <Gift size={20} color="#ffffff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.optionCardTitle, { color: colors.text }]}>Gratuita</Text>
+                <Text style={[styles.optionCardDesc, { color: colors.textMuted }]}>
+                  Livre para todos os estudantes estudarem sem custos.
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.optionCard,
+                { backgroundColor: colors.cardSecondary },
+                pagamento === 'Paga' && styles.optionCardActiveGold,
+              ]}
+              onPress={() => setPagamento('Paga')}
+              activeOpacity={0.85}
+            >
+              <View style={[styles.optionCardIcon, { backgroundColor: pagamento === 'Paga' ? '#F59E0B' : '#374151' }]}>
+                <DollarSign size={20} color="#ffffff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.optionCardTitle, { color: colors.text }]}>Paga</Text>
+                <Text style={[styles.optionCardDesc, { color: colors.textMuted }]}>
+                  Conteúdo premium com valor ou plano de acesso.
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {pagamento === 'Paga' && (
+            <View style={styles.priceContainer}>
+              <Text style={[styles.label, { color: colors.text, fontSize: 13 }]}>Preço Sugerido (R$)</Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.cardSecondary, color: colors.text }]}
+                placeholder="Ex: 29.90"
+                placeholderTextColor={colors.textMuted}
+                keyboardType="numeric"
+                value={preco}
+                onChangeText={setPreco}
+              />
+            </View>
+          )}
+        </View>
+
+        {/* Visibilidade: Aberta (Pública) ou Privada (Requer Código) */}
+        <View style={styles.inputGroup}>
+          <Text style={[styles.label, { color: colors.text }]}>Visibilidade e Privacidade *</Text>
+          <Text style={[styles.fieldSublabel, { color: colors.textMuted }]}>
+            Trilhas privadas exigem um código exclusivo para que o aluno consiga acessar.
+          </Text>
+          <View style={styles.optionCardsRow}>
+            <TouchableOpacity
+              style={[
+                styles.optionCard,
+                { backgroundColor: colors.cardSecondary },
+                disponibilidade === 'Aberto' && styles.optionCardActiveBlue,
+              ]}
+              onPress={() => setDisponibilidade('Aberto')}
+              activeOpacity={0.85}
+            >
+              <View style={[styles.optionCardIcon, { backgroundColor: disponibilidade === 'Aberto' ? '#3B82F6' : '#374151' }]}>
+                <Globe size={20} color="#ffffff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.optionCardTitle, { color: colors.text }]}>Aberta (Pública)</Text>
+                <Text style={[styles.optionCardDesc, { color: colors.textMuted }]}>
+                  Disponível para qualquer aluno na Home e na busca.
+                </Text>
+              </View>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                styles.optionCard,
+                { backgroundColor: colors.cardSecondary },
+                disponibilidade === 'Privado' && styles.optionCardActivePurple,
+              ]}
+              onPress={() => setDisponibilidade('Privado')}
+              activeOpacity={0.85}
+            >
+              <View style={[styles.optionCardIcon, { backgroundColor: disponibilidade === 'Privado' ? '#8B5CF6' : '#374151' }]}>
+                <Lock size={20} color="#ffffff" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.optionCardTitle, { color: colors.text }]}>Privada (Requer Código)</Text>
+                <Text style={[styles.optionCardDesc, { color: colors.textMuted }]}>
+                  Bloqueada. Alunos precisam digitar o código gerado.
+                </Text>
+              </View>
+            </TouchableOpacity>
+          </View>
+
+          {/* Caixa de Código de Acesso Exclusivo para o Professor */}
+          {disponibilidade === 'Privado' && (
+            <View style={styles.codeGeneratedCard}>
+              <View style={styles.codeHeaderRow}>
+                <Key size={20} color="#F59E0B" />
+                <Text style={styles.codeCardTitle}>Código de Acesso Exclusivo 🔑</Text>
+              </View>
+              <Text style={styles.codeCardDesc}>
+                Este é o código exclusivo gerado para sua turma. Somente alunos que inserirem este código poderão desbloquear e cursar esta trilha.
+              </Text>
+
+              <View style={styles.codeDisplayBox}>
+                <Text style={styles.codeDisplayText}>{codigoAcesso || 'GERANDO...'}</Text>
+              </View>
+
+              <View style={styles.codeActionsRow}>
+                <TouchableOpacity
+                  style={[styles.codeActionBtn, styles.copyBtn]}
+                  onPress={() => handleCopyCode(codigoAcesso)}
+                  activeOpacity={0.85}
+                >
+                  {codeCopied ? (
+                    <>
+                      <Check size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                      <Text style={styles.codeActionBtnText}>Código Copiado!</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                      <Text style={styles.codeActionBtnText}>Copiar Código</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[styles.codeActionBtn, styles.regenerateBtn]}
+                  onPress={handleRegenerateCode}
+                  activeOpacity={0.85}
+                >
+                  <RefreshCw size={16} color="#ffffff" style={{ marginRight: 6 }} />
+                  <Text style={styles.codeActionBtnText}>Gerar Outro</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+        </View>
+
         {/* Idioma */}
         <View style={styles.inputGroup}>
           <Text style={[styles.label, { color: colors.text }]}>Idioma da Trilha</Text>
@@ -327,6 +533,66 @@ export default function CriarTrilhaScreen() {
         </TouchableOpacity>
       </View>
     </ScrollView>
+
+    {/* Modal de Sucesso pós-criação para Trilha Privada */}
+    <Modal
+      visible={createdModalVisible}
+      transparent
+      animationType="fade"
+      onRequestClose={() => {
+        setCreatedModalVisible(false);
+        if (createdTrilha?._id) router.replace(`/trilha/${createdTrilha._id}`);
+      }}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[styles.successModalCard, { backgroundColor: colors.card }]}>
+          <View style={styles.successIconBubble}>
+            <Sparkles size={36} color="#ffffff" />
+          </View>
+          <Text style={[styles.successModalTitle, { color: colors.text }]}>Trilha Privada Criada! 🎉</Text>
+          <Text style={[styles.successModalDesc, { color: colors.textMuted }]}>
+            Sua trilha foi configurada com sucesso. Copie o código abaixo e compartilhe com seus alunos para que eles possam desbloqueá-la:
+          </Text>
+
+          <View style={styles.modalCodeBox}>
+            <Text style={styles.modalCodeText}>{createdTrilha?.codigoAcesso || codigoAcesso}</Text>
+          </View>
+
+          <TouchableOpacity
+            style={styles.modalCopyBtn}
+            onPress={() => handleCopyCode(createdTrilha?.codigoAcesso || codigoAcesso)}
+            activeOpacity={0.85}
+          >
+            {codeCopied ? (
+              <>
+                <Check size={18} color="#ffffff" style={{ marginRight: 8 }} />
+                <Text style={styles.modalCopyBtnText}>Código Copiado!</Text>
+              </>
+            ) : (
+              <>
+                <Copy size={18} color="#ffffff" style={{ marginRight: 8 }} />
+                <Text style={styles.modalCopyBtnText}>Copiar Código de Acesso</Text>
+              </>
+            )}
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.modalProceedBtn}
+            onPress={() => {
+              setCreatedModalVisible(false);
+              if (createdTrilha?._id) {
+                router.replace(`/trilha/${createdTrilha._id}`);
+              } else {
+                router.replace('/(tabs)/home');
+              }
+            }}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.modalProceedBtnText}>Acessar Trilha Agora 🚀</Text>
+          </TouchableOpacity>
+        </View>
+      </View>
+    </Modal>
   </SafeAreaView>
   );
 }
@@ -532,6 +798,234 @@ const styles = StyleSheet.create({
   backHomeBtnText: {
     color: '#ffffff',
     fontSize: 15,
+    fontWeight: '900',
+  },
+  fieldSublabel: {
+    fontSize: 12,
+    marginBottom: 10,
+    fontWeight: '500',
+  },
+  optionCardsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 10,
+  },
+  optionCard: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#374151',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  optionCardActiveGreen: {
+    borderColor: '#10B981',
+    borderWidth: 2.5,
+    backgroundColor: '#064E3B25',
+  },
+  optionCardActiveGold: {
+    borderColor: '#F59E0B',
+    borderWidth: 2.5,
+    backgroundColor: '#78350F25',
+  },
+  optionCardActiveBlue: {
+    borderColor: '#3B82F6',
+    borderWidth: 2.5,
+    backgroundColor: '#1E3A8A25',
+  },
+  optionCardActivePurple: {
+    borderColor: '#8B5CF6',
+    borderWidth: 2.5,
+    backgroundColor: '#5B21B625',
+  },
+  optionCardIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  optionCardTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  optionCardDesc: {
+    fontSize: 10.5,
+    lineHeight: 14,
+  },
+  priceContainer: {
+    marginTop: 8,
+  },
+  codeGeneratedCard: {
+    backgroundColor: '#18181B',
+    borderRadius: 14,
+    borderWidth: 2.5,
+    borderColor: '#F59E0B',
+    padding: 14,
+    marginTop: 10,
+    shadowColor: '#F59E0B',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.15,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  codeHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  codeCardTitle: {
+    fontSize: 15,
+    fontWeight: '900',
+    color: '#F59E0B',
+  },
+  codeCardDesc: {
+    fontSize: 12,
+    color: '#A1A1AA',
+    lineHeight: 16,
+    marginBottom: 12,
+  },
+  codeDisplayBox: {
+    backgroundColor: '#09090B',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#F59E0B',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  codeDisplayText: {
+    fontSize: 24,
+    fontWeight: '900',
+    color: '#FCD34D',
+    letterSpacing: 4,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  codeActionsRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  codeActionBtn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 10,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  copyBtn: {
+    backgroundColor: '#4F46E5',
+  },
+  regenerateBtn: {
+    backgroundColor: '#27272A',
+  },
+  codeActionBtnText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  successModalCard: {
+    width: '100%',
+    maxWidth: 420,
+    borderRadius: 20,
+    borderWidth: 4,
+    borderColor: '#1b1b1b',
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 8,
+  },
+  successIconBubble: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#10B981',
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  successModalTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  successModalDesc: {
+    fontSize: 13,
+    lineHeight: 18,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  modalCodeBox: {
+    backgroundColor: '#09090B',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: '#F59E0B',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    width: '100%',
+    marginBottom: 14,
+  },
+  modalCodeText: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#FCD34D',
+    letterSpacing: 4,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  modalCopyBtn: {
+    backgroundColor: '#4F46E5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    marginBottom: 10,
+  },
+  modalCopyBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  modalProceedBtn: {
+    backgroundColor: '#16A34A',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+  },
+  modalProceedBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
     fontWeight: '900',
   },
 });
