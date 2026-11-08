@@ -31,6 +31,10 @@ import {
   getAllKnownTrailCodes,
   getOrGenerateTrailAccessCode,
 } from '../../services/trilhaAcessoService';
+import {
+  obterExtratoGeralAdmin,
+  TransacaoPagamento,
+} from '../../services/pagamentoService';
 import QRCodeModal from '../../components/QRCodeModal';
 import {
   ShieldCheck,
@@ -50,6 +54,10 @@ import {
   ChevronDown,
   ChevronUp,
   User as UserIcon,
+  DollarSign,
+  TrendingUp,
+  CreditCard,
+  Receipt,
 } from 'lucide-react-native';
 
 export default function AdminScreen() {
@@ -58,7 +66,7 @@ export default function AdminScreen() {
   const { user } = useAuth();
   const { colors } = useTheme();
 
-  const [activeTab, setActiveTab] = useState<'trilhas' | 'usuarios' | 'materias'>('trilhas');
+  const [activeTab, setActiveTab] = useState<'trilhas' | 'usuarios' | 'materias' | 'financeiro'>('trilhas');
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -67,6 +75,13 @@ export default function AdminScreen() {
   const [usuarios, setUsuarios] = useState<AdminUserItem[]>([]);
   const [materias, setMaterias] = useState<string[]>([]);
   const [knownCodes, setKnownCodes] = useState<Record<string, string>>({});
+  const [extratoAdmin, setExtratoAdmin] = useState<{
+    totalTransacoes: number;
+    faturamentoTotal: number;
+    repasseTotalProfessores: number;
+    receitaLiquidaEstudeMy: number;
+    transacoes: TransacaoPagamento[];
+  } | null>(null);
 
   // Busca e Filtros
   const [searchTrilhas, setSearchTrilhas] = useState('');
@@ -89,11 +104,12 @@ export default function AdminScreen() {
 
   const loadAllAdminData = useCallback(async () => {
     try {
-      const [trilhasData, usuariosData, materiasData, codes] = await Promise.all([
+      const [trilhasData, usuariosData, materiasData, codes, extrato] = await Promise.all([
         listarTodasTrilhasAdmin(),
         listarUsuariosAdmin(),
         obterMaterias(),
         getAllKnownTrailCodes(),
+        obterExtratoGeralAdmin(),
       ]);
 
       const updatedCodes = { ...codes };
@@ -108,6 +124,7 @@ export default function AdminScreen() {
       setUsuarios(usuariosData);
       setMaterias(materiasData);
       setKnownCodes(updatedCodes);
+      setExtratoAdmin(extrato);
     } catch (err) {
       console.error('Erro ao carregar dados administrativos:', err);
     } finally {
@@ -265,21 +282,29 @@ export default function AdminScreen() {
           {/* Cards de Métricas Globais */}
           <View style={styles.metricsRow}>
             <View style={[styles.metricCard, { backgroundColor: colors.cardSecondary }]}>
-              <Users size={18} color="#3B82F6" />
+              <Users size={16} color="#3B82F6" />
               <Text style={styles.metricNumber}>{usuarios.length}</Text>
               <Text style={[styles.metricLabel, { color: colors.textMuted }]}>Usuários</Text>
             </View>
 
             <View style={[styles.metricCard, { backgroundColor: colors.cardSecondary }]}>
-              <BookOpen size={18} color="#10B981" />
+              <BookOpen size={16} color="#10B981" />
               <Text style={styles.metricNumber}>{trilhas.length}</Text>
               <Text style={[styles.metricLabel, { color: colors.textMuted }]}>Trilhas</Text>
             </View>
 
             <View style={[styles.metricCard, { backgroundColor: colors.cardSecondary }]}>
-              <Tag size={18} color="#F59E0B" />
+              <Tag size={16} color="#F59E0B" />
               <Text style={styles.metricNumber}>{materias.length}</Text>
               <Text style={[styles.metricLabel, { color: colors.textMuted }]}>Matérias</Text>
+            </View>
+
+            <View style={[styles.metricCard, { backgroundColor: colors.cardSecondary }]}>
+              <DollarSign size={16} color="#8B5CF6" />
+              <Text style={[styles.metricNumber, { color: '#8B5CF6' }]}>
+                {extratoAdmin?.totalTransacoes || 0}
+              </Text>
+              <Text style={[styles.metricLabel, { color: colors.textMuted }]}>Vendas</Text>
             </View>
           </View>
         </View>
@@ -291,7 +316,7 @@ export default function AdminScreen() {
             onPress={() => setActiveTab('trilhas')}
             activeOpacity={0.8}
           >
-            <BookOpen size={15} color={activeTab === 'trilhas' ? '#ffffff' : colors.textMuted} style={{ marginRight: 6 }} />
+            <BookOpen size={13} color={activeTab === 'trilhas' ? '#ffffff' : colors.textMuted} style={{ marginRight: 4 }} />
             <Text style={[styles.segmentedTabText, activeTab === 'trilhas' && styles.segmentedTabTextActive]}>
               Trilhas ({trilhas.length})
             </Text>
@@ -302,7 +327,7 @@ export default function AdminScreen() {
             onPress={() => setActiveTab('usuarios')}
             activeOpacity={0.8}
           >
-            <Users size={15} color={activeTab === 'usuarios' ? '#ffffff' : colors.textMuted} style={{ marginRight: 6 }} />
+            <Users size={13} color={activeTab === 'usuarios' ? '#ffffff' : colors.textMuted} style={{ marginRight: 4 }} />
             <Text style={[styles.segmentedTabText, activeTab === 'usuarios' && styles.segmentedTabTextActive]}>
               Usuários ({usuarios.length})
             </Text>
@@ -313,9 +338,20 @@ export default function AdminScreen() {
             onPress={() => setActiveTab('materias')}
             activeOpacity={0.8}
           >
-            <Tag size={15} color={activeTab === 'materias' ? '#ffffff' : colors.textMuted} style={{ marginRight: 6 }} />
+            <Tag size={13} color={activeTab === 'materias' ? '#ffffff' : colors.textMuted} style={{ marginRight: 4 }} />
             <Text style={[styles.segmentedTabText, activeTab === 'materias' && styles.segmentedTabTextActive]}>
               Matérias ({materias.length})
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.segmentedTab, activeTab === 'financeiro' && styles.segmentedTabActive]}
+            onPress={() => setActiveTab('financeiro')}
+            activeOpacity={0.8}
+          >
+            <DollarSign size={13} color={activeTab === 'financeiro' ? '#ffffff' : colors.textMuted} style={{ marginRight: 4 }} />
+            <Text style={[styles.segmentedTabText, activeTab === 'financeiro' && styles.segmentedTabTextActive]}>
+              Financeiro 💰
             </Text>
           </TouchableOpacity>
         </View>
@@ -641,6 +677,134 @@ export default function AdminScreen() {
                 );
               })}
             </View>
+          </View>
+        )}
+
+        {/* ================================================================= */}
+        {/* ABA 4: GESTÃO FINANCEIRA E REPASSES (85% PROFESSOR / 15% ESTUDEMY) */}
+        {/* ================================================================= */}
+        {activeTab === 'financeiro' && (
+          <View>
+            {/* Card Explicativo de Repasse e Split */}
+            <View style={[styles.financeExplainerCard, { backgroundColor: colors.card }]}>
+              <View style={styles.financeExplainerHeader}>
+                <TrendingUp size={22} color="#10B981" />
+                <View style={{ flex: 1 }}>
+                  <Text style={[styles.financeExplainerTitle, { color: colors.text }]}>
+                    Split de Pagamentos da Plataforma
+                  </Text>
+                  <Text style={[styles.financeExplainerDesc, { color: colors.textMuted }]}>
+                    Regra oficial da EstudeMy: 85% do valor total de cada trilha vendida é repassado ao professor autor, e 15% é a taxa administrativa e de manutenção da plataforma.
+                  </Text>
+                </View>
+              </View>
+
+              <View style={styles.financeSplitPillsRow}>
+                <View style={[styles.financeSplitPill, { backgroundColor: '#10B981' }]}>
+                  <Text style={styles.financeSplitPillText}>85% Repasse aos Professores</Text>
+                </View>
+                <View style={[styles.financeSplitPill, { backgroundColor: '#6366F1' }]}>
+                  <Text style={styles.financeSplitPillText}>15% Taxa EstudeMy</Text>
+                </View>
+              </View>
+            </View>
+
+            {/* Grid com Métricas Financeiras Globais */}
+            <View style={styles.financeGrid}>
+              <View style={[styles.financeGridCard, { backgroundColor: colors.cardSecondary }]}>
+                <Text style={[styles.financeGridLabel, { color: colors.textMuted }]}>Faturamento Bruto</Text>
+                <Text style={[styles.financeGridValue, { color: '#3B82F6' }]}>
+                  R$ {(extratoAdmin?.faturamentoTotal || 0).toFixed(2).replace('.', ',')}
+                </Text>
+              </View>
+
+              <View style={[styles.financeGridCard, { backgroundColor: colors.cardSecondary }]}>
+                <Text style={[styles.financeGridLabel, { color: colors.textMuted }]}>Repasse Professores (85%)</Text>
+                <Text style={[styles.financeGridValue, { color: '#10B981' }]}>
+                  R$ {(extratoAdmin?.repasseTotalProfessores || 0).toFixed(2).replace('.', ',')}
+                </Text>
+              </View>
+
+              <View style={[styles.financeGridCard, { backgroundColor: colors.cardSecondary }]}>
+                <Text style={[styles.financeGridLabel, { color: colors.textMuted }]}>Receita Líquida EstudeMy (15%)</Text>
+                <Text style={[styles.financeGridValue, { color: '#8B5CF6' }]}>
+                  R$ {(extratoAdmin?.receitaLiquidaEstudeMy || 0).toFixed(2).replace('.', ',')}
+                </Text>
+              </View>
+
+              <View style={[styles.financeGridCard, { backgroundColor: colors.cardSecondary }]}>
+                <Text style={[styles.financeGridLabel, { color: colors.textMuted }]}>Total de Compras</Text>
+                <Text style={[styles.financeGridValue, { color: colors.text }]}>
+                  {extratoAdmin?.totalTransacoes || 0}
+                </Text>
+              </View>
+            </View>
+
+            {/* Lista de Transações */}
+            <Text style={[styles.transactionsSectionTitle, { color: colors.text }]}>
+              Histórico de Vendas ({extratoAdmin?.transacoes.length || 0})
+            </Text>
+
+            {!extratoAdmin?.transacoes || extratoAdmin.transacoes.length === 0 ? (
+              <View style={[styles.emptyCard, { backgroundColor: colors.card }]}>
+                <Receipt size={40} color={colors.textMuted} style={{ marginBottom: 10 }} />
+                <Text style={[styles.emptyCardText, { color: colors.textMuted }]}>
+                  Nenhuma transação de compra registrada até o momento.
+                </Text>
+              </View>
+            ) : (
+              extratoAdmin.transacoes.map((tx) => (
+                <View key={tx.id} style={[styles.transactionCard, { backgroundColor: colors.card }]}>
+                  <View style={styles.transactionHeaderRow}>
+                    <View style={styles.txIdBadge}>
+                      <Text style={styles.txIdText}>{tx.id}</Text>
+                    </View>
+                    <View style={[styles.txMethodBadge, { backgroundColor: tx.metodo === 'PIX' ? '#10B981' : '#3B82F6' }]}>
+                      <Text style={styles.txMethodText}>{tx.metodo}</Text>
+                    </View>
+                    <Text style={styles.txDateText}>
+                      {new Date(tx.data).toLocaleDateString('pt-BR')}
+                    </Text>
+                  </View>
+
+                  <Text style={[styles.txTrailTitle, { color: colors.text }]}>
+                    {tx.trilhaTitulo}
+                  </Text>
+
+                  <View style={styles.txDetailsGrid}>
+                    <Text style={[styles.txDetailText, { color: colors.textMuted }]}>
+                      Aluno(a): <Text style={{ color: colors.text, fontWeight: '700' }}>{tx.compradorNome}</Text>
+                    </Text>
+                    {tx.professorNome ? (
+                      <Text style={[styles.txDetailText, { color: colors.textMuted }]}>
+                        Professor(a): <Text style={{ color: colors.text, fontWeight: '700' }}>{tx.professorNome}</Text>
+                      </Text>
+                    ) : null}
+                  </View>
+
+                  <View style={styles.txSplitRow}>
+                    <View style={styles.txSplitBox}>
+                      <Text style={styles.txSplitLabel}>Total Pago</Text>
+                      <Text style={[styles.txSplitValue, { color: colors.text }]}>
+                        R$ {Number(tx.valorTotal || 0).toFixed(2).replace('.', ',')}
+                      </Text>
+                    </View>
+                    <View style={styles.txSplitBox}>
+                      <Text style={styles.txSplitLabel}>Professor (85%)</Text>
+                      <Text style={[styles.txSplitValue, { color: '#10B981' }]}>
+                        R$ {Number(tx.valorProfessor || 0).toFixed(2).replace('.', ',')}
+                      </Text>
+                    </View>
+                    <View style={styles.txSplitBox}>
+                      <Text style={styles.txSplitLabel}>EstudeMy (15%)</Text>
+                      <Text style={[styles.txSplitValue, { color: '#8B5CF6' }]}>
+                        R$ {Number(tx.valorEstudeMy || 0).toFixed(2).replace('.', ',')}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+              ))
+            )}
           </View>
         )}
       </ScrollView>
@@ -1117,6 +1281,153 @@ const styles = StyleSheet.create({
   emptyCardText: {
     fontSize: 13,
     fontWeight: '700',
+  },
+  financeExplainerCard: {
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 2.5,
+    borderColor: '#1b1b1b',
+    marginBottom: 16,
+  },
+  financeExplainerHeader: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 12,
+  },
+  financeExplainerTitle: {
+    fontSize: 15,
+    fontWeight: '900',
+    marginBottom: 4,
+  },
+  financeExplainerDesc: {
+    fontSize: 12,
+    fontWeight: '600',
+    lineHeight: 18,
+  },
+  financeSplitPillsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  financeSplitPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#1b1b1b',
+  },
+  financeSplitPillText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  financeGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: 20,
+  },
+  financeGridCard: {
+    width: '48%',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  financeGridLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  financeGridValue: {
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  transactionsSectionTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    marginBottom: 12,
+  },
+  transactionCard: {
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 2.5,
+    borderColor: '#1b1b1b',
+    marginBottom: 12,
+  },
+  transactionHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  txIdBadge: {
+    backgroundColor: '#1E293B',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#1b1b1b',
+  },
+  txIdText: {
+    color: '#38BDF8',
+    fontSize: 11,
+    fontWeight: '900',
+    fontFamily: Platform.OS === 'ios' ? 'Menlo' : 'monospace',
+  },
+  txMethodBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#1b1b1b',
+  },
+  txMethodText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  txDateText: {
+    color: '#94A3B8',
+    fontSize: 11,
+    fontWeight: '700',
+    marginLeft: 'auto',
+  },
+  txTrailTitle: {
+    fontSize: 14,
+    fontWeight: '900',
+    marginBottom: 6,
+  },
+  txDetailsGrid: {
+    marginBottom: 10,
+    gap: 2,
+  },
+  txDetailText: {
+    fontSize: 12,
+  },
+  txSplitRow: {
+    flexDirection: 'row',
+    gap: 6,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.1)',
+  },
+  txSplitBox: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.03)',
+    paddingVertical: 6,
+    paddingHorizontal: 6,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  txSplitLabel: {
+    fontSize: 9,
+    fontWeight: '800',
+    color: '#94A3B8',
+    marginBottom: 2,
+  },
+  txSplitValue: {
+    fontSize: 12,
+    fontWeight: '900',
   },
   deniedTitle: {
     fontSize: 22,

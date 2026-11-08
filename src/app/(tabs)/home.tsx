@@ -50,10 +50,12 @@ import {
   ShieldCheck,
   Camera,
   QrCode,
+  CheckCircle2,
 } from 'lucide-react-native';
 import QRCodeModal from '../../components/QRCodeModal';
 import QRScannerModal from '../../components/QRScannerModal';
 import { APP_FULL_VERSION_STRING } from '../../constants/version';
+import { listarTodasTransacoes } from '../../services/pagamentoService';
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -79,6 +81,7 @@ export default function HomeScreen() {
 
   // Estados de controle de acesso e trilhas privadas
   const [unlockedTrailIds, setUnlockedTrailIds] = useState<string[]>([]);
+  const [purchasedTrailIds, setPurchasedTrailIds] = useState<string[]>([]);
   const [knownCodes, setKnownCodes] = useState<Record<string, string>>({});
 
   // Modal para Aluno desbloquear trilha clicada
@@ -106,16 +109,23 @@ export default function HomeScreen() {
 
   const refreshAccessState = useCallback(async () => {
     try {
-      const [unlocked, codes] = await Promise.all([
+      const [unlocked, codes, allTxs] = await Promise.all([
         getUnlockedTrails(),
         getAllKnownTrailCodes(),
+        listarTodasTransacoes(),
       ]);
+      const currentUserId = user?._id || user?.id;
+      const boughtIds = allTxs
+        .filter((tx) => tx.status === 'CONCLUIDO' && (!currentUserId || tx.compradorId === currentUserId))
+        .map((tx) => tx.trilhaId);
+
+      setPurchasedTrailIds(boughtIds);
       setUnlockedTrailIds(unlocked);
       setKnownCodes(codes);
     } catch (e) {
       console.error('Erro ao carregar estado de acesso de trilhas:', e);
     }
-  }, []);
+  }, [user]);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -423,6 +433,7 @@ export default function HomeScreen() {
     const diff = item.dificuldade || item.nivelDificuldade || 'Fácil';
     const isPrivate = isTrilhaPrivate(item);
     const isPaid = isTrilhaPaid(item);
+    const isPurchased = purchasedTrailIds.includes(item._id);
     const isTeacher = isTeacherOrCreator(item);
 
     return (
@@ -440,11 +451,15 @@ export default function HomeScreen() {
 
           {/* Badges Flutuantes no Card */}
           <View style={styles.badgesTopRow}>
-            {/* Pagamento: Gratuita vs Paga */}
-            <View style={[styles.floatingBadge, isPaid ? styles.badgePaid : styles.badgeFree]}>
-              {isPaid ? <DollarSign size={10} color="#ffffff" style={{ marginRight: 2 }} /> : null}
+            {/* Pagamento: Gratuita vs Paga / Adquirida */}
+            <View style={[styles.floatingBadge, isPurchased ? styles.badgePurchased : isPaid ? styles.badgePaid : styles.badgeFree]}>
+              {isPurchased ? (
+                <CheckCircle2 size={10} color="#ffffff" style={{ marginRight: 2 }} />
+              ) : isPaid ? (
+                <DollarSign size={10} color="#ffffff" style={{ marginRight: 2 }} />
+              ) : null}
               <Text style={styles.floatingBadgeText}>
-                {isPaid ? (item.preco ? `R$ ${Number(item.preco).toFixed(2).replace('.', ',')}` : 'Paga') : 'Gratuita'}
+                {isPurchased ? 'Adquirida' : isPaid ? (item.preco ? `R$ ${Number(item.preco).toFixed(2).replace('.', ',')}` : 'Paga') : 'Gratuita'}
               </Text>
             </View>
 
@@ -508,6 +523,7 @@ export default function HomeScreen() {
     const diff = item.dificuldade || item.nivelDificuldade || 'Fácil';
     const isPrivate = isTrilhaPrivate(item);
     const isPaid = isTrilhaPaid(item);
+    const isPurchased = purchasedTrailIds.includes(item._id);
     const isTeacher = isTeacherOrCreator(item);
 
     return (
@@ -526,9 +542,9 @@ export default function HomeScreen() {
 
           {/* Badges Flutuantes no Grid */}
           <View style={styles.badgesTopRowGrid}>
-            <View style={[styles.floatingBadgeGrid, isPaid ? styles.badgePaid : styles.badgeFree]}>
+            <View style={[styles.floatingBadgeGrid, isPurchased ? styles.badgePurchased : isPaid ? styles.badgePaid : styles.badgeFree]}>
               <Text style={styles.floatingBadgeTextGrid}>
-                {isPaid ? (item.preco ? `R$ ${Number(item.preco).toFixed(2).replace('.', ',')}` : 'Paga') : 'Gratuita'}
+                {isPurchased ? 'Adquirida' : isPaid ? (item.preco ? `R$ ${Number(item.preco).toFixed(2).replace('.', ',')}` : 'Paga') : 'Gratuita'}
               </Text>
             </View>
 
@@ -1474,6 +1490,9 @@ const styles = StyleSheet.create({
   },
   badgePaid: {
     backgroundColor: '#F59E0B',
+  },
+  badgePurchased: {
+    backgroundColor: '#16A34A',
   },
   badgePublic: {
     backgroundColor: '#3B82F6',

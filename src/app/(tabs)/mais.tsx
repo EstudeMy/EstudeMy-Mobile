@@ -10,6 +10,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useAuth } from '../../contexts/AuthContext';
 import { APP_VERSION, APP_BUILD, APP_ENVIRONMENT } from '../../constants/version';
 import { User, Settings, ChevronRight, BookOpen, Bookmark, ShieldCheck, HelpCircle, Info } from 'lucide-react-native';
 
@@ -18,6 +19,9 @@ export default function MaisScreen() {
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
   const { colors } = useTheme();
+  const { user } = useAuth();
+
+  const isAdminOrOwner = user?.tipoUsuario === 'ADMINISTRADOR' || user?.tipoUsuario === 'OWNER';
 
   return (
     <ScrollView
@@ -40,6 +44,35 @@ export default function MaisScreen() {
 
       {/* Opções de Menu */}
       <View style={styles.menuContainer}>
+        {/* Opção Painel Admin (Apenas Administrador / Owner) */}
+        {isAdminOrOwner && (
+          <TouchableOpacity
+            style={[styles.menuItem, styles.adminMenuItem, { backgroundColor: colors.card }]}
+            onPress={() => router.push('/admin' as any)}
+            activeOpacity={0.85}
+          >
+            <View style={styles.menuItemLeft}>
+              <View style={[styles.iconContainer, { backgroundColor: '#8B5CF6' }]}>
+                <ShieldCheck size={22} color="#ffffff" />
+              </View>
+              <View>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Text style={[styles.menuItemLabel, { color: colors.text }]}>
+                    Painel do Administrador
+                  </Text>
+                  <View style={styles.adminBadge}>
+                    <Text style={styles.adminBadgeText}>ADMIN</Text>
+                  </View>
+                </View>
+                <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>
+                  Trilhas globais, usuários e matérias
+                </Text>
+              </View>
+            </View>
+            <ChevronRight size={20} color={colors.textMuted} />
+          </TouchableOpacity>
+        )}
+
         {/* Opção Perfil */}
         <TouchableOpacity
           style={[styles.menuItem, { backgroundColor: colors.card }]}
@@ -210,6 +243,28 @@ const styles = StyleSheet.create({
   menuItemLabel: {
     fontSize: 16,
     fontWeight: '800',
+  },
+  menuItemSublabel: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  adminMenuItem: {
+    borderLeftWidth: 6,
+    borderLeftColor: '#8B5CF6',
+  },
+  adminBadge: {
+    backgroundColor: '#8B5CF6',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 4,
+    borderWidth: 1.5,
+    borderColor: '#1b1b1b',
+  },
+  adminBadgeText: {
+    color: '#ffffff',
+    fontSize: 9,
+    fontWeight: '900',
   },
   versionCard: {
     padding: 16,

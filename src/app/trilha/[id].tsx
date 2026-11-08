@@ -30,6 +30,8 @@ import { buscarFasesPorTrilha, Fase } from '../../services/faseService';
 import api from '../../services/api';
 import QRCodeModal from '../../components/QRCodeModal';
 import QRScannerModal from '../../components/QRScannerModal';
+import { CheckoutModal } from '../../components/CheckoutModal';
+import { isTrilhaComprada } from '../../services/pagamentoService';
 import {
   Lock,
   Star,
@@ -42,9 +44,12 @@ import {
   Copy,
   DollarSign,
   Globe,
-  ShieldAlert,
   QrCode,
   Camera,
+  CreditCard,
+  CheckCircle2,
+  Sparkles,
+  Percent,
 } from 'lucide-react-native';
 import * as SecureStore from 'expo-secure-store';
 
@@ -73,6 +78,10 @@ export default function TrilhaDetailScreen() {
   const [studentCodeError, setStudentCodeError] = useState<string | null>(null);
   const [studentUnlocking, setStudentUnlocking] = useState(false);
   const [teacherCodeCopied, setTeacherCodeCopied] = useState(false);
+
+  // Pagamento e Checkout
+  const [isPurchased, setIsPurchased] = useState(false);
+  const [checkoutModalVisible, setCheckoutModalVisible] = useState(false);
 
   // Modais de QR Code
   const [qrModalVisible, setQrModalVisible] = useState(false);
@@ -129,16 +138,22 @@ export default function TrilhaDetailScreen() {
       setLoading(true);
     }
     try {
-      const [trilhaData, secoesData, fasesData, localCode] = await Promise.all([
+      const [trilhaData, secoesData, fasesData, localCode, purchased] = await Promise.all([
         buscarTrilhaPorId(id),
         buscarSecoesPorTrilha(id),
         buscarFasesPorTrilha(id),
         getTrailAccessCode(id),
+        isTrilhaComprada(id, user?._id || user?.id),
       ]);
       setTrilha(trilhaData);
       setLocalAccessCode(localCode);
+      setIsPurchased(purchased);
 
-      // Verificação de trilha privada e permissões
+      // Verificação de trilha privada, paga e permissões
+      const isPaid =
+        trilhaData.pagamento === 'Paga' ||
+        Boolean(trilhaData.preco && Number(trilhaData.preco) > 0);
+
       const isPrivate =
         trilhaData.disponibilidade === 'Privado' ||
         Boolean(trilhaData.codigoAcesso) ||
@@ -152,11 +167,16 @@ export default function TrilhaDetailScreen() {
         user?.tipoUsuario === 'ADMINISTRADOR' ||
         user?.tipoUsuario === 'OWNER';
 
-      if (!isPrivate || isCreator || isStaff) {
+      if (isCreator || isStaff) {
         setIsUnlocked(true);
-      } else {
+      } else if (isPaid && !purchased) {
+        // Trilha paga ainda não comprada
+        setIsUnlocked(false);
+      } else if (isPrivate) {
         const unlocked = await isTrailUnlocked(id);
         setIsUnlocked(unlocked);
+      } else {
+        setIsUnlocked(true);
       }
 
       const sortedSecoes = secoesData.sort((a, b) => a.ordem - b.ordem);
@@ -379,12 +399,19 @@ export default function TrilhaDetailScreen() {
         <View style={{ padding: 16 }}>
           {/* Badges de Pagamento e Disponibilidade */}
           <View style={styles.detailBadgesRow}>
-            <View style={[styles.detailBadge, isPaidTrail ? styles.badgePaid : styles.badgeFree]}>
-              {isPaidTrail ? <DollarSign size={12} color="#ffffff" style={{ marginRight: 3 }} /> : null}
-              <Text style={styles.detailBadgeText}>
-                {isPaidTrail ? (trilha.preco ? `Paga • R$ ${Number(trilha.preco).toFixed(2).replace('.', ',')}` : 'Paga') : 'Gratuita'}
-              </Text>
-            </View>
+            {isPaidTrail && isPurchased ? (
+              <View style={[styles.detailBadge, styles.badgePurchased]}>
+                <CheckCircle2 size={12} color="#ffffff" style={{ marginRight: 3 }} />
+                <Text style={styles.detailBadgeText}>Adquirida ✓</Text>
+              </View>
+            ) : (
+              <View style={[styles.detailBadge, isPaidTrail ? styles.badgePaid : styles.badgeFree]}>
+                {isPaidTrail ? <DollarSign size={12} color="#ffffff" style={{ marginRight: 3 }} /> : null}
+                <Text style={styles.detailBadgeText}>
+                  {isPaidTrail ? (trilha.preco ? `Paga • R$ ${Number(trilha.preco).toFixed(2).replace('.', ',')}` : 'Paga') : 'Gratuita'}
+                </Text>
+              </View>
+            )}
             <View style={[styles.detailBadge, isPrivateTrail ? styles.badgePrivate : styles.badgePublic]}>
               {isPrivateTrail ? (
                 <>
@@ -404,6 +431,20 @@ export default function TrilhaDetailScreen() {
           <Text style={[styles.trackTitle, { color: colors.text }]}>{trilha.titulo}</Text>
           {trilha.descricao && <Text style={[styles.trackDesc, { color: colors.textMuted }]}>{trilha.descricao}</Text>}
         </View>
+
+        {/* Botão de Compra no Header (se for paga e não foi comprada) */}
+        {!isUnlocked && isPaidTrail && !isPurchased && (
+          <TouchableOpacity
+            style={styles.buyHeaderBtn}
+            onPress={() => setCheckoutModalVisible(true)}
+            activeOpacity={0.9}
+          >
+            <CreditCard size={18} color="#ffffff" style={{ marginRight: 8 }} />
+            <Text style={styles.buyHeaderBtnText}>
+              Comprar por R$ {Number(trilha.preco || 29.9).toFixed(2).replace('.', ',')}
+            </Text>
+          </TouchableOpacity>
+        )}
 
         {/* Botão de Ação / Iniciar (apenas se desbloqueada) */}
         {isUnlocked && (
@@ -484,40 +525,88 @@ export default function TrilhaDetailScreen() {
         </View>
       )}
 
-      {/* Conteúdo: Bloqueado (se for privada e aluno não desbloqueou) OU Desbloqueado com Jornada */}
+      {/* Conteúdo: Bloqueado (se for paga/privada e aluno não adquiriu) OU Desbloqueado com Jornada */}
       {!isUnlocked ? (
-        <View style={[styles.lockedCard, { backgroundColor: colors.card }]}>
-          <View style={styles.lockedIconBubble}>
-            <Lock size={36} color="#ffffff" />
-          </View>
-          <Text style={[styles.lockedTitle, { color: colors.text }]}>Conteúdo Bloqueado 🔒</Text>
-          <Text style={[styles.lockedDesc, { color: colors.textMuted }]}>
-            Esta trilha é privada e requer o código de acesso exclusivo fornecido pelo seu professor para liberar o conteúdo e as lições.
-          </Text>
-
-          {studentCodeError && (
-            <View style={styles.lockedErrorCard}>
-              <Text style={styles.lockedErrorText}>{studentCodeError}</Text>
+        isPaidTrail && !isPurchased ? (
+          <View style={[styles.lockedCard, { backgroundColor: colors.card }]}>
+            <View style={styles.lockedIconBubblePaid}>
+              <CreditCard size={36} color="#ffffff" />
             </View>
-          )}
+            <Text style={[styles.lockedTitle, { color: colors.text }]}>Trilha Paga Exclusiva 💎</Text>
+            <Text style={[styles.lockedDesc, { color: colors.textMuted }]}>
+              Esta trilha requer aquisição para liberação de todas as fases, exercícios e quizzes interativos.
+            </Text>
 
-          <TextInput
-            style={[
-              styles.lockedCodeInput,
-              { backgroundColor: colors.cardSecondary, color: colors.text },
-            ]}
-            placeholder="Ex: TRL-8K4M9Q"
-            placeholderTextColor={colors.textMuted}
-            value={studentCodeInput}
-            onChangeText={(txt) => {
-              setStudentCodeInput(txt.toUpperCase());
-              setStudentCodeError(null);
-            }}
-            autoCapitalize="characters"
-            autoCorrect={false}
-          />
+            {/* Split de Transparência */}
+            <View style={[styles.splitPreviewCard, { backgroundColor: colors.cardSecondary }]}>
+              <View style={styles.splitPreviewHeader}>
+                <Percent size={16} color="#16A34A" />
+                <Text style={[styles.splitPreviewTitle, { color: colors.text }]}>
+                  Divisão de Valores da Compra
+                </Text>
+              </View>
+              <View style={styles.splitPreviewRow}>
+                <View style={styles.splitPreviewItem}>
+                  <Text style={styles.splitPreviewLabel}>Professor (85%):</Text>
+                  <Text style={styles.splitPreviewValProf}>
+                    R$ {(Number(trilha.preco || 29.9) * 0.85).toFixed(2).replace('.', ',')}
+                  </Text>
+                </View>
+                <View style={styles.splitPreviewItem}>
+                  <Text style={styles.splitPreviewLabel}>EstudeMy (15%):</Text>
+                  <Text style={styles.splitPreviewValEstude}>
+                    R$ {(Number(trilha.preco || 29.9) * 0.15).toFixed(2).replace('.', ',')}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.splitPreviewHint}>
+                A maior parte da sua compra (85%) remunera diretamente o professor autor.
+              </Text>
+            </View>
 
-          <View style={styles.lockedButtonsCol}>
+            {/* Botão de Compra Principal */}
+            <TouchableOpacity
+              style={styles.buyNowBtn}
+              onPress={() => setCheckoutModalVisible(true)}
+              activeOpacity={0.88}
+            >
+              <Sparkles size={20} color="#ffffff" style={{ marginRight: 8 }} />
+              <Text style={styles.buyNowBtnText}>
+                Comprar por R$ {Number(trilha.preco || 29.9).toFixed(2).replace('.', ',')}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Se tiver código de cortesia/acesso concedido pelo professor */}
+            <View style={styles.couponDividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={[styles.dividerText, { color: colors.textMuted }]}>
+                OU POSSUI UM CÓDIGO?
+              </Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {studentCodeError && (
+              <View style={styles.lockedErrorCard}>
+                <Text style={styles.lockedErrorText}>{studentCodeError}</Text>
+              </View>
+            )}
+
+            <TextInput
+              style={[
+                styles.lockedCodeInput,
+                { backgroundColor: colors.cardSecondary, color: colors.text },
+              ]}
+              placeholder="Digite o código de acesso"
+              placeholderTextColor={colors.textMuted}
+              value={studentCodeInput}
+              onChangeText={(txt) => {
+                setStudentCodeInput(txt.toUpperCase());
+                setStudentCodeError(null);
+              }}
+              autoCapitalize="characters"
+              autoCorrect={false}
+            />
+
             <TouchableOpacity
               style={styles.lockedSubmitBtn}
               onPress={handleStudentUnlock}
@@ -529,21 +618,71 @@ export default function TrilhaDetailScreen() {
               ) : (
                 <>
                   <Key size={18} color="#ffffff" style={{ marginRight: 8 }} />
-                  <Text style={styles.lockedSubmitBtnText}>Desbloquear com Código</Text>
+                  <Text style={styles.lockedSubmitBtnText}>Liberar com Código</Text>
                 </>
               )}
             </TouchableOpacity>
-
-            <TouchableOpacity
-              style={styles.lockedScanQrBtn}
-              onPress={() => setScannerModalVisible(true)}
-              activeOpacity={0.85}
-            >
-              <Camera size={18} color="#ffffff" style={{ marginRight: 8 }} />
-              <Text style={styles.lockedScanQrBtnText}>Ler QR Code da Trilha 📷</Text>
-            </TouchableOpacity>
           </View>
-        </View>
+        ) : (
+          <View style={[styles.lockedCard, { backgroundColor: colors.card }]}>
+            <View style={styles.lockedIconBubble}>
+              <Lock size={36} color="#ffffff" />
+            </View>
+            <Text style={[styles.lockedTitle, { color: colors.text }]}>Conteúdo Bloqueado 🔒</Text>
+            <Text style={[styles.lockedDesc, { color: colors.textMuted }]}>
+              Esta trilha é privada e requer o código de acesso exclusivo fornecido pelo seu professor para liberar o conteúdo e as lições.
+            </Text>
+
+            {studentCodeError && (
+              <View style={styles.lockedErrorCard}>
+                <Text style={styles.lockedErrorText}>{studentCodeError}</Text>
+              </View>
+            )}
+
+            <TextInput
+              style={[
+                styles.lockedCodeInput,
+                { backgroundColor: colors.cardSecondary, color: colors.text },
+              ]}
+              placeholder="Ex: TRL-8K4M9Q"
+              placeholderTextColor={colors.textMuted}
+              value={studentCodeInput}
+              onChangeText={(txt) => {
+                setStudentCodeInput(txt.toUpperCase());
+                setStudentCodeError(null);
+              }}
+              autoCapitalize="characters"
+              autoCorrect={false}
+            />
+
+            <View style={styles.lockedButtonsCol}>
+              <TouchableOpacity
+                style={styles.lockedSubmitBtn}
+                onPress={handleStudentUnlock}
+                disabled={studentUnlocking}
+                activeOpacity={0.85}
+              >
+                {studentUnlocking ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <>
+                    <Key size={18} color="#ffffff" style={{ marginRight: 8 }} />
+                    <Text style={styles.lockedSubmitBtnText}>Desbloquear com Código</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.lockedScanQrBtn}
+                onPress={() => setScannerModalVisible(true)}
+                activeOpacity={0.85}
+              >
+                <Camera size={18} color="#ffffff" style={{ marginRight: 8 }} />
+                <Text style={styles.lockedScanQrBtnText}>Ler QR Code da Trilha 📷</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )
       ) : (
         <>
           {/* Lista de Seções & Fases */}
@@ -890,6 +1029,20 @@ export default function TrilhaDetailScreen() {
         onClose={() => setScannerModalVisible(false)}
         onScanSuccess={handleScannerResult}
       />
+
+      {/* Modal de Checkout / Compra da Trilha */}
+      {trilha && (
+        <CheckoutModal
+          visible={checkoutModalVisible}
+          onClose={() => setCheckoutModalVisible(false)}
+          trilha={trilha}
+          onSuccess={async () => {
+            setIsPurchased(true);
+            setIsUnlocked(true);
+            await fetchTrilhaDetails();
+          }}
+        />
+      )}
 
       <View style={{ height: 60 }} />
     </ScrollView>
@@ -1249,6 +1402,135 @@ const styles = StyleSheet.create({
   },
   badgePrivate: {
     backgroundColor: '#8B5CF6',
+  },
+  badgePurchased: {
+    backgroundColor: '#16A34A',
+  },
+  buyHeaderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#16A34A',
+    paddingVertical: 14,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 10,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    shadowColor: '#000000',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  buyHeaderBtnText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  lockedIconBubblePaid: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#4F46E5',
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  splitPreviewCard: {
+    width: '100%',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+    marginVertical: 14,
+  },
+  splitPreviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  splitPreviewTitle: {
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  splitPreviewRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 6,
+  },
+  splitPreviewItem: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: '#1b1b1b',
+  },
+  splitPreviewLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#6B7280',
+  },
+  splitPreviewValProf: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#16A34A',
+    marginTop: 2,
+  },
+  splitPreviewValEstude: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#4F46E5',
+    marginTop: 2,
+  },
+  splitPreviewHint: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginTop: 4,
+  },
+  buyNowBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#16A34A',
+    width: '100%',
+    paddingVertical: 15,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+    marginBottom: 12,
+  },
+  buyNowBtnText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  couponDividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginVertical: 12,
+    width: '100%',
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1.5,
+    backgroundColor: '#374151',
+  },
+  dividerText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
   },
   teacherCodeCard: {
     backgroundColor: '#18181B',

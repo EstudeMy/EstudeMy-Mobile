@@ -14,13 +14,12 @@ import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { getCharacterImage } from '../constants/assets';
 import api from '../services/api';
-import { ArrowLeft, Copy, Check, Lock, Eye, EyeOff, ShieldCheck, KeyRound } from 'lucide-react-native';
+import { ArrowLeft, Lock, Eye, EyeOff, ShieldCheck, KeyRound } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { logger } from '../utils/logger';
 import { sanitizeInput } from '../utils/security';
 import { alterarMinhaSenha } from '../services/adminService';
-import { copyToClipboard } from '../services/trilhaAcessoService';
 
 const CHARACTERS = ['Samurai', 'Mago', 'Guerreiro'];
 
@@ -33,9 +32,6 @@ export default function PerfilScreen() {
 
   const [loadingChar, setLoadingChar] = useState<string | null>(null);
 
-  // ID Copy state
-  const [idCopied, setIdCopied] = useState(false);
-
   // Alterar Senha state
   const [senhaAtual, setSenhaAtual] = useState('');
   const [novaSenha, setNovaSenha] = useState('');
@@ -45,15 +41,6 @@ export default function PerfilScreen() {
   const [showConfirmarSenha, setShowConfirmarSenha] = useState(false);
   const [loadingSenha, setLoadingSenha] = useState(false);
   const [senhaFeedback, setSenhaFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-
-  const userId = user?._id || user?.id || '';
-
-  const handleCopyId = async () => {
-    if (!userId) return;
-    await copyToClipboard(userId);
-    setIdCopied(true);
-    setTimeout(() => setIdCopied(false), 2000);
-  };
 
   const handleUpdateCharacter = async (charName: string) => {
     const cleanCharName = sanitizeInput(charName);
@@ -161,33 +148,6 @@ export default function PerfilScreen() {
           <Text style={[styles.xpLabel, { backgroundColor: colors.cardSecondary, color: colors.text }]}>
             {t('profilePage.xpTotal') || 'Total:'} {xp} XP
           </Text>
-        </View>
-
-        {/* ID do Usuário Visível com Botão Copiar */}
-        <View style={[styles.idContainer, { backgroundColor: colors.cardSecondary }]}>
-          <View style={{ flex: 1, marginRight: 8 }}>
-            <Text style={[styles.idLabel, { color: colors.textMuted }]}>ID do Usuário</Text>
-            <Text style={[styles.idValue, { color: colors.text }]} numberOfLines={1} ellipsizeMode="middle">
-              {userId || 'Nenhum ID disponível'}
-            </Text>
-          </View>
-          <TouchableOpacity
-            style={[styles.copyIdBtn, idCopied && styles.copyIdBtnSuccess]}
-            onPress={handleCopyId}
-            activeOpacity={0.8}
-          >
-            {idCopied ? (
-              <>
-                <Check size={14} color="#ffffff" style={{ marginRight: 4 }} />
-                <Text style={styles.copyIdBtnText}>Copiado!</Text>
-              </>
-            ) : (
-              <>
-                <Copy size={14} color="#ffffff" style={{ marginRight: 4 }} />
-                <Text style={styles.copyIdBtnText}>Copiar</Text>
-              </>
-            )}
-          </TouchableOpacity>
         </View>
       </View>
 
@@ -444,46 +404,6 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     borderWidth: 1.5,
     borderColor: '#1b1b1b',
-  },
-  idContainer: {
-    width: '100%',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderRadius: 10,
-    borderWidth: 2,
-    borderColor: '#1b1b1b',
-    marginTop: 18,
-  },
-  idLabel: {
-    fontSize: 10,
-    fontWeight: '800',
-    textTransform: 'uppercase',
-  },
-  idValue: {
-    fontSize: 12,
-    fontWeight: '900',
-    marginTop: 2,
-  },
-  copyIdBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#4F46E5',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 6,
-    borderWidth: 2,
-    borderColor: '#1b1b1b',
-  },
-  copyIdBtnSuccess: {
-    backgroundColor: '#16A34A',
-  },
-  copyIdBtnText: {
-    color: '#ffffff',
-    fontSize: 11,
-    fontWeight: '900',
   },
   section: {
     marginBottom: 24,

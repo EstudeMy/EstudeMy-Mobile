@@ -21,6 +21,7 @@ import {
   getAllKnownTrailCodes,
   getOrGenerateTrailAccessCode,
 } from '../../services/trilhaAcessoService';
+import { obterExtratoProfessor } from '../../services/pagamentoService';
 import { getTrackImage } from '../../constants/assets';
 import QRCodeModal from '../../components/QRCodeModal';
 import {
@@ -37,6 +38,8 @@ import {
   QrCode,
   ShieldAlert,
   ArrowRight,
+  TrendingUp,
+  Wallet,
 } from 'lucide-react-native';
 
 export default function MinhasTrilhasScreen() {
@@ -58,6 +61,14 @@ export default function MinhasTrilhasScreen() {
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const [selectedTrilhaForQr, setSelectedTrilhaForQr] = useState<Trilha | null>(null);
 
+  // Extrato Financeiro de Vendas (85% Professor / 15% EstudeMy)
+  const [extrato, setExtrato] = useState<{
+    totalVendas: number;
+    receitaBruta: number;
+    saldoProfessor: number;
+    taxaEstudeMy: number;
+  } | null>(null);
+
   const isTeacherOrStaff =
     user?.tipoUsuario === 'PROFESSOR' ||
     user?.tipoUsuario === 'ADMINISTRADOR' ||
@@ -67,9 +78,10 @@ export default function MinhasTrilhasScreen() {
     if (!user) return;
     const userId = user._id || user.id || '';
     try {
-      const [list, codes] = await Promise.all([
+      const [list, codes, extratoData] = await Promise.all([
         listarMinhasTrilhas(userId),
         getAllKnownTrailCodes(),
+        obterExtratoProfessor(userId),
       ]);
 
       // Garante que cada trilha tenha seu próprio código exclusivo mapeado
@@ -83,6 +95,7 @@ export default function MinhasTrilhasScreen() {
 
       setTrilhas(list);
       setKnownCodes(updatedCodes);
+      setExtrato(extratoData);
     } catch (err) {
       console.error('Erro ao carregar minhas trilhas:', err);
     } finally {
@@ -244,6 +257,47 @@ export default function MinhasTrilhasScreen() {
           </View>
         </View>
 
+        {/* Card de Faturamento e Repasses do Professor (85% Professor / 15% EstudeMy) */}
+        <View style={[styles.financeCard, { backgroundColor: colors.card }]}>
+          <View style={styles.financeHeaderRow}>
+            <View style={styles.financeIconWrap}>
+              <Wallet size={20} color="#ffffff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.financeTitle, { color: colors.text }]}>
+                Extrato de Vendas & Saldo 💰
+              </Text>
+              <Text style={[styles.financeSubtitle, { color: colors.textMuted }]}>
+                Você recebe 85% do valor total de cada compra das suas trilhas
+              </Text>
+            </View>
+            <View style={styles.splitPill}>
+              <Text style={styles.splitPillText}>85% / 15%</Text>
+            </View>
+          </View>
+
+          <View style={styles.financeValuesGrid}>
+            <View style={[styles.financeValueBox, { backgroundColor: colors.cardSecondary }]}>
+              <Text style={[styles.financeValueLabel, { color: colors.textMuted }]}>Seu Saldo Líquido (85%)</Text>
+              <Text style={[styles.financeValueAmount, { color: '#10B981' }]}>
+                R$ {(extrato?.saldoProfessor || 0).toFixed(2).replace('.', ',')}
+              </Text>
+            </View>
+            <View style={[styles.financeValueBox, { backgroundColor: colors.cardSecondary }]}>
+              <Text style={[styles.financeValueLabel, { color: colors.textMuted }]}>Total de Vendas</Text>
+              <Text style={[styles.financeValueAmount, { color: '#3B82F6' }]}>
+                {extrato?.totalVendas || 0}
+              </Text>
+            </View>
+          </View>
+
+          <View style={styles.financeSubRow}>
+            <Text style={[styles.financeSubText, { color: colors.textMuted }]}>
+              Bruto: R$ {(extrato?.receitaBruta || 0).toFixed(2).replace('.', ',')} • Taxa EstudeMy (15%): R$ {(extrato?.taxaEstudeMy || 0).toFixed(2).replace('.', ',')}
+            </Text>
+          </View>
+        </View>
+
         {/* Barra de Pesquisa */}
         <View style={styles.searchBarWrap}>
           <Search size={18} color={colors.textMuted} style={styles.searchIcon} />
@@ -382,6 +436,19 @@ export default function MinhasTrilhasScreen() {
                     </Text>
                   ) : null}
 
+                  {/* Detalhe de Repasse se a Trilha for Paga */}
+                  {isPaid && (
+                    <View style={styles.trailSplitBadge}>
+                      <TrendingUp size={14} color="#10B981" />
+                      <Text style={styles.trailSplitBadgeText}>
+                        Preço: R$ {Number(item.preco || 0).toFixed(2).replace('.', ',')} • Ganho Líquido (85%):{' '}
+                        <Text style={{ fontWeight: '900', color: '#10B981' }}>
+                          R$ {(Number(item.preco || 0) * 0.85).toFixed(2).replace('.', ',')}
+                        </Text>
+                      </Text>
+                    </View>
+                  )}
+
                   {/* Se for privada: Caixa do Código Exclusivo ÚNICO */}
                   {isPrivate && (
                     <View style={styles.privateCodeSection}>
@@ -478,6 +545,108 @@ const styles = StyleSheet.create({
     shadowRadius: 0,
     elevation: 5,
     marginBottom: 20,
+  },
+  financeCard: {
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+    marginBottom: 20,
+  },
+  financeHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  financeIconWrap: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#10B981',
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  financeTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  financeSubtitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 1,
+  },
+  splitPill: {
+    backgroundColor: '#10B981',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#1b1b1b',
+  },
+  splitPillText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  financeValuesGrid: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  financeValueBox: {
+    flex: 1,
+    paddingVertical: 10,
+    paddingHorizontal: 10,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+    alignItems: 'center',
+  },
+  financeValueLabel: {
+    fontSize: 11,
+    fontWeight: '800',
+    marginBottom: 4,
+  },
+  financeValueAmount: {
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  financeSubRow: {
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(0,0,0,0.08)',
+    alignItems: 'center',
+  },
+  financeSubText: {
+    fontSize: 11,
+    fontWeight: '700',
+  },
+  trailSplitBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+    paddingVertical: 6,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: '#10B981',
+    marginTop: 8,
+    marginBottom: 4,
+  },
+  trailSplitBadgeText: {
+    fontSize: 12,
+    fontWeight: '700',
+    color: '#10B981',
+    flex: 1,
   },
   headerTopRow: {
     flexDirection: 'row',
