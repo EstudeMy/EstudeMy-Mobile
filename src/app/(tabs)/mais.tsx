@@ -10,7 +10,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { User, Settings, ChevronRight, BookOpen, Bookmark, ShieldCheck } from 'lucide-react-native';
+import { User, Settings, ChevronRight, BookOpen, Bookmark, ShieldCheck, HelpCircle } from 'lucide-react-native';
 
 export default function MaisScreen() {
   const router = useRouter();
@@ -110,7 +110,7 @@ export default function MaisScreen() {
         {/* Opção Segurança & Privacidade (RC05 Anti-Phishing & RC10 LGPD) */}
         <TouchableOpacity
           style={[styles.menuItem, { backgroundColor: colors.card }]}
-          onPress={() => router.push('/configuracoes' as any)}
+          onPress={() => router.push('/seguranca-privacidade' as any)}
           activeOpacity={0.85}
         >
           <View style={styles.menuItemLeft}>
@@ -119,6 +119,23 @@ export default function MaisScreen() {
             </View>
             <Text style={[styles.menuItemLabel, { color: colors.text }]}>
               Segurança & Privacidade
+            </Text>
+          </View>
+          <ChevronRight size={20} color={colors.textMuted} />
+        </TouchableOpacity>
+
+        {/* Opção Central de Ajuda & FAQ */}
+        <TouchableOpacity
+          style={[styles.menuItem, { backgroundColor: colors.card }]}
+          onPress={() => router.push('/ajuda' as any)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.menuItemLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: '#3B82F6' }]}>
+              <HelpCircle size={22} color="#ffffff" />
+            </View>
+            <Text style={[styles.menuItemLabel, { color: colors.text }]}>
+              Ajuda & Suporte
             </Text>
           </View>
           <ChevronRight size={20} color={colors.textMuted} />

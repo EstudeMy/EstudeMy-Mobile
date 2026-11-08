@@ -41,6 +41,8 @@ function RootLayoutContent() {
         <Stack.Screen name="perfil" />
         <Stack.Screen name="meus-cursos" />
         <Stack.Screen name="licoes-salvas" />
+        <Stack.Screen name="seguranca-privacidade" />
+        <Stack.Screen name="ajuda" />
       </Stack>
     </>
   );
