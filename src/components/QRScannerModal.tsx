@@ -8,7 +8,9 @@ import {
   TextInput,
   Platform,
 } from 'react-native';
+import { CameraView, useCameraPermissions } from 'expo-camera';
 import { useTheme } from '../contexts/ThemeContext';
+import { useLanguage } from '../contexts/LanguageContext';
 import { parseQrCodeData } from '../utils/qrCode';
 import { Camera, X, Image as ImageIcon, Key, CheckCircle, ShieldAlert } from 'lucide-react-native';
 
@@ -26,6 +28,8 @@ export default function QRScannerModal({
   onScanSuccess,
 }: QRScannerModalProps) {
   const { colors } = useTheme();
+  const { t } = useLanguage();
+  const [nativePermission, requestNativePermission] = useCameraPermissions();
   const [cameraError, setCameraError] = useState<string | null>(null);
   const [manualCode, setManualCode] = useState('');
   const [scanSuccess, setScanSuccess] = useState(false);
@@ -132,14 +136,27 @@ export default function QRScannerModal({
   useEffect(() => {
     if (!visible) return;
 
+    let active = true;
     if (activeTab === 'camera' && isWeb) {
-      void startWebCamera();
+      void (async () => {
+        if (active) {
+          await startWebCamera();
+        }
+      })();
     }
 
     return () => {
+      active = false;
       stopCamera();
     };
   }, [visible, activeTab, isWeb, startWebCamera, stopCamera]);
+
+  // Solicitar permissão de câmera no Mobile (Android / iOS)
+  useEffect(() => {
+    if (visible && !isWeb && (!nativePermission || !nativePermission.granted)) {
+      void requestNativePermission();
+    }
+  }, [visible, isWeb, nativePermission, requestNativePermission]);
 
   const handleImageUpload = (event: any) => {
     const file = event.target?.files?.[0];
@@ -245,7 +262,7 @@ export default function QRScannerModal({
             <View style={styles.cameraContainer}>
               {/* Visor de Câmera */}
               <View style={styles.viewfinderFrame}>
-                {isWeb && (
+                {isWeb ? (
                   <video
                     ref={(el) => {
                       videoRef.current = el;
@@ -260,6 +277,39 @@ export default function QRScannerModal({
                     playsInline
                     muted
                   />
+                ) : nativePermission?.granted ? (
+                  <CameraView
+                    style={StyleSheet.absoluteFill}
+                    facing="back"
+                    barcodeScannerSettings={{
+                      barcodeTypes: ['qr'],
+                    }}
+                    onBarcodeScanned={
+                      isProcessing
+                        ? undefined
+                        : ({ data }) => {
+                            if (data) {
+                              handleDetectedContent(data);
+                            }
+                          }
+                    }
+                  />
+                ) : (
+                  <View style={styles.permissionBox}>
+                    <Camera size={40} color="#4F46E5" style={{ marginBottom: 10 }} />
+                    <Text style={[styles.permissionText, { color: '#ffffff' }]}>
+                      {t('scanner.cameraPermissionDesc') || 'Permita o acesso à câmera para escanear o QR Code.'}
+                    </Text>
+                    <TouchableOpacity
+                      style={styles.permissionBtn}
+                      onPress={() => requestNativePermission()}
+                      activeOpacity={0.85}
+                    >
+                      <Text style={styles.permissionBtnText}>
+                        {t('scanner.allowCamera') || 'Ativar Câmera 📸'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
 
                 {/* Linha animada de Scanner e Mira */}
@@ -490,7 +540,15 @@ const styles = StyleSheet.create({
     top: '50%',
     height: 2.5,
     backgroundColor: '#10B981',
-    boxShadow: '0 0 10px #10B981',
+    ...(Platform.OS === 'web'
+      ? ({ boxShadow: '0 0 10px #10B981' } as any)
+      : {
+          shadowColor: '#10B981',
+          shadowOffset: { width: 0, height: 0 },
+          shadowOpacity: 0.8,
+          shadowRadius: 5,
+          elevation: 4,
+        }),
   },
   instructionText: {
     fontSize: 12,
@@ -573,6 +631,33 @@ const styles = StyleSheet.create({
   },
   cancelBtnText: {
     fontSize: 14,
+    fontWeight: '800',
+  },
+  permissionBox: {
+    padding: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    height: '100%',
+  },
+  permissionText: {
+    fontSize: 13,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 14,
+    lineHeight: 18,
+  },
+  permissionBtn: {
+    backgroundColor: '#4F46E5',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: '#ffffff',
+  },
+  permissionBtnText: {
+    color: '#ffffff',
+    fontSize: 13,
     fontWeight: '800',
   },
   successBox: {

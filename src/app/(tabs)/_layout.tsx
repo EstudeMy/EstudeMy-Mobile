@@ -71,7 +71,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="minhas-trilhas"
         options={{
-          title: 'Minhas Trilhas',
+          title: t('common.myTrails') || 'Minhas Trilhas',
           href: isProfessor ? '/minhas-trilhas' : null,
           tabBarIcon: ({ color, size }) => <BookOpen color={color} size={size} />,
         }}

@@ -21,7 +21,9 @@ export default function MaisScreen() {
   const { colors } = useTheme();
   const { user } = useAuth();
 
-  const isAdminOrOwner = user?.tipoUsuario === 'ADMINISTRADOR' || user?.tipoUsuario === 'OWNER';
+  const rawRole = (user?.tipoUsuario || (user as any)?.role || (user as any)?.tipo || '').toString().toUpperCase();
+  const isAdminEmail = user?.email?.toLowerCase().includes('adm') || user?.email === 'estudemy.adm@gmail.com';
+  const isAdminOrOwner = rawRole === 'ADMINISTRADOR' || rawRole === 'ADMIN' || rawRole === 'OWNER' || isAdminEmail;
 
   return (
     <ScrollView
@@ -48,7 +50,7 @@ export default function MaisScreen() {
         {isAdminOrOwner && (
           <TouchableOpacity
             style={[styles.menuItem, styles.adminMenuItem, { backgroundColor: colors.card }]}
-            onPress={() => router.push('/admin' as any)}
+            onPress={() => router.push('/(tabs)/admin' as any)}
             activeOpacity={0.85}
           >
             <View style={styles.menuItemLeft}>
@@ -58,14 +60,14 @@ export default function MaisScreen() {
               <View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                   <Text style={[styles.menuItemLabel, { color: colors.text }]}>
-                    Painel do Administrador
+                    {t('more.adminPanel') || 'Painel do Administrador'}
                   </Text>
                   <View style={styles.adminBadge}>
                     <Text style={styles.adminBadgeText}>ADMIN</Text>
                   </View>
                 </View>
                 <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>
-                  Trilhas globais, usuários e matérias
+                  {t('more.adminPanelDesc') || 'Trilhas globais, usuários e matérias'}
                 </Text>
               </View>
             </View>
@@ -152,7 +154,7 @@ export default function MaisScreen() {
               <ShieldCheck size={22} color="#ffffff" />
             </View>
             <Text style={[styles.menuItemLabel, { color: colors.text }]}>
-              Segurança & Privacidade
+              {t('more.securityPrivacy') || 'Segurança & Privacidade'}
             </Text>
           </View>
           <ChevronRight size={20} color={colors.textMuted} />
@@ -169,7 +171,7 @@ export default function MaisScreen() {
               <HelpCircle size={22} color="#ffffff" />
             </View>
             <Text style={[styles.menuItemLabel, { color: colors.text }]}>
-              Ajuda & Suporte
+              {t('more.helpSupport') || 'Ajuda & Suporte'}
             </Text>
           </View>
           <ChevronRight size={20} color={colors.textMuted} />
@@ -182,7 +184,7 @@ export default function MaisScreen() {
             <Text style={[styles.versionAppName, { color: colors.text }]}>EstudeMy Mobile</Text>
           </View>
           <Text style={[styles.versionNumber, { color: colors.text }]}>
-            Versão {APP_VERSION} <Text style={{ color: colors.textMuted, fontWeight: '700' }}>(Build {APP_BUILD})</Text>
+            {t('more.appVersion') || 'Versão'} {APP_VERSION} <Text style={{ color: colors.textMuted, fontWeight: '700' }}>(Build {APP_BUILD})</Text>
           </Text>
           <Text style={[styles.versionEnv, { color: colors.textMuted }]}>
             Ambiente: {APP_ENVIRONMENT} • Sistema Atualizado

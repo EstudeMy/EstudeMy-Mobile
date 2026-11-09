@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { Trilha } from '../../services/trilhaService';
 import {
   listarUsuariosAdmin,
@@ -48,6 +49,7 @@ import {
   QrCode,
   ShieldAlert,
   ArrowRight,
+  ArrowLeft,
   Lock,
   Globe,
   Trash2,
@@ -62,8 +64,9 @@ import {
 export default function AdminScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { colors } = useTheme();
+  const { t } = useLanguage();
 
   const [activeTab, setActiveTab] = useState<'trilhas' | 'usuarios' | 'materias' | 'financeiro'>('trilhas');
   const [loading, setLoading] = useState(true);
@@ -98,8 +101,9 @@ export default function AdminScreen() {
 
   const [copiedCodeId, setCopiedCodeId] = useState<string | null>(null);
 
-  const isAdminOrOwner =
-    user?.tipoUsuario === 'ADMINISTRADOR' || user?.tipoUsuario === 'OWNER';
+  const rawRole = (user?.tipoUsuario || (user as any)?.role || (user as any)?.tipo || '').toString().toUpperCase();
+  const isAdminEmail = user?.email?.toLowerCase().includes('adm') || user?.email === 'estudemy.adm@gmail.com';
+  const isAdminOrOwner = rawRole === 'ADMINISTRADOR' || rawRole === 'ADMIN' || rawRole === 'OWNER' || isAdminEmail;
 
   const loadAllAdminData = useCallback(async () => {
     try {
@@ -133,11 +137,23 @@ export default function AdminScreen() {
   }, []);
 
   useEffect(() => {
+    let active = true;
     if (isAdminOrOwner) {
-      loadAllAdminData();
+      void (async () => {
+        if (active) {
+          await loadAllAdminData();
+        }
+      })();
     } else {
-      setLoading(false);
+      void Promise.resolve().then(() => {
+        if (active) {
+          setLoading(false);
+        }
+      });
     }
+    return () => {
+      active = false;
+    };
   }, [isAdminOrOwner, loadAllAdminData]);
 
   const onRefresh = () => {
@@ -220,6 +236,27 @@ export default function AdminScreen() {
     });
   };
 
+  if (authLoading || (loading && isAdminOrOwner)) {
+    return (
+      <View
+        style={[
+          styles.container,
+          {
+            backgroundColor: colors.background,
+            justifyContent: 'center',
+            alignItems: 'center',
+            paddingTop: insets.top,
+          },
+        ]}
+      >
+        <ActivityIndicator size="large" color="#4F46E5" />
+        <Text style={{ marginTop: 12, fontWeight: '700', color: colors.textMuted }}>
+          {t('adminPanel.loading') || 'Carregando painel administrativo...'}
+        </Text>
+      </View>
+    );
+  }
+
   if (!isAdminOrOwner) {
     return (
       <View
@@ -239,13 +276,22 @@ export default function AdminScreen() {
         <Text style={[styles.deniedDesc, { color: colors.textMuted }]}>
           Este painel contém controles e relatórios globais restritos aos administradores da plataforma EstudeMy.
         </Text>
-        <TouchableOpacity
-          style={styles.backHomeBtn}
-          onPress={() => router.replace('/(tabs)/home')}
-          activeOpacity={0.85}
-        >
-          <Text style={styles.backHomeBtnText}>Voltar para a Home</Text>
-        </TouchableOpacity>
+        <View style={{ flexDirection: 'row', gap: 12, marginTop: 8 }}>
+          <TouchableOpacity
+            style={[styles.backHomeBtn, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}
+            onPress={() => router.back()}
+            activeOpacity={0.85}
+          >
+            <Text style={[styles.backHomeBtnText, { color: colors.text }]}>Voltar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.backHomeBtn}
+            onPress={() => router.replace('/(tabs)/home')}
+            activeOpacity={0.85}
+          >
+            <Text style={styles.backHomeBtnText}>Ir para a Home</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -266,6 +312,18 @@ export default function AdminScreen() {
       >
         {/* Header do Painel Admin */}
         <View style={[styles.headerCard, { backgroundColor: colors.card }]}>
+          {/* Botão Superior Voltar */}
+          <TouchableOpacity
+            style={styles.backRowBtn}
+            onPress={() => router.back()}
+            activeOpacity={0.8}
+          >
+            <ArrowLeft size={18} color={colors.text} />
+            <Text style={[styles.backRowBtnText, { color: colors.text }]}>
+              {t('common.back') || 'Voltar'}
+            </Text>
+          </TouchableOpacity>
+
           <View style={styles.headerTitleRow}>
             <View style={styles.adminBadgeIcon}>
               <ShieldCheck size={26} color="#ffffff" />
@@ -844,6 +902,21 @@ const styles = StyleSheet.create({
     shadowRadius: 0,
     elevation: 5,
     marginBottom: 16,
+  },
+  backRowBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    alignSelf: 'flex-start',
+    marginBottom: 12,
+    paddingVertical: 4,
+    paddingHorizontal: 8,
+    borderRadius: 8,
+    backgroundColor: 'rgba(0,0,0,0.06)',
+  },
+  backRowBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
   },
   headerTitleRow: {
     flexDirection: 'row',

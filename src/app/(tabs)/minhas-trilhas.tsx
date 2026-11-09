@@ -15,6 +15,7 @@ import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
+import { useLanguage } from '../../contexts/LanguageContext';
 import { Trilha, listarMinhasTrilhas } from '../../services/trilhaService';
 import {
   copyToClipboard,
@@ -47,6 +48,7 @@ export default function MinhasTrilhasScreen() {
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { colors } = useTheme();
+  const { t } = useLanguage();
 
   const [trilhas, setTrilhas] = useState<Trilha[]>([]);
   const [loading, setLoading] = useState(true);
@@ -105,7 +107,15 @@ export default function MinhasTrilhasScreen() {
   }, [user]);
 
   useEffect(() => {
-    loadData();
+    let active = true;
+    void (async () => {
+      if (active) {
+        await loadData();
+      }
+    })();
+    return () => {
+      active = false;
+    };
   }, [loadData]);
 
   const onRefresh = () => {
@@ -208,9 +218,11 @@ export default function MinhasTrilhasScreen() {
               <BookOpen size={24} color="#ffffff" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.headerTitle, { color: colors.text }]}>Minhas Trilhas 📚</Text>
+              <Text style={[styles.headerTitle, { color: colors.text }]}>
+                {t('myTrails.title') || 'Minhas Trilhas 📚'}
+              </Text>
               <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
-                Gerencie suas jornadas pedagógicas, códigos e QR Codes
+                {t('myTrails.subtitle') || 'Gerencie suas jornadas pedagógicas, códigos e QR Codes'}
               </Text>
             </View>
           </View>
@@ -219,19 +231,27 @@ export default function MinhasTrilhasScreen() {
           <View style={styles.statsRow}>
             <View style={[styles.statBox, { backgroundColor: colors.cardSecondary }]}>
               <Text style={styles.statNumber}>{stats.total}</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Total Criadas</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+                {t('myTrails.totalCreated') || 'Total Criadas'}
+              </Text>
             </View>
             <View style={[styles.statBox, { backgroundColor: colors.cardSecondary }]}>
               <Text style={[styles.statNumber, { color: '#8B5CF6' }]}>{stats.privadas}</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Privadas 🔒</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+                {t('myTrails.private') || 'Privadas 🔒'}
+              </Text>
             </View>
             <View style={[styles.statBox, { backgroundColor: colors.cardSecondary }]}>
               <Text style={[styles.statNumber, { color: '#10B981' }]}>{stats.abertas}</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Abertas 🌐</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+                {t('myTrails.public') || 'Abertas 🌐'}
+              </Text>
             </View>
             <View style={[styles.statBox, { backgroundColor: colors.cardSecondary }]}>
               <Text style={[styles.statNumber, { color: '#F59E0B' }]}>{stats.pagas}</Text>
-              <Text style={[styles.statLabel, { color: colors.textMuted }]}>Pagas 💰</Text>
+              <Text style={[styles.statLabel, { color: colors.textMuted }]}>
+                {t('myTrails.paid') || 'Pagas 💰'}
+              </Text>
             </View>
           </View>
 
@@ -243,7 +263,9 @@ export default function MinhasTrilhasScreen() {
               activeOpacity={0.85}
             >
               <PlusCircle size={18} color="#ffffff" style={{ marginRight: 6 }} />
-              <Text style={styles.createBtnText}>Criar Manual ✍️</Text>
+              <Text style={styles.createBtnText}>
+                {t('myTrails.createManual') || 'Criar Manual ✍️'}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -252,7 +274,9 @@ export default function MinhasTrilhasScreen() {
               activeOpacity={0.85}
             >
               <Sparkles size={18} color="#ffffff" style={{ marginRight: 6 }} />
-              <Text style={styles.createBtnText}>ConsultAi IA 🤖</Text>
+              <Text style={styles.createBtnText}>
+                {t('myTrails.consultAi') || 'ConsultAi IA 🤖'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -265,10 +289,10 @@ export default function MinhasTrilhasScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.financeTitle, { color: colors.text }]}>
-                Extrato de Vendas & Saldo 💰
+                {t('myTrails.salesBalance') || 'Extrato de Vendas & Saldo 💰'}
               </Text>
               <Text style={[styles.financeSubtitle, { color: colors.textMuted }]}>
-                Você recebe 85% do valor total de cada compra das suas trilhas
+                {t('myTrails.salesSub') || 'Você recebe 85% do valor total de cada compra das suas trilhas'}
               </Text>
             </View>
             <View style={styles.splitPill}>
@@ -278,13 +302,17 @@ export default function MinhasTrilhasScreen() {
 
           <View style={styles.financeValuesGrid}>
             <View style={[styles.financeValueBox, { backgroundColor: colors.cardSecondary }]}>
-              <Text style={[styles.financeValueLabel, { color: colors.textMuted }]}>Seu Saldo Líquido (85%)</Text>
+              <Text style={[styles.financeValueLabel, { color: colors.textMuted }]}>
+                {t('myTrails.netBalance') || 'Seu Saldo Líquido (85%)'}
+              </Text>
               <Text style={[styles.financeValueAmount, { color: '#10B981' }]}>
                 R$ {(extrato?.saldoProfessor || 0).toFixed(2).replace('.', ',')}
               </Text>
             </View>
             <View style={[styles.financeValueBox, { backgroundColor: colors.cardSecondary }]}>
-              <Text style={[styles.financeValueLabel, { color: colors.textMuted }]}>Total de Vendas</Text>
+              <Text style={[styles.financeValueLabel, { color: colors.textMuted }]}>
+                {t('myTrails.totalSales') || 'Total de Vendas'}
+              </Text>
               <Text style={[styles.financeValueAmount, { color: '#3B82F6' }]}>
                 {extrato?.totalVendas || 0}
               </Text>
@@ -303,7 +331,7 @@ export default function MinhasTrilhasScreen() {
           <Search size={18} color={colors.textMuted} style={styles.searchIcon} />
           <TextInput
             style={[styles.searchInput, { backgroundColor: colors.card, color: colors.text }]}
-            placeholder="Pesquisar em minhas trilhas..."
+            placeholder={t('myTrails.searchPlaceholder') || 'Pesquisar em minhas trilhas...'}
             placeholderTextColor={colors.textMuted}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -452,7 +480,9 @@ export default function MinhasTrilhasScreen() {
                     <View style={styles.privateCodeSection}>
                       <View style={styles.privateCodeHeader}>
                         <Key size={14} color="#F59E0B" />
-                        <Text style={styles.privateCodeLabel}>CÓDIGO DE ACESSO EXCLUSIVO DESTA TRILHA:</Text>
+                        <Text style={styles.privateCodeLabel}>
+                          {t('myTrails.accessCode') || 'CÓDIGO DE ACESSO EXCLUSIVO DESTA TRILHA:'}
+                        </Text>
                       </View>
                       <View style={styles.privateCodeDashedBox}>
                         <Text style={styles.privateCodeText}>{accessCode}</Text>
@@ -467,12 +497,16 @@ export default function MinhasTrilhasScreen() {
                           {copiedCodeId === item._id ? (
                             <>
                               <Check size={14} color="#ffffff" style={{ marginRight: 6 }} />
-                              <Text style={styles.copyCodeBtnText}>Copiado!</Text>
+                              <Text style={styles.copyCodeBtnText}>
+                                {t('myTrails.copied') || 'Copiado!'}
+                              </Text>
                             </>
                           ) : (
                             <>
                               <Copy size={14} color="#ffffff" style={{ marginRight: 6 }} />
-                              <Text style={styles.copyCodeBtnText}>Copiar Código</Text>
+                              <Text style={styles.copyCodeBtnText}>
+                                {t('myTrails.copyCode') || 'Copiar Código'}
+                              </Text>
                             </>
                           )}
                         </TouchableOpacity>
@@ -483,7 +517,9 @@ export default function MinhasTrilhasScreen() {
                           activeOpacity={0.85}
                         >
                           <QrCode size={14} color="#ffffff" style={{ marginRight: 6 }} />
-                          <Text style={styles.qrCodeBtnText}>Ver QR Code 📱</Text>
+                          <Text style={styles.qrCodeBtnText}>
+                            {t('myTrails.viewQr') || 'Ver QR Code 📱'}
+                          </Text>
                         </TouchableOpacity>
                       </View>
                     </View>
@@ -496,7 +532,9 @@ export default function MinhasTrilhasScreen() {
                       onPress={() => router.push(`/trilha/${item._id}`)}
                       activeOpacity={0.85}
                     >
-                      <Text style={styles.openTrailBtnText}>Acessar Trilha</Text>
+                      <Text style={styles.openTrailBtnText}>
+                        {t('myTrails.accessTrail') || 'Acessar Trilha'}
+                      </Text>
                       <ArrowRight size={16} color="#ffffff" style={{ marginLeft: 6 }} />
                     </TouchableOpacity>
                   </View>

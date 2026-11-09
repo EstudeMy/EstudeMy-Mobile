@@ -36,7 +36,13 @@
         }
       ],
       "expo-secure-store",
-      "@react-native-community/datetimepicker"
+      "@react-native-community/datetimepicker",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "O EstudeMy precisa de acesso à câmera para ler QR Codes de trilhas de estudo."
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,

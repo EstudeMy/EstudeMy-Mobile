@@ -42,7 +42,7 @@ export default function PerfilScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, refreshUser } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const { colors } = useTheme();
 
   const [loadingChar, setLoadingChar] = useState<string | null>(null);
@@ -169,25 +169,30 @@ export default function PerfilScreen() {
       dateObj = new Date();
     }
 
-    const meses = [
-      'Janeiro',
-      'Fevereiro',
-      'Março',
-      'Abril',
-      'Maio',
-      'Junho',
-      'Julho',
-      'Agosto',
-      'Setembro',
-      'Outubro',
-      'Novembro',
-      'Dezembro',
+    const mesesPt = [
+      'Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho',
+      'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro',
+    ];
+    const mesesEn = [
+      'January', 'February', 'March', 'April', 'May', 'June',
+      'July', 'August', 'September', 'October', 'November', 'December',
+    ];
+    const mesesEs = [
+      'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+      'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
     ];
 
-    const mes = meses[dateObj.getMonth()];
+    const lang = language || 'pt-BR';
+    const monthIndex = dateObj.getMonth();
     const ano = dateObj.getFullYear();
-    return `Membro desde ${mes} de ${ano}`;
-  }, [user]);
+
+    if (lang === 'en-US') {
+      return `Member since ${mesesEn[monthIndex]} ${ano}`;
+    } else if (lang === 'es-ES') {
+      return `Miembro desde ${mesesEs[monthIndex]} de ${ano}`;
+    }
+    return `Membro desde ${mesesPt[monthIndex]} de ${ano}`;
+  }, [user, language]);
 
   return (
     <ScrollView
@@ -257,10 +262,10 @@ export default function PerfilScreen() {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.statsCardTitle, { color: colors.text }]}>
-              Estatísticas de Aprendizado 📊
+              {t('profile.learningStats') || 'Estatísticas de Aprendizado 📊'}
             </Text>
             <Text style={[styles.statsCardSubtitle, { color: colors.textMuted }]}>
-              Seu progresso e conquistas na jornada EstudeMy
+              {t('profile.learningStatsDesc') || 'Seu progresso e conquistas na jornada EstudeMy'}
             </Text>
           </View>
         </View>
@@ -269,15 +274,15 @@ export default function PerfilScreen() {
           {/* Card 1: Nível Atual */}
           <View style={[styles.statItemCard, { backgroundColor: colors.cardSecondary }]}>
             <Trophy size={18} color="#8B5CF6" />
-            <Text style={[styles.statItemValue, { color: colors.text }]}>Nível {level}</Text>
-            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>Nível Atual</Text>
+            <Text style={[styles.statItemValue, { color: colors.text }]}>{t('ranking.levelLabel') || 'Nível'} {level}</Text>
+            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>{t('profile.currentLevel') || 'Nível Atual'}</Text>
           </View>
 
           {/* Card 2: XP Total */}
           <View style={[styles.statItemCard, { backgroundColor: colors.cardSecondary }]}>
             <Zap size={18} color="#F59E0B" />
             <Text style={[styles.statItemValue, { color: '#F59E0B' }]}>{xp} XP</Text>
-            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>Experiência</Text>
+            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>{t('profile.experience') || 'Experiência'}</Text>
           </View>
 
           {/* Card 3: Trilhas Ativas */}
@@ -286,7 +291,7 @@ export default function PerfilScreen() {
             <Text style={[styles.statItemValue, { color: '#3B82F6' }]}>
               {trilhasAndamentoCount}
             </Text>
-            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>Trilhas Ativas</Text>
+            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>{t('profile.activeTrails') || 'Trilhas Ativas'}</Text>
           </View>
 
           {/* Card 4: Fases Completadas */}
@@ -295,16 +300,16 @@ export default function PerfilScreen() {
             <Text style={[styles.statItemValue, { color: '#10B981' }]}>
               {fasesConcluidasCount}
             </Text>
-            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>Fases Concluídas</Text>
+            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>{t('profile.completedPhases') || 'Fases Concluídas'}</Text>
           </View>
 
           {/* Card 5: Ofensiva */}
           <View style={[styles.statItemCard, { backgroundColor: colors.cardSecondary }]}>
             <Flame size={18} color="#EF4444" />
             <Text style={[styles.statItemValue, { color: '#EF4444' }]}>
-              {(user as any)?.ofensiva || (user as any)?.streak || 3} dias
+              {(user as any)?.ofensiva || (user as any)?.streak || 3} {t('common.days') || 'dias'}
             </Text>
-            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>Ofensiva 🔥</Text>
+            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>{t('profile.streak') || 'Ofensiva 🔥'}</Text>
           </View>
 
           {/* Card 6: Conquistas */}
@@ -313,7 +318,7 @@ export default function PerfilScreen() {
             <Text style={[styles.statItemValue, { color: colors.text }]}>
               {Math.min(level, 10)}/10
             </Text>
-            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>Conquistas</Text>
+            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>{t('profile.achievements') || 'Conquistas'}</Text>
           </View>
         </View>
       </View>
@@ -362,10 +367,12 @@ export default function PerfilScreen() {
       <View style={[styles.passwordSection, { backgroundColor: colors.card }]}>
         <View style={styles.passwordHeader}>
           <KeyRound size={22} color="#F59E0B" />
-          <Text style={[styles.passwordSectionTitle, { color: colors.text }]}>Alterar Senha</Text>
+          <Text style={[styles.passwordSectionTitle, { color: colors.text }]}>
+            {t('profile.changePassword') || 'Alterar Senha'}
+          </Text>
         </View>
         <Text style={[styles.passwordSectionDesc, { color: colors.textMuted }]}>
-          Para sua segurança, informe sua senha atual e digite a nova com pelo menos 8 caracteres.
+          {t('profile.changePasswordDesc') || 'Para sua segurança, informe sua senha atual e digite a nova com pelo menos 8 caracteres.'}
         </Text>
 
         {senhaFeedback && (
@@ -388,12 +395,14 @@ export default function PerfilScreen() {
 
         {/* Senha Atual */}
         <View style={styles.inputGroup}>
-          <Text style={[styles.inputLabel, { color: colors.text }]}>Senha Atual</Text>
+          <Text style={[styles.inputLabel, { color: colors.text }]}>
+            {t('profile.currentPassword') || 'Senha Atual'}
+          </Text>
           <View style={[styles.inputWrapper, { backgroundColor: colors.cardSecondary }]}>
             <Lock size={18} color={colors.textMuted} style={styles.inputIcon} />
             <TextInput
               style={[styles.textInput, { color: colors.text }]}
-              placeholder="Digite sua senha atual"
+              placeholder={t('profile.currentPassword') || 'Digite sua senha atual'}
               placeholderTextColor={colors.textMuted}
               secureTextEntry={!showSenhaAtual}
               value={senhaAtual}
@@ -407,12 +416,14 @@ export default function PerfilScreen() {
 
         {/* Nova Senha */}
         <View style={styles.inputGroup}>
-          <Text style={[styles.inputLabel, { color: colors.text }]}>Nova Senha (Mínimo 8 dígitos)</Text>
+          <Text style={[styles.inputLabel, { color: colors.text }]}>
+            {t('profile.newPassword') || 'Nova Senha (Mínimo 8 dígitos)'}
+          </Text>
           <View style={[styles.inputWrapper, { backgroundColor: colors.cardSecondary }]}>
             <Lock size={18} color={colors.textMuted} style={styles.inputIcon} />
             <TextInput
               style={[styles.textInput, { color: colors.text }]}
-              placeholder="Digite a nova senha"
+              placeholder={t('profile.newPassword') || 'Digite a nova senha'}
               placeholderTextColor={colors.textMuted}
               secureTextEntry={!showNovaSenha}
               value={novaSenha}
@@ -426,12 +437,14 @@ export default function PerfilScreen() {
 
         {/* Confirmar Nova Senha */}
         <View style={styles.inputGroup}>
-          <Text style={[styles.inputLabel, { color: colors.text }]}>Confirmar Nova Senha</Text>
+          <Text style={[styles.inputLabel, { color: colors.text }]}>
+            {t('profile.confirmNewPassword') || 'Confirmar Nova Senha'}
+          </Text>
           <View style={[styles.inputWrapper, { backgroundColor: colors.cardSecondary }]}>
             <Lock size={18} color={colors.textMuted} style={styles.inputIcon} />
             <TextInput
               style={[styles.textInput, { color: colors.text }]}
-              placeholder="Repita a nova senha"
+              placeholder={t('profile.confirmNewPassword') || 'Repita a nova senha'}
               placeholderTextColor={colors.textMuted}
               secureTextEntry={!showConfirmarSenha}
               value={confirmarSenha}
@@ -455,7 +468,9 @@ export default function PerfilScreen() {
           ) : (
             <>
               <KeyRound size={18} color="#ffffff" style={{ marginRight: 8 }} />
-              <Text style={styles.savePasswordBtnText}>Atualizar Minha Senha</Text>
+              <Text style={styles.savePasswordBtnText}>
+                {t('profile.updatePassword') || 'Atualizar Minha Senha'}
+              </Text>
             </>
           )}
         </TouchableOpacity>

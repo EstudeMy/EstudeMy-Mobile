@@ -852,7 +852,7 @@ export default function HomeScreen() {
               activeFiltersCount === 0 && styles.quickFilterChipTextActive,
             ]}
           >
-            Todas
+            {t('homeFilters.filterPillAll') || 'Todas'}
           </Text>
         </TouchableOpacity>
 
@@ -862,7 +862,7 @@ export default function HomeScreen() {
           activeOpacity={0.8}
         >
           <Text style={[styles.quickFilterChipText, filtroPagamento === 'gratuitas' && styles.quickFilterChipTextActive]}>
-            🎁 Gratuitas
+            {t('homeFilters.filterPillFree') || '🎁 Gratuitas'}
           </Text>
         </TouchableOpacity>
 
@@ -872,7 +872,7 @@ export default function HomeScreen() {
           activeOpacity={0.8}
         >
           <Text style={[styles.quickFilterChipText, filtroPagamento === 'pagas' && styles.quickFilterChipTextActive]}>
-            💰 Pagas
+            {t('homeFilters.filterPillPaid') || '💰 Pagas'}
           </Text>
         </TouchableOpacity>
 
@@ -882,7 +882,7 @@ export default function HomeScreen() {
           activeOpacity={0.8}
         >
           <Text style={[styles.quickFilterChipText, filtroDisponibilidade === 'abertas' && styles.quickFilterChipTextActive]}>
-            🌐 Abertas
+            {t('homeFilters.filterPillPublic') || '🌐 Abertas'}
           </Text>
         </TouchableOpacity>
 
@@ -892,7 +892,7 @@ export default function HomeScreen() {
           activeOpacity={0.8}
         >
           <Text style={[styles.quickFilterChipText, filtroDisponibilidade === 'privadas' && styles.quickFilterChipTextActive]}>
-            🔒 Privadas
+            {t('homeFilters.filterPillPrivate') || '🔒 Privadas'}
           </Text>
         </TouchableOpacity>
 
@@ -914,9 +914,11 @@ export default function HomeScreen() {
           <Key size={18} color="#ffffff" />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.enterCodeTitle, { color: colors.text }]}>Trilha com Código ou QR Code</Text>
+          <Text style={[styles.enterCodeTitle, { color: colors.text }]}>
+            {t('homeFilters.enterCodeOrQr') || 'Trilha com Código ou QR Code'}
+          </Text>
           <Text style={[styles.enterCodeDesc, { color: colors.textMuted }]}>
-            Recebeu um código de acesso ou QR Code do seu professor?
+            {t('homeFilters.enterCodeOrQrDesc') || 'Recebeu um código de acesso ou QR Code do seu professor?'}
           </Text>
           <View style={styles.enterCodeButtonsRow}>
             <TouchableOpacity
@@ -929,7 +931,9 @@ export default function HomeScreen() {
               activeOpacity={0.85}
             >
               <Key size={13} color="#F59E0B" style={{ marginRight: 4 }} />
-              <Text style={styles.enterCodePillText}>Inserir Código</Text>
+              <Text style={styles.enterCodePillText}>
+                {t('homeFilters.insertCode') || 'Inserir Código'}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -938,7 +942,9 @@ export default function HomeScreen() {
               activeOpacity={0.85}
             >
               <Camera size={13} color="#ffffff" style={{ marginRight: 4 }} />
-              <Text style={styles.enterQrPillText}>Ler QR Code 📷</Text>
+              <Text style={styles.enterQrPillText}>
+                {t('homeFilters.readQrCode') || 'Ler QR Code 📷'}
+              </Text>
             </TouchableOpacity>
           </View>
         </View>
