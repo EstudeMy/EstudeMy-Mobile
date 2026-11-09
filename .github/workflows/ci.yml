@@ -18,6 +18,10 @@ jobs:
   validate:
     name: Lint & Typecheck
     runs-on: ubuntu-latest
+    env:
+      EMAIL_ORIGIN: ${{ secrets.EMAIL_ORIGIN }}
+      EMAIL_APP_PASSWORD: ${{ secrets.EMAIL_APP_PASSWORD }}
+      EMAIL_DESTINO: ${{ secrets.EMAIL_DESTINO }}
 
     steps:
       - name: Checkout do código
@@ -42,14 +46,15 @@ jobs:
         run: npx expo export
 
       - name: Enviar e-mail em caso de falha
-        if: failure() && secrets.EMAIL_ORIGIN != '' && secrets.EMAIL_APP_PASSWORD != '' && secrets.EMAIL_DESTINO != ''
+        if: failure() && env.EMAIL_ORIGIN != '' && env.EMAIL_APP_PASSWORD != '' && env.EMAIL_DESTINO != ''
+        continue-on-error: true
         uses: dawidd6/action-send-mail@v3
         with:
           server_address: smtp.gmail.com
           server_port: 587
-          username: ${{ secrets.EMAIL_ORIGIN }}
-          password: ${{ secrets.EMAIL_APP_PASSWORD }}  
+          username: ${{ env.EMAIL_ORIGIN }}
+          password: ${{ env.EMAIL_APP_PASSWORD }}  
           subject: "❌ Falha no CI/CD - EstudeMy Mobile"
           body: "A pipeline de integração contínua do aplicativo mobile falhou nos testes estáticos (linter/typecheck/build). Por favor, verifique os logs do GitHub Actions para mais detalhes."
-          to: ${{ secrets.EMAIL_DESTINO }}
-          from: ${{ secrets.EMAIL_ORIGIN }}
+          to: ${{ env.EMAIL_DESTINO }}
+          from: ${{ env.EMAIL_ORIGIN }}

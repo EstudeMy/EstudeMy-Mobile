@@ -1,358 +1,356 @@
-import React, { useEffect, useState, useCallback } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   StyleSheet,
   TouchableOpacity,
-  ActivityIndicator,
-  ScrollView,
-  Dimensions,
-  ImageBackground,
+  Platform,
+  Animated,
+  Easing,
+  StatusBar,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { Image } from 'expo-image';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import * as ScreenOrientation from 'expo-screen-orientation';
+import { WebView } from 'react-native-webview';
 import { buscarFasePorId, concluirFase, Fase } from '../../services/faseService';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { FASE_BACKGROUNDS } from '../../constants/assets';
-import { ArrowLeft, Check, X, ShieldAlert, Sparkles, Heart } from 'lucide-react-native';
-import asyncLock from '../../utils/asyncLock';
-import logger from '../../utils/logger';
-
-
-const screenWidth = Dimensions.get('window').width;
-
-// Dicionário estático para carregar os assets de GIFs via Metro Bundler
-// Inclui fallbacks seguros em caso de caminhos inexistentes
-const CHAR_ASSETS: Record<string, any> = {
-  Samurai: {
-    idle: require('../../../assets/assests/samurai/samurai_idle.gif'),
-    attack: require('../../../assets/assests/samurai/samurai_Golpe_1 .gif'),
-  },
-  Guerreiro: {
-    idle: require('../../../assets/assests/samurai/samurai_idle.gif'),
-    attack: require('../../../assets/assests/samurai/samurai_Golpe_1 .gif'),
-  },
-  Mago: {
-    idle: require('../../../assets/assests/samurai/samurai_idle.gif'),
-    attack: require('../../../assets/assests/samurai/samurai_Golpe_1 .gif'),
-  },
-  spectre: {
-    idle: require('../../../assets/assests/castelo/spectre/Spectre_Parado.gif'),
-    attack: require('../../../assets/assests/castelo/spectre/Spectre_Golpe_1.gif'),
-  },
-  arqueira: {
-    idle: require('../../../assets/assests/castelo/Arqueira/Arqueira/Arqueira Parada.gif'),
-    attack: require('../../../assets/assests/castelo/Arqueira/Arqueira/Arqueira Golpe 1.gif'),
-  },
-  magoCorrompido: {
-    idle: require('../../../assets/assests/castelo/Mago Corrompido/Mago Corrompido/Mago Corrompido Parado.gif'),
-    attack: require('../../../assets/assests/castelo/Mago Corrompido/Mago Corrompido/Mago Corrompido Golpe 1.gif'),
-  },
-  cavaleiroDecaido: {
-    idle: require('../../../assets/assests/castelo/Cavaleiro Decaido/Cavaleiro Decaido/Cavaleiro Decadente Parado.gif'),
-    attack: require('../../../assets/assests/castelo/Cavaleiro Decaido/Cavaleiro Decaido/Cavaleiro Decadente Golpe 1.gif'),
-  },
-};
-
-// Mapeamento auxiliar de inimigos com nome correto e HP base
-interface EnemyInfo {
-  id: string;
-  name: string;
-  maxHP: number;
-}
-
-const ENEMY_MAPPING: EnemyInfo[] = [
-  { id: 'spectre', name: 'Spectre', maxHP: 100 },
-  { id: 'arqueira', name: 'Arqueira', maxHP: 150 },
-  { id: 'magoCorrompido', name: 'Mago Corrompido', maxHP: 200 },
-  { id: 'cavaleiroDecaido', name: 'Cavaleiro Decaído', maxHP: 250 },
-];
+import api from '../../services/api';
+import GameSplashScreen from '../../components/game/SplashScreen';
+import {
+  Trophy,
+  ArrowLeft,
+  RotateCcw,
+  Smartphone,
+  Sparkles,
+  ArrowRight,
+  CheckCircle2,
+  AlertTriangle,
+  RefreshCw,
+} from 'lucide-react-native';
 
 export default function GameScreen() {
-  const { faseId } = useLocalSearchParams<{ faseId: string }>();
+  const { faseId, trilhaId } = useLocalSearchParams<{ faseId: string; trilhaId?: string }>();
   const router = useRouter();
-  const insets = useSafeAreaInsets();
   const { user, refreshUser } = useAuth();
-  const { isDark, colors } = useTheme();
+  const { colors } = useTheme();
 
-
-  const [loading, setLoading] = useState(true);
+  // Estados de Carregamento e Fases
   const [fase, setFase] = useState<Fase | null>(null);
-  
-  // Estados do Jogo
-  const [playerHP, setPlayerHP] = useState(100);
-  const [enemyMaxHP, setEnemyMaxHP] = useState(100);
-  const [enemyHP, setEnemyHP] = useState(100);
-  const [currentQuestionIdx, setCurrentQuestionIdx] = useState(0);
-  const [selectedAnswer, setSelectedAnswer] = useState<number | null>(null);
-  const [answered, setAnswered] = useState(false);
-  const [isCorrect, setIsCorrect] = useState(false);
-  
-  const [acertos, setAcertos] = useState(0);
-  const [erros, setErros] = useState(0);
-  const [gameState, setGameState] = useState<'PLAYING' | 'VICTORY' | 'DEFEAT'>('PLAYING');
-  const [savingProgress, setSavingProgress] = useState(false);
+  const [faseCarregada, setFaseCarregada] = useState(false);
+  const [splashCompleta, setSplashCompleta] = useState(false);
+  const [erro, setErro] = useState<string | null>(null);
+  const [iframeKey, setIframeKey] = useState(1);
+  const [gameData, setGameData] = useState<any>(null);
 
-  // Animação de ataque e dano (visual flash + troca de sprites)
-  const [playerHit, setPlayerHit] = useState(false);
-  const [enemyHit, setEnemyHit] = useState(false);
-  const [isPlayerAttacking, setIsPlayerAttacking] = useState(false);
-  const [isEnemyAttacking, setIsEnemyAttacking] = useState(false);
+  // Estados de Fim de Fase
+  const [fimDeJogo, setFimDeJogo] = useState<'vitoria' | 'derrota' | null>(null);
+  const [salvandoProgresso, setSalvandoProgresso] = useState(false);
 
-  // Helper para resolver o índice da resposta correta (seja string ou número no banco)
-  const getCorrectAnswerIndex = useCallback((question: any): number => {
-    if (!question) return 0;
-    const dbCorrect = question.respostaCorreta;
-    if (typeof dbCorrect === 'number') {
-      return dbCorrect;
-    }
-    if (typeof dbCorrect === 'string') {
-      // 1. Tenta achar o texto exato da alternativa
-      const idx = question.alternativas?.findIndex(
-        (alt: string) => alt.trim().toLowerCase() === dbCorrect.trim().toLowerCase()
-      );
-      if (idx !== undefined && idx !== -1) return idx;
+  // Estados de Rotação e Orientação
+  const [portraitAngle, setPortraitAngle] = useState<90 | 270>(90);
+  const [showRotationAnimation, setShowRotationAnimation] = useState(true);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
-      // 2. Tenta parsear número '0', '1', '2'
-      const parsedNum = parseInt(dbCorrect, 10);
-      if (!isNaN(parsedNum) && parsedNum >= 0 && parsedNum < (question.alternativas?.length || 4)) {
-        return parsedNum;
-      }
+  // Animação de Entrada em React Native puro (compatível com React 19)
+  const [rotateAnim] = useState(() => new Animated.Value(0));
+  const [pulseAnim] = useState(() => new Animated.Value(1));
+  const [overlayOpacity] = useState(() => new Animated.Value(1));
+  const toastTimeoutRef = useRef<any>(null);
 
-      // 3. Tenta letra 'A', 'B', 'C', 'D'
-      const trimmed = dbCorrect.trim().toUpperCase();
-      if (trimmed.length === 1) {
-        const code = trimmed.charCodeAt(0);
-        if (code >= 65 && code <= 68) {
-          return code - 65;
-        }
-      }
-    }
-    return 0;
-  }, []);
+  const isWeb = Platform.OS === 'web';
+  const webViewRef = useRef<any>(null);
 
+  const exibirToast = (msg: string) => {
+    if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    setToastMessage(msg);
+    toastTimeoutRef.current = setTimeout(() => {
+      setToastMessage(null);
+    }, 3200);
+  };
+
+  // 1. Bloqueio de Orientação Nativa para Paisagem (Landscape) no Mobile
   useEffect(() => {
-    const fetchGameData = async () => {
-      if (!faseId) return;
+    async function lockLandscape() {
       try {
-        const faseData = await buscarFasePorId(faseId);
-        setFase(faseData);
-        
-        // Define o HP do inimigo baseado na ordem da fase
-        const enemyIndex = (faseData.ordem - 1) % ENEMY_MAPPING.length;
-        const currentEnemy = ENEMY_MAPPING[enemyIndex >= 0 ? enemyIndex : 0];
-        const initialEnemyHP = currentEnemy.maxHP;
-        
-        setEnemyMaxHP(initialEnemyHP);
-        setEnemyHP(initialEnemyHP);
+        if (!isWeb) {
+          await ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE);
+        }
       } catch (e) {
-        console.error('Erro ao carregar fase do jogo:', e);
-      } finally {
-        setLoading(false);
+        console.warn('Erro ao travar tela na horizontal:', e);
+      }
+    }
+
+    void lockLandscape();
+
+    return () => {
+      if (!isWeb) {
+        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
       }
     };
-    fetchGameData();
-  }, [faseId]);
+  }, [isWeb]);
 
-  if (loading) {
-    return (
-      <View style={[styles.loadingContainer, { backgroundColor: isDark ? '#1a1a2a' : '#f9fafb' }]}>
-        <ActivityIndicator size="large" color="#4F46E5" />
-        <Text style={{ color: '#ffffff', marginTop: 12 }}>Carregando batalha...</Text>
-      </View>
-    );
-  }
+  // 2. Animação de Entrada: Virar o Celular (0° -> 90°)
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(rotateAnim, {
+        toValue: 1,
+        duration: 1200,
+        easing: Easing.out(Easing.back(1.5)),
+        useNativeDriver: true,
+      }),
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 1.12,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+        ])
+      ),
+    ]).start();
 
-  if (!fase || !fase.perguntas || fase.perguntas.length === 0) {
-    return (
-      <View style={[styles.loadingContainer, { backgroundColor: isDark ? '#1a1a2a' : '#f9fafb' }]}>
-        <Text style={{ color: '#ffffff', fontSize: 16 }}>Nenhuma pergunta cadastrada nesta fase.</Text>
-        <TouchableOpacity style={styles.backBtnText} onPress={() => router.back()}>
-          <Text style={{ color: '#4F46E5', fontWeight: '900', marginTop: 14 }}>Voltar</Text>
-        </TouchableOpacity>
-      </View>
-    );
-  }
-
-  const currentQuestion = fase.perguntas[currentQuestionIdx];
-  const totalQuestions = fase.perguntas.length;
-
-  const handleSelectAnswer = (optionIdx: number) => {
-    if (answered) return;
-    setSelectedAnswer(optionIdx);
-  };
-
-  const handleSubmitAnswer = () => {
-    if (selectedAnswer === null || answered) return;
-
-    const correctIdx = getCorrectAnswerIndex(currentQuestion);
-    const checkCorrect = selectedAnswer === correctIdx;
-    setIsCorrect(checkCorrect);
-    setAnswered(true);
-
-    if (checkCorrect) {
-      setAcertos((prev) => prev + 1);
-
-      // Animação de ataque do jogador e dano no inimigo
-      setIsPlayerAttacking(true);
-      setEnemyHit(true);
-      setTimeout(() => {
-        setIsPlayerAttacking(false);
-        setEnemyHit(false);
-      }, 750);
-
-      // Causa dano proporcional no inimigo
-      const damage = Math.ceil(enemyMaxHP / totalQuestions);
-      setEnemyHP((prev) => {
-        const nextHP = Math.max(0, prev - damage);
-        if (nextHP <= 0) {
-          setTimeout(() => setGameState('VICTORY'), 850);
-        }
-        return nextHP;
+    const fadeOutTimer = setTimeout(() => {
+      Animated.timing(overlayOpacity, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: true,
+      }).start(() => {
+        setShowRotationAnimation(false);
       });
+    }, 2200);
+
+    return () => {
+      clearTimeout(fadeOutTimer);
+      if (toastTimeoutRef.current) clearTimeout(toastTimeoutRef.current);
+    };
+  }, [rotateAnim, pulseAnim, overlayOpacity]);
+
+  // 3. Voltar para a Trilha
+  const handleVoltar = useCallback(() => {
+    if (trilhaId) {
+      router.replace(`/trilha/${trilhaId}`);
+    } else if (router.canGoBack()) {
+      router.back();
     } else {
-      setErros((prev) => prev + 1);
-
-      // Animação de ataque do inimigo e dano no jogador
-      setIsEnemyAttacking(true);
-      setPlayerHit(true);
-      setTimeout(() => {
-        setIsEnemyAttacking(false);
-        setPlayerHit(false);
-      }, 750);
-
-      // Inimigo ataca jogador
-      const damage = 20; // 5 erros e você perde
-      setPlayerHP((prev) => {
-        const nextHP = Math.max(0, prev - damage);
-        if (nextHP <= 0) {
-          setTimeout(() => setGameState('DEFEAT'), 850);
-        }
-        return nextHP;
-      });
+      router.replace('/(tabs)/home');
     }
-  };
+  }, [router, trilhaId]);
 
-  const handleNext = () => {
-    setSelectedAnswer(null);
-    setAnswered(false);
-
-    if (currentQuestionIdx + 1 < totalQuestions) {
-      setCurrentQuestionIdx((prev) => prev + 1);
-    } else {
-      // Perguntas acabaram. Se o inimigo ainda tem HP, o jogador perdeu
-      if (enemyHP > 0) {
-        setGameState('DEFEAT');
-      } else {
-        setGameState('VICTORY');
-      }
-    }
-  };
-
-  const handleFinishPhase = async () => {
-    if (!faseId || savingProgress) return;
-
-    // RC09: Prevenção de Race Condition usando trava atômica no cliente
-    await asyncLock.runExclusive(`finish_phase_${faseId}`, async () => {
-      setSavingProgress(true);
+  // 4. Salvar Progresso de Vitória no Backend
+  const salvarProgressoVitoria = useCallback(async () => {
+    if (!faseId) return;
+    setSalvandoProgresso(true);
+    try {
+      await concluirFase({ faseId, pontuacao: 100, acertos: 4, erros: 0 });
+      console.log('✅ Progresso salvo com sucesso via concluirFase');
+    } catch (err) {
+      console.warn('⚠️ Tentando rota alternativa de progresso...', err);
       try {
-        await concluirFase({
-          faseId: String(faseId),
-          pontuacao: acertos,
-          totalPerguntas: totalQuestions,
-          acertos: acertos,
-          erros: erros,
+        await api.post('/api/progresso/salvar', {
+          faseId,
+          pontuacao: 100,
+          totalPerguntas: 4,
+          respostasUsuario: [0, 0, 0, 0],
         });
-        await refreshUser(); // Atualiza XP do usuário atomicamente
-        router.back();
-      } catch {
-        logger.error('Erro ao salvar progresso');
-        router.back(); // Volta de qualquer forma para não travar
-      } finally {
-        setSavingProgress(false);
+      } catch (err2) {
+        console.error('❌ Erro ao salvar progresso da fase:', err2);
       }
+    } finally {
+      setSalvandoProgresso(false);
+      if (refreshUser) {
+        refreshUser().catch(() => {});
+      }
+    }
+  }, [faseId, refreshUser]);
+
+  // 5. Carregamento e Preparação dos Dados da Fase (Fisher-Yates)
+  useEffect(() => {
+    async function loadFase() {
+      if (!faseId) {
+        setErro('ID da fase não fornecido.');
+        return;
+      }
+      try {
+        const res = await buscarFasePorId(faseId);
+        setFase(res);
+
+        // Transformar perguntas
+        const personagemUsuario = (user?.personagem || 'samurai').toLowerCase();
+        const perguntasTransformadas = (res.perguntas || []).map((p: any) => {
+          const alternativasOriginais = Array.isArray(p.alternativas) ? [...p.alternativas] : [];
+
+          let textoCorreto = '';
+          if (typeof p.respostaCorreta === 'number' && alternativasOriginais[p.respostaCorreta] !== undefined) {
+            textoCorreto = alternativasOriginais[p.respostaCorreta];
+          } else if (
+            typeof p.respostaCorreta === 'string' &&
+            /^\d+$/.test(p.respostaCorreta.trim()) &&
+            alternativasOriginais[parseInt(p.respostaCorreta.trim(), 10)] !== undefined
+          ) {
+            textoCorreto = alternativasOriginais[parseInt(p.respostaCorreta.trim(), 10)];
+          } else if (typeof p.respostaCorreta === 'string' && alternativasOriginais.includes(p.respostaCorreta)) {
+            textoCorreto = p.respostaCorreta;
+          } else {
+            textoCorreto = alternativasOriginais[0] || '';
+          }
+
+          const alternativasEmbaralhadas = [...alternativasOriginais];
+          for (let i = alternativasEmbaralhadas.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            const temp = alternativasEmbaralhadas[i];
+            alternativasEmbaralhadas[i] = alternativasEmbaralhadas[j];
+            alternativasEmbaralhadas[j] = temp;
+          }
+
+          const index = alternativasEmbaralhadas.findIndex((alt) => alt === textoCorreto);
+          const novoIndexCorreto = index >= 0 ? index : 0;
+
+          return {
+            ...p,
+            alternativas: alternativasEmbaralhadas,
+            respostaCorreta: textoCorreto,
+            indiceRespostaCorreta: novoIndexCorreto,
+            indiceRespostaCorrecta: novoIndexCorreto,
+            respostaCorretaIndex: novoIndexCorreto,
+            _T5: p.enunciado,
+            _U5: alternativasEmbaralhadas,
+            _V5: novoIndexCorreto,
+          };
+        });
+
+        const perguntasFinais = [...perguntasTransformadas].sort(() => Math.random() - 0.5);
+
+        const prepared = {
+          faseId: res._id,
+          titulo: res.titulo,
+          personagem_selecionado: personagemUsuario,
+          cenario: res.cenario || 'bg_dojo',
+          perguntas: perguntasFinais,
+          _q5: res._id,
+          _s5: res.titulo,
+          _u5: personagemUsuario,
+          _D5: res.cenario || 'bg_dojo',
+          _M5: perguntasFinais,
+        };
+
+        setGameData(prepared);
+        setFaseCarregada(true);
+      } catch (err: any) {
+        console.error('Erro ao carregar dados da fase:', err);
+        setErro(err.message || 'Falha ao carregar a fase. Verifique sua conexão.');
+      }
+    }
+
+    void loadFase();
+  }, [faseId, user?.personagem]);
+
+  // 6. Injeção de gameData na Window (Web) e Ponte de Mensagens
+  useEffect(() => {
+    if (isWeb && gameData && typeof window !== 'undefined') {
+      (window as any).gameData = gameData;
+      (window as any).jogar_voltar_js = handleVoltar;
+
+      const handleMessage = async (event: MessageEvent) => {
+        let data = event.data;
+        if (typeof data === 'string') {
+          try {
+            data = JSON.parse(data);
+          } catch {
+            return;
+          }
+        }
+
+        if (data?.type === 'VOLTAR_PAGINA' || data?.type === 'VOLTAR_TRILHA') {
+          handleVoltar();
+        } else if (data?.type === 'FIM_FASE') {
+          if (data?.vitoria) {
+            setFimDeJogo('vitoria');
+            await salvarProgressoVitoria();
+          } else {
+            setFimDeJogo('derrota');
+          }
+        }
+      };
+
+      window.addEventListener('message', handleMessage);
+      return () => {
+        window.removeEventListener('message', handleMessage);
+      };
+    }
+  }, [isWeb, gameData, handleVoltar, salvarProgressoVitoria]);
+
+  // Mensagem nativa recebida do WebView no Mobile
+  const handleNativeMessage = async (msgEvent: any) => {
+    let payload = msgEvent?.nativeEvent?.data;
+    if (typeof payload === 'string') {
+      try {
+        payload = JSON.parse(payload);
+      } catch {
+        return;
+      }
+    }
+
+    if (payload?.type === 'VOLTAR_PAGINA') {
+      handleVoltar();
+    } else if (payload?.type === 'FIM_FASE') {
+      if (payload?.vitoria) {
+        setFimDeJogo('vitoria');
+        await salvarProgressoVitoria();
+      } else {
+        setFimDeJogo('derrota');
+      }
+    }
+  };
+
+  const toggleRotationAngle = () => {
+    setPortraitAngle((prev) => {
+      const next = prev === 90 ? 270 : 90;
+      exibirToast(`Rotação invertida (${next}°)`);
+      return next;
     });
   };
 
-  // Determinar asset e nome do jogador e inimigo (idle vs attack)
-  const playerClassName = user?.personagem || 'Samurai';
-  const playerDisplayName = user?.username || user?.nome || playerClassName || 'Jogador';
-  const playerAsset = isPlayerAttacking
-    ? (CHAR_ASSETS[playerClassName]?.attack || CHAR_ASSETS.Samurai.attack)
-    : (CHAR_ASSETS[playerClassName]?.idle || CHAR_ASSETS.Samurai.idle);
+  const resetRotation = () => {
+    setPortraitAngle(90);
+    exibirToast('Orientação padrão (90°)');
+  };
 
-  const enemyIndex = (fase.ordem - 1) % ENEMY_MAPPING.length;
-  const currentEnemy = ENEMY_MAPPING[enemyIndex >= 0 ? enemyIndex : 0];
-  const enemyAsset = isEnemyAttacking
-    ? (CHAR_ASSETS[currentEnemy.id]?.attack || CHAR_ASSETS.spectre.attack)
-    : (CHAR_ASSETS[currentEnemy.id]?.idle || CHAR_ASSETS.spectre.idle);
-  const bossDisplayName = currentEnemy.name;
+  const tentarNovamente = () => {
+    setFimDeJogo(null);
+    setIframeKey((prev) => prev + 1);
+  };
 
-  if (gameState === 'VICTORY') {
+  const podeExibirJogo = faseCarregada && splashCompleta && gameData;
+
+  const spinInterpolate = rotateAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '90deg'],
+  });
+
+  const rawBaseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://18.222.3.101';
+  const cleanBase = rawBaseUrl.replace(/:5000.*$/, '').replace(/\/api.*$/, '').replace(/\/$/, '');
+  const gameUri = `${cleanBase}/game-pi/index.html?t=${iframeKey}`;
+
+  if (erro) {
     return (
-      <View
-        style={[
-          styles.endContainer,
-          {
-            backgroundColor: '#1a1a2a',
-            paddingTop: Math.max(insets.top + 20, 24),
-            paddingBottom: Math.max(insets.bottom + 16, 16),
-          },
-        ]}
-      >
-        <View style={styles.victoryCard}>
-          <Sparkles size={48} color="#FBBF24" />
-          <Text style={styles.victoryTitle}>Vitória!</Text>
-          <Text style={styles.endSubtitle}>Você derrotou o monstro e completou a fase!</Text>
-          
-          <View style={styles.statsContainer}>
-            <Text style={styles.statsText}>Acertos: {acertos}</Text>
-            <Text style={styles.statsText}>Erros: {erros}</Text>
-            <Text style={styles.xpGainText}>+50 XP Obtidos!</Text>
-          </View>
-
-          <TouchableOpacity style={styles.finishBtn} onPress={handleFinishPhase} disabled={savingProgress}>
-            {savingProgress ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <Text style={styles.finishBtnText}>Concluir Batalha</Text>
-            )}
+      <View style={[styles.errorContainer, { backgroundColor: colors.background }]}>
+        <AlertTriangle size={56} color="#EF4444" style={{ marginBottom: 16 }} />
+        <Text style={[styles.errorTitle, { color: colors.text }]}>Não foi possível carregar o jogo</Text>
+        <Text style={[styles.errorDesc, { color: colors.textMuted }]}>{erro}</Text>
+        <View style={styles.errorButtonsRow}>
+          <TouchableOpacity style={styles.retryBtn} onPress={() => router.replace(`/game/${faseId}` as any)}>
+            <RefreshCw size={16} color="#ffffff" style={{ marginRight: 6 }} />
+            <Text style={styles.retryBtnText}>Tentar Novamente</Text>
           </TouchableOpacity>
-        </View>
-      </View>
-    );
-  }
-
-  if (gameState === 'DEFEAT') {
-    return (
-      <View
-        style={[
-          styles.endContainer,
-          {
-            backgroundColor: '#1a1a2a',
-            paddingTop: Math.max(insets.top + 20, 24),
-            paddingBottom: Math.max(insets.bottom + 16, 16),
-          },
-        ]}
-      >
-        <View style={styles.defeatCard}>
-          <ShieldAlert size={48} color="#EF4444" />
-          <Text style={styles.defeatTitle}>Derrota...</Text>
-          <Text style={styles.endSubtitle}>Seu HP chegou a zero. Revise a matéria e tente de novo!</Text>
-
-          <View style={styles.statsContainer}>
-            <Text style={styles.statsText}>Perguntas respondidas: {currentQuestionIdx + 1}</Text>
-            <Text style={styles.statsText}>Acertos: {acertos}</Text>
-          </View>
-
-          <TouchableOpacity style={styles.retryBtn} onPress={() => router.replace(`/game/${faseId}`)}>
-            <Text style={styles.finishBtnText}>Tentar Novamente</Text>
-          </TouchableOpacity>
-          
-          <TouchableOpacity style={styles.backBtnText} onPress={() => router.back()}>
-            <Text style={{ color: '#9CA3AF', fontWeight: '800', marginTop: 16 }}>Voltar para a Trilha</Text>
+          <TouchableOpacity style={styles.backBtn} onPress={handleVoltar}>
+            <ArrowLeft size={16} color={colors.text} style={{ marginRight: 6 }} />
+            <Text style={[styles.backBtnText, { color: colors.text }]}>Voltar à Trilha</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -360,471 +358,503 @@ export default function GameScreen() {
   }
 
   return (
-    <View
-      style={[
-        styles.container,
-        {
-          backgroundColor: isDark ? '#11111f' : '#f3f4f6',
-          paddingTop: Math.max(insets.top + 8, 48),
-        },
-      ]}
-    >
-      {/* Botão de Fechar */}
-      <TouchableOpacity style={styles.closeBtn} onPress={() => router.back()} activeOpacity={0.8}>
-        <ArrowLeft size={20} color="#ffffff" />
-      </TouchableOpacity>
+    <View style={styles.mainContainer}>
+      <StatusBar hidden={true} />
 
-      {/* ÁREA DE COMBATE RPG */}
-      <ImageBackground
-        source={FASE_BACKGROUNDS.castelo}
-        style={styles.combatArea}
-        resizeMode="cover"
-      >
-        <View style={styles.combatOverlay}>
-          {/* Jogador */}
-          <View style={[styles.characterBox, isPlayerAttacking && styles.playerAttacking, playerHit && styles.hitActive]}>
-            <Text style={styles.characterName} numberOfLines={1}>{playerDisplayName}</Text>
-            <Image source={playerAsset} style={styles.characterGif} contentFit="contain" />
-            <View style={styles.hpContainer}>
-              <Heart size={12} color="#EF4444" fill="#EF4444" style={{ marginRight: 4 }} />
-              <View style={styles.hpBarBg}>
-                <View style={[styles.hpBarFill, { width: `${playerHP}%` }]} />
-              </View>
-            </View>
-            <Text style={styles.hpText}>{playerHP}/100 HP</Text>
+      {/* 1. SplashScreen EstudeMy (E-S-T-U-D-E-M-Y) */}
+      {!podeExibirJogo && (
+        <GameSplashScreen
+          onComplete={() => setSplashCompleta(true)}
+          mensagem={faseCarregada ? 'INICIANDO JOGO...' : 'CARREGANDO DADOS DA FASE...'}
+        />
+      )}
+
+      {/* 2. Animação de Entrada: Virar o Celular para Paisagem (Tela Deitada) */}
+      {showRotationAnimation && (
+        <Animated.View style={[styles.rotationOverlay, { opacity: overlayOpacity }]}>
+          <Animated.View
+            style={[
+              styles.phoneIconBox,
+              {
+                transform: [{ rotate: spinInterpolate }, { scale: pulseAnim }],
+              },
+            ]}
+          >
+            <Smartphone size={68} color="#38BDF8" />
+          </Animated.View>
+          <Text style={styles.rotationTitle}>MODO PAISAGEM ATIVADO 📱🔄</Text>
+          <Text style={styles.rotationSubtitle}>
+            Segure seu celular na horizontal (tela deitada) para a melhor experiência épica de jogo!
+          </Text>
+        </Animated.View>
+      )}
+
+      {/* 3. Área do Jogo com Proporção 16:9 Widescreen */}
+      <View style={styles.gameViewport}>
+        <View style={styles.gameInnerCard}>
+          {podeExibirJogo && isWeb && (
+            <iframe
+              key={iframeKey}
+              src={`/game-pi/index.html?t=${iframeKey}`}
+              style={{
+                width: '100%',
+                height: '100%',
+                border: 'none',
+                display: 'block',
+                backgroundColor: '#000000',
+              }}
+              title="EstudeMy GamePi"
+              allow="autoplay; fullscreen; keyboard; orientation"
+            />
+          )}
+
+          {podeExibirJogo && !isWeb && (
+            <WebView
+              ref={webViewRef}
+              key={iframeKey}
+              source={{ uri: gameUri }}
+              style={styles.webView}
+              javaScriptEnabled
+              domStorageEnabled
+              allowsFullscreenVideo
+              mediaPlaybackRequiresUserAction={false}
+              injectedJavaScriptBeforeContentLoaded={`
+                window.gameData = ${JSON.stringify(gameData)};
+                true;
+              `}
+              onMessage={handleNativeMessage}
+              originWhitelist={['*']}
+            />
+          )}
+        </View>
+
+        {/* 4. Barra Superior Flutuante de Controles Rápidos */}
+        <View style={styles.floatingControls}>
+          <TouchableOpacity
+            style={styles.floatingControlBtn}
+            onPress={handleVoltar}
+            activeOpacity={0.8}
+          >
+            <ArrowLeft size={16} color="#ffffff" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.floatingControlBtn}
+            onPress={resetRotation}
+            activeOpacity={0.8}
+          >
+            <RotateCcw size={16} color="#ffffff" />
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={styles.floatingControlBtn}
+            onPress={toggleRotationAngle}
+            activeOpacity={0.8}
+          >
+            <Text style={styles.angleLabelText}>{portraitAngle}°</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Notificação Toast */}
+        {toastMessage && (
+          <View style={styles.toastWrap}>
+            <Smartphone size={14} color="#38BDF8" style={{ marginRight: 6 }} />
+            <Text style={styles.toastText}>{toastMessage}</Text>
           </View>
+        )}
+      </View>
 
-          {/* VS */}
-          <Text style={styles.vsText}>VS</Text>
-
-          {/* Inimigo / Boss */}
-          <View style={[styles.characterBox, isEnemyAttacking && styles.enemyAttacking, enemyHit && styles.hitActive]}>
-            <Text style={styles.characterName} numberOfLines={1}>{bossDisplayName}</Text>
-            <Image source={enemyAsset} style={styles.characterGif} contentFit="contain" />
-            <View style={styles.hpContainer}>
-              <Heart size={12} color="#EF4444" fill="#EF4444" style={{ marginRight: 4 }} />
-              <View style={styles.hpBarBg}>
-                <View style={[styles.hpBarFill, { width: `${(enemyHP / enemyMaxHP) * 100}%`, backgroundColor: '#3B82F6' }]} />
-              </View>
+      {/* 5. Modal de Vitória Épica */}
+      {fimDeJogo === 'vitoria' && (
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.resultCard, styles.victoryCard]}>
+            <View style={styles.trophyGlow}>
+              <Trophy size={48} color="#F59E0B" />
             </View>
-            <Text style={styles.hpText}>{enemyHP}/{enemyMaxHP} HP</Text>
-          </View>
-        </View>
-      </ImageBackground>
-
-      {/* PERGUNTA E ALTERNATIVAS */}
-      <ScrollView
-        contentContainerStyle={[
-          styles.scrollQuiz,
-          { paddingBottom: Math.max(insets.bottom + 16, 16) },
-        ]}
-        style={[styles.quizArea, { backgroundColor: colors.background }]}
-        showsVerticalScrollIndicator={false}
-      >
-        {/* Enunciado */}
-        <View style={[styles.questionCard, { backgroundColor: colors.card }]}>
-          <Text style={styles.questionIndexText}>Pergunta {currentQuestionIdx + 1} de {totalQuestions}</Text>
-          <Text style={[styles.questionStatement, { color: colors.text }]}>{currentQuestion.enunciado}</Text>
-        </View>
-
-        {/* Alternativas */}
-        <View style={styles.optionsContainer}>
-          {currentQuestion.alternativas.map((opcao: string, index: number) => {
-            const isSelected = selectedAnswer === index;
-            const correctIdx = getCorrectAnswerIndex(currentQuestion);
-            const isThisCorrect = index === correctIdx;
-
-            return (
-              <TouchableOpacity
-                key={index}
-                style={[
-                  styles.optionBtn,
-                  { backgroundColor: colors.card },
-                  isSelected && !answered && styles.optionBtnSelected,
-                  answered && isThisCorrect && styles.optionBtnCorrect,
-                  answered && isSelected && !isThisCorrect && styles.optionBtnIncorrect,
-                ]}
-                onPress={() => handleSelectAnswer(index)}
-                disabled={answered}
-                activeOpacity={0.8}
-              >
-                <Text style={[styles.optionLetter, { color: answered && (isThisCorrect || isSelected) ? '#ffffff' : colors.textMuted }]}>{String.fromCharCode(65 + index)})</Text>
-                <Text style={[styles.optionText, { color: answered && (isThisCorrect || isSelected) ? '#ffffff' : colors.text }]}>{opcao}</Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-
-        {/* Feedback da Resposta */}
-        {answered && (
-          <View style={[styles.feedbackCard, isCorrect ? styles.feedbackCorrect : styles.feedbackIncorrect]}>
-            <View style={styles.feedbackHeader}>
-              {isCorrect ? (
-                <>
-                  <Check size={20} color="#ffffff" style={{ marginRight: 6 }} />
-                  <Text style={styles.feedbackTitleText}>Excelente! Você acertou!</Text>
-                </>
-              ) : (
-                <>
-                  <X size={20} color="#ffffff" style={{ marginRight: 6 }} />
-                  <Text style={styles.feedbackTitleText}>Ops! Resposta errada.</Text>
-                </>
-              )}
-            </View>
-            {currentQuestion.explicacao && (
-              <Text style={styles.explanationText}>{currentQuestion.explicacao}</Text>
-            )}
-            
-            <TouchableOpacity style={styles.nextBtn} onPress={handleNext}>
-              <Text style={styles.nextBtnText}>
-                {currentQuestionIdx + 1 < totalQuestions ? 'Próxima Questão' : 'Finalizar Batalha'}
+            <View style={styles.stageCompletedBadge}>
+              <CheckCircle2 size={12} color="#10B981" style={{ marginRight: 4 }} />
+              <Text style={styles.stageCompletedText}>
+                {fase?.titulo ? `FASE: ${fase.titulo.toUpperCase()}` : 'FASE CONCLUÍDA'}
               </Text>
+            </View>
+            <Text style={styles.modalMainTitle}>Vitória Épica! 🎉</Text>
+            <Text style={styles.modalDescText}>
+              Você derrotou o adversário, provou seu domínio no conteúdo e avançou na sua jornada!
+            </Text>
+
+            <View style={styles.rewardBox}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Sparkles size={18} color="#F59E0B" />
+                <Text style={styles.rewardLabel}>Recompensa</Text>
+              </View>
+              <Text style={styles.rewardAmount}>+100 XP</Text>
+            </View>
+
+            <TouchableOpacity
+              style={styles.advanceBtn}
+              onPress={handleVoltar}
+              disabled={salvandoProgresso}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.advanceBtnText}>
+                {salvandoProgresso ? 'Salvando...' : 'Avançar para a Trilha'}
+              </Text>
+              <ArrowRight size={18} color="#ffffff" style={{ marginLeft: 6 }} />
             </TouchableOpacity>
           </View>
-        )}
+        </View>
+      )}
 
-        {/* Botão de Enviar (se ainda não respondido) */}
-        {!answered && (
-          <TouchableOpacity
-            style={[styles.submitBtn, selectedAnswer === null && styles.submitBtnDisabled]}
-            disabled={selectedAnswer === null}
-            onPress={handleSubmitAnswer}
-            activeOpacity={0.9}
-          >
-            <Text style={styles.submitBtnText}>Confirmar Ataque ⚔️</Text>
-          </TouchableOpacity>
-        )}
-      </ScrollView>
+      {/* 6. Modal de Derrota */}
+      {fimDeJogo === 'derrota' && (
+        <View style={styles.modalBackdrop}>
+          <View style={[styles.resultCard, styles.defeatCard]}>
+            <View style={styles.defeatIconBox}>
+              <AlertTriangle size={46} color="#EF4444" />
+            </View>
+            <Text style={styles.modalMainTitle}>Não foi dessa vez!</Text>
+            <Text style={styles.modalDescText}>
+              Sua energia esgotou, mas todo erro é uma oportunidade de aprender e evoluir!
+            </Text>
+
+            <View style={styles.defeatButtonsRow}>
+              <TouchableOpacity
+                style={styles.retryGameBtn}
+                onPress={tentarNovamente}
+                activeOpacity={0.85}
+              >
+                <RefreshCw size={16} color="#ffffff" style={{ marginRight: 6 }} />
+                <Text style={styles.retryGameBtnText}>Tentar Novamente</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.studyBtn}
+                onPress={handleVoltar}
+                activeOpacity={0.85}
+              >
+                <Text style={styles.studyBtnText}>Voltar à Trilha</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
+  mainContainer: {
     flex: 1,
-  },
-  loadingContainer: {
-    flex: 1,
+    backgroundColor: '#090a0f',
     justifyContent: 'center',
     alignItems: 'center',
-  },
-  closeBtn: {
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    justifyContent: 'center',
-    alignItems: 'center',
-    marginLeft: 16,
-    borderWidth: 1.5,
-    borderColor: '#ffffff',
-  },
-  combatArea: {
-    borderBottomWidth: 4,
-    borderColor: '#1b1b1b',
     overflow: 'hidden',
   },
-  combatOverlay: {
-    flexDirection: 'row',
+  rotationOverlay: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(9, 10, 15, 0.95)',
+    zIndex: 9998,
+    justifyContent: 'center',
     alignItems: 'center',
-    justifyContent: 'space-evenly',
-    paddingVertical: 18,
-    backgroundColor: 'rgba(15, 15, 26, 0.72)',
+    padding: 28,
   },
-  characterBox: {
+  phoneIconBox: {
+    width: 100,
+    height: 100,
+    borderRadius: 24,
+    backgroundColor: 'rgba(56, 189, 248, 0.12)',
+    borderWidth: 2,
+    borderColor: 'rgba(56, 189, 248, 0.35)',
+    justifyContent: 'center',
     alignItems: 'center',
-    width: screenWidth * 0.4,
-    padding: 8,
-    borderRadius: 12,
+    marginBottom: 20,
+    shadowColor: '#38BDF8',
+    shadowOffset: { width: 0, height: 0 },
+    shadowOpacity: 0.5,
+    shadowRadius: 16,
+    elevation: 8,
   },
-  hitActive: {
-    backgroundColor: 'rgba(239, 68, 68, 0.45)', // Flash de dano vermelho
-    transform: [{ scale: 0.96 }],
-  },
-  playerAttacking: {
-    transform: [{ translateX: 12 }, { scale: 1.06 }],
-  },
-  enemyAttacking: {
-    transform: [{ translateX: -12 }, { scale: 1.06 }],
-  },
-  characterName: {
+  rotationTitle: {
     color: '#ffffff',
-    fontSize: 14,
+    fontSize: 20,
     fontWeight: '900',
-    marginBottom: 6,
+    letterSpacing: 1,
     textAlign: 'center',
-  },
-  characterGif: {
-    width: 96,
-    height: 96,
-  },
-  hpContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    width: '100%',
-    marginTop: 8,
-  },
-  hpBarBg: {
-    flex: 1,
-    height: 10,
-    backgroundColor: '#374151',
-    borderRadius: 5,
-    overflow: 'hidden',
-  },
-  hpBarFill: {
-    height: '100%',
-    backgroundColor: '#EF4444', // Vermelho HP
-  },
-  hpText: {
-    color: '#9CA3AF',
-    fontSize: 10,
-    fontWeight: '800',
-    marginTop: 4,
-  },
-  vsText: {
-    color: '#EAB308',
-    fontSize: 18,
-    fontWeight: '900',
-  },
-  quizArea: {
-    flex: 1,
-    paddingHorizontal: 16,
-  },
-  scrollQuiz: {
-    paddingTop: 16,
-    paddingBottom: 48,
-    gap: 16,
-  },
-  questionCard: {
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 3,
-    borderColor: '#1b1b1b',
-    shadowColor: '#000000',
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 3,
-  },
-  cardDark: {
-    backgroundColor: '#2D2D44',
-  },
-  cardLight: {
-    backgroundColor: '#ffffff',
-  },
-  questionIndexText: {
-    fontSize: 12,
-    fontWeight: '900',
-    color: '#818CF8', // indigo-400
-    marginBottom: 6,
-  },
-  questionStatement: {
-    fontSize: 16,
-    fontWeight: '800',
-    color: '#ffffff',
-    lineHeight: 22,
-  },
-  optionsContainer: {
-    gap: 10,
-  },
-  optionBtn: {
-    flexDirection: 'row',
-    padding: 14,
-    borderRadius: 10,
-    borderWidth: 3,
-    borderColor: '#1b1b1b',
-  },
-  optionBtnSelected: {
-    borderColor: '#F59E0B', // Borda amarela de seleção
-    backgroundColor: '#374151',
-  },
-  optionBtnCorrect: {
-    backgroundColor: '#10B981', // Fundo verde para a correta
-    borderColor: '#059669',
-  },
-  optionBtnIncorrect: {
-    backgroundColor: '#EF4444', // Fundo vermelho se escolheu errado
-    borderColor: '#B91C1C',
-  },
-  optionLetter: {
-    color: '#9CA3AF',
-    fontWeight: '900',
-    marginRight: 8,
-  },
-  optionText: {
-    color: '#ffffff',
-    fontWeight: '700',
-    flex: 1,
-  },
-  submitBtn: {
-    backgroundColor: '#CA8A04',
-    borderWidth: 3,
-    borderColor: '#1b1b1b',
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: 'center',
-    justifyContent: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 4, height: 4 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-    elevation: 4,
-    marginTop: 10,
-  },
-  submitBtnDisabled: {
-    backgroundColor: '#374151',
-    opacity: 0.5,
-  },
-  submitBtnText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '900',
-  },
-  feedbackCard: {
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 3,
-    borderColor: '#1b1b1b',
-    marginTop: 10,
-  },
-  feedbackCorrect: {
-    backgroundColor: '#16A34A',
-  },
-  feedbackIncorrect: {
-    backgroundColor: '#DC2626',
-  },
-  feedbackHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
     marginBottom: 8,
   },
-  feedbackTitleText: {
+  rotationSubtitle: {
+    color: '#94A3B8',
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 18,
+    maxWidth: 320,
+  },
+  gameViewport: {
+    width: '100%',
+    height: '100%',
+    justifyContent: 'center',
+    alignItems: 'center',
+    position: 'relative',
+    backgroundColor: '#000000',
+  },
+  gameInnerCard: {
+    width: '100%',
+    height: '100%',
+    backgroundColor: '#000000',
+    overflow: 'hidden',
+  },
+  webView: {
+    flex: 1,
+    backgroundColor: '#000000',
+  },
+  floatingControls: {
+    position: 'absolute',
+    top: 12,
+    right: 12,
+    flexDirection: 'row',
+    gap: 8,
+    zIndex: 50,
+  },
+  floatingControlBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(255,255,255,0.3)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  angleLabelText: {
     color: '#ffffff',
-    fontSize: 15,
+    fontSize: 11,
     fontWeight: '900',
   },
-  explanationText: {
-    color: '#F3F4F6',
-    fontSize: 13,
-    lineHeight: 18,
-    fontWeight: '600',
+  toastWrap: {
+    position: 'absolute',
+    top: 14,
+    left: '50%',
+    transform: [{ translateX: -120 }],
+    width: 240,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.25)',
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 60,
   },
-  nextBtn: {
-    backgroundColor: '#1b1b1b',
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    borderRadius: 8,
-    alignSelf: 'flex-end',
-    marginTop: 14,
-    borderWidth: 1.5,
-    borderColor: '#ffffff',
-  },
-  nextBtnText: {
+  toastText: {
     color: '#ffffff',
-    fontWeight: '800',
-    fontSize: 13,
+    fontSize: 11,
+    fontWeight: '700',
   },
-  endContainer: {
+  errorContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
     padding: 24,
   },
-  victoryCard: {
-    width: '100%',
-    maxWidth: 320,
-    backgroundColor: '#1E1E2F',
-    borderRadius: 16,
-    padding: 28,
-    borderWidth: 4,
-    borderColor: '#FBBF24', // Borda dourada
-    alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 8, height: 8 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-  },
-  defeatCard: {
-    width: '100%',
-    maxWidth: 320,
-    backgroundColor: '#1E1E2F',
-    borderRadius: 16,
-    padding: 28,
-    borderWidth: 4,
-    borderColor: '#EF4444', // Borda vermelha
-    alignItems: 'center',
-    shadowColor: '#000000',
-    shadowOffset: { width: 8, height: 8 },
-    shadowOpacity: 1,
-    shadowRadius: 0,
-  },
-  victoryTitle: {
-    color: '#FBBF24',
-    fontSize: 32,
+  errorTitle: {
+    fontSize: 20,
     fontWeight: '900',
-    marginTop: 12,
-  },
-  defeatTitle: {
-    color: '#EF4444',
-    fontSize: 32,
-    fontWeight: '900',
-    marginTop: 12,
-  },
-  endSubtitle: {
-    color: '#9CA3AF',
-    fontSize: 14,
+    marginBottom: 8,
     textAlign: 'center',
-    fontWeight: '700',
-    marginTop: 8,
-    lineHeight: 20,
   },
-  statsContainer: {
-    backgroundColor: '#2D2D44',
+  errorDesc: {
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+    marginBottom: 24,
+    maxWidth: 320,
+  },
+  errorButtonsRow: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  retryBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4F46E5',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 10,
     borderWidth: 2,
     borderColor: '#1b1b1b',
-    width: '100%',
-    padding: 16,
-    marginTop: 20,
-    gap: 8,
   },
-  statsText: {
+  retryBtnText: {
     color: '#ffffff',
-    fontWeight: '700',
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: '800',
   },
-  xpGainText: {
-    color: '#FBBF24',
-    fontWeight: '900',
-    fontSize: 15,
-    marginTop: 4,
-  },
-  finishBtn: {
-    backgroundColor: '#16A34A',
-    width: '100%',
-    paddingVertical: 14,
-    borderRadius: 10,
-    borderWidth: 3,
-    borderColor: '#1b1b1b',
+  backBtn: {
+    flexDirection: 'row',
     alignItems: 'center',
-    marginTop: 24,
-  },
-  retryBtn: {
-    backgroundColor: '#CA8A04',
-    width: '100%',
-    paddingVertical: 14,
+    backgroundColor: '#E5E7EB',
+    paddingHorizontal: 16,
+    paddingVertical: 10,
     borderRadius: 10,
-    borderWidth: 3,
+    borderWidth: 2,
     borderColor: '#1b1b1b',
-    alignItems: 'center',
-    marginTop: 24,
-  },
-  finishBtnText: {
-    color: '#ffffff',
-    fontSize: 15,
-    fontWeight: '900',
   },
   backBtnText: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  modalBackdrop: {
+    ...StyleSheet.absoluteFill,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    zIndex: 9999,
+    justifyContent: 'center',
     alignItems: 'center',
+    padding: 20,
+  },
+  resultCard: {
+    width: '90%',
+    maxWidth: 400,
+    borderRadius: 24,
+    borderWidth: 2.5,
+    borderColor: '#1b1b1b',
+    padding: 24,
+    alignItems: 'center',
+  },
+  victoryCard: {
+    backgroundColor: '#18181B',
+    borderColor: '#F59E0B',
+  },
+  defeatCard: {
+    backgroundColor: '#18181B',
+    borderColor: '#EF4444',
+  },
+  trophyGlow: {
+    width: 80,
+    height: 80,
+    borderRadius: 20,
+    backgroundColor: 'rgba(245, 158, 11, 0.15)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(245, 158, 11, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  defeatIconBox: {
+    width: 76,
+    height: 76,
+    borderRadius: 20,
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    borderWidth: 1.5,
+    borderColor: 'rgba(239, 68, 68, 0.4)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 14,
+  },
+  stageCompletedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 20,
+    backgroundColor: 'rgba(16, 185, 129, 0.15)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.4)',
+    marginBottom: 10,
+  },
+  stageCompletedText: {
+    color: '#10B981',
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 1,
+  },
+  modalMainTitle: {
+    color: '#ffffff',
+    fontSize: 24,
+    fontWeight: '900',
+    marginBottom: 8,
+    textAlign: 'center',
+  },
+  modalDescText: {
+    color: '#9CA3AF',
+    fontSize: 13,
+    fontWeight: '600',
+    textAlign: 'center',
+    lineHeight: 18,
+    marginBottom: 18,
+    maxWidth: 320,
+  },
+  rewardBox: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    backgroundColor: '#27272A',
+    borderWidth: 1.5,
+    borderColor: '#3F3F46',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    marginBottom: 20,
+  },
+  rewardLabel: {
+    color: '#E4E4E7',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  rewardAmount: {
+    color: '#F59E0B',
+    fontSize: 16,
+    fontWeight: '900',
+  },
+  advanceBtn: {
+    width: '100%',
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#F59E0B',
+    paddingVertical: 14,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  advanceBtnText: {
+    color: '#000000',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  defeatButtonsRow: {
+    width: '100%',
+    gap: 10,
+  },
+  retryGameBtn: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#EF4444',
+    paddingVertical: 13,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  retryGameBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  studyBtn: {
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#27272A',
+    paddingVertical: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    borderColor: '#3F3F46',
+  },
+  studyBtnText: {
+    color: '#D4D4D8',
+    fontSize: 13,
+    fontWeight: '800',
   },
 });

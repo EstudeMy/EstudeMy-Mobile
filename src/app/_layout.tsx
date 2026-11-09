@@ -33,6 +33,7 @@ function RootLayoutContent() {
         
         {/* Telas Protegidas (Abas principais e detalhes) */}
         <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="admin" />
         <Stack.Screen name="trilha/[id]" />
         <Stack.Screen name="game/[faseId]" />
         <Stack.Screen name="consultai/index" />

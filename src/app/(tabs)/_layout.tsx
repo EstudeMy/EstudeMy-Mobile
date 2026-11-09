@@ -77,12 +77,6 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="admin"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
         name="ranking"
         options={{
           title: t('common.ranking') || 'Ranking',

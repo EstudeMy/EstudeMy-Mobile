@@ -21,9 +21,9 @@ export default function MaisScreen() {
   const { colors } = useTheme();
   const { user } = useAuth();
 
-  const rawRole = (user?.tipoUsuario || (user as any)?.role || (user as any)?.tipo || '').toString().toUpperCase();
+  const rawRole = (user?.tipoUsuario || (user as any)?.role || (user as any)?.tipo || (user as any)?.tipo_usuario || '').toString().toUpperCase();
   const isAdminEmail = user?.email?.toLowerCase().includes('adm') || user?.email === 'estudemy.adm@gmail.com';
-  const isAdminOrOwner = rawRole === 'ADMINISTRADOR' || rawRole === 'ADMIN' || rawRole === 'OWNER' || isAdminEmail;
+  const isAdminOrOwner = rawRole === 'ADMINISTRADOR' || rawRole === 'ADMIN' || rawRole === 'OWNER' || isAdminEmail || Boolean((user as any)?.isAdmin);
 
   return (
     <ScrollView
@@ -50,7 +50,7 @@ export default function MaisScreen() {
         {isAdminOrOwner && (
           <TouchableOpacity
             style={[styles.menuItem, styles.adminMenuItem, { backgroundColor: colors.card }]}
-            onPress={() => router.push('/(tabs)/admin' as any)}
+            onPress={() => router.push('/admin' as any)}
             activeOpacity={0.85}
           >
             <View style={styles.menuItemLeft}>
