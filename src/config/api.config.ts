@@ -1,8 +1,12 @@
-import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 
 const getBaseUrl = (): string => {
-  // 1. Web no navegador
+  // 1. Variável de ambiente explícita definida no .env (para builds nativos Android/iOS, Expo Go e Web)
+  if (process.env.EXPO_PUBLIC_API_URL && process.env.EXPO_PUBLIC_API_URL.trim() !== '') {
+    return process.env.EXPO_PUBLIC_API_URL.trim();
+  }
+
+  // 2. Web no navegador
   if (Platform.OS === 'web' && typeof window !== 'undefined') {
     if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
       return 'http://localhost:5000';
@@ -11,30 +15,7 @@ const getBaseUrl = (): string => {
     return '';
   }
 
-  // 2. Variável de ambiente explícita definida no .env (para builds nativos Android/iOS)
-  if (process.env.EXPO_PUBLIC_API_URL) {
-    return process.env.EXPO_PUBLIC_API_URL;
-  }
-
-  // 3. Expo Go / Dispositivo Físico conectado na mesma rede local se estiver em dev local
-  const hostUri =
-    Constants.expoConfig?.hostUri ||
-    (Constants.manifest2 as any)?.extra?.expoGo?.debuggerHost ||
-    (Constants as any)?.experienceUrl;
-
-  if (hostUri && typeof hostUri === 'string') {
-    const ip = hostUri.split(':')[0].replace(/^[a-z]+:\/\//i, '');
-    if (ip && ip !== 'localhost' && ip !== '127.0.0.1') {
-      return `http://${ip}:5000`;
-    }
-  }
-
-  // 4. Emulador Android em dev local
-  if (Platform.OS === 'android') {
-    return 'http://10.0.2.2:5000';
-  }
-
-  // 5. API pública na instância AWS
+  // 3. Padrão universal para Mobile (Android Studio, Expo Go no celular físico, emuladores e produção)
   return 'http://18.222.3.101';
 };
 

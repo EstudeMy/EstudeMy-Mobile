@@ -106,10 +106,11 @@ export default function LoginScreen() {
         setCooldownSeconds(failState.remainingSeconds);
         setErrorMsg(`Múltiplas falhas detectadas. Bloqueio temporário de ${failState.remainingSeconds}s ativado.`);
       } else {
-        const msg = error.response?.data?.message || 'Email ou senha incorretos.';
+        const isNetworkErr = error.message?.includes('Network Error') || !error.response;
+        const msg = error.response?.data?.message || (isNetworkErr ? 'Não foi possível conectar ao servidor. Verifique sua conexão.' : 'Email ou senha incorretos.');
         setErrorMsg(msg);
       }
-      logger.error('Falha na autenticação');
+      logger.warn('Falha na autenticação');
     } finally {
       setLoading(false);
     }
