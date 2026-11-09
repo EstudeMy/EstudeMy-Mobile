@@ -19,7 +19,11 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
-      "predictiveBackGestureEnabled": false
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "android.permission.CAMERA",
+        "android.permission.RECORD_AUDIO"
+      ]
     },
     "web": {
       "output": "static",
@@ -42,11 +46,22 @@
         {
           "cameraPermission": "O EstudeMy precisa de acesso à câmera para ler QR Codes de trilhas de estudo."
         }
-      ]
+      ],
+      "./plugins/withCleartextTraffic"
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {
+        "asyncRoutes": {
+          "web": true
+        }
+      },
+      "eas": {
+        "projectId": "a34ac81f-c01f-417c-a20c-732f4adc68e5"
+      }
     }
   }
 }
