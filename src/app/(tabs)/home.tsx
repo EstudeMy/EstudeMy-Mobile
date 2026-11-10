@@ -32,6 +32,8 @@ import {
   validateAndUnlockTrail,
   unlockTrail,
   copyToClipboard,
+  isTrilhaPrivada,
+  removeTrailAccessCode,
 } from '../../services/trilhaAcessoService';
 import { getCharacterImage, getTrackImage, EXTRA_IMAGES } from '../../constants/assets';
 import {
@@ -194,7 +196,7 @@ export default function HomeScreen() {
   };
 
   const isTrilhaPrivate = (item: Trilha) => {
-    return item.disponibilidade === 'Privado' || Boolean(item.codigoAcesso) || Boolean(knownCodes[item._id]);
+    return isTrilhaPrivada(item);
   };
 
   const isTrilhaPaid = (item: Trilha) => {
@@ -232,10 +234,7 @@ export default function HomeScreen() {
   const applyFilters = useCallback(
     (item: Trilha) => {
       // 1. Disponibilidade
-      const isPrivate =
-        item.disponibilidade === 'Privado' ||
-        Boolean(item.codigoAcesso) ||
-        Boolean(knownCodes[item._id]);
+      const isPrivate = isTrilhaPrivada(item);
       if (filtroDisponibilidade === 'abertas' && isPrivate) return false;
       if (filtroDisponibilidade === 'privadas' && !isPrivate) return false;
 

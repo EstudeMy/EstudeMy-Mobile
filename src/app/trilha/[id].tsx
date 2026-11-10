@@ -23,6 +23,8 @@ import {
   validateAndUnlockTrail,
   copyToClipboard,
   getTrailAccessCode,
+  isTrilhaPrivada,
+  removeTrailAccessCode,
 } from '../../services/trilhaAcessoService';
 
 import { buscarSecoesPorTrilha, Secao } from '../../services/secaoService';
@@ -145,19 +147,20 @@ export default function TrilhaDetailScreen() {
         getTrailAccessCode(id),
         isTrilhaComprada(id, user?._id || user?.id),
       ]);
+      const isPrivate = isTrilhaPrivada(trilhaData);
+      if (!isPrivate) {
+        setLocalAccessCode(null);
+        await removeTrailAccessCode(id);
+      } else {
+        setLocalAccessCode(localCode);
+      }
       setTrilha(trilhaData);
-      setLocalAccessCode(localCode);
       setIsPurchased(purchased);
 
       // Verificação de trilha privada, paga e permissões
       const isPaid =
         trilhaData.pagamento === 'Paga' ||
         Boolean(trilhaData.preco && Number(trilhaData.preco) > 0);
-
-      const isPrivate =
-        trilhaData.disponibilidade === 'Privado' ||
-        Boolean(trilhaData.codigoAcesso) ||
-        Boolean(localCode);
 
       const isCreator =
         (trilhaData.criadoPor && (trilhaData.criadoPor === user?._id || trilhaData.criadoPor === user?.id)) ||
@@ -167,16 +170,17 @@ export default function TrilhaDetailScreen() {
         user?.tipoUsuario === 'ADMINISTRADOR' ||
         user?.tipoUsuario === 'OWNER';
 
-      if (isCreator || isStaff) {
+      if (!isPrivate) {
+        // Trilha aberta: NUNCA pede código para alunos nem professores
+        setIsUnlocked(true);
+      } else if (isCreator || isStaff) {
         setIsUnlocked(true);
       } else if (isPaid && !purchased) {
         // Trilha paga ainda não comprada
         setIsUnlocked(false);
-      } else if (isPrivate) {
+      } else {
         const unlocked = await isTrailUnlocked(id);
         setIsUnlocked(unlocked);
-      } else {
-        setIsUnlocked(true);
       }
 
       const sortedSecoes = secoesData.sort((a, b) => a.ordem - b.ordem);
@@ -276,18 +280,14 @@ export default function TrilhaDetailScreen() {
     user?.tipoUsuario === 'OWNER'
   );
 
-  const isPrivateTrail = Boolean(
-    trilha?.disponibilidade === 'Privado' ||
-    Boolean(trilha?.codigoAcesso) ||
-    Boolean(localAccessCode)
-  );
+  const isPrivateTrail = isTrilhaPrivada(trilha);
 
   const isPaidTrail = Boolean(
     trilha?.pagamento === 'Paga' ||
     Boolean(trilha?.preco && Number(trilha.preco) > 0)
   );
 
-  const effectiveCode = trilha?.codigoAcesso || localAccessCode || 'TRL-ACESSO';
+  const effectiveCode = isPrivateTrail ? (trilha?.codigoAcesso || localAccessCode || '') : '';
 
   const handleTeacherCopy = async (code: string) => {
     await copyToClipboard(code);
@@ -482,7 +482,7 @@ export default function TrilhaDetailScreen() {
       </View>
 
       {/* Box Exclusiva para o Professor ver o Código da Trilha Privada */}
-      {isPrivateTrail && isTeacherOrCreator && (
+      {isPrivateTrail && isTeacherOrCreator && Boolean(effectiveCode) && (
         <View style={styles.teacherCodeCard}>
           <View style={styles.teacherCodeHeader}>
             <Key size={22} color="#F59E0B" />

@@ -16,10 +16,11 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useLanguage } from '../contexts/LanguageContext';
-import { Trilha } from '../services/trilhaService';
+import { Trilha, excluirTrilha } from '../services/trilhaService';
 import {
   listarUsuariosAdmin,
   listarTodasTrilhasAdmin,
+  excluirUsuarioAdmin,
   AdminUserItem,
 } from '../services/adminService';
 import {
@@ -31,6 +32,8 @@ import {
   copyToClipboard,
   getAllKnownTrailCodes,
   getOrGenerateTrailAccessCode,
+  isTrilhaPrivada,
+  removeTrailAccessCode,
 } from '../services/trilhaAcessoService';
 import {
   obterExtratoGeralAdmin,
@@ -117,9 +120,14 @@ export default function AdminScreen() {
 
       const updatedCodes = { ...codes };
       for (const t of trilhasData) {
-        if (!updatedCodes[t._id]) {
-          const uniqueCode = await getOrGenerateTrailAccessCode(t._id, t.codigoAcesso);
-          updatedCodes[t._id] = uniqueCode;
+        if (t.disponibilidade === 'Privado') {
+          if (!updatedCodes[t._id]) {
+            const uniqueCode = await getOrGenerateTrailAccessCode(t._id, t.codigoAcesso, 'Privado');
+            if (uniqueCode) updatedCodes[t._id] = uniqueCode;
+          }
+        } else {
+          delete updatedCodes[t._id];
+          await removeTrailAccessCode(t._id);
         }
       }
 
@@ -201,6 +209,86 @@ export default function AdminScreen() {
         { text: 'Cancelar', style: 'cancel' },
         { text: 'Excluir', style: 'destructive', onPress: confirm },
       ]);
+    }
+  };
+
+  const handleExcluirTrilha = (trilhaId: string, titulo: string) => {
+    const confirm = async () => {
+      try {
+        await excluirTrilha(trilhaId);
+        setTrilhas((prev) => prev.filter((t) => t._id !== trilhaId));
+        if (Platform.OS === 'web') {
+          window.alert(`Trilha "${titulo}" excluída com sucesso!`);
+        } else {
+          Alert.alert('Sucesso', `Trilha "${titulo}" excluída com sucesso!`);
+        }
+      } catch (err: any) {
+        const msg = err.response?.data?.message || 'Erro ao excluir trilha.';
+        if (Platform.OS === 'web') {
+          window.alert(msg);
+        } else {
+          Alert.alert('Erro', msg);
+        }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(`Tem certeza que deseja excluir permanentemente a trilha "${titulo}"?\n\nEsta ação não poderá ser desfeita.`)) {
+        void confirm();
+      }
+    } else {
+      Alert.alert(
+        'Excluir Trilha',
+        `Tem certeza que deseja excluir permanentemente a trilha "${titulo}"?\n\nEsta ação não poderá ser desfeita.`,
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Excluir', style: 'destructive', onPress: confirm },
+        ]
+      );
+    }
+  };
+
+  const handleExcluirUsuario = (userId: string, nome: string, email: string) => {
+    const currentUserId = user?._id || user?.id;
+    if (userId === currentUserId) {
+      const msg = 'Você não pode excluir sua própria conta de administrador por aqui.';
+      if (Platform.OS === 'web') window.alert(msg);
+      else Alert.alert('Ação Não Permitida', msg);
+      return;
+    }
+
+    const confirm = async () => {
+      try {
+        await excluirUsuarioAdmin(userId);
+        setUsuarios((prev) => prev.filter((u) => (u._id || u.id) !== userId));
+        if (Platform.OS === 'web') {
+          window.alert(`Usuário "${nome}" excluído com sucesso!`);
+        } else {
+          Alert.alert('Sucesso', `Usuário "${nome}" excluído com sucesso!`);
+        }
+      } catch (err: any) {
+        const msg = err.response?.data?.message || 'Erro ao excluir usuário.';
+        if (Platform.OS === 'web') {
+          window.alert(msg);
+        } else {
+          Alert.alert('Erro', msg);
+        }
+      }
+    };
+
+    if (Platform.OS === 'web') {
+      if (window.confirm(`ATENÇÃO: Deseja realmente excluir o usuário "${nome}" (${email}) permanentemente do sistema?`)) {
+        void confirm();
+      }
+    } else {
+      Alert.alert(
+        'Excluir Usuário',
+        `ATENÇÃO: Deseja realmente excluir o usuário "${nome}" (${email}) permanentemente do sistema?\n\nTodos os dados e acessos serão removidos.`,
+        [
+          { text: 'Cancelar', style: 'cancel' },
+          { text: 'Excluir Definitivamente', style: 'destructive', onPress: confirm },
+        ]
+      );
     }
   };
 
@@ -439,13 +527,9 @@ export default function AdminScreen() {
               </View>
             ) : (
               filteredTrilhas.map((item) => {
-                const isPrivate =
-                  item.disponibilidade === 'Privado' ||
-                  Boolean(item.codigoAcesso) ||
-                  Boolean(knownCodes[item._id]);
+                const isPrivate = isTrilhaPrivada(item);
                 const isPaid = item.pagamento === 'Paga' || Boolean(item.preco && Number(item.preco) > 0);
-                const accessCode =
-                  item.codigoAcesso || knownCodes[item._id] || 'TRL-ACESSO';
+                const accessCode = isPrivate ? (item.codigoAcesso || knownCodes[item._id] || '') : '';
                 const autor =
                   typeof item.criadoPor === 'object'
                     ? (item.criadoPor as any).nome || (item.criadoPor as any).email || 'Professor'
@@ -522,6 +606,15 @@ export default function AdminScreen() {
                       >
                         <Text style={styles.viewTrailBtnText}>Ver Trilha</Text>
                         <ArrowRight size={14} color="#ffffff" style={{ marginLeft: 4 }} />
+                      </TouchableOpacity>
+
+                      <TouchableOpacity
+                        style={styles.deleteTrailBtn}
+                        onPress={() => handleExcluirTrilha(item._id, item.titulo)}
+                        activeOpacity={0.8}
+                      >
+                        <Trash2 size={14} color="#ffffff" style={{ marginRight: 4 }} />
+                        <Text style={styles.deleteTrailBtnText}>Excluir</Text>
                       </TouchableOpacity>
                     </View>
                   </View>
@@ -630,24 +723,56 @@ export default function AdminScreen() {
                           </Text>
                         ) : (
                           userTrilhas.map((ut) => (
-                            <TouchableOpacity
+                            <View
                               key={ut._id}
                               style={[styles.userTrilhaRow, { backgroundColor: colors.cardSecondary }]}
-                              onPress={() => router.push(`/trilha/${ut._id}`)}
-                              activeOpacity={0.85}
                             >
-                              <View style={{ flex: 1 }}>
+                              <TouchableOpacity
+                                style={{ flex: 1 }}
+                                onPress={() => router.push(`/trilha/${ut._id}`)}
+                                activeOpacity={0.85}
+                              >
                                 <Text style={[styles.utTitle, { color: colors.text }]}>{ut.titulo}</Text>
                                 <Text style={[styles.utMeta, { color: colors.textMuted }]}>
                                   {ut.materia} • {ut.disponibilidade || 'Aberta'} • {ut.pagamento || 'Gratuita'}
                                 </Text>
+                              </TouchableOpacity>
+                              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                                <TouchableOpacity
+                                  style={styles.deleteMiniBtn}
+                                  onPress={() => handleExcluirTrilha(ut._id, ut.titulo)}
+                                  activeOpacity={0.8}
+                                >
+                                  <Trash2 size={13} color="#EF4444" />
+                                </TouchableOpacity>
+                                <TouchableOpacity
+                                  onPress={() => router.push(`/trilha/${ut._id}`)}
+                                  activeOpacity={0.8}
+                                >
+                                  <ArrowRight size={16} color="#4F46E5" />
+                                </TouchableOpacity>
                               </View>
-                              <ArrowRight size={16} color="#4F46E5" />
-                            </TouchableOpacity>
+                            </View>
                           ))
                         )}
                       </View>
                     )}
+
+                    {/* Ações Administrativas: Excluir Usuário */}
+                    <View style={styles.userCardActionsRow}>
+                      <TouchableOpacity
+                        style={[
+                          styles.userActionDeleteBtn,
+                          (uId === (user?._id || user?.id) || userItem.tipoUsuario === 'OWNER') && { opacity: 0.4 },
+                        ]}
+                        onPress={() => handleExcluirUsuario(uId, userItem.nome, userItem.email)}
+                        disabled={uId === (user?._id || user?.id) || userItem.tipoUsuario === 'OWNER'}
+                        activeOpacity={0.8}
+                      >
+                        <Trash2 size={13} color="#ffffff" style={{ marginRight: 6 }} />
+                        <Text style={styles.userActionDeleteText}>Excluir Usuário</Text>
+                      </TouchableOpacity>
+                    </View>
                   </View>
                 );
               })
@@ -1128,6 +1253,52 @@ const styles = StyleSheet.create({
     borderColor: '#1b1b1b',
   },
   viewTrailBtnText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  deleteTrailBtn: {
+    backgroundColor: '#EF4444',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  deleteTrailBtnText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  deleteMiniBtn: {
+    backgroundColor: 'rgba(239, 68, 68, 0.15)',
+    padding: 6,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#EF4444',
+  },
+  userCardActionsRow: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginTop: 10,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: 'rgba(255, 255, 255, 0.08)',
+  },
+  userActionDeleteBtn: {
+    backgroundColor: '#EF4444',
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 7,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  userActionDeleteText: {
     color: '#ffffff',
     fontSize: 12,
     fontWeight: '900',

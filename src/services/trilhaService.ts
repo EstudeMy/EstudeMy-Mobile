@@ -2,7 +2,7 @@ import api from './api';
 import { API_ENDPOINTS } from '../config/api.config';
 import { isValidId, sanitizeInput } from '../utils/security';
 import { logger } from '../utils/logger';
-import { saveTrailAccessCode, getOrGenerateTrailAccessCode } from './trilhaAcessoService';
+import { saveTrailAccessCode, getOrGenerateTrailAccessCode, removeTrailAccessCode } from './trilhaAcessoService';
 
 export interface Trilha {
   _id: string;
@@ -74,9 +74,13 @@ export const criarTrilhaManual = async (dados: {
   const response = await api.post('/api/trilhas', safeData);
   const trilhaCriada: Trilha = response.data;
 
-  // Garante que o código de acesso seja salvo localmente também
-  if (trilhaCriada && trilhaCriada._id && cleanCode) {
-    await saveTrailAccessCode(trilhaCriada._id, cleanCode);
+  // Garante que o código de acesso seja salvo localmente caso seja privada, ou removido se aberta
+  if (trilhaCriada && trilhaCriada._id) {
+    if (dados.disponibilidade === 'Privado' && cleanCode) {
+      await saveTrailAccessCode(trilhaCriada._id, cleanCode);
+    } else {
+      await removeTrailAccessCode(trilhaCriada._id);
+    }
   }
 
   return trilhaCriada;
@@ -123,13 +127,29 @@ export const buscarTrilhaPorId = async (id: string): Promise<Trilha> => {
   const response = await api.get(API_ENDPOINTS.TRILHAS.POR_ID(id));
   const data: Trilha = response.data;
   if (data) {
-    const uniqueCode = await getOrGenerateTrailAccessCode(id, data.codigoAcesso);
-    data.codigoAcesso = uniqueCode;
-    if (data.disponibilidade === 'Privado' || !data.disponibilidade) {
-      data.disponibilidade = data.disponibilidade || 'Privado';
+    if (data.disponibilidade === 'Aberto') {
+      data.codigoAcesso = undefined;
+      await removeTrailAccessCode(id);
+    } else if (data.disponibilidade === 'Privado' || Boolean(data.codigoAcesso)) {
+      data.disponibilidade = 'Privado';
+      const uniqueCode = await getOrGenerateTrailAccessCode(id, data.codigoAcesso, 'Privado');
+      data.codigoAcesso = uniqueCode || undefined;
+    } else {
+      data.disponibilidade = 'Aberto';
+      data.codigoAcesso = undefined;
+      await removeTrailAccessCode(id);
     }
   }
   return data;
+};
+
+export const excluirTrilha = async (id: string): Promise<boolean> => {
+  if (!isValidId(id)) {
+    throw new Error('ID da trilha inválido.');
+  }
+  await api.delete(`/api/trilhas/${id}`);
+  await removeTrailAccessCode(id);
+  return true;
 };
 
 export const iniciarTrilha = async (trilhaId: string): Promise<any> => {

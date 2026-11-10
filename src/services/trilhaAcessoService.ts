@@ -106,6 +106,29 @@ export function getDeterministicTrailCode(trilhaId: string): string {
 }
 
 /**
+ * Verifica de forma definitiva e segura se uma trilha é Privada.
+ * Regra de Ouro: Trilhas com disponibilidade 'Aberto' NUNCA são privadas e NUNCA requerem código!
+ */
+export function isTrilhaPrivada(trilha?: { disponibilidade?: string; codigoAcesso?: string } | null): boolean {
+  if (!trilha) return false;
+  if (trilha.disponibilidade === 'Aberto') return false;
+  if (trilha.disponibilidade === 'Privado') return true;
+  return Boolean(trilha.codigoAcesso && trilha.codigoAcesso.trim() !== '' && trilha.codigoAcesso !== 'TRL-ACESSO');
+}
+
+/**
+ * Remove qualquer código de acesso salvo para uma trilha (usado ao tornar trilha aberta ou limpando resíduos)
+ */
+export async function removeTrailAccessCode(trilhaId: string): Promise<void> {
+  if (!trilhaId) return;
+  await initCache();
+  if (inMemoryCodes[trilhaId]) {
+    delete inMemoryCodes[trilhaId];
+    await setStorageItem(STORAGE_CODES_MAP_KEY, JSON.stringify(inMemoryCodes));
+  }
+}
+
+/**
  * Salva o código de acesso gerado para uma trilha
  */
 export async function saveTrailAccessCode(trilhaId: string, code: string): Promise<void> {
@@ -124,10 +147,21 @@ export async function getTrailAccessCode(trilhaId: string): Promise<string | nul
 }
 
 /**
- * Garante e retorna o código de acesso ÚNICO da trilha.
- * Nunca retorna um código compartilhado ou genérico.
+ * Garante e retorna o código de acesso ÚNICO da trilha privada.
+ * Se a trilha for aberta (disponibilidade === 'Aberto'), NUNCA gera nem retorna código.
  */
-export async function getOrGenerateTrailAccessCode(trilhaId: string, serverCode?: string): Promise<string> {
+export async function getOrGenerateTrailAccessCode(
+  trilhaId: string,
+  serverCode?: string,
+  disponibilidade?: string
+): Promise<string | null> {
+  if (!trilhaId) return null;
+  // Trilhas abertas NUNCA possuem código
+  if (disponibilidade === 'Aberto') {
+    await removeTrailAccessCode(trilhaId);
+    return null;
+  }
+
   await initCache();
   if (serverCode && serverCode.trim() && serverCode.toUpperCase() !== 'TRL-ACESSO') {
     const clean = serverCode.trim().toUpperCase();

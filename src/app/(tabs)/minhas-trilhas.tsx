@@ -21,6 +21,8 @@ import {
   copyToClipboard,
   getAllKnownTrailCodes,
   getOrGenerateTrailAccessCode,
+  isTrilhaPrivada,
+  removeTrailAccessCode,
 } from '../../services/trilhaAcessoService';
 import { obterExtratoProfessor } from '../../services/pagamentoService';
 import { getTrackImage } from '../../constants/assets';
@@ -86,12 +88,17 @@ export default function MinhasTrilhasScreen() {
         obterExtratoProfessor(userId),
       ]);
 
-      // Garante que cada trilha tenha seu próprio código exclusivo mapeado
+      // Garante que apenas trilhas privadas tenham código exclusivo mapeado
       const updatedCodes = { ...codes };
       for (const t of list) {
-        if (!updatedCodes[t._id]) {
-          const uniqueCode = await getOrGenerateTrailAccessCode(t._id, t.codigoAcesso);
-          updatedCodes[t._id] = uniqueCode;
+        if (t.disponibilidade === 'Privado') {
+          if (!updatedCodes[t._id]) {
+            const uniqueCode = await getOrGenerateTrailAccessCode(t._id, t.codigoAcesso, 'Privado');
+            if (uniqueCode) updatedCodes[t._id] = uniqueCode;
+          }
+        } else {
+          delete updatedCodes[t._id];
+          await removeTrailAccessCode(t._id);
         }
       }
 
@@ -144,10 +151,7 @@ export default function MinhasTrilhasScreen() {
         item.materia.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (item.descricao && item.descricao.toLowerCase().includes(searchQuery.toLowerCase()));
 
-      const isPrivate =
-        item.disponibilidade === 'Privado' ||
-        Boolean(item.codigoAcesso) ||
-        Boolean(knownCodes[item._id]);
+      const isPrivate = isTrilhaPrivada(item);
 
       if (!matchSearch) return false;
       if (filtroTipo === 'privadas') return isPrivate;
@@ -161,7 +165,7 @@ export default function MinhasTrilhasScreen() {
     let privadas = 0;
     let pagas = 0;
     trilhas.forEach((t) => {
-      if (t.disponibilidade === 'Privado' || t.codigoAcesso || knownCodes[t._id]) privadas++;
+      if (isTrilhaPrivada(t)) privadas++;
       if (t.pagamento === 'Paga' || (t.preco && Number(t.preco) > 0)) pagas++;
     });
     return { total, privadas, abertas: total - privadas, pagas, gratuitas: total - pagas };
@@ -404,13 +408,9 @@ export default function MinhasTrilhasScreen() {
           </View>
         ) : (
           filteredTrilhas.map((item) => {
-            const isPrivate =
-              item.disponibilidade === 'Privado' ||
-              Boolean(item.codigoAcesso) ||
-              Boolean(knownCodes[item._id]);
+            const isPrivate = isTrilhaPrivada(item);
             const isPaid = item.pagamento === 'Paga' || Boolean(item.preco && Number(item.preco) > 0);
-            const accessCode =
-              item.codigoAcesso || knownCodes[item._id] || 'TRL-GERANDO';
+            const accessCode = isPrivate ? (item.codigoAcesso || knownCodes[item._id] || '') : '';
             const trackImage = getTrackImage(item);
 
             return (

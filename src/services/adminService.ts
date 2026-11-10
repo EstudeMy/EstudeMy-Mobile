@@ -69,6 +69,19 @@ export async function listarTodasTrilhasAdmin(): Promise<Trilha[]> {
 }
 
 /**
+ * Exclui um usuário da plataforma (Admin / Owner)
+ */
+export async function excluirUsuarioAdmin(userId: string): Promise<boolean> {
+  try {
+    await api.delete(`/api/admin/usuarios/${userId}`);
+    return true;
+  } catch (err) {
+    logger.error('Erro ao excluir usuário no backend:', err);
+    throw err;
+  }
+}
+
+/**
  * Altera a senha do usuário logado na plataforma
  */
 export async function alterarMinhaSenha(senhaAtual: string, novaSenha: string): Promise<{ success: boolean; message: string }> {
