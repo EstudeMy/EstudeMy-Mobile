@@ -39,6 +39,7 @@ import {
   Star,
   Check,
   ArrowLeft,
+  ArrowRight,
   Bookmark,
   HelpCircle,
   X,
@@ -84,6 +85,7 @@ export default function TrilhaDetailScreen() {
   // Pagamento e Checkout
   const [isPurchased, setIsPurchased] = useState(false);
   const [checkoutModalVisible, setCheckoutModalVisible] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'PIX' | 'CARTAO'>('PIX');
 
   // Modais de QR Code
   const [qrModalVisible, setQrModalVisible] = useState(false);
@@ -162,23 +164,40 @@ export default function TrilhaDetailScreen() {
         trilhaData.pagamento === 'Paga' ||
         Boolean(trilhaData.preco && Number(trilhaData.preco) > 0);
 
-      const isCreator =
-        (trilhaData.criadoPor && (trilhaData.criadoPor === user?._id || trilhaData.criadoPor === user?.id)) ||
-        (typeof trilhaData.criadoPor === 'object' && (trilhaData.criadoPor as any)?._id === user?._id);
-      const isStaff =
-        user?.tipoUsuario === 'PROFESSOR' ||
+      const currentUserId = user?._id || user?.id;
+      const isCreator = Boolean(
+        currentUserId && (
+          trilhaData.criadoPor === currentUserId ||
+          (typeof trilhaData.criadoPor === 'object' && (trilhaData.criadoPor as any)?._id === currentUserId) ||
+          (trilhaData as any).usuario === currentUserId ||
+          (typeof (trilhaData as any).usuario === 'object' && (trilhaData as any).usuario?._id === currentUserId)
+        )
+      );
+      const isAdminOrOwner =
         user?.tipoUsuario === 'ADMINISTRADOR' ||
         user?.tipoUsuario === 'OWNER';
 
-      if (!isPrivate) {
-        // Trilha aberta: NUNCA pede código para alunos nem professores
+      if (isCreator || isAdminOrOwner) {
+        // Criador da trilha ou Administrador/Owner sempre têm acesso irrestrito
         setIsUnlocked(true);
-      } else if (isCreator || isStaff) {
+      } else if (isPaid) {
+        // Trilha PAGA: SÓ LIBERA SE O PAGAMENTO FOR EFETUADO!
+        if (purchased) {
+          if (!isPrivate) {
+            setIsUnlocked(true);
+          } else {
+            const unlocked = await isTrailUnlocked(id);
+            setIsUnlocked(unlocked);
+          }
+        } else {
+          // NÃO COMPRADA: Bloqueio estrito! Exibe a tela de pagamento
+          setIsUnlocked(false);
+        }
+      } else if (!isPrivate) {
+        // Trilha aberta e gratuita: 100% liberada sem pedir código
         setIsUnlocked(true);
-      } else if (isPaid && !purchased) {
-        // Trilha paga ainda não comprada
-        setIsUnlocked(false);
       } else {
+        // Trilha privada e gratuita: requer código de acesso da turma
         const unlocked = await isTrailUnlocked(id);
         setIsUnlocked(unlocked);
       }
@@ -272,10 +291,14 @@ export default function TrilhaDetailScreen() {
     }
   };
 
+  const currentUserId = user?._id || user?.id;
   const isTeacherOrCreator = Boolean(
-    (trilha?.criadoPor && (trilha.criadoPor === user?._id || trilha.criadoPor === user?.id)) ||
-    (typeof trilha?.criadoPor === 'object' && (trilha?.criadoPor as any)?._id === user?._id) ||
-    user?.tipoUsuario === 'PROFESSOR' ||
+    (currentUserId && (
+      trilha?.criadoPor === currentUserId ||
+      (typeof trilha?.criadoPor === 'object' && (trilha?.criadoPor as any)?._id === currentUserId) ||
+      (trilha as any)?.usuario === currentUserId ||
+      (typeof (trilha as any)?.usuario === 'object' && (trilha as any)?.usuario?._id === currentUserId)
+    )) ||
     user?.tipoUsuario === 'ADMINISTRADOR' ||
     user?.tipoUsuario === 'OWNER'
   );
@@ -566,10 +589,58 @@ export default function TrilhaDetailScreen() {
               </Text>
             </View>
 
+            {/* Formas de Pagamento Aceitas (PIX e Cartão de Crédito) */}
+            <View style={styles.paymentMethodsRow}>
+              <TouchableOpacity
+                style={[
+                  styles.paymentMethodOptionBtn,
+                  { backgroundColor: colors.cardSecondary, borderColor: '#10B981' },
+                ]}
+                onPress={() => {
+                  setSelectedPaymentMethod('PIX');
+                  setCheckoutModalVisible(true);
+                }}
+                activeOpacity={0.85}
+              >
+                <View style={styles.paymentMethodIconPix}>
+                  <QrCode size={18} color="#ffffff" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={[styles.paymentMethodTitle, { color: colors.text }]}>Pagar com PIX</Text>
+                  <Text style={styles.paymentMethodSubtitle}>Liberação imediata via QR Code ⚡</Text>
+                </View>
+                <ArrowRight size={18} color="#10B981" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.paymentMethodOptionBtn,
+                  { backgroundColor: colors.cardSecondary, borderColor: '#4F46E5' },
+                ]}
+                onPress={() => {
+                  setSelectedPaymentMethod('CARTAO');
+                  setCheckoutModalVisible(true);
+                }}
+                activeOpacity={0.85}
+              >
+                <View style={styles.paymentMethodIconCard}>
+                  <CreditCard size={18} color="#ffffff" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={[styles.paymentMethodTitle, { color: colors.text }]}>Cartão de Crédito</Text>
+                  <Text style={styles.paymentMethodSubtitle}>Parcelamento em até 12x 💳</Text>
+                </View>
+                <ArrowRight size={18} color="#4F46E5" />
+              </TouchableOpacity>
+            </View>
+
             {/* Botão de Compra Principal */}
             <TouchableOpacity
               style={styles.buyNowBtn}
-              onPress={() => setCheckoutModalVisible(true)}
+              onPress={() => {
+                setSelectedPaymentMethod('PIX');
+                setCheckoutModalVisible(true);
+              }}
               activeOpacity={0.88}
             >
               <Sparkles size={20} color="#ffffff" style={{ marginRight: 8 }} />
@@ -1038,6 +1109,7 @@ export default function TrilhaDetailScreen() {
           visible={checkoutModalVisible}
           onClose={() => setCheckoutModalVisible(false)}
           trilha={trilha}
+          initialMetodo={selectedPaymentMethod}
           onSuccess={async () => {
             setIsPurchased(true);
             setIsUnlocked(true);
@@ -1494,6 +1566,49 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#6B7280',
     marginTop: 4,
+  },
+  paymentMethodsRow: {
+    width: '100%',
+    gap: 10,
+    marginBottom: 14,
+  },
+  paymentMethodOptionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  paymentMethodIconPix: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  paymentMethodIconCard: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#4F46E5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  paymentMethodTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  paymentMethodSubtitle: {
+    fontSize: 11,
+    color: '#6B7280',
+    fontWeight: '600',
+    marginTop: 1,
   },
   buyNowBtn: {
     flexDirection: 'row',

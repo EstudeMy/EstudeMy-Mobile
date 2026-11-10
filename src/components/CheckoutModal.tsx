@@ -42,13 +42,20 @@ interface CheckoutModalProps {
   onClose: () => void;
   trilha: Trilha;
   onSuccess: (transacao: TransacaoPagamento) => void;
+  initialMetodo?: 'PIX' | 'CARTAO';
 }
 
-export function CheckoutModal({ visible, onClose, trilha, onSuccess }: CheckoutModalProps) {
+export function CheckoutModal({ visible, onClose, trilha, onSuccess, initialMetodo }: CheckoutModalProps) {
   const { colors } = useTheme();
   const { user } = useAuth();
 
-  const [metodo, setMetodo] = useState<'PIX' | 'CARTAO'>('PIX');
+  const [metodo, setMetodo] = useState<'PIX' | 'CARTAO'>(initialMetodo || 'PIX');
+
+  useEffect(() => {
+    if (visible && initialMetodo) {
+      setMetodo(initialMetodo);
+    }
+  }, [visible, initialMetodo]);
   const [parcelas, setParcelas] = useState(1);
   const [loading, setLoading] = useState(false);
   const [pixCopied, setPixCopied] = useState(false);
