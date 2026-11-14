@@ -2,7 +2,7 @@
   "expo": {
     "name": "EstudeMy",
     "slug": "EstudeMy-Mobile",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "estudemymobile",
@@ -10,6 +10,7 @@
     "ios": {
       "icon": "./assets/images/icon.png",
       "bundleIdentifier": "com.estudemy.mobile",
+      "buildNumber": "2",
       "supportsTablet": true,
       "infoPlist": {
         "NSCameraUsageDescription": "O EstudeMy precisa de acesso à câmera para ler QR Codes de trilhas de estudo.",
@@ -20,6 +21,7 @@
     },
     "android": {
       "package": "com.estudemy.mobile",
+      "versionCode": 2,
       "usesCleartextTraffic": true,
       "adaptiveIcon": {
         "backgroundColor": "#0A0D18",
