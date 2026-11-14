@@ -19,11 +19,11 @@
       name: 'Castelo dos Dados',
       trackLabel: 'TRILHA: CASTELO DOS DADOS',
       musicKey: 'gothic_orchestra',
-      bottomOffset: '28%',
-      playerLeft: '14%',
+      bottomOffset: '18%',
+      playerLeft: '13%',
       enemyPool: [
         { name: 'Guarda da Muralha', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 65, atk: 14, isFlying: false, type: 'fisico', ultName: 'Golpe de Ruína da Armadura' },
-        { name: 'Spectre do Código', spriteFolder: 'assets/sprites/spectre', baseHp: 110, atk: 22, isFlying: true, type: 'magico', ultName: 'Chamas Negras da Corrupção' },
+        { name: 'Spectre do Código', spriteFolder: 'assets/sprites/spectre', baseHp: 110, atk: 22, isFlying: false, type: 'magico', ultName: 'Chamas Negras da Corrupção' },
         { name: 'Acólito da Memória', spriteFolder: 'assets/sprites/mago', baseHp: 55, atk: 16, isFlying: false, type: 'magico', ultName: 'Vórtice dos Registradores' },
       ],
       phases: [
@@ -37,12 +37,12 @@
       name: 'Pico da Lógica',
       trackLabel: 'TRILHA: PICO DA LÓGICA',
       musicKey: 'viking_mountains',
-      bottomOffset: '29%',
-      playerLeft: '14%',
+      bottomOffset: '18%',
+      playerLeft: '13%',
       enemyPool: [
         { name: 'Guerreiro da Geada', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 75, atk: 16, isFlying: false, type: 'fisico', ultName: 'Impacto Glacial Esmagador' },
         { name: 'Mago Cósmico do Pico', spriteFolder: 'assets/sprites/mago', baseHp: 120, atk: 25, isFlying: false, type: 'magico', ultName: 'Tempestade de Nevasca Cósmica' },
-        { name: 'Espectro dos Ventos', spriteFolder: 'assets/sprites/spectre', baseHp: 60, atk: 18, isFlying: true, type: 'magico', ultName: 'Rajada Cortante do Ártico' },
+        { name: 'Espectro dos Ventos', spriteFolder: 'assets/sprites/spectre', baseHp: 60, atk: 18, isFlying: false, type: 'magico', ultName: 'Rajada Cortante do Ártico' },
       ],
       phases: [
         { id: 1, name: 'Encosta Nevada dos Vetores', bgImg: 'assets/backgrounds/montanha_fase1_encosta.jpg', weather: 'mountain_snow' },
@@ -55,11 +55,11 @@
       name: 'Deserto Primordial',
       trackLabel: 'TRILHA: DESERTO PRIMORDIAL',
       musicKey: 'arabic_desert',
-      bottomOffset: '28%',
-      playerLeft: '14%',
+      bottomOffset: '18%',
+      playerLeft: '13%',
       enemyPool: [
         { name: 'Guerreiro das Areias', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 70, atk: 15, isFlying: false, type: 'fisico', ultName: 'Fúria da Cimitarra Solar' },
-        { name: 'Djinn das Tempestades', spriteFolder: 'assets/sprites/spectre', baseHp: 115, atk: 24, isFlying: true, type: 'magico', ultName: 'Ciclone do Sol Escaldante' },
+        { name: 'Djinn das Tempestades', spriteFolder: 'assets/sprites/spectre', baseHp: 115, atk: 24, isFlying: false, type: 'magico', ultName: 'Ciclone do Sol Escaldante' },
         { name: 'Mago das Dunas', spriteFolder: 'assets/sprites/mago', baseHp: 60, atk: 18, isFlying: false, type: 'magico', ultName: 'Sepultamento do Arenito' },
       ],
       phases: [
@@ -73,8 +73,8 @@
       name: 'Vila Ancestral',
       trackLabel: 'TRILHA: VILA ANCESTRAL',
       musicKey: 'bard_village',
-      bottomOffset: '28%',
-      playerLeft: '14%',
+      bottomOffset: '18%',
+      playerLeft: '13%',
       enemyPool: [
         { name: 'Cavaleiro Renegado', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 80, atk: 18, isFlying: false, type: 'fisico', ultName: 'Lâmina do Julgamento Cego' },
         { name: 'Lorde Decaído', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 125, atk: 26, isFlying: false, type: 'fisico', ultName: 'Golpe Quebra-Crânios' },
@@ -91,10 +91,10 @@
       name: 'Vazio Cósmico',
       trackLabel: 'TRILHA: VAZIO CÓSMICO',
       musicKey: 'dark_void',
-      bottomOffset: '28%',
-      playerLeft: '14%',
+      bottomOffset: '18%',
+      playerLeft: '13%',
       enemyPool: [
-        { name: 'Arauto do Esquecimento', spriteFolder: 'assets/sprites/spectre', baseHp: 85, atk: 20, isFlying: true, type: 'magico', ultName: 'Aniquilação da Matéria' },
+        { name: 'Arauto do Esquecimento', spriteFolder: 'assets/sprites/spectre', baseHp: 85, atk: 20, isFlying: false, type: 'magico', ultName: 'Aniquilação da Matéria' },
         { name: 'O Arquivista do Vazio', spriteFolder: 'assets/sprites/mago', baseHp: 150, atk: 30, isFlying: false, type: 'magico', ultName: 'Singularidade da Entropia' },
         { name: 'Cavaleiro da Entropia', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 90, atk: 22, isFlying: false, type: 'fisico', ultName: 'Corte da Dimensão Oculta' },
       ],
@@ -668,6 +668,15 @@
       this.cinematicOverlay = document.getElementById('cinematic-overlay');
       this.ultimateBanner = document.getElementById('ultimate-banner');
 
+      // Modais de Fim de Fase (Vitória e Derrota)
+      this.phaseVictoryModal = document.getElementById('phase-victory-modal');
+      this.victoryPhaseTitle = document.getElementById('victory-phase-title');
+      this.victoryXpAmount = document.getElementById('victory-xp-amount');
+      this.victoryStatEnemies = document.getElementById('victory-stat-enemies');
+      this.victoryStatStreak = document.getElementById('victory-stat-streak');
+      this.btnNextPhase = document.getElementById('btn-next-phase');
+      this.phaseDefeatModal = document.getElementById('phase-defeat-modal');
+
       // Estados de Jogo
       this.activeTheme = 'castelo';
       this.currentThemePhase = 0;
@@ -924,8 +933,8 @@
 
     applyGrounding() {
       const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
-      const bottom = theme.bottomOffset || '28%';
-      const playerL = theme.playerLeft || '14%';
+      const bottom = theme.bottomOffset || '18%';
+      const playerL = theme.playerLeft || '13%';
 
       this.playerWrapper.style.bottom = bottom;
       this.playerWrapper.style.left = playerL;
@@ -1055,24 +1064,9 @@
         // REGRA CRÍTICA: As fases só avançam quando TODOS os inimigos daquela fase forem derrotados!
         const anyAlive = this.enemySlots.some((s) => s.isAlive);
         if (!anyAlive) {
-          const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
-          if (this.currentThemePhase + 1 < theme.phases.length) {
-            // Avança para a próxima fase com novos inimigos!
-            this.soundtrack.playSFX('victory');
-            this.addFloatingText(`FASE ${this.currentThemePhase + 1} CONCLUÍDA!`, '#22c55e', 683, 330, true);
-            setTimeout(() => {
-              this.setPhase(this.currentThemePhase + 1);
-            }, 1800);
-          } else {
-            // Fim da trilha inteira!
-            this.soundtrack.playSFX('victory');
-            this.addFloatingText('VITÓRIA ÉPICA DA TRILHA!', '#22c55e', 683, 350, true);
-            setTimeout(() => {
-              if (typeof window.notificar_vitoria_js === 'function') {
-                window.notificar_vitoria_js();
-              }
-            }, 2400);
-          }
+          this.soundtrack.playSFX('victory');
+          this.addFloatingText('VITÓRIA!', '#22c55e', 683, 330, true);
+          this.showPhaseVictoryMenu();
         }
       }
     }
@@ -1154,12 +1148,96 @@
 
       if (this.playerHp <= 0) {
         this.soundtrack.playSFX('wrong');
-        this.addFloatingText('DERROTA...', '#ef4444', 683, 350, true);
+        this.addFloatingText('DERROTA...', '#ef4444', 250, 330, true);
+        if (typeof window.notificar_derrota_js === 'function') {
+          window.notificar_derrota_js();
+        }
         setTimeout(() => {
-          if (typeof window.notificar_derrota_js === 'function') {
-            window.notificar_derrota_js();
+          if (this.phaseDefeatModal) {
+            this.phaseDefeatModal.style.display = 'flex';
           }
-        }, 2000);
+        }, 1100);
+      }
+    }
+
+    // ==========================================================================
+    // 4B. MENUS DE FIM DE FASE (VITÓRIA E DERROTA COM GANHO DE XP)
+    // ==========================================================================
+    showPhaseVictoryMenu() {
+      const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
+      const currentPhase = theme.phases ? theme.phases[this.currentThemePhase] : null;
+      const phaseName = currentPhase ? currentPhase.name : `Fase ${this.currentThemePhase + 1}`;
+      const isLastPhase = this.currentThemePhase + 1 >= theme.phases.length;
+
+      // Cálculo do XP Ganho pelo Jogador
+      const baseXP = 100;
+      const enemyCount = this.enemySlots.filter((s) => s.data && s.wrapper.style.display !== 'none').length || 1;
+      const streakBonus = Math.min(50, this.streak * 10);
+      const earnedXP = baseXP + (enemyCount * 15) + streakBonus;
+
+      if (this.victoryPhaseTitle) {
+        this.victoryPhaseTitle.textContent = `${phaseName} — Concluída!`;
+      }
+      if (this.victoryXpAmount) {
+        this.victoryXpAmount.textContent = `+${earnedXP} XP`;
+      }
+      if (this.victoryStatEnemies) {
+        this.victoryStatEnemies.textContent = `${enemyCount} ${enemyCount > 1 ? 'Inimigos Derrotados' : 'Chefe Derrotado'}`;
+      }
+      if (this.victoryStatStreak) {
+        this.victoryStatStreak.textContent = `Combo Streak: ${this.streak}`;
+      }
+
+      if (this.btnNextPhase) {
+        if (isLastPhase) {
+          this.btnNextPhase.innerHTML = '<span>Finalizar Trilha</span> <span>🏆</span>';
+        } else {
+          this.btnNextPhase.innerHTML = '<span>Avançar</span> <span class="btn-arrow">➔</span>';
+        }
+      }
+
+      if (typeof window.notificar_vitoria_js === 'function') {
+        window.notificar_vitoria_js();
+      }
+
+      setTimeout(() => {
+        if (this.phaseVictoryModal) {
+          this.phaseVictoryModal.style.display = 'flex';
+        }
+      }, 1000);
+    }
+
+    advanceToNextPhase() {
+      if (this.phaseVictoryModal) this.phaseVictoryModal.style.display = 'none';
+      const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
+      if (this.currentThemePhase + 1 < theme.phases.length) {
+        this.setPhase(this.currentThemePhase + 1);
+        this.renderQuestion();
+      } else {
+        this.exitBattle();
+      }
+    }
+
+    repeatCurrentPhase() {
+      if (this.phaseVictoryModal) this.phaseVictoryModal.style.display = 'none';
+      if (this.phaseDefeatModal) this.phaseDefeatModal.style.display = 'none';
+      this.playerHp = this.playerMaxHp;
+      this.ultCharge = 0;
+      this.isUltReady = false;
+      this.updateHUD();
+      this.setPhase(this.currentThemePhase);
+      this.renderQuestion();
+    }
+
+    exitBattle() {
+      if (this.phaseVictoryModal) this.phaseVictoryModal.style.display = 'none';
+      if (this.phaseDefeatModal) this.phaseDefeatModal.style.display = 'none';
+      if (typeof window.jogar_voltar_js === 'function') {
+        window.jogar_voltar_js();
+      } else if (window.history && window.history.length > 1) {
+        window.history.back();
+      } else {
+        window.location.href = '/trilha';
       }
     }
 
