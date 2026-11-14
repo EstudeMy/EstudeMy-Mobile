@@ -1,6 +1,12 @@
 /**
  * AudioSystem - Sistema de Áudio e Efeitos Sonoros com Web Audio API
- * Produz áudio sintético procedural leve e dinâmico, sem peso de arquivos pesados.
+ * Produz trilhas orquestradas procedurais e efeitos sonoros autênticos:
+ * - Castelo: Orquestra Gótica (Órgão de tubos, sino de catedral, escala menor harmônica)
+ * - Deserto: Orquestra Antiga Árabe (Maqam Hijaz, Alaúde/Oud, percussão Darbuka)
+ * - Vila: Tema com Bardos (Flauta celta/tin whistle, alaúde em 6/8)
+ * - Vazio: Tema Dark Sombrio Cósmico (Drone sub-grave 42Hz, trítonos)
+ * - Montanha: Tema Viking/Nórdico (Tambores de guerra épicos, trompa Gjallarhorn em 5as)
+ * - SFX: Sons de espadas, magias/poderes, flechas, pancadas pesadas e trovão
  */
 
 export type SFXKey =
@@ -9,9 +15,15 @@ export type SFXKey =
   | 'dialogue_blip'
   | 'slash_light'
   | 'slash_heavy'
+  | 'sword_slash'
+  | 'sword_clash'
   | 'magic_cast'
+  | 'magic_impact'
   | 'arrow_shot'
+  | 'arrow_whoosh'
+  | 'arrow_hit'
   | 'hit_impact'
+  | 'heavy_impact'
   | 'critical_hit'
   | 'shield_block'
   | 'qte_alert'
@@ -19,13 +31,23 @@ export type SFXKey =
   | 'qte_fail'
   | 'ultimate_ready'
   | 'ultimate_release'
+  | 'thunder_ultimate'
   | 'correct_answer'
   | 'wrong_answer'
   | 'boss_roar'
   | 'victory_fanfare'
   | 'defeat_sound';
 
-export type MusicTrack = 'peaceful_camp' | 'battle_stage' | 'boss_clash' | 'final_showdown';
+export type MusicTrack =
+  | 'peaceful_camp'
+  | 'battle_stage'
+  | 'boss_clash'
+  | 'final_showdown'
+  | 'gothic_orchestra'
+  | 'viking_mountains'
+  | 'arabic_desert'
+  | 'bard_village'
+  | 'dark_void';
 
 export class AudioSystem {
   private static instance: AudioSystem;
@@ -38,6 +60,7 @@ export class AudioSystem {
   // BGM sintetizada ativa
   private bgmInterval: any = null;
   private currentTrack: MusicTrack | null = null;
+  private step: number = 0;
 
   private constructor() {}
 
@@ -112,28 +135,52 @@ export class AudioSystem {
         break;
 
       case 'slash_light':
-        this.createNoiseSweep(800, 200, t, 0.12, 0.3);
+      case 'sword_slash':
+        this.createTone(480, t, 0.08, 'sawtooth', 0.35);
+        this.createTone(220, t + 0.03, 0.12, 'sawtooth', 0.4);
+        this.createNoiseSweep(2200, 400, t, 0.08, 0.25);
         break;
 
       case 'slash_heavy':
-        this.createNoiseSweep(600, 100, t, 0.22, 0.5);
-        this.createTone(90, t, 0.25, 'sawtooth', 0.35);
+      case 'sword_clash':
+        this.createTone(1200, t, 0.15, 'square', 0.35);
+        this.createTone(800, t + 0.02, 0.2, 'sawtooth', 0.3);
+        this.createTone(300, t, 0.18, 'triangle', 0.45);
         break;
 
       case 'magic_cast':
-        this.createTone(400, t, 0.15, 'sine', 0.2);
-        this.createTone(600, t + 0.05, 0.15, 'sine', 0.25);
-        this.createTone(900, t + 0.1, 0.2, 'triangle', 0.3);
+        this.createTone(440, t, 0.12, 'sine', 0.3);
+        this.createTone(659, t + 0.05, 0.15, 'sine', 0.35);
+        this.createTone(880, t + 0.1, 0.22, 'triangle', 0.4);
+        this.createTone(1320, t + 0.14, 0.25, 'sine', 0.3);
+        break;
+
+      case 'magic_impact':
+        this.createTone(160, t, 0.25, 'sawtooth', 0.5);
+        this.createTone(880, t + 0.02, 0.2, 'square', 0.3);
+        this.createNoise(t + 0.04, 0.16, 0.4);
         break;
 
       case 'arrow_shot':
-        this.createNoiseSweep(1200, 400, t, 0.08, 0.3);
-        this.createTone(550, t, 0.09, 'triangle', 0.18);
+      case 'arrow_whoosh':
+        this.createNoiseSweep(3000, 600, t, 0.12, 0.28);
+        this.createTone(600, t, 0.1, 'triangle', 0.2);
+        break;
+
+      case 'arrow_hit':
+        this.createTone(320, t, 0.08, 'sawtooth', 0.35);
+        this.createTone(180, t + 0.02, 0.12, 'triangle', 0.4);
         break;
 
       case 'hit_impact':
-        this.createTone(120, t, 0.15, 'sawtooth', 0.4);
-        this.createNoise(t, 0.1, 0.3);
+      case 'heavy_impact':
+        this.createTone(120, t, 0.18, 'sawtooth', 0.55);
+        this.createNoise(t, 0.12, 0.35);
+        break;
+
+      case 'shield_block':
+        this.createTone(320, t, 0.12, 'square', 0.4);
+        this.createTone(180, t + 0.04, 0.2, 'triangle', 0.45);
         break;
 
       case 'critical_hit':
@@ -142,21 +189,16 @@ export class AudioSystem {
         this.createNoise(t, 0.18, 0.45);
         break;
 
-      case 'shield_block':
-        this.createTone(240, t, 0.1, 'square', 0.3);
-        this.createTone(160, t + 0.03, 0.15, 'triangle', 0.35);
-        break;
-
       case 'qte_alert':
         this.createTone(750, t, 0.08, 'square', 0.4);
         this.createTone(1050, t + 0.07, 0.12, 'square', 0.45);
         break;
 
       case 'qte_success':
-        this.createTone(523.25, t, 0.09, 'sine', 0.35); // C5
-        this.createTone(659.25, t + 0.08, 0.09, 'sine', 0.35); // E5
-        this.createTone(783.99, t + 0.16, 0.15, 'triangle', 0.45); // G5
-        this.createTone(1046.5, t + 0.22, 0.25, 'sine', 0.5); // C6
+        this.createTone(523.25, t, 0.09, 'sine', 0.35);
+        this.createTone(659.25, t + 0.08, 0.09, 'sine', 0.35);
+        this.createTone(783.99, t + 0.16, 0.15, 'triangle', 0.45);
+        this.createTone(1046.5, t + 0.22, 0.25, 'sine', 0.5);
         break;
 
       case 'qte_fail':
@@ -171,9 +213,10 @@ export class AudioSystem {
         break;
 
       case 'ultimate_release':
-        this.createTone(110, t, 0.4, 'sawtooth', 0.6);
-        this.createNoiseSweep(1400, 100, t, 0.45, 0.5);
-        this.createTone(880, t + 0.1, 0.3, 'square', 0.4);
+      case 'thunder_ultimate':
+        this.createNoiseSweep(1600, 80, t, 0.45, 0.65);
+        this.createTone(85, t, 0.5, 'sawtooth', 0.65);
+        this.createTone(880, t + 0.1, 0.25, 'square', 0.4);
         break;
 
       case 'correct_answer':
@@ -208,7 +251,7 @@ export class AudioSystem {
   }
 
   /**
-   * Toca ou altera a trilha sonora de fundo sintetizada
+   * Toca a trilha temática autêntica
    */
   public playMusic(track: MusicTrack): void {
     if (this.currentTrack === track && this.bgmInterval) return;
@@ -219,29 +262,59 @@ export class AudioSystem {
     this.initContext();
     if (!this.ctx) return;
 
-    const baseNotes = track === 'boss_clash' || track === 'final_showdown'
-      ? [110, 123.47, 130.81, 146.83, 110, 164.81] // A2, B2, C3, D3, A2, E3
-      : [130.81, 164.81, 196.0, 220.0, 196.0, 164.81]; // C3, E3, G3, A3, G3, E3
+    this.step = 0;
+    let intervalMs = 240;
 
-    let step = 0;
-    const intervalMs = track === 'boss_clash' ? 240 : track === 'final_showdown' ? 190 : 380;
+    if (track === 'viking_mountains') intervalMs = 260;
+    else if (track === 'arabic_desert') intervalMs = 175;
+    else if (track === 'bard_village') intervalMs = 160;
+    else if (track === 'dark_void') intervalMs = 420;
+    else if (track === 'gothic_orchestra') intervalMs = 220;
 
     this.bgmInterval = setInterval(() => {
       if (this.isMuted || !this.ctx) return;
       const t = this.ctx.currentTime;
-      const freq = baseNotes[step % baseNotes.length];
 
-      // Baixo / Linha de percussão melódica
-      this.createTone(freq, t, 0.16, 'triangle', this.musicVolume * 0.4);
-
-      // Camada de tensão no boss
-      if (track === 'boss_clash' || track === 'final_showdown') {
-        if (step % 2 === 0) {
-          this.createTone(freq * 2, t, 0.09, 'sawtooth', this.musicVolume * 0.25);
+      if (track === 'gothic_orchestra' || track === 'battle_stage') {
+        const organMelody = [293.66, 349.23, 440.0, 415.3, 440.0, 349.23, 293.66, 277.18];
+        const note = organMelody[this.step % organMelody.length];
+        this.createTone(note, t, 0.25, 'square', this.musicVolume * 0.22);
+        if (this.step % 2 === 0) {
+          this.createTone(73.42, t, 0.35, 'sawtooth', this.musicVolume * 0.3);
+        }
+      } else if (track === 'viking_mountains') {
+        // Taiko drum + Gjallarhorn
+        if (this.step % 2 === 0) {
+          this.createTone(85, t, 0.2, 'sawtooth', this.musicVolume * 0.45);
+        }
+        if (this.step % 8 === 0) {
+          this.createTone(73.42, t, 1.2, 'sawtooth', this.musicVolume * 0.3);
+          this.createTone(110.0, t, 1.2, 'triangle', this.musicVolume * 0.25);
+        }
+      } else if (track === 'arabic_desert') {
+        const hijaz = [293.66, 311.13, 369.99, 392.0, 369.99, 311.13, 293.66, 261.63];
+        const note = hijaz[this.step % hijaz.length];
+        this.createTone(note, t, 0.16, 'sawtooth', this.musicVolume * 0.25);
+        if (this.step % 2 === 0) {
+          this.createTone(146.83, t, 0.18, 'triangle', this.musicVolume * 0.2);
+        }
+      } else if (track === 'bard_village' || track === 'peaceful_camp') {
+        const flute = [587.33, 659.25, 783.99, 880.0, 783.99, 659.25];
+        const note = flute[this.step % flute.length];
+        this.createTone(note, t, 0.14, 'sine', this.musicVolume * 0.3);
+        if (this.step % 3 === 0) {
+          this.createTone(196.0, t, 0.25, 'triangle', this.musicVolume * 0.25);
+        }
+      } else {
+        // Dark Void
+        this.createTone(42.0, t, 0.8, 'sine', this.musicVolume * 0.45);
+        if (this.step % 4 === 0) {
+          this.createTone(65.41, t, 0.9, 'sawtooth', this.musicVolume * 0.18);
+          this.createTone(92.5, t, 0.9, 'triangle', this.musicVolume * 0.18);
         }
       }
 
-      step++;
+      this.step++;
     }, intervalMs);
   }
 
@@ -329,11 +402,11 @@ export class AudioSystem {
 
   private playVictoryFanfare(t: number): void {
     const fanfareNotes = [
-      { f: 523.25, d: 0.12 }, // C5
-      { f: 523.25, d: 0.12 }, // C5
-      { f: 523.25, d: 0.12 }, // C5
-      { f: 659.25, d: 0.35 }, // E5
-      { f: 783.99, d: 0.5 },  // G5
+      { f: 523.25, d: 0.12 },
+      { f: 523.25, d: 0.12 },
+      { f: 523.25, d: 0.12 },
+      { f: 659.25, d: 0.35 },
+      { f: 783.99, d: 0.5 },
     ];
 
     let offset = 0;

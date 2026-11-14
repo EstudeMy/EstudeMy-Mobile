@@ -64,24 +64,4 @@ export const CHARACTERS_DATA: Record<string, CharacterBaseDefinition> = {
     defaultSkinId: 'mago_arcanista',
     skins: ['mago_arcanista', 'mago_necromante_espectral'],
   },
-
-  arqueira: {
-    id: 'arqueira',
-    name: 'Lyra',
-    classTitle: 'Arqueira dos Bosques',
-    lore: 'Patrulheira atenta com visão além do alcance. Suas flechas encontram a verdade em meio às ilusões dos monstros, acertando fraquezas com precisão cirúrgica.',
-    baseStats: {
-      hp: 95,
-      maxHp: 95,
-      atk: 26,
-      def: 10,
-      spd: 20,
-      critRate: 0.22,
-      critDamage: 1.9,
-      ultCharge: 0,
-      maxUltCharge: 100,
-    },
-    defaultSkinId: 'arqueira_silvestre',
-    skins: ['arqueira_silvestre', 'arqueira_sniper_sonica'],
-  },
 };

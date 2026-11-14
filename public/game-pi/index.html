@@ -8,7 +8,7 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Jaro&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Jaro&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 
     <style>
         * {
@@ -39,11 +39,11 @@
             max-height: 768px;
             aspect-ratio: 16 / 9;
             overflow: hidden;
-            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.95);
             background-color: #0a0d18;
         }
 
-        /* Camada 1: Background Cenário com Parallax */
+        /* Camada 1: Background Cenário Temático por Fase */
         #bg-layer {
             position: absolute;
             top: 0;
@@ -52,8 +52,8 @@
             height: 100%;
             object-fit: cover;
             object-position: center bottom;
-            filter: brightness(0.72) contrast(1.15);
-            transition: opacity 0.5s ease-in-out;
+            filter: brightness(0.78) contrast(1.12);
+            transition: opacity 0.4s ease-in-out;
             z-index: 1;
         }
 
@@ -63,13 +63,13 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at center, rgba(0,0,0,0) 40%, rgba(0,0,0,0.85) 100%),
-                        linear-gradient(to top, rgba(10,13,24,0.95) 0%, rgba(0,0,0,0) 35%);
+            background: radial-gradient(circle at center, rgba(0,0,0,0) 45%, rgba(0,0,0,0.85) 100%),
+                        linear-gradient(to top, rgba(10,13,24,0.92) 0%, rgba(0,0,0,0) 30%);
             z-index: 2;
             pointer-events: none;
         }
 
-        /* Camada 2: Canvas de Efeitos, Partículas e HUD */
+        /* Camada 2: Canvas de Efeitos e Partículas Climáticas */
         #fx-canvas {
             position: absolute;
             top: 0;
@@ -80,7 +80,7 @@
             pointer-events: none;
         }
 
-        /* Camada 3: Sprites dos Personagens (GIFs Reais com Animações) */
+        /* Camada 3: Atores da Batalha (Heróis e Chefes Firmemente no Chão) */
         .stage-actors {
             position: absolute;
             top: 0;
@@ -93,31 +93,65 @@
 
         .actor-wrapper {
             position: absolute;
-            bottom: 24%;
+            bottom: 15%;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-end;
-            transition: transform 0.25s ease-out, filter 0.3s ease;
+            transition: transform 0.25s ease-out, filter 0.3s ease, bottom 0.4s ease, left 0.4s ease, right 0.4s ease;
         }
 
         #player-wrapper {
-            left: 14%;
+            left: 18%;
         }
 
         #boss-wrapper {
-            right: 14%;
+            right: 18%;
         }
 
         .actor-sprite {
-            max-height: 230px;
+            max-height: 235px;
             image-rendering: pixelated;
             image-rendering: crisp-edges;
-            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.7));
+            filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.75));
             transition: filter 0.3s ease, transform 0.2s ease;
+            z-index: 2;
         }
 
-        /* Auras de Skins para o Jogador */
+        /* Sombra de Contato Fisiológica com o Chão (Pés firmemente no terreno) */
+        .actor-contact-shadow {
+            width: 155px;
+            height: 24px;
+            background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 45%, rgba(0, 0, 0, 0) 75%);
+            border-radius: 50%;
+            margin-top: -14px;
+            z-index: 1;
+            transform: scale(1);
+            transition: transform 0.3s ease, opacity 0.3s ease;
+        }
+
+        /* Apenas Inimigos Voadores (como Spectre ou Gárgula) Levitem */
+        .actor-wrapper.is-flying .actor-sprite {
+            animation: float-levitate 3.2s ease-in-out infinite alternate;
+        }
+
+        .actor-wrapper.is-flying .actor-contact-shadow {
+            animation: shadow-breathe 3.2s ease-in-out infinite alternate;
+        }
+
+        @keyframes float-levitate {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-16px); }
+            100% { transform: translateY(-4px); }
+        }
+
+        @keyframes shadow-breathe {
+            0% { transform: scale(1); opacity: 0.75; }
+            50% { transform: scale(0.72); opacity: 0.35; }
+            100% { transform: scale(0.9); opacity: 0.65; }
+        }
+
+        /* Auras de Skins para o Herói */
         .skin-cyber-void {
             filter: drop-shadow(0 0 20px #a855f7) hue-rotate(180deg) brightness(1.2) !important;
         }
@@ -127,148 +161,80 @@
         .skin-necromante {
             filter: drop-shadow(0 0 20px #10b981) hue-rotate(85deg) contrast(1.3) !important;
         }
-        .skin-sniper-sonica {
-            filter: drop-shadow(0 0 22px #06b6d4) hue-rotate(150deg) brightness(1.15) !important;
-        }
 
         .actor-nameplate {
             margin-top: 8px;
-            padding: 3px 12px;
-            background: rgba(15, 23, 42, 0.85);
+            padding: 4px 14px;
+            background: rgba(15, 23, 42, 0.88);
             border: 1px solid rgba(255, 255, 255, 0.2);
             border-radius: 6px;
             font-size: 13px;
             font-weight: 800;
             letter-spacing: 1px;
             text-transform: uppercase;
-            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.65);
+            z-index: 3;
         }
 
-        /* Camada 4: Barra Superior de Controles e Modos */
-        #top-control-bar {
+        /* Camada 4: Barra Superior Limpa do Jogo (Sem Seletores de Debug) */
+        #game-top-bar {
             position: absolute;
-            top: 8px;
-            left: 10px;
-            right: 10px;
+            top: 12px;
+            left: 18px;
+            right: 18px;
             display: flex;
-            flex-direction: column;
-            gap: 6px;
+            justify-content: space-between;
+            align-items: center;
             z-index: 10;
             pointer-events: auto;
         }
 
-        .control-row {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            width: 100%;
-        }
-
-        .control-pill-group {
+        /* Esquerda: Identificador da Trilha e Fase Atual */
+        #mission-info-badge {
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 10px;
             background: rgba(10, 13, 24, 0.88);
-            padding: 4px 8px;
-            border-radius: 8px;
-            border: 1px solid rgba(255, 255, 255, 0.15);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            border-radius: 10px;
+            padding: 8px 14px;
             backdrop-filter: blur(8px);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+            box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+            min-width: 250px;
         }
 
-        .group-label {
+        .badge-icon {
+            font-size: 18px;
+        }
+
+        .mission-text-container {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        #mission-track-text {
             font-size: 10px;
             font-weight: 900;
             color: #38bdf8;
-            letter-spacing: 0.8px;
-            padding: 0 4px;
+            letter-spacing: 1.2px;
             text-transform: uppercase;
         }
 
-        .ctrl-btn {
-            background: #1e293b;
-            color: #cbd5e1;
-            border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 5px 10px;
-            border-radius: 6px;
-            font-size: 11px;
-            font-weight: 700;
-            cursor: pointer;
-            transition: all 0.2s;
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .ctrl-btn:hover {
-            background: #334155;
-            color: #ffffff;
-            border-color: #38bdf8;
-        }
-
-        .ctrl-btn.active {
-            background: #0284c7;
-            color: #ffffff;
-            border-color: #38bdf8;
-            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
-        }
-
-        /* Banner de Notificação de Fase */
-        #phase-banner {
-            position: absolute;
-            top: 76px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: rgba(15, 23, 42, 0.9);
-            border: 1px solid #38bdf8;
-            border-radius: 20px;
-            padding: 4px 16px;
-            font-size: 11px;
+        #mission-phase-text {
+            font-size: 13px;
             font-weight: 800;
             color: #f8fafc;
-            letter-spacing: 1px;
-            z-index: 5;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
-            pointer-events: none;
-            display: flex;
-            align-items: center;
-            gap: 6px;
+            letter-spacing: 0.5px;
         }
 
-        /* Banner de Ativação de Áudio */
-        #audio-unlock-overlay {
-            position: absolute;
-            top: 108px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: linear-gradient(135deg, #1e293b, #0f172a);
-            border: 1.5px solid #facc15;
-            border-radius: 24px;
-            padding: 6px 18px;
-            font-size: 12px;
-            font-weight: 800;
-            color: #fef08a;
-            cursor: pointer;
-            z-index: 25;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            box-shadow: 0 0 20px rgba(250, 204, 21, 0.4);
-            animation: pulse-glow 1.2s infinite alternate;
-        }
-
-        /* Camada 5: HUD de Batalha (Top Boss HP e Bottom Player HUD) */
+        /* Centro: Barra de Vida do Chefe / Inimigo */
         #boss-hud {
-            position: absolute;
-            top: 56px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 520px;
-            background: rgba(10, 13, 24, 0.9);
+            width: 480px;
+            background: rgba(10, 13, 24, 0.92);
             border: 2px solid #334155;
             border-radius: 10px;
-            padding: 10px 16px;
-            z-index: 5;
+            padding: 8px 16px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
         }
 
@@ -277,15 +243,15 @@
             justify-content: space-between;
             align-items: center;
             margin-bottom: 6px;
-            font-size: 14px;
+            font-size: 13px;
             font-weight: 900;
         }
 
         .boss-bar-track {
             width: 100%;
-            height: 18px;
+            height: 16px;
             background: #1e293b;
-            border-radius: 6px;
+            border-radius: 5px;
             overflow: hidden;
             position: relative;
             border: 1px solid rgba(255, 255, 255, 0.1);
@@ -309,6 +275,81 @@
             text-shadow: 0 1px 3px #000000;
         }
 
+        /* Direita: Controles In-Game (Skin, Áudio e Sair) */
+        #top-actions-group {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .top-action-btn {
+            background: rgba(15, 23, 42, 0.88);
+            color: #f1f5f9;
+            border: 1px solid rgba(255, 255, 255, 0.18);
+            border-radius: 8px;
+            padding: 8px 14px;
+            font-size: 12px;
+            font-weight: 800;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+        }
+
+        .top-action-btn:hover {
+            background: #334155;
+            color: #ffffff;
+            border-color: #38bdf8;
+            transform: translateY(-1px);
+        }
+
+        #btn-skin-toggle {
+            border-color: rgba(250, 204, 21, 0.4);
+            color: #fef08a;
+        }
+
+        #btn-skin-toggle:hover {
+            border-color: #facc15;
+            box-shadow: 0 0 12px rgba(250, 204, 21, 0.4);
+        }
+
+        .exit-btn {
+            border-color: rgba(239, 68, 68, 0.4);
+            color: #fca5a5;
+        }
+
+        .exit-btn:hover {
+            background: #7f1d1d;
+            border-color: #ef4444;
+            color: #ffffff;
+        }
+
+        /* Banner de Ativação de Áudio (caso bloqueado pelo navegador) */
+        #audio-unlock-overlay {
+            position: absolute;
+            top: 86px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1.5px solid #facc15;
+            border-radius: 24px;
+            padding: 6px 20px;
+            font-size: 12px;
+            font-weight: 800;
+            color: #fef08a;
+            cursor: pointer;
+            z-index: 25;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 20px rgba(250, 204, 21, 0.45);
+            animation: pulse-glow 1.2s infinite alternate;
+        }
+
+        /* Camada 5: HUD Inferior do Herói (Vida e Ultimate) */
         #player-hud {
             position: absolute;
             bottom: 20px;
@@ -316,18 +357,19 @@
             display: flex;
             align-items: center;
             gap: 16px;
-            background: rgba(10, 13, 24, 0.9);
+            background: rgba(10, 13, 24, 0.92);
             border: 2px solid #334155;
             border-radius: 10px;
             padding: 12px 18px;
             z-index: 5;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
         }
 
         .bar-group {
             display: flex;
             flex-direction: column;
             gap: 4px;
-            width: 220px;
+            width: 210px;
         }
 
         .bar-label {
@@ -378,18 +420,18 @@
             to { transform: scale(1.06); box-shadow: 0 0 22px #facc15; }
         }
 
-        /* Camada 6: Cartão de Perguntas Pedagógicas */
+        /* Camada 6: Cartão Pedagógico de Perguntas e Respostas */
         #quiz-box {
             position: absolute;
             bottom: 20px;
             right: 20px;
-            left: 450px;
-            background: rgba(10, 13, 24, 0.92);
+            left: 440px;
+            background: rgba(10, 13, 24, 0.94);
             border: 2px solid #38bdf8;
             border-radius: 12px;
             padding: 14px 20px;
             z-index: 6;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(8px);
         }
 
@@ -456,7 +498,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.6);
+            background: rgba(0, 0, 0, 0.65);
             z-index: 20;
             display: none;
             flex-direction: column;
@@ -470,7 +512,7 @@
             border-radius: 16px;
             padding: 24px 36px;
             text-align: center;
-            box-shadow: 0 0 40px rgba(250, 204, 21, 0.4);
+            box-shadow: 0 0 40px rgba(250, 204, 21, 0.45);
         }
 
         .qte-title {
@@ -547,102 +589,78 @@
 <body>
 
     <div id="game-container">
-        <!-- 1. Background Dinâmico da Trilha -->
-        <img id="bg-layer" src="assets/backgrounds/castelo.jpg" alt="Cenário de Batalha" />
+        <!-- 1. Background Cenário Temático da Fase -->
+        <img id="bg-layer" src="assets/backgrounds/castelo_fase1_portao.jpg" alt="Cenário de Batalha" />
         <div id="bg-vignette"></div>
 
-        <!-- 2. Canvas de Efeitos Especiais, Dano Flutuante e Raios -->
+        <!-- 2. Canvas de Efeitos Especiais e Partículas -->
         <canvas id="fx-canvas" width="1366" height="768"></canvas>
         <div id="screen-flash"></div>
 
-        <!-- 3. Atores do Jogo com Spritesheets Reais -->
+        <!-- 3. Atores do Jogo (Herói e Chefe com pés no chão e sombras) -->
         <div class="stage-actors">
-            <!-- Herói -->
+            <!-- Herói (Sempre apoiado no piso) -->
             <div id="player-wrapper" class="actor-wrapper">
                 <img id="player-sprite" class="actor-sprite" src="assets/sprites/samurai/idle.gif" alt="Herói" />
+                <div class="actor-contact-shadow"></div>
                 <div id="player-nameplate" class="actor-nameplate">Kaito Ronin</div>
             </div>
 
-            <!-- Chefe da Fase -->
-            <div id="boss-wrapper" class="actor-wrapper">
+            <!-- Chefe da Fase (is-flying apenas se voador) -->
+            <div id="boss-wrapper" class="actor-wrapper is-flying">
                 <img id="boss-sprite" class="actor-sprite" src="assets/sprites/spectre/idle.gif" alt="Chefe" />
+                <div class="actor-contact-shadow"></div>
                 <div id="boss-nameplate" class="actor-nameplate">Spectre do Código</div>
             </div>
         </div>
 
-        <!-- 4. Barra Superior de Controles de Modo, Skin, Cenário e Áudio -->
-        <div id="top-control-bar">
-            <!-- Linha 1: Trilhas Temáticas, Fases do Cenário e Áudio -->
-            <div class="control-row">
-                <div class="control-pill-group">
-                    <span class="group-label">Trilha:</span>
-                    <button class="ctrl-btn active" id="btn-theme-castelo" onclick="window.estudemyGame.setTheme('castelo')">🏰 Castelo</button>
-                    <button class="ctrl-btn" id="btn-theme-montanha" onclick="window.estudemyGame.setTheme('montanha')">⛰️ Montanha</button>
-                    <button class="ctrl-btn" id="btn-theme-deserto" onclick="window.estudemyGame.setTheme('deserto')">🏜️ Deserto</button>
-                    <button class="ctrl-btn" id="btn-theme-vila" onclick="window.estudemyGame.setTheme('vila')">🏡 Vila</button>
-                    <button class="ctrl-btn" id="btn-theme-vazio" onclick="window.estudemyGame.setTheme('vazio_cosmico')">🌌 Vazio</button>
-                </div>
-
-                <div class="control-pill-group" id="phases-pill-group">
-                    <span class="group-label">Fase / Cenário:</span>
-                    <button class="ctrl-btn active" id="btn-fase-0" onclick="window.estudemyGame.setPhase(0)">Fase 1</button>
-                    <button class="ctrl-btn" id="btn-fase-1" onclick="window.estudemyGame.setPhase(1)">Fase 2</button>
-                    <button class="ctrl-btn" id="btn-fase-2" onclick="window.estudemyGame.setPhase(2)">Fase 3</button>
-                    <button class="ctrl-btn" id="btn-fase-3" onclick="window.estudemyGame.setPhase(3)">Fase 4</button>
-                </div>
-
-                <div class="control-pill-group">
-                    <button class="ctrl-btn" id="btn-audio-toggle" onclick="window.estudemyGame.toggleAudio()">🔊 Música: ON</button>
-                    <button class="ctrl-btn" onclick="window.jogar_voltar_js ? window.jogar_voltar_js() : history.back()">🚪 Sair</button>
+        <!-- 4. Barra Superior Limpa do Jogo (Sem Seletores de Debug) -->
+        <header id="game-top-bar">
+            <!-- Esquerda: Informações da Missão e Trilha -->
+            <div id="mission-info-badge">
+                <span class="badge-icon">📍</span>
+                <div class="mission-text-container">
+                    <span id="mission-track-text">TRILHA: CASTELO DOS DADOS</span>
+                    <span id="mission-phase-text">Muralha e Portão dos Algoritmos — Fase 1/4</span>
                 </div>
             </div>
 
-            <!-- Linha 2: Modos de Jogo, Personagem e Skins Exclusivas -->
-            <div class="control-row">
-                <div class="control-pill-group">
-                    <span class="group-label">Modo:</span>
-                    <button class="ctrl-btn active" id="btn-mode-campanha" onclick="window.estudemyGame.setGameMode('campanha')">⚔️ Campanha</button>
-                    <button class="ctrl-btn" id="btn-mode-speedrun" onclick="window.estudemyGame.setGameMode('speedrun')">⏱️ Speedrun</button>
-                    <button class="ctrl-btn" id="btn-mode-sobrevivencia" onclick="window.estudemyGame.setGameMode('sobrevivencia')">🛡️ Sobrevivência</button>
-                    <button class="ctrl-btn" id="btn-mode-boss_rush" onclick="window.estudemyGame.setGameMode('boss_rush')">👑 Boss Rush</button>
+            <!-- Centro: Barra de Vida do Chefe Multi-Fase -->
+            <div id="boss-hud">
+                <div class="boss-info-row">
+                    <span id="boss-title-text">👑 SPECTRE DO CÓDIGO</span>
+                    <span id="boss-phase-text" style="color: #facc15;">FASE 1/1</span>
                 </div>
-
-                <div class="control-pill-group">
-                    <span class="group-label">Herói:</span>
-                    <button class="ctrl-btn active" id="btn-char-samurai" onclick="window.estudemyGame.setCharacter('samurai')">🥋 Kaito</button>
-                    <button class="ctrl-btn" id="btn-char-guerreiro" onclick="window.estudemyGame.setCharacter('guerreiro')">🛡️ Boran</button>
-                    <button class="ctrl-btn" id="btn-char-mago" onclick="window.estudemyGame.setCharacter('mago')">🧙 Valerius</button>
-                    <button class="ctrl-btn" id="btn-char-arqueira" onclick="window.estudemyGame.setCharacter('arqueira')">🏹 Lyra</button>
-                    <button class="ctrl-btn" id="btn-skin-toggle" onclick="window.estudemyGame.cycleSkin()" style="border-color: #facc15; color: #facc15;">👘 Trocar Skin</button>
+                <div class="boss-bar-track">
+                    <div id="boss-bar-fill" class="boss-bar-fill"></div>
+                    <div id="boss-hp-text" class="boss-hp-text">100 / 100 HP</div>
                 </div>
             </div>
-        </div>
 
-        <!-- Banner Indicador de Fase e Cenário -->
-        <div id="phase-banner">
-            <span>📍</span>
-            <span id="phase-banner-text">Muralha e Portão dos Algoritmos — Fase 1/4</span>
-        </div>
+            <!-- Direita: Controles In-Game (Skin, Áudio e Sair) -->
+            <div id="top-actions-group">
+                <button class="top-action-btn" id="btn-skin-toggle" onclick="window.estudemyGame.cycleSkin()" title="Alternar Skin do Herói">
+                    <span>👘</span>
+                    <span id="skin-btn-text">Skin: Padrão</span>
+                </button>
+                <button class="top-action-btn" id="btn-audio-toggle" onclick="window.estudemyGame.toggleAudio()" title="Alternar Áudio">
+                    <span id="audio-btn-icon">🔊</span>
+                    <span id="audio-btn-text">Som: ON</span>
+                </button>
+                <button class="top-action-btn exit-btn" onclick="window.jogar_voltar_js ? window.jogar_voltar_js() : history.back()" title="Voltar para a Trilha">
+                    <span>🚪</span>
+                    <span>Sair</span>
+                </button>
+            </div>
+        </header>
 
-        <!-- Botão Flutuante de Inicialização de Som caso o navegador bloqueie autoplay -->
+        <!-- Botão Flutuante de Inicialização de Som se bloqueado pelo navegador -->
         <div id="audio-unlock-overlay" onclick="window.estudemyGame.unlockAudioUserAction()">
             <span>🎵</span>
             <span>Ativar Trilha Sonora e Efeitos</span>
         </div>
 
-        <!-- 5. Barra Superior de Vida do Chefe Multi-Fase -->
-        <div id="boss-hud">
-            <div class="boss-info-row">
-                <span id="boss-title-text">👑 SPECTRE DO CÓDIGO</span>
-                <span id="boss-phase-text" style="color: #facc15;">FASE 1/1</span>
-            </div>
-            <div class="boss-bar-track">
-                <div id="boss-bar-fill" class="boss-bar-fill"></div>
-                <div id="boss-hp-text" class="boss-hp-text">100 / 100 HP</div>
-            </div>
-        </div>
-
-        <!-- 6. HUD Inferior do Jogador (Vida e Ultimate) -->
+        <!-- 5. HUD Inferior do Herói (Vida e Ultimate) -->
         <div id="player-hud">
             <div class="bar-group">
                 <div class="bar-label">
@@ -664,7 +682,7 @@
             <button id="btn-ultimate" onclick="window.estudemyGame.triggerUltimate()">⚡ ULTIMATE [ESPAÇO]</button>
         </div>
 
-        <!-- 7. Cartão Pedagógico de Perguntas e Respostas -->
+        <!-- 6. Cartão Pedagógico de Perguntas e Respostas -->
         <div id="quiz-box">
             <div id="question-title">Carregando pergunta de aprendizado...</div>
             <div id="alternatives-grid">
@@ -688,7 +706,7 @@
             <div id="pedagogical-feedback"></div>
         </div>
 
-        <!-- 8. Overlay de Quick Time Events (QTE) -->
+        <!-- 7. Overlay de Quick Time Events (QTE) -->
         <div id="qte-modal">
             <div class="qte-card">
                 <div id="qte-prompt-label" class="qte-title">COMBO RELÂMPAGO!</div>
@@ -701,8 +719,8 @@
     </div>
 
     <!-- Scripts de Ponte e Motor de Jogo -->
-    <script type="text/javascript" src="html5game/tph_pontedados.js?v=20261114_overhaul"></script>
-    <script type="text/javascript" src="html5game/estudemy_game_engine.js?v=20261114_overhaul"></script>
+    <script type="text/javascript" src="html5game/tph_pontedados.js?v=20261114_overhaul_v2"></script>
+    <script type="text/javascript" src="html5game/estudemy_game_engine.js?v=20261114_overhaul_v2"></script>
 
 </body>
 </html>

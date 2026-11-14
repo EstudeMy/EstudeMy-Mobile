@@ -308,7 +308,7 @@ export const STAGES_DATA: Record<string, StageThemeConfig> = {
         hp: 90,
         atk: 23,
         def: 9,
-        spriteKey: 'arqueira',
+        spriteKey: 'spectre',
         tauntQuote: 'A luz do deserto queima sua hesitação!',
       },
     ],

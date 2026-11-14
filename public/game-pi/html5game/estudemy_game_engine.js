@@ -1,19 +1,32 @@
 /**
- * ESTUDEMY RPG ENGINE - VERSÃO COMPLETA OVERHAUL
- * Integração de Sprites Reais, Backgrounds Temáticos, Trilha Sonora Sintetizada, Skins e QTEs
+ * ESTUDEMY RPG ENGINE - VERSÃO OVERHAUL V2
+ * - Cenários exclusivos com 19 backgrounds temáticos integrados
+ * - Atores ancorados no chão com sombras de contato (apenas voadores levitam)
+ * - 5 Trilhas Sonoras Sintetizadas Autênticas:
+ *     1. Castelo: Orquestra Gótica (Órgão de tubos, sino de catedral, escala menor harmônica)
+ *     2. Deserto: Orquestra Antiga Árabe (Maqam Hijaz, Oud/Alaúde, percussão Darbuka)
+ *     3. Vila: Tema com Bardos (Flauta celta/tin whistle, alaúde folk em 6/8)
+ *     4. Vazio: Tema Dark Sombrio Cósmico (Drone sub-grave 42Hz, trítonos, horror cósmico)
+ *     5. Montanha: Tema Viking/Nórdico (Tambores de guerra épicos, trompa Gjallarhorn em 5as)
+ * - Efeitos Sonoros (SFX): Espadas, Magias/Poderes, Flechas, Pancadas pesadas e Trovão
+ * - 3 Heróis Oficiais: Samurai, Guerreiro e Mago (com suas skins e golpes exclusivos)
+ * - Integração automática com dados do perfil e da trilha sem botões de debug na tela
  */
 
 (function () {
   'use strict';
 
   // ============================================================================
-  // 1. CONFIGURAÇÕES VISUAIS: SPRITES, SKINS E CENÁRIOS EXCLUSIVOS POR FASE
+  // 1. CONFIGURAÇÕES VISUAIS: CENÁRIOS POR TRILHA E FASE
   // ============================================================================
   const THEMES_CONFIG = {
     castelo: {
       name: 'Castelo dos Dados',
+      trackLabel: 'TRILHA: CASTELO DOS DADOS',
       defaultBoss: 'spectre',
-      musicKey: 'battle',
+      musicKey: 'gothic_orchestra',
+      bottomOffset: '14%',
+      sideOffset: '18%',
       phases: [
         { id: 1, name: 'Muralha e Portão dos Algoritmos', bgImg: 'assets/backgrounds/castelo_fase1_portao.jpg', weather: 'embers' },
         { id: 2, name: 'Grande Salão dos Dados', bgImg: 'assets/backgrounds/castelo_fase2_salao.jpg', weather: 'embers' },
@@ -23,8 +36,11 @@
     },
     montanha: {
       name: 'Pico da Lógica',
+      trackLabel: 'TRILHA: PICO DA LÓGICA',
       defaultBoss: 'mago',
-      musicKey: 'battle',
+      musicKey: 'viking_mountains',
+      bottomOffset: '17%',
+      sideOffset: '21%',
       phases: [
         { id: 1, name: 'Encosta Nevada dos Vetores', bgImg: 'assets/backgrounds/montanha_fase1_encosta.jpg', weather: 'snow' },
         { id: 2, name: 'Desfiladeiro da Gravidade', bgImg: 'assets/backgrounds/montanha_fase2_desfiladeiro.jpg', weather: 'snow' },
@@ -34,8 +50,11 @@
     },
     deserto: {
       name: 'Deserto Primordial',
+      trackLabel: 'TRILHA: DESERTO PRIMORDIAL',
       defaultBoss: 'spectre',
-      musicKey: 'battle',
+      musicKey: 'arabic_desert',
+      bottomOffset: '14%',
+      sideOffset: '18%',
       phases: [
         { id: 1, name: 'Dunas Escaldantes da Erosão', bgImg: 'assets/backgrounds/deserto_fase1_dunas.jpg', weather: 'sand' },
         { id: 2, name: 'Oásis dos Fósseis Antigos', bgImg: 'assets/backgrounds/deserto_fase2_oasis.jpg', weather: 'sand' },
@@ -45,8 +64,11 @@
     },
     vila: {
       name: 'Vila Ancestral',
+      trackLabel: 'TRILHA: VILA ANCESTRAL',
       defaultBoss: 'cavaleiro',
-      musicKey: 'battle',
+      musicKey: 'bard_village',
+      bottomOffset: '14%',
+      sideOffset: '18%',
       phases: [
         { id: 1, name: 'Praça do Mercado das Crônicas', bgImg: 'assets/backgrounds/vila_fase1_mercado.jpg', weather: 'leaves' },
         { id: 2, name: 'Grande Arquivo e Biblioteca Arcana', bgImg: 'assets/backgrounds/vila_fase2_biblioteca.jpg', weather: 'leaves' },
@@ -56,8 +78,11 @@
     },
     vazio_cosmico: {
       name: 'Vazio Cósmico',
+      trackLabel: 'TRILHA: VAZIO CÓSMICO',
       defaultBoss: 'chefe_final',
-      musicKey: 'final_boss',
+      musicKey: 'dark_void',
+      bottomOffset: '15%',
+      sideOffset: '18%',
       phases: [
         { id: 1, name: 'Fragmentos dos Tomos Perdidos', bgImg: 'assets/backgrounds/vazio_fase1_fragmentos.jpg', weather: 'cosmic' },
         { id: 2, name: 'Nebulosa da Entropia Cósmica', bgImg: 'assets/backgrounds/vazio_fase2_nebulosa.jpg', weather: 'cosmic' },
@@ -66,37 +91,36 @@
     },
   };
 
+  // 3 Heróis Oficiais de EstudeMy (Samurai, Guerreiro e Mago)
   const CHARACTERS_CONFIG = {
     samurai: {
       name: 'Kaito',
       spriteFolder: 'assets/sprites/samurai',
+      attackSound: 'sword_slash',
+      clashSound: 'sword_clash',
       skins: [
-        { id: 'samurai_ronin', name: 'Kaito Ronin', cssClass: '', ultName: 'Dança das Mil Lâminas' },
-        { id: 'samurai_cyber_void', name: 'Kaito Cyber-Void', cssClass: 'skin-cyber-void', ultName: 'Julgamento Omnislash' },
+        { id: 'samurai_ronin', name: 'Kaito Ronin', shortName: 'Ronin', cssClass: '', ultName: 'Dança das Mil Lâminas' },
+        { id: 'samurai_cyber_void', name: 'Kaito Cyber-Void', shortName: 'Cyber-Void', cssClass: 'skin-cyber-void', ultName: 'Julgamento Omnislash' },
       ],
     },
     guerreiro: {
       name: 'Boran',
       spriteFolder: 'assets/sprites/cavaleiro',
+      attackSound: 'heavy_impact',
+      clashSound: 'shield_block',
       skins: [
-        { id: 'guerreiro_templario', name: 'Boran da Ordem', cssClass: '', ultName: 'Investida Sagrada' },
-        { id: 'guerreiro_berserker_lava', name: 'Boran Vulcânico', cssClass: 'skin-berserker-lava', ultName: 'Erupção Titânica' },
+        { id: 'guerreiro_templario', name: 'Boran da Ordem', shortName: 'Ordem', cssClass: '', ultName: 'Investida Sagrada' },
+        { id: 'guerreiro_berserker_lava', name: 'Boran Vulcânico', shortName: 'Vulcânico', cssClass: 'skin-berserker-lava', ultName: 'Erupção Titânica' },
       ],
     },
     mago: {
       name: 'Valerius',
       spriteFolder: 'assets/sprites/mago',
+      attackSound: 'magic_cast',
+      clashSound: 'magic_impact',
       skins: [
-        { id: 'mago_arcanista', name: 'Valerius Arcano', cssClass: '', ultName: 'Meteoro Cósmico' },
-        { id: 'mago_necromante_espectral', name: 'Valerius das Sombras', cssClass: 'skin-necromante', ultName: 'Apocalipse das Almas' },
-      ],
-    },
-    arqueira: {
-      name: 'Lyra',
-      spriteFolder: 'assets/sprites/arqueira',
-      skins: [
-        { id: 'arqueira_silvestre', name: 'Lyra dos Bosques', cssClass: '', ultName: 'Chuva de Flechas' },
-        { id: 'arqueira_sniper_sonica', name: 'Lyra Railgun', cssClass: 'skin-sniper-sonica', ultName: 'Disparo Orbital Sônico' },
+        { id: 'mago_arcanista', name: 'Valerius Arcano', shortName: 'Arcano', cssClass: '', ultName: 'Meteoro Cósmico' },
+        { id: 'mago_necromante_espectral', name: 'Valerius das Sombras', shortName: 'Sombras', cssClass: 'skin-necromante', ultName: 'Apocalipse das Almas' },
       ],
     },
   };
@@ -105,6 +129,8 @@
     spectre: {
       name: 'Spectre do Código',
       spriteFolder: 'assets/sprites/spectre',
+      isFlying: true, // Único que flutua no ar
+      attackSound: 'magic_cast',
       phases: [
         { name: 'Manifestação Ectoplasmática', hpMax: 100, barColor: '#38bdf8', atk: 18 },
       ],
@@ -112,6 +138,8 @@
     cavaleiro: {
       name: 'Cavaleiro Decaído',
       spriteFolder: 'assets/sprites/cavaleiro',
+      isFlying: false, // Pés firmemente no chão
+      attackSound: 'heavy_impact',
       phases: [
         { name: 'Fase I: Postura Implacável', hpMax: 120, barColor: '#3b82f6', atk: 20 },
         { name: 'Fase II: Fúria da Armadura Quebrada', hpMax: 150, barColor: '#ef4444', atk: 30 },
@@ -120,6 +148,8 @@
     mago: {
       name: 'Mago Corrompido',
       spriteFolder: 'assets/sprites/mago',
+      isFlying: false, // Pés firmemente no chão
+      attackSound: 'magic_cast',
       phases: [
         { name: 'Fase I: Ilusão de Fórmulas', hpMax: 110, barColor: '#a855f7', atk: 22 },
         { name: 'Fase II: Tempestade de Caos', hpMax: 160, barColor: '#d946ef', atk: 34 },
@@ -127,7 +157,9 @@
     },
     chefe_final: {
       name: 'O Arquivista do Vazio',
-      spriteFolder: 'assets/sprites/mago', // Usa sprite de mago com aura dourada
+      spriteFolder: 'assets/sprites/mago',
+      isFlying: false, // Pés firmemente no chão
+      attackSound: 'thunder_ultimate',
       phases: [
         { name: 'Fase I: Tomos Apagados', hpMax: 140, barColor: '#8b5cf6', atk: 24 },
         { name: 'Fase II: Fúria da Entropia', hpMax: 180, barColor: '#ef4444', atk: 36 },
@@ -137,14 +169,14 @@
   };
 
   // ============================================================================
-  // 2. SISTEMA DE TRILHA SONORA & SFX COMPLETO (SINTETIZADOR MULTICANAL)
+  // 2. SISTEMA DE TRILHA SONORA TEMÁTICA & SFX PROCEDURAL COMPLETO
   // ============================================================================
   class SynthesizedSoundtrack {
     constructor() {
       this.ctx = null;
       this.isMuted = false;
       this.timer = null;
-      this.currentTrack = 'battle';
+      this.currentTrack = 'gothic_orchestra';
       this.step = 0;
     }
 
@@ -161,43 +193,45 @@
       } catch (e) {}
     }
 
-    start(track = 'battle') {
+    start(track = 'gothic_orchestra') {
       this.init();
       this.stop();
       this.currentTrack = track;
-      if (this.isMuted) return;
+      if (this.isMuted || !this.ctx) return;
 
-      // Escalas de batalha empolgantes no estilo 16-bit
-      const melodyBattle = [
-        440, 493.88, 523.25, 587.33, 659.25, 587.33, 523.25, 493.88,
-        440, 523.25, 659.25, 783.99, 659.25, 523.25, 440, 392,
-      ];
-      const melodyBoss = [
-        220, 246.94, 261.63, 293.66, 329.63, 293.66, 261.63, 246.94,
-        220, 261.63, 329.63, 392.00, 329.63, 261.63, 220, 196,
-      ];
-      const bassBattle = [110, 110, 130.81, 130.81, 146.83, 146.83, 110, 110];
+      this.step = 0;
 
-      const intervalMs = track === 'final_boss' ? 140 : 180;
+      // Tempos e intervalos por gênero musical
+      let intervalMs = 240;
+      if (track === 'viking_mountains') intervalMs = 260; // Marcha viking pesada
+      else if (track === 'arabic_desert') intervalMs = 175; // Ritmo sincopado árabe
+      else if (track === 'bard_village') intervalMs = 160; // Giga celta viva em 6/8
+      else if (track === 'dark_void') intervalMs = 420; // Drone atmosférico lento
+      else if (track === 'gothic_orchestra') intervalMs = 220; // Fuga barroca gótica
 
       this.timer = setInterval(() => {
         if (this.isMuted || !this.ctx) return;
         const t = this.ctx.currentTime;
-        const melody = track === 'final_boss' ? melodyBoss : melodyBattle;
-        const note = melody[this.step % melody.length];
-        const bassNote = bassBattle[Math.floor(this.step / 2) % bassBattle.length];
 
-        // 1. Canal de Melodia Líder (Square wave com vibrato leve)
-        this.playTone(note, t, 0.12, 'square', 0.12);
-
-        // 2. Canal de Baixo Pulsante (Triangle wave)
-        if (this.step % 2 === 0) {
-          this.playTone(bassNote, t, 0.16, 'triangle', 0.22);
-        }
-
-        // 3. Canal de Percussão (Ruído branco como chimbal/caixa)
-        if (this.step % 2 === 1) {
-          this.playNoise(t, 0.05, 0.08);
+        switch (this.currentTrack) {
+          case 'gothic_orchestra':
+            this.tickGothicCastle(t, this.step);
+            break;
+          case 'arabic_desert':
+            this.tickArabicDesert(t, this.step);
+            break;
+          case 'bard_village':
+            this.tickBardVillage(t, this.step);
+            break;
+          case 'dark_void':
+            this.tickDarkVoid(t, this.step);
+            break;
+          case 'viking_mountains':
+            this.tickVikingMountain(t, this.step);
+            break;
+          default:
+            this.tickGothicCastle(t, this.step);
+            break;
         }
 
         this.step++;
@@ -221,13 +255,231 @@
       return !this.isMuted;
     }
 
-    playTone(freq, time, duration, type, vol) {
+    // --------------------------------------------------------------------------
+    // 1. CASTELO: Orquestra Gótica (Pipe Organ, Sino de Catedral, Ré Menor Harmônico)
+    // --------------------------------------------------------------------------
+    tickGothicCastle(t, step) {
+      // Escala: Ré Menor Harmônico (D, E, F, G, A, Bb, C#)
+      const organMelody = [
+        293.66, 349.23, 440.0, 415.3, 440.0, 349.23, 293.66, 277.18,
+        293.66, 369.99, 440.0, 554.37, 440.0, 349.23, 293.66, 220.0,
+      ];
+      const celloBass = [73.42, 73.42, 87.31, 87.31, 69.3, 69.3, 73.42, 73.42];
+
+      const note = organMelody[step % organMelody.length];
+      const bass = celloBass[Math.floor(step / 2) % celloBass.length];
+
+      // Órgão de Tubos (Voz Dupla: Square filtrado + Sine com leve vibrato)
+      this.playPipeOrgan(note, t, 0.28, 0.14);
+
+      // Cello no contrabaixo
+      if (step % 2 === 0) {
+        this.playTone(bass, t, 0.38, 'sawtooth', 0.18, 500);
+      }
+
+      // Sino gótico solene a cada 16 compassos
+      if (step % 16 === 0) {
+        this.playCathedralBell(146.83, t, 2.2, 0.25);
+      }
+    }
+
+    // --------------------------------------------------------------------------
+    // 2. DESERTO: Orquestra Antiga Árabe (Maqam Hijaz, Alaúde/Oud, Darbuka)
+    // --------------------------------------------------------------------------
+    tickArabicDesert(t, step) {
+      // Escala Maqam Hijaz (D, Eb, F#, G, A, Bb, C)
+      const hijazOud = [
+        293.66, 311.13, 369.99, 392.0, 369.99, 311.13, 293.66, 261.63,
+        233.08, 220.0, 233.08, 293.66, 311.13, 369.99, 440.0, 369.99,
+      ];
+
+      const note = hijazOud[step % hijazOud.length];
+
+      // Alaúde / Oud Árabe (Ataque rápido de corda dedilhada com ressonância)
+      this.playPluckedString(note, t, 0.16, 0.22);
+
+      // Drone místico de fundo
+      if (step % 8 === 0) {
+        this.playTone(146.83, t, 1.2, 'triangle', 0.12);
+      }
+
+      // Percussão Darbuka / Doumbek (Dum-Tek-Tek-Dum-Tek)
+      const drumPattern = [1, 0, 2, 0, 2, 1, 0, 2]; // 1 = Dum (grave), 2 = Tek (estalo agudo)
+      const hit = drumPattern[step % drumPattern.length];
+      if (hit === 1) {
+        this.playDarbukaDum(t, 0.14, 0.28);
+      } else if (hit === 2) {
+        this.playDarbukaTek(t, 0.06, 0.18);
+      }
+    }
+
+    // --------------------------------------------------------------------------
+    // 3. VILA: Tema com Bardos (Flauta Celta / Tin Whistle, Alaúde em 6/8)
+    // --------------------------------------------------------------------------
+    tickBardVillage(t, step) {
+      // Melodia de Flauta Celta / Tin Whistle (Alegre e dançante)
+      const fluteMelody = [
+        587.33, 659.25, 783.99, 880.0, 783.99, 659.25,
+        587.33, 493.88, 523.25, 587.33, 659.25, 493.88,
+      ];
+      const luteChords = [146.83, 196.0, 220.0, 164.81];
+
+      const note = fluteMelody[step % fluteMelody.length];
+      const chordRoot = luteChords[Math.floor(step / 6) % luteChords.length];
+
+      // Flauta do Bardo (Onda Senoidal pura com sopro leve)
+      this.playFluteNote(note, t, 0.14, 0.18);
+
+      // Dedilhado do Alaúde em 6/8
+      if (step % 3 === 0) {
+        this.playTone(chordRoot, t, 0.25, 'triangle', 0.16);
+      } else if (step % 3 === 1) {
+        this.playTone(chordRoot * 1.5, t, 0.18, 'sine', 0.12);
+      }
+
+      // Pandeiro / Percussão de Taberna
+      if (step % 3 === 2) {
+        this.playTambourine(t, 0.05, 0.09);
+      }
+    }
+
+    // --------------------------------------------------------------------------
+    // 4. VAZIO CÓSMICO: Tema Mais Dark Sombrio (Sub-Bass 42Hz, Trítonos, Horror Cósmico)
+    // --------------------------------------------------------------------------
+    tickDarkVoid(t, step) {
+      // Sub-Bass 42Hz pulsante contínuo
+      this.playTone(42.0, t, 0.8, 'sine', 0.35);
+
+      // Acordes dissonantes de Trítono Cósmico (Tensão Infinita)
+      const cosmicPads = [
+        [65.41, 92.5],   // C2 e F#2 (Trítono do Vazio)
+        [61.74, 87.31],  // B1 e F2
+        [73.42, 103.83], // D2 e G#2
+        [58.27, 82.41],  // Bb1 e E2
+      ];
+
+      const pad = cosmicPads[Math.floor(step / 2) % cosmicPads.length];
+      if (step % 2 === 0) {
+        this.playTone(pad[0], t, 0.9, 'sawtooth', 0.12, 380);
+        this.playTone(pad[1], t, 0.9, 'triangle', 0.14, 450);
+      }
+
+      // Ecos cósmicos brilhantes esparsos
+      if (step % 4 === 1) {
+        const shimmer = 880 + Math.random() * 400;
+        this.playTone(shimmer, t, 0.35, 'sine', 0.05);
+      }
+    }
+
+    // --------------------------------------------------------------------------
+    // 5. MONTANHA: Tema Mais Viking / Nórdico (Tambores de Guerra, Gjallarhorn)
+    // --------------------------------------------------------------------------
+    tickVikingMountain(t, step) {
+      // Percussão tribal de tambores de guerra pesados (Taiko / Shamanic Drum)
+      // Ritmo Nórdico: DUM... DUM-DUM... DUM
+      const drumPattern = [1, 0, 1, 1, 0, 1, 0, 0];
+      if (drumPattern[step % drumPattern.length] === 1) {
+        this.playWarDrum(t, 0.22, 0.42);
+      }
+
+      // Trompa Nórdica / Gjallarhorn (Quintas Abertas D2 + A2 em Sawtooth filtrado)
+      if (step % 8 === 0) {
+        this.playGjallarhorn(73.42, t, 1.4, 0.28);
+        this.playGjallarhorn(110.0, t, 1.4, 0.22);
+      } else if (step % 8 === 4) {
+        this.playGjallarhorn(82.41, t, 1.2, 0.26);
+        this.playGjallarhorn(123.47, t, 1.2, 0.2);
+      }
+
+      // Lyra / Tagelharpa rítmica
+      if (step % 2 === 1) {
+        this.playTone(146.83, t, 0.15, 'sawtooth', 0.08, 600);
+      }
+    }
+
+    // --------------------------------------------------------------------------
+    // SÍNTESE DE INSTRUMENTOS
+    // --------------------------------------------------------------------------
+    playTone(freq, time, duration, type, vol, filterFreq = null) {
       if (!this.ctx || this.isMuted) return;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
 
       osc.type = type;
       osc.frequency.setValueAtTime(freq, time);
+
+      gain.gain.setValueAtTime(vol, time);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+      if (filterFreq) {
+        const filter = this.ctx.createBiquadFilter();
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(filterFreq, time);
+        osc.connect(filter);
+        filter.connect(gain);
+      } else {
+        osc.connect(gain);
+      }
+
+      gain.connect(this.ctx.destination);
+      osc.start(time);
+      osc.stop(time + duration);
+    }
+
+    playPipeOrgan(freq, time, duration, vol) {
+      if (!this.ctx || this.isMuted) return;
+      // Voz 1: Square com filtro quente
+      this.playTone(freq, time, duration, 'square', vol * 0.65, 1200);
+      // Voz 2: Senoide de oitava para corpo harmônico
+      this.playTone(freq * 2, time, duration, 'sine', vol * 0.5);
+    }
+
+    playCathedralBell(freq, time, duration, vol) {
+      if (!this.ctx || this.isMuted) return;
+      this.playTone(freq, time, duration, 'sine', vol);
+      this.playTone(freq * 2.76, time, duration * 0.7, 'triangle', vol * 0.4);
+      this.playTone(freq * 5.4, time, duration * 0.4, 'sine', vol * 0.2);
+    }
+
+    playPluckedString(freq, time, duration, vol) {
+      if (!this.ctx || this.isMuted) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, time);
+
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(freq * 2.5, time);
+      filter.Q.setValueAtTime(3, time);
+
+      gain.gain.setValueAtTime(vol, time);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(time);
+      osc.stop(time + duration);
+    }
+
+    playFluteNote(freq, time, duration, vol) {
+      if (!this.ctx || this.isMuted) return;
+      this.playTone(freq, time, duration, 'sine', vol);
+      // Leve sopro harmônico
+      this.playTone(freq * 2, time, duration * 0.8, 'triangle', vol * 0.25);
+    }
+
+    playWarDrum(time, duration, vol) {
+      if (!this.ctx || this.isMuted) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(120, time);
+      osc.frequency.exponentialRampToValueAtTime(32, time + duration);
 
       gain.gain.setValueAtTime(vol, time);
       gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
@@ -239,7 +491,52 @@
       osc.stop(time + duration);
     }
 
-    playNoise(time, duration, vol) {
+    playGjallarhorn(freq, time, duration, vol) {
+      if (!this.ctx || this.isMuted) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, time);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(600, time);
+      filter.Q.setValueAtTime(4, time);
+
+      // Envelope com ataque majestoso tipo trompa
+      gain.gain.setValueAtTime(0.0001, time);
+      gain.gain.linearRampToValueAtTime(vol, time + 0.15);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(time);
+      osc.stop(time + duration);
+    }
+
+    playDarbukaDum(time, duration, vol) {
+      if (!this.ctx || this.isMuted) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.frequency.setValueAtTime(170, time);
+      osc.frequency.exponentialRampToValueAtTime(65, time + duration);
+      gain.gain.setValueAtTime(vol, time);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+      osc.start(time);
+      osc.stop(time + duration);
+    }
+
+    playDarbukaTek(time, duration, vol) {
+      if (!this.ctx || this.isMuted) return;
+      this.playTone(850, time, duration, 'triangle', vol, 1400);
+    }
+
+    playTambourine(time, duration, vol) {
       if (!this.ctx || this.isMuted) return;
       const bufferSize = this.ctx.sampleRate * duration;
       const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
@@ -249,57 +546,165 @@
       const noise = this.ctx.createBufferSource();
       noise.buffer = buffer;
 
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.setValueAtTime(3500, time);
+
       const gain = this.ctx.createGain();
       gain.gain.setValueAtTime(vol, time);
       gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
 
-      noise.connect(gain);
+      noise.connect(filter);
+      filter.connect(gain);
       gain.connect(this.ctx.destination);
 
       noise.start(time);
       noise.stop(time + duration);
     }
 
+    // --------------------------------------------------------------------------
+    // EFEITOS SONOROS (SFX) PROCEDURAIS: ESPADAS, MAGIAS, FLECHAS, PANCADAS
+    // --------------------------------------------------------------------------
     playSFX(name) {
       this.init();
       if (!this.ctx || this.isMuted) return;
       const t = this.ctx.currentTime;
 
-      if (name === 'slash') {
-        this.playTone(340, t, 0.12, 'sawtooth', 0.4);
-        this.playTone(180, t + 0.05, 0.15, 'sawtooth', 0.45);
-      } else if (name === 'hit') {
-        this.playTone(120, t, 0.18, 'sawtooth', 0.5);
-        this.playNoise(t, 0.1, 0.35);
-      } else if (name === 'crit') {
-        this.playTone(880, t, 0.2, 'square', 0.45);
-        this.playTone(140, t + 0.02, 0.25, 'sawtooth', 0.55);
-      } else if (name === 'qte_alert') {
-        this.playTone(700, t, 0.08, 'square', 0.4);
-        this.playTone(1050, t + 0.07, 0.14, 'square', 0.45);
-      } else if (name === 'qte_success') {
-        this.playTone(523, t, 0.08, 'sine', 0.35);
-        this.playTone(659, t + 0.08, 0.08, 'sine', 0.35);
-        this.playTone(1046, t + 0.16, 0.25, 'triangle', 0.5);
-      } else if (name === 'qte_fail') {
-        this.playTone(220, t, 0.15, 'sawtooth', 0.4);
-        this.playTone(160, t + 0.12, 0.22, 'sawtooth', 0.45);
-      } else if (name === 'correct') {
-        this.playTone(440, t, 0.09, 'sine', 0.35);
-        this.playTone(659, t + 0.08, 0.2, 'sine', 0.45);
-      } else if (name === 'wrong') {
-        this.playTone(200, t, 0.18, 'sawtooth', 0.4);
-        this.playTone(150, t + 0.12, 0.22, 'sawtooth', 0.45);
-      } else if (name === 'victory') {
-        this.playTone(523, t, 0.12, 'triangle', 0.4);
-        this.playTone(659, t + 0.12, 0.12, 'triangle', 0.4);
-        this.playTone(783, t + 0.24, 0.35, 'triangle', 0.55);
+      switch (name) {
+        // Sons de Espada e Lâmina
+        case 'sword_slash':
+        case 'slash':
+          this.playTone(480, t, 0.08, 'sawtooth', 0.35);
+          this.playTone(220, t + 0.03, 0.12, 'sawtooth', 0.4);
+          this.playNoiseBurst(t, 0.08, 0.25, 2000);
+          break;
+
+        case 'sword_clash':
+          this.playTone(1200, t, 0.15, 'square', 0.35);
+          this.playTone(800, t + 0.02, 0.2, 'sawtooth', 0.3);
+          this.playTone(300, t, 0.18, 'triangle', 0.45);
+          break;
+
+        // Sons de Magias e Poderes Arcanos
+        case 'magic_cast':
+          this.playTone(440, t, 0.12, 'sine', 0.3);
+          this.playTone(659, t + 0.05, 0.15, 'sine', 0.35);
+          this.playTone(880, t + 0.1, 0.22, 'triangle', 0.4);
+          this.playTone(1320, t + 0.14, 0.25, 'sine', 0.3);
+          break;
+
+        case 'magic_impact':
+          this.playTone(160, t, 0.25, 'sawtooth', 0.5, 450);
+          this.playTone(880, t + 0.02, 0.2, 'square', 0.3);
+          this.playNoiseBurst(t + 0.04, 0.16, 0.4, 800);
+          break;
+
+        // Sons de Flecha
+        case 'arrow_whoosh':
+          this.playNoiseBurst(t, 0.12, 0.28, 3000);
+          this.playTone(600, t, 0.1, 'triangle', 0.2);
+          break;
+
+        case 'arrow_hit':
+          this.playTone(320, t, 0.08, 'sawtooth', 0.35);
+          this.playTone(180, t + 0.02, 0.12, 'triangle', 0.4);
+          break;
+
+        // Pancadas Pesadas e Impactos Contundentes
+        case 'heavy_impact':
+        case 'hit':
+          this.playWarDrum(t, 0.2, 0.6);
+          this.playTone(110, t, 0.2, 'sawtooth', 0.45);
+          this.playNoiseBurst(t, 0.12, 0.35, 1200);
+          break;
+
+        case 'shield_block':
+          this.playTone(320, t, 0.12, 'square', 0.4);
+          this.playTone(180, t + 0.04, 0.2, 'triangle', 0.45);
+          break;
+
+        // Trovão e Ultimate
+        case 'thunder_ultimate':
+          this.playNoiseBurst(t, 0.4, 0.65, 800);
+          this.playTone(85, t, 0.5, 'sawtooth', 0.65);
+          this.playWarDrum(t + 0.08, 0.4, 0.7);
+          break;
+
+        case 'crit':
+          this.playTone(980, t, 0.22, 'square', 0.45);
+          this.playTone(140, t + 0.02, 0.26, 'sawtooth', 0.55);
+          this.playNoiseBurst(t, 0.15, 0.4, 1500);
+          break;
+
+        // QTEs
+        case 'qte_alert':
+          this.playTone(740, t, 0.08, 'square', 0.4);
+          this.playTone(1100, t + 0.07, 0.14, 'square', 0.45);
+          break;
+
+        case 'qte_success':
+          this.playTone(523, t, 0.08, 'sine', 0.35);
+          this.playTone(659, t + 0.08, 0.08, 'sine', 0.35);
+          this.playTone(1046, t + 0.16, 0.25, 'triangle', 0.5);
+          break;
+
+        case 'qte_fail':
+          this.playTone(220, t, 0.15, 'sawtooth', 0.4);
+          this.playTone(150, t + 0.12, 0.24, 'sawtooth', 0.45);
+          break;
+
+        // Pedagógicos
+        case 'correct':
+          this.playTone(440, t, 0.09, 'sine', 0.35);
+          this.playTone(659, t + 0.08, 0.2, 'sine', 0.45);
+          break;
+
+        case 'wrong':
+          this.playTone(200, t, 0.18, 'sawtooth', 0.4);
+          this.playTone(150, t + 0.12, 0.24, 'sawtooth', 0.45);
+          break;
+
+        case 'victory':
+          this.playTone(523, t, 0.12, 'triangle', 0.45);
+          this.playTone(659, t + 0.12, 0.12, 'triangle', 0.45);
+          this.playTone(783, t + 0.24, 0.38, 'triangle', 0.6);
+          break;
+
+        default:
+          this.playTone(440, t, 0.1, 'sine', 0.2);
+          break;
       }
+    }
+
+    playNoiseBurst(time, duration, vol, highCut = 2000) {
+      if (!this.ctx || this.isMuted) return;
+      const bufferSize = this.ctx.sampleRate * duration;
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(highCut, time);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(vol, time);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+      noise.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      noise.start(time);
+      noise.stop(time + duration);
     }
   }
 
   // ============================================================================
-  // 3. CONTROLADOR COMPLETO DA BATALHA
+  // 3. MOTOR PRINCIPAL DE BATALHA RPG (OVERHAUL V2)
   // ============================================================================
   class EstudeMyOverhaulGame {
     constructor() {
@@ -316,20 +721,28 @@
       this.playerNameplate = document.getElementById('player-nameplate');
       this.bossNameplate = document.getElementById('boss-nameplate');
 
-      // HUD Elements
-      this.phaseBannerText = document.getElementById('phase-banner-text');
+      // Top Bar Elements
+      this.missionTrackText = document.getElementById('mission-track-text');
+      this.missionPhaseText = document.getElementById('mission-phase-text');
       this.audioUnlockOverlay = document.getElementById('audio-unlock-overlay');
       this.bossTitleText = document.getElementById('boss-title-text');
       this.bossPhaseText = document.getElementById('boss-phase-text');
       this.bossBarFill = document.getElementById('boss-bar-fill');
       this.bossHpText = document.getElementById('boss-hp-text');
+
+      // In-Game Action Buttons
+      this.btnSkinToggle = document.getElementById('btn-skin-toggle');
+      this.skinBtnText = document.getElementById('skin-btn-text');
+      this.btnAudioToggle = document.getElementById('btn-audio-toggle');
+      this.audioBtnIcon = document.getElementById('audio-btn-icon');
+      this.audioBtnText = document.getElementById('audio-btn-text');
+
+      // Player HUD
       this.playerHpFill = document.getElementById('player-hp-fill');
       this.playerHpNum = document.getElementById('player-hp-num');
       this.playerUltFill = document.getElementById('player-ult-fill');
       this.playerUltNum = document.getElementById('player-ult-num');
       this.btnUltimate = document.getElementById('btn-ultimate');
-      this.btnSkinToggle = document.getElementById('btn-skin-toggle');
-      this.btnAudioToggle = document.getElementById('btn-audio-toggle');
 
       // Quiz Elements
       this.questionTitle = document.getElementById('question-title');
@@ -347,7 +760,7 @@
       this.qteKeysContainer = document.getElementById('qte-keys-container');
       this.qteTimerFill = document.getElementById('qte-timer-fill');
 
-      // Estados
+      // Estados de Jogo
       this.gameMode = 'campanha';
       this.activeTheme = 'castelo';
       this.currentThemePhase = 0;
@@ -369,7 +782,7 @@
       this.qteActive = false;
       this.qteKeys = [];
       this.qteCurrentKeyIdx = 0;
-      this.qteDuration = 2200;
+      this.qteDuration = 2400;
       this.qteTimeRemaining = 0;
       this.qteTimerInterval = null;
       this.qteCallback = null;
@@ -388,11 +801,12 @@
     }
 
     initEvents() {
-      // Inicia áudio na primeira interação
+      // Inicia áudio na primeira interação do usuário
       const unlockAudio = () => {
         this.soundtrack.init();
         if (!this.soundtrack.timer && !this.soundtrack.isMuted) {
-          this.soundtrack.start(THEMES_CONFIG[this.activeTheme].musicKey);
+          const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
+          this.soundtrack.start(theme.musicKey);
         }
       };
       window.addEventListener('pointerdown', unlockAudio, { once: true });
@@ -429,24 +843,30 @@
         raw = window.gameData;
       }
 
+      // Herói Selecionado (Perfil do Usuário) - Somente Samurai, Guerreiro ou Mago
       const char = (raw?.personagem_selecionado || 'samurai').toLowerCase();
-      if (char.includes('guerreiro') || char.includes('cavaleiro')) {
+      if (char.includes('guerreiro') || char.includes('cavaleiro') || char.includes('boran')) {
         this.selectedCharKey = 'guerreiro';
-      } else if (char.includes('mago')) {
+      } else if (char.includes('mago') || char.includes('valerius')) {
         this.selectedCharKey = 'mago';
-      } else if (char.includes('arqueira')) {
-        this.selectedCharKey = 'arqueira';
       } else {
         this.selectedCharKey = 'samurai';
       }
 
-      const cenario = (raw?.cenario || 'castelo').toLowerCase();
-      if (cenario.includes('montanha')) this.activeTheme = 'montanha';
-      else if (cenario.includes('deserto')) this.activeTheme = 'deserto';
-      else if (cenario.includes('vila')) this.activeTheme = 'vila';
-      else if (cenario.includes('vazio') || cenario.includes('final')) this.activeTheme = 'vazio_cosmico';
+      // Trilha / Cenário selecionado na trilha de aprendizado
+      const cenario = (raw?.cenario || raw?.trilha || 'castelo').toLowerCase();
+      if (cenario.includes('montanha') || cenario.includes('pico')) this.activeTheme = 'montanha';
+      else if (cenario.includes('deserto') || cenario.includes('dunas')) this.activeTheme = 'deserto';
+      else if (cenario.includes('vila') || cenario.includes('mercado')) this.activeTheme = 'vila';
+      else if (cenario.includes('vazio') || cenario.includes('final') || cenario.includes('singularidade')) this.activeTheme = 'vazio_cosmico';
       else this.activeTheme = 'castelo';
 
+      // Modo de Jogo selecionado na Trilha
+      if (raw?.modo) {
+        this.gameMode = raw.modo;
+      }
+
+      // Perguntas pedagógicas
       this.questions = raw?.perguntas && raw.perguntas.length > 0 ? raw.perguntas : [
         {
           enunciado: 'Qual a principal vantagem da computação em nuvem?',
@@ -471,7 +891,13 @@
         },
       ];
 
-      this.applyTheme(this.activeTheme);
+      // Determina a fase inicial do cenário
+      let initialPhase = 0;
+      if (typeof raw?.ordem === 'number' && raw.ordem >= 1) {
+        initialPhase = Math.max(0, (raw.ordem - 1) % 4);
+      }
+
+      this.applyTheme(this.activeTheme, initialPhase);
       this.applySkin();
       this.renderQuestion();
     }
@@ -483,8 +909,9 @@
       if (this.audioUnlockOverlay) {
         this.audioUnlockOverlay.style.display = 'none';
       }
-      if (this.btnAudioToggle) {
-        this.btnAudioToggle.textContent = '🔊 Música: ON';
+      if (this.audioBtnIcon && this.audioBtnText) {
+        this.audioBtnIcon.textContent = '🔊';
+        this.audioBtnText.textContent = 'Som: ON';
       }
       this.addFloatingText('ÁUDIO HABILITADO!', '#22c55e', 683, 220);
     }
@@ -496,83 +923,66 @@
       this.currentThemePhase = safeIdx;
       const phase = theme.phases ? theme.phases[safeIdx] : { name: theme.name, bgImg: theme.bgImg };
 
-      // Transição suave de cenário com fade rápido
+      // Transição suave de cenário com fade
       this.bgLayer.style.opacity = '0.35';
       setTimeout(() => {
         this.bgLayer.src = phase.bgImg;
         this.bgLayer.style.opacity = '1';
-      }, 120);
+      }, 100);
 
-      // Atualiza botões de fase no topo
-      for (let i = 0; i < 4; i++) {
-        const btn = document.getElementById(`btn-fase-${i}`);
-        if (btn) {
-          btn.classList.toggle('active', i === safeIdx);
-          btn.style.display = i < maxPhases ? 'inline-flex' : 'none';
-        }
+      // Atualiza o Mission Badge
+      if (this.missionTrackText) {
+        this.missionTrackText.textContent = theme.trackLabel;
+      }
+      if (this.missionPhaseText) {
+        this.missionPhaseText.textContent = `${phase.name} — Fase ${safeIdx + 1}/${maxPhases}`;
       }
 
-      // Atualiza banner de fase e cenário
-      if (this.phaseBannerText) {
-        this.phaseBannerText.textContent = `${phase.name} — Fase ${safeIdx + 1}/${maxPhases}`;
-      }
+      // Aplica posicionamento de chão conforme o cenário
+      this.applyGroundingPositions();
 
       this.addFloatingText(`CENÁRIO: ${phase.name}!`, '#38bdf8', 683, 220);
     }
 
-    setCharacter(charKey) {
-      if (!CHARACTERS_CONFIG[charKey]) return;
-      this.selectedCharKey = charKey;
-      this.selectedSkinIndex = 0;
+    applyGroundingPositions() {
+      const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
+      const bottom = theme.bottomOffset || '14%';
+      const side = theme.sideOffset || '18%';
 
-      // Atualiza botões de personagens
-      ['samurai', 'guerreiro', 'mago', 'arqueira'].forEach((c) => {
-        const btn = document.getElementById(`btn-char-${c}`);
-        if (btn) btn.classList.toggle('active', c === charKey);
-      });
+      // Posiciona herói e chefe com pés firmemente plantados no platô do mapa
+      this.playerWrapper.style.bottom = bottom;
+      this.playerWrapper.style.left = side;
 
-      this.applySkin();
-      this.soundtrack.playSFX('slash');
+      this.bossWrapper.style.bottom = bottom;
+      this.bossWrapper.style.right = side;
+
+      // Animação de voo apenas para chefes voadores (Spectre)
+      const boss = BOSSES_CONFIG[this.selectedBossKey];
+      if (boss && boss.isFlying) {
+        this.bossWrapper.classList.add('is-flying');
+      } else {
+        this.bossWrapper.classList.remove('is-flying');
+      }
+
+      // O herói NUNCA flutua; pés sempre no chão
+      this.playerWrapper.classList.remove('is-flying');
     }
 
     applyTheme(themeKey, phaseIndex = 0) {
       this.activeTheme = themeKey;
       const theme = THEMES_CONFIG[themeKey] || THEMES_CONFIG.castelo;
 
-      // Atualiza botões de tema na barra superior
-      ['castelo', 'montanha', 'deserto', 'vila', 'vazio'].forEach((t) => {
-        const btn = document.getElementById(`btn-theme-${t}`);
-        if (btn) btn.classList.toggle('active', themeKey.includes(t));
-      });
-
-      // Aplica a fase solicitada com o cenário dedicado
-      this.setPhase(phaseIndex);
-
-      // Define o Boss temático
+      // Define o Boss temático da trilha
       this.selectedBossKey = theme.defaultBoss;
       this.setupBoss(this.selectedBossKey);
 
-      // Inicia a música da trilha
+      // Aplica a fase solicitada
+      this.setPhase(phaseIndex);
+
+      // Inicia a música autêntica da trilha
       if (this.soundtrack.ctx && !this.soundtrack.isMuted) {
         this.soundtrack.start(theme.musicKey);
       }
-    }
-
-    setTheme(themeKey) {
-      this.applyTheme(themeKey, 0);
-    }
-
-    setGameMode(modeKey) {
-      this.gameMode = modeKey;
-      ['campanha', 'speedrun', 'sobrevivencia', 'boss_rush'].forEach((m) => {
-        const btn = document.getElementById(`btn-mode-${m}`);
-        if (btn) btn.classList.toggle('active', m === modeKey);
-      });
-
-      if (modeKey === 'boss_rush') {
-        this.setupBoss('chefe_final');
-      }
-      this.addFloatingText(`MODO: ${modeKey.toUpperCase()}!`, '#facc15', 683, 300);
     }
 
     setupBoss(bossKey) {
@@ -596,6 +1006,13 @@
       this.bossPhaseText.textContent = `FASE ${idx + 1}/${boss.phases.length}`;
       this.bossBarFill.style.backgroundColor = phase.barColor;
 
+      // Aplica voo se voador
+      if (boss.isFlying) {
+        this.bossWrapper.classList.add('is-flying');
+      } else {
+        this.bossWrapper.classList.remove('is-flying');
+      }
+
       this.updateHUD();
       this.addFloatingText(`FASE ${idx + 1}: ${phase.name}!`, phase.barColor, 1020, 300);
     }
@@ -604,7 +1021,7 @@
       const char = CHARACTERS_CONFIG[this.selectedCharKey];
       this.selectedSkinIndex = (this.selectedSkinIndex + 1) % char.skins.length;
       this.applySkin();
-      this.soundtrack.playSFX('slash');
+      this.soundtrack.playSFX(char.attackSound || 'sword_slash');
     }
 
     applySkin() {
@@ -615,16 +1032,20 @@
       this.playerSprite.className = `actor-sprite ${skin.cssClass}`;
       this.playerSprite.src = `${char.spriteFolder}/idle.gif`;
       this.playerNameplate.textContent = skin.name;
-      if (this.btnSkinToggle) {
-        this.btnSkinToggle.textContent = `👘 Skin: ${skin.name.split(' ')[1] || 'Padrão'}`;
+
+      if (this.skinBtnText) {
+        this.skinBtnText.textContent = `Skin: ${skin.shortName}`;
       }
 
-      this.addFloatingText(`SKIN ATIVADA: ${skin.name}!`, '#38bdf8', 340, 300);
+      this.addFloatingText(`SKIN: ${skin.name}!`, '#38bdf8', 340, 300);
     }
 
     toggleAudio() {
       const isPlaying = this.soundtrack.toggle();
-      this.btnAudioToggle.textContent = isPlaying ? '🔊 Música: ON' : '🔇 Música: OFF';
+      if (this.audioBtnIcon && this.audioBtnText) {
+        this.audioBtnIcon.textContent = isPlaying ? '🔊' : '🔇';
+        this.audioBtnText.textContent = isPlaying ? 'Som: ON' : 'Som: OFF';
+      }
     }
 
     renderQuestion() {
@@ -645,6 +1066,7 @@
       if (!q) return;
 
       const isCorrect = idx === q.indiceRespostaCorreta;
+      const char = CHARACTERS_CONFIG[this.selectedCharKey];
 
       if (isCorrect) {
         this.soundtrack.playSFX('correct');
@@ -658,8 +1080,12 @@
           this.setPhase(nextPhase);
         }
 
-        // Animação de Golpe do Herói (Lunge + Attack GIF)
-        const char = CHARACTERS_CONFIG[this.selectedCharKey];
+        // Toca SFX autêntico do herói
+        setTimeout(() => {
+          this.soundtrack.playSFX(char.attackSound);
+        }, 120);
+
+        // Animação de Golpe do Herói (Avanço rápido + Attack GIF)
         this.playerSprite.src = `${char.spriteFolder}/attack1.gif`;
         this.playerWrapper.style.transform = 'translateX(55px)';
 
@@ -668,7 +1094,7 @@
           this.playerWrapper.style.transform = 'translateX(0)';
         }, 450);
 
-        // Chance de QTE em Streak
+        // Chance de QTE em sequência de acertos
         if (this.streak >= 2) {
           this.triggerQTE(['A', 'D', 'SPACE'], 'COMBO CRÍTICO! [A] -> [D] -> [ESPAÇO]!', (success) => {
             const mult = success ? 2.5 : 1.0;
@@ -683,8 +1109,12 @@
         this.soundtrack.playSFX('wrong');
         this.streak = 0;
 
-        // Animação de Contra-Ataque do Boss
+        // Contra-Ataque do Boss
         const boss = BOSSES_CONFIG[this.selectedBossKey];
+        setTimeout(() => {
+          this.soundtrack.playSFX(boss.attackSound || 'heavy_impact');
+        }, 120);
+
         this.bossSprite.src = `${boss.spriteFolder}/attack1.gif`;
         this.bossWrapper.style.transform = 'translateX(-55px)';
 
@@ -695,7 +1125,7 @@
 
         const phase = boss.phases[this.currentPhaseIndex];
         this.damagePlayer(phase.atk);
-        this.showFeedback(`Incorreto! Dica: ${q.explicacao || 'Revise a matéria.'}`, '#ef4444');
+        this.showFeedback(`Incorreto! Dica: ${q.explicacao || 'Revise o conteúdo desta etapa.'}`, '#ef4444');
       }
 
       this.currentQuestionIdx++;
@@ -716,7 +1146,8 @@
 
     damageBoss(dmg, isCrit) {
       this.bossHp = Math.max(0, this.bossHp - dmg);
-      this.soundtrack.playSFX(isCrit ? 'crit' : 'hit');
+      const char = CHARACTERS_CONFIG[this.selectedCharKey];
+      this.soundtrack.playSFX(isCrit ? 'crit' : char.clashSound);
       this.addFloatingText(`-${dmg}`, isCrit ? '#facc15' : '#38bdf8', 1020, 360, isCrit);
 
       // Flash do Boss
@@ -732,7 +1163,7 @@
         if (this.currentPhaseIndex + 1 < boss.phases.length) {
           this.setupBossPhase(this.currentPhaseIndex + 1);
 
-          // Avança também o cenário da trilha para a nova fase
+          // Avança também o cenário da trilha
           const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
           const nextStagePhase = Math.min(this.currentPhaseIndex, theme.phases.length - 1);
           this.setPhase(nextStagePhase);
@@ -751,10 +1182,10 @@
 
     damagePlayer(dmg) {
       this.playerHp = Math.max(0, this.playerHp - dmg);
-      this.soundtrack.playSFX('hit');
+      this.soundtrack.playSFX('heavy_impact');
       this.addFloatingText(`-${dmg}`, '#ef4444', 340, 360, false);
 
-      // Flash do Jogador
+      // Flash de Dano no Jogador
       this.playerSprite.style.filter = 'brightness(2.2) drop-shadow(0 0 15px red)';
       setTimeout(() => {
         this.applySkin();
@@ -790,8 +1221,10 @@
       const char = CHARACTERS_CONFIG[this.selectedCharKey];
       const skin = char.skins[this.selectedSkinIndex];
 
+      this.soundtrack.playSFX('thunder_ultimate');
+
       this.triggerQTE(['W', 'S', 'A', 'D', 'SPACE'], `GOLPE SUPREMO: ${skin.ultName}!`, (success) => {
-        const dmg = success ? 110 : 55;
+        const dmg = success ? 115 : 60;
         this.damageBoss(dmg, true);
       });
     }
@@ -837,7 +1270,7 @@
       const match = key === expected || (expected === 'SPACE' && (key === ' ' || key === 'TAP'));
 
       if (match) {
-        this.soundtrack.playSFX('slash');
+        this.soundtrack.playSFX('sword_slash');
         const boxes = this.qteKeysContainer.children;
         if (boxes[this.qteCurrentKeyIdx]) {
           boxes[this.qteCurrentKeyIdx].className = 'qte-key-box completed';
