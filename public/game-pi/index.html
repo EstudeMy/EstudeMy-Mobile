@@ -43,27 +43,26 @@
             background-color: #0a0d18;
         }
 
-        /* Camada 1: Background Cenário com Movimento Suave (Não Estático) */
+        /* Camada 1: Background Cenário com Animação Visível de Câmera e Respiração */
         #bg-layer {
             position: absolute;
-            top: -4%;
-            left: -4%;
-            width: 108%;
-            height: 108%;
+            top: -5%;
+            left: -5%;
+            width: 110%;
+            height: 110%;
             object-fit: cover;
             object-position: center bottom;
-            filter: brightness(0.82) contrast(1.12);
-            transition: opacity 0.5s ease-in-out;
-            animation: bg-pan-drift 32s ease-in-out infinite alternate;
+            filter: brightness(0.85) contrast(1.12);
+            transition: opacity 0.4s ease-in-out;
+            animation: bg-camera-drift 14s ease-in-out infinite alternate;
             z-index: 1;
             transform-origin: center center;
         }
 
-        @keyframes bg-pan-drift {
+        @keyframes bg-camera-drift {
             0% { transform: scale(1) translate(0px, 0px); }
-            35% { transform: scale(1.04) translate(-1.5%, -0.8%); }
-            70% { transform: scale(1.06) translate(1.2%, -0.4%); }
-            100% { transform: scale(1.03) translate(-0.8%, 0.8%); }
+            50% { transform: scale(1.05) translate(-14px, -8px); }
+            100% { transform: scale(1.08) translate(14px, 6px); }
         }
 
         #bg-vignette {
@@ -72,32 +71,52 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at center, rgba(0,0,0,0) 42%, rgba(0,0,0,0.85) 100%),
-                        linear-gradient(to top, rgba(10,13,24,0.92) 0%, rgba(0,0,0,0) 30%);
+            background: radial-gradient(circle at center, rgba(0,0,0,0) 45%, rgba(0,0,0,0.85) 100%),
+                        linear-gradient(to top, rgba(10,13,24,0.92) 0%, rgba(0,0,0,0) 28%);
             z-index: 2;
             pointer-events: none;
         }
 
-        /* Feixe de Luz e Atmosfera em Movimento Contínuo */
+        /* Camada de Névoa / Neblina em Movimento Contínuo no Cenário */
+        #fog-layer {
+            position: absolute;
+            bottom: 22%;
+            left: -30%;
+            width: 160%;
+            height: 140px;
+            background: radial-gradient(ellipse at center, rgba(148, 163, 184, 0.16) 0%, rgba(148, 163, 184, 0.06) 50%, rgba(0, 0, 0, 0) 75%);
+            filter: blur(16px);
+            animation: fog-drift 10s linear infinite alternate;
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        @keyframes fog-drift {
+            0% { transform: translateX(0); opacity: 0.4; }
+            50% { transform: translateX(12%); opacity: 0.75; }
+            100% { transform: translateX(24%); opacity: 0.45; }
+        }
+
+        /* Feixe de Luz Atmosférica em Movimento */
         #ambient-light-sweep {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(115deg, rgba(255,255,255,0) 30%, rgba(56,189,248,0.06) 50%, rgba(255,255,255,0) 70%);
-            animation: light-sweep 22s ease-in-out infinite alternate;
+            background: linear-gradient(115deg, rgba(255,255,255,0) 25%, rgba(56,189,248,0.07) 50%, rgba(255,255,255,0) 75%);
+            animation: light-sweep 16s ease-in-out infinite alternate;
             pointer-events: none;
             z-index: 2;
         }
 
         @keyframes light-sweep {
             0% { transform: translateX(-35%); opacity: 0.3; }
-            50% { transform: translateX(15%); opacity: 0.7; }
+            50% { transform: translateX(10%); opacity: 0.7; }
             100% { transform: translateX(45%); opacity: 0.35; }
         }
 
-        /* Camada 2: Canvas de Efeitos Especiais, Raios, Partículas e Clima Animado */
+        /* Camada 2: Canvas de Efeitos Especiais, Tochas Animadas, Aurora e Clima */
         #fx-canvas {
             position: absolute;
             top: 0;
@@ -108,7 +127,7 @@
             pointer-events: none;
         }
 
-        /* Camada 3: Atores da Batalha (Herói à Esquerda e Inimigos à Direita) */
+        /* Camada 3: Atores da Batalha (Herói e Inimigos Acima da Barra de Perguntas) */
         .stage-actors {
             position: absolute;
             top: 0;
@@ -119,9 +138,10 @@
             pointer-events: none;
         }
 
+        /* Os personagens ficam a 28% do chão (215px), firmemente sobre a ponte e totalmente livres da barra de perguntas */
         .actor-wrapper {
             position: absolute;
-            bottom: 14%;
+            bottom: 28%;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -131,7 +151,7 @@
 
         /* Posicionamento do Herói */
         #player-wrapper {
-            left: 17%;
+            left: 14%;
             z-index: 6;
         }
 
@@ -147,25 +167,25 @@
 
         /* Slots dos Inimigos */
         #enemy-0 {
-            right: 32%;
-            bottom: 14%;
+            right: 28%;
+            bottom: 28%;
             z-index: 7;
         }
 
         #enemy-1 {
-            right: 19%;
-            bottom: 15%;
+            right: 17%;
+            bottom: 28%;
             z-index: 5;
         }
 
         #enemy-2 {
-            right: 7%;
-            bottom: 16%;
+            right: 6%;
+            bottom: 28%;
             z-index: 4;
         }
 
         .actor-sprite {
-            max-height: 235px;
+            max-height: 220px;
             image-rendering: pixelated;
             image-rendering: crisp-edges;
             filter: drop-shadow(0 8px 14px rgba(0, 0, 0, 0.75));
@@ -175,18 +195,18 @@
 
         #enemy-0 .actor-sprite,
         #enemy-2 .actor-sprite {
-            max-height: 205px;
+            max-height: 195px;
         }
 
         #enemy-1 .actor-sprite {
-            max-height: 250px;
+            max-height: 235px;
         }
 
         /* Sombra de Contato Fisiológica com o Chão */
         .actor-contact-shadow {
-            width: 155px;
-            height: 22px;
-            background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 45%, rgba(0, 0, 0, 0) 75%);
+            width: 145px;
+            height: 20px;
+            background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.92) 0%, rgba(0, 0, 0, 0.5) 45%, rgba(0, 0, 0, 0) 75%);
             border-radius: 50%;
             margin-top: -12px;
             z-index: 1;
@@ -218,12 +238,12 @@
         /* Barra de Vida Mini Individual Sobre os Inimigos */
         .enemy-mini-hud {
             position: absolute;
-            top: -28px;
+            top: -26px;
             display: flex;
             flex-direction: column;
             align-items: center;
             gap: 2px;
-            width: 90px;
+            width: 85px;
             z-index: 5;
             transition: opacity 0.3s ease;
         }
@@ -374,7 +394,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* Centro: Barra Superior de Vida do Chefe / Horda de Inimigos */
+        /* Centro: Barra Superior de Vida do Esquadrão / Chefe */
         #boss-hud {
             width: 480px;
             background: rgba(10, 13, 24, 0.92);
@@ -463,29 +483,62 @@
             color: #ffffff;
         }
 
-        /* Camada 5: HUD Inferior do Herói (Vida e Ultimate Sem Sobreposição) */
+        /* Camada 5: Botão de Golpe Supremo (Acima do HUD do Jogador) */
+        #btn-ultimate {
+            position: absolute;
+            bottom: 106px;
+            left: 18px;
+            width: 215px;
+            height: 38px;
+            background: linear-gradient(135deg, #eab308, #ca8a04);
+            color: #000000;
+            border: 2px solid #ffffff;
+            border-radius: 8px;
+            padding: 8px 12px;
+            font-size: 12px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 0 20px rgba(234, 179, 8, 0.7);
+            display: none;
+            z-index: 10;
+            animation: pulse-glow 1s infinite alternate;
+            text-align: center;
+        }
+
+        @keyframes pulse-glow {
+            from { transform: scale(1); box-shadow: 0 0 10px #eab308; }
+            to { transform: scale(1.04); box-shadow: 0 0 22px #facc15; }
+        }
+
+        /* Camada 6: HUD Inferior do Herói (Vida e Barra de Carga de Ultimate) */
         #player-hud {
             position: absolute;
-            bottom: 20px;
-            left: 20px;
-            width: 230px;
-            background: rgba(10, 13, 24, 0.94);
+            bottom: 12px;
+            left: 18px;
+            width: 215px;
+            height: 86px;
+            background: rgba(10, 13, 24, 0.95);
             border: 2px solid #334155;
             border-radius: 10px;
-            padding: 12px 16px;
-            z-index: 5;
-            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+            padding: 8px 12px;
+            z-index: 10;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
+            backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            gap: 6px;
         }
 
         .bar-group {
             display: flex;
             flex-direction: column;
-            gap: 5px;
+            gap: 3px;
             width: 100%;
         }
 
         .bar-label {
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 800;
             color: #94a3b8;
             display: flex;
@@ -493,7 +546,7 @@
         }
 
         .player-bar-track {
-            height: 14px;
+            height: 10px;
             background: #1e293b;
             border-radius: 4px;
             overflow: hidden;
@@ -514,104 +567,101 @@
             transition: width 0.25s;
         }
 
-        /* Botão de Ultimate Posicionado Imediatamente Acima do HUD (Sem Colidir com Quiz) */
-        #btn-ultimate {
-            position: absolute;
-            bottom: 122px;
-            left: 20px;
-            width: 230px;
-            background: linear-gradient(135deg, #eab308, #ca8a04);
-            color: #000000;
-            border: 2px solid #ffffff;
-            border-radius: 8px;
-            padding: 10px 14px;
-            font-size: 13px;
-            font-weight: 900;
-            cursor: pointer;
-            box-shadow: 0 0 20px rgba(234, 179, 8, 0.7);
-            display: none;
-            z-index: 6;
-            animation: pulse-glow 1s infinite alternate;
-            text-align: center;
-        }
-
-        @keyframes pulse-glow {
-            from { transform: scale(1); box-shadow: 0 0 10px #eab308; }
-            to { transform: scale(1.04); box-shadow: 0 0 22px #facc15; }
-        }
-
-        /* Camada 6: Cartão Pedagógico de Perguntas e Respostas */
+        /* Camada 7: Cartão Pedagógico de Perguntas e Respostas (Compacto, Confortável e Zero Sobreposição) */
         #quiz-box {
             position: absolute;
-            bottom: 20px;
-            right: 20px;
-            left: 270px;
-            background: rgba(10, 13, 24, 0.94);
+            bottom: 12px;
+            right: 18px;
+            left: 248px;
+            height: 124px;
+            max-height: 124px;
+            background: rgba(10, 13, 24, 0.95);
             border: 2px solid #38bdf8;
             border-radius: 12px;
-            padding: 14px 20px;
-            z-index: 6;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85);
+            padding: 8px 14px;
+            z-index: 10;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.85);
             backdrop-filter: blur(8px);
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
         }
 
         #question-title {
-            font-size: 15px;
+            font-size: 13px;
             font-weight: 800;
             text-align: center;
-            margin-bottom: 12px;
+            margin-bottom: 6px;
             color: #f8fafc;
-            min-height: 22px;
+            min-height: 16px;
+            line-height: 1.25;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         #alternatives-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 10px;
+            gap: 6px;
+            flex: 1;
         }
 
         .alt-btn {
             background: #1e293b;
             border: 1.5px solid #475569;
             color: #f8fafc;
-            padding: 10px 14px;
-            border-radius: 8px;
-            font-size: 13px;
+            padding: 6px 10px;
+            border-radius: 7px;
+            font-size: 11.5px;
             font-weight: 600;
             cursor: pointer;
             display: flex;
             align-items: center;
-            gap: 10px;
-            transition: all 0.2s;
+            gap: 8px;
+            transition: all 0.15s;
             text-align: left;
+            height: 34px;
+            min-height: 34px;
+            overflow: hidden;
+            text-overflow: ellipsis;
         }
 
         .alt-btn:hover {
             background: #334155;
             border-color: #38bdf8;
-            transform: translateY(-2px);
+            transform: translateY(-1px);
         }
 
         .alt-key-badge {
             background: #0284c7;
             color: #ffffff;
-            font-size: 11px;
+            font-size: 10px;
             font-weight: 900;
-            padding: 2px 7px;
+            padding: 2px 5px;
             border-radius: 4px;
+            flex-shrink: 0;
         }
 
         #pedagogical-feedback {
-            margin-top: 8px;
-            font-size: 12px;
+            position: absolute;
+            top: -34px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95);
+            border: 1px solid #38bdf8;
+            color: #38bdf8;
+            font-size: 11.5px;
             font-weight: 700;
-            text-align: center;
-            padding: 6px;
+            padding: 4px 14px;
             border-radius: 6px;
+            white-space: nowrap;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
             display: none;
+            z-index: 12;
         }
 
-        /* Camada 7: Overlay de QTE (Quick Time Event) */
+        /* Camada 8: Overlay de QTE (Quick Time Event) */
         #qte-modal {
             position: absolute;
             top: 0;
@@ -693,7 +743,7 @@
             width: 100%;
         }
 
-        /* Camada 8: Overlay Cinemático de Golpe Supremo */
+        /* Camada 9: Overlay Cinemático de Golpe Supremo */
         #cinematic-overlay {
             position: absolute;
             top: 0;
@@ -746,15 +796,16 @@
         <!-- 1. Background Cenário com Movimento Suave -->
         <img id="bg-layer" src="assets/backgrounds/castelo_fase1_portao.jpg" alt="Cenário de Batalha" />
         <div id="bg-vignette"></div>
+        <div id="fog-layer"></div>
         <div id="ambient-light-sweep"></div>
 
-        <!-- 2. Canvas de Efeitos Especiais, Clima Animado e Projéteis -->
+        <!-- 2. Canvas de Efeitos Especiais, Tochas Animadas, Aurora e Clima -->
         <canvas id="fx-canvas" width="1366" height="768"></canvas>
         <div id="screen-flash"></div>
 
         <!-- 3. Atores do Jogo (Herói à Esquerda e Inimigos à Direita) -->
         <div class="stage-actors">
-            <!-- Herói -->
+            <!-- Herói (Posicionado firmemente a 27% de altura do chão, 100% livre da caixa de perguntas) -->
             <div id="player-wrapper" class="actor-wrapper">
                 <img id="player-sprite" class="actor-sprite" src="assets/sprites/samurai/idle.gif" alt="Herói" />
                 <div class="actor-contact-shadow"></div>
@@ -850,13 +901,13 @@
                     <span id="ult-label">ULTIMATE</span>
                     <span id="player-ult-num">0%</span>
                 </div>
-                <div class="player-bar-track" style="height: 12px;">
+                <div class="player-bar-track">
                     <div id="player-ult-fill" class="ult-fill"></div>
                 </div>
             </div>
         </div>
 
-        <!-- 7. Cartão Pedagógico de Perguntas e Respostas -->
+        <!-- 7. Cartão Pedagógico de Perguntas e Respostas (Compacto e Bem Posicionado) -->
         <div id="quiz-box">
             <div id="question-title">Carregando pergunta de aprendizado...</div>
             <div id="alternatives-grid">
@@ -898,8 +949,8 @@
     </div>
 
     <!-- Scripts de Ponte e Motor de Jogo -->
-    <script type="text/javascript" src="html5game/tph_pontedados.js?v=20261114_overhaul_v4"></script>
-    <script type="text/javascript" src="html5game/estudemy_game_engine.js?v=20261114_overhaul_v4"></script>
+    <script type="text/javascript" src="html5game/tph_pontedados.js?v=20261114_overhaul_v5"></script>
+    <script type="text/javascript" src="html5game/estudemy_game_engine.js?v=20261114_overhaul_v5"></script>
 
 </body>
 </html>

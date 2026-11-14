@@ -19,8 +19,8 @@
       name: 'Castelo dos Dados',
       trackLabel: 'TRILHA: CASTELO DOS DADOS',
       musicKey: 'gothic_orchestra',
-      bottomOffset: '14%',
-      playerLeft: '17%',
+      bottomOffset: '28%',
+      playerLeft: '14%',
       enemyPool: [
         { name: 'Guarda da Muralha', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 65, atk: 14, isFlying: false, type: 'fisico', ultName: 'Golpe de Ruína da Armadura' },
         { name: 'Spectre do Código', spriteFolder: 'assets/sprites/spectre', baseHp: 110, atk: 22, isFlying: true, type: 'magico', ultName: 'Chamas Negras da Corrupção' },
@@ -37,8 +37,8 @@
       name: 'Pico da Lógica',
       trackLabel: 'TRILHA: PICO DA LÓGICA',
       musicKey: 'viking_mountains',
-      bottomOffset: '17%',
-      playerLeft: '20%',
+      bottomOffset: '29%',
+      playerLeft: '14%',
       enemyPool: [
         { name: 'Guerreiro da Geada', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 75, atk: 16, isFlying: false, type: 'fisico', ultName: 'Impacto Glacial Esmagador' },
         { name: 'Mago Cósmico do Pico', spriteFolder: 'assets/sprites/mago', baseHp: 120, atk: 25, isFlying: false, type: 'magico', ultName: 'Tempestade de Nevasca Cósmica' },
@@ -55,8 +55,8 @@
       name: 'Deserto Primordial',
       trackLabel: 'TRILHA: DESERTO PRIMORDIAL',
       musicKey: 'arabic_desert',
-      bottomOffset: '14%',
-      playerLeft: '17%',
+      bottomOffset: '28%',
+      playerLeft: '14%',
       enemyPool: [
         { name: 'Guerreiro das Areias', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 70, atk: 15, isFlying: false, type: 'fisico', ultName: 'Fúria da Cimitarra Solar' },
         { name: 'Djinn das Tempestades', spriteFolder: 'assets/sprites/spectre', baseHp: 115, atk: 24, isFlying: true, type: 'magico', ultName: 'Ciclone do Sol Escaldante' },
@@ -73,8 +73,8 @@
       name: 'Vila Ancestral',
       trackLabel: 'TRILHA: VILA ANCESTRAL',
       musicKey: 'bard_village',
-      bottomOffset: '14%',
-      playerLeft: '17%',
+      bottomOffset: '28%',
+      playerLeft: '14%',
       enemyPool: [
         { name: 'Cavaleiro Renegado', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 80, atk: 18, isFlying: false, type: 'fisico', ultName: 'Lâmina do Julgamento Cego' },
         { name: 'Lorde Decaído', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 125, atk: 26, isFlying: false, type: 'fisico', ultName: 'Golpe Quebra-Crânios' },
@@ -91,8 +91,8 @@
       name: 'Vazio Cósmico',
       trackLabel: 'TRILHA: VAZIO CÓSMICO',
       musicKey: 'dark_void',
-      bottomOffset: '15%',
-      playerLeft: '17%',
+      bottomOffset: '28%',
+      playerLeft: '14%',
       enemyPool: [
         { name: 'Arauto do Esquecimento', spriteFolder: 'assets/sprites/spectre', baseHp: 85, atk: 20, isFlying: true, type: 'magico', ultName: 'Aniquilação da Matéria' },
         { name: 'O Arquivista do Vazio', spriteFolder: 'assets/sprites/mago', baseHp: 150, atk: 30, isFlying: false, type: 'magico', ultName: 'Singularidade da Entropia' },
@@ -873,7 +873,7 @@
         slot.currentHp = slot.maxHp;
         slot.isAlive = true;
         slot.wrapper.style.display = 'flex';
-        slot.wrapper.style.right = '20%';
+        slot.wrapper.style.right = '18%';
         slot.sprite.src = `${eData.spriteFolder}/idle.gif`;
         slot.nameText.textContent = `👑 ${eData.name}`;
         slot.barFill.style.width = '100%';
@@ -891,7 +891,7 @@
           slot.currentHp = slot.maxHp;
           slot.isAlive = true;
           slot.wrapper.style.display = 'flex';
-          slot.wrapper.style.right = slotIdx === 0 ? '28%' : '12%';
+          slot.wrapper.style.right = slotIdx === 0 ? '25%' : '10%';
           slot.sprite.src = `${eData.spriteFolder}/idle.gif`;
           slot.nameText.textContent = eData.name;
           slot.barFill.style.width = '100%';
@@ -908,7 +908,7 @@
           slot.currentHp = slot.maxHp;
           slot.isAlive = true;
           slot.wrapper.style.display = 'flex';
-          slot.wrapper.style.right = i === 0 ? '32%' : i === 1 ? '19%' : '7%';
+          slot.wrapper.style.right = i === 0 ? '28%' : i === 1 ? '17%' : '6%';
           slot.sprite.src = `${eData.spriteFolder}/idle.gif`;
           slot.nameText.textContent = eData.name;
           slot.barFill.style.width = '100%';
@@ -918,20 +918,21 @@
         });
       }
 
+      this.applyGrounding();
       this.updateTotalBossHUD();
     }
 
     applyGrounding() {
       const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
-      const bottom = theme.bottomOffset || '14%';
-      const playerL = theme.playerLeft || '17%';
+      const bottom = theme.bottomOffset || '28%';
+      const playerL = theme.playerLeft || '14%';
 
       this.playerWrapper.style.bottom = bottom;
       this.playerWrapper.style.left = playerL;
 
       if (this.enemySlots[0]?.wrapper) this.enemySlots[0].wrapper.style.bottom = bottom;
-      if (this.enemySlots[1]?.wrapper) this.enemySlots[1].wrapper.style.bottom = `calc(${bottom} + 1%)`;
-      if (this.enemySlots[2]?.wrapper) this.enemySlots[2].wrapper.style.bottom = `calc(${bottom} + 2%)`;
+      if (this.enemySlots[1]?.wrapper) this.enemySlots[1].wrapper.style.bottom = bottom;
+      if (this.enemySlots[2]?.wrapper) this.enemySlots[2].wrapper.style.bottom = bottom;
     }
 
     applyHeroSkin() {
@@ -1372,8 +1373,69 @@
     // ==========================================================================
     startFxLoop() {
       let last = performance.now();
+
+      // Posições das tochas da muralha e torres para a trilha do Castelo
+      const CASTLE_TORCHES = [
+        { x: 68, y: 330, s: 1.0 },
+        { x: 395, y: 170, s: 0.85 },
+        { x: 525, y: 410, s: 1.25 },
+        { x: 808, y: 410, s: 1.25 },
+        { x: 955, y: 245, s: 0.9 },
+        { x: 1205, y: 325, s: 1.0 },
+      ];
+
+      // Bancos de névoa volumétrica móvel sob a ponte
+      const fogBanks = [
+        { x: 80, y: 550, rx: 240, ry: 50, vx: 22, alpha: 0.16 },
+        { x: 440, y: 580, rx: 300, ry: 60, vx: 28, alpha: 0.20 },
+        { x: 820, y: 545, rx: 260, ry: 55, vx: 20, alpha: 0.17 },
+        { x: 1180, y: 575, rx: 320, ry: 65, vx: 26, alpha: 0.19 },
+      ];
+
+      // Vaga-lumes bioluminescentes para a Vila
+      const fireflies = Array.from({ length: 42 }, () => ({
+        x: Math.random() * 1366,
+        y: Math.random() * 580 + 60,
+        seed: Math.random() * 100,
+        speed: Math.random() * 0.8 + 0.4,
+        size: Math.random() * 2.5 + 1.8,
+        color: Math.random() > 0.35 ? '#bef264' : '#fde047',
+      }));
+
+      // Folhas de outono para a Vila
+      const autumnLeaves = Array.from({ length: 36 }, () => ({
+        x: Math.random() * 1366,
+        y: Math.random() * 768,
+        vx: Math.random() * 35 + 20,
+        vy: Math.random() * 45 + 30,
+        va: Math.random() * 3 - 1.5,
+        angle: Math.random() * Math.PI * 2,
+        size: Math.random() * 5 + 4,
+        color: ['#d97706', '#b45309', '#dc2626', '#ca8a04', '#65a30d'][Math.floor(Math.random() * 5)],
+      }));
+
+      // Estrelas cintilantes no céu alpino e cósmico
+      const stars = Array.from({ length: 65 }, () => ({
+        x: Math.random() * 1366,
+        y: Math.random() * 320,
+        r: Math.random() * 1.8 + 0.7,
+        seed: Math.random() * 50,
+      }));
+
+      // Vórtice de acreção do Vazio Cósmico
+      const voidVortex = Array.from({ length: 60 }, () => ({
+        dist: Math.random() * 260 + 40,
+        angle: Math.random() * Math.PI * 2,
+        speed: Math.random() * 0.8 + 0.5,
+        size: Math.random() * 3.5 + 1.5,
+        color: ['#a855f7', '#38bdf8', '#c084fc', '#e0e7ff'][Math.floor(Math.random() * 4)],
+      }));
+
+      let lightningTimer = 8;
+      let lightningFlash = 0;
+
       const loop = (now) => {
-        const dt = (now - last) / 1000;
+        const dt = Math.min((now - last) / 1000, 0.1);
         last = now;
 
         this.fxCtx.clearRect(0, 0, 1366, 768);
@@ -1382,86 +1444,308 @@
         const phase = theme.phases ? theme.phases[this.currentThemePhase] : null;
         const weather = phase ? phase.weather : 'castle_embers';
 
-        // 1. Gera partículas atmosféricas em movimento contínuo
-        if (this.particles.length < 65) {
-          if (weather === 'castle_embers') {
+        // ----------------------------------------------------------------------
+        // A. CENÁRIO: CASTELO DOS DADOS (Tochas com chamas, névoa e trovões)
+        // ----------------------------------------------------------------------
+        if (weather === 'castle_embers') {
+          // 1. Tochas dinâmicas nas torres e portão
+          CASTLE_TORCHES.forEach((t) => {
+            const flicker = Math.sin(now * 0.012 + t.x * 0.1) * 0.2 + Math.cos(now * 0.024 + t.y * 0.1) * 0.14 + (Math.random() - 0.5) * 0.12;
+            const currentScale = t.s * (1 + flicker * 0.22);
+
+            // Halo radiante de luz quente
+            const glowRadius = 55 * currentScale;
+            const glow = this.fxCtx.createRadialGradient(t.x, t.y, 4, t.x, t.y, glowRadius);
+            glow.addColorStop(0, `rgba(251, 146, 60, ${0.45 * (0.8 + flicker)})`);
+            glow.addColorStop(0.45, `rgba(234, 88, 12, ${0.18 * (0.8 + flicker)})`);
+            glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            this.fxCtx.fillStyle = glow;
+            this.fxCtx.beginPath();
+            this.fxCtx.arc(t.x, t.y, glowRadius, 0, Math.PI * 2);
+            this.fxCtx.fill();
+
+            // Língua de fogo animada
+            this.fxCtx.save();
+            this.fxCtx.translate(t.x, t.y);
+            this.fxCtx.fillStyle = '#f97316';
+            this.fxCtx.beginPath();
+            this.fxCtx.moveTo(0, 4 * currentScale);
+            this.fxCtx.quadraticCurveTo(7 * currentScale, -5 * currentScale, (Math.random() - 0.5) * 3, -17 * currentScale);
+            this.fxCtx.quadraticCurveTo(-7 * currentScale, -5 * currentScale, 0, 4 * currentScale);
+            this.fxCtx.fill();
+
+            // Núcleo branco-amarelado
+            this.fxCtx.fillStyle = '#fef08a';
+            this.fxCtx.beginPath();
+            this.fxCtx.moveTo(0, 2 * currentScale);
+            this.fxCtx.quadraticCurveTo(3.5 * currentScale, -3 * currentScale, 0, -10 * currentScale);
+            this.fxCtx.quadraticCurveTo(-3.5 * currentScale, -3 * currentScale, 0, 2 * currentScale);
+            this.fxCtx.fill();
+            this.fxCtx.restore();
+
+            // Emissão de fagulhas das tochas
+            if (Math.random() < 0.25 && this.particles.length < 130) {
+              this.particles.push({
+                x: t.x + (Math.random() - 0.5) * 6,
+                y: t.y - 10,
+                vx: (Math.random() - 0.5) * 22,
+                vy: -(Math.random() * 45 + 30),
+                size: Math.random() * 2.8 + 1.2,
+                color: Math.random() > 0.4 ? '#facc15' : '#f97316',
+                alpha: 0.9,
+                life: Math.random() * 1.8 + 1.2,
+              });
+            }
+          });
+
+          // 2. Névoa volumétrica móvel sobre o abismo sob a ponte
+          fogBanks.forEach((f) => {
+            f.x += f.vx * dt;
+            if (f.x - f.rx > 1450) f.x = -f.rx - 50;
+
+            this.fxCtx.save();
+            this.fxCtx.translate(f.x, f.y);
+            this.fxCtx.scale(1.6, 0.45);
+            const fogGrad = this.fxCtx.createRadialGradient(0, 0, 20, 0, 0, f.rx);
+            fogGrad.addColorStop(0, `rgba(148, 163, 184, ${f.alpha})`);
+            fogGrad.addColorStop(0.6, `rgba(148, 163, 184, ${f.alpha * 0.4})`);
+            fogGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            this.fxCtx.fillStyle = fogGrad;
+            this.fxCtx.beginPath();
+            this.fxCtx.arc(0, 0, f.rx, 0, Math.PI * 2);
+            this.fxCtx.fill();
+            this.fxCtx.restore();
+          });
+
+          // 3. Relâmpago periódico atmosférico
+          lightningTimer -= dt;
+          if (lightningTimer <= 0) {
+            lightningFlash = 0.65;
+            lightningTimer = Math.random() * 8 + 10;
+          }
+          if (lightningFlash > 0) {
+            this.fxCtx.fillStyle = `rgba(224, 242, 254, ${lightningFlash * 0.35})`;
+            this.fxCtx.fillRect(0, 0, 1366, 768);
+            lightningFlash -= dt * 2.5;
+          }
+        }
+
+        // ----------------------------------------------------------------------
+        // B. CENÁRIO: PICO DA LÓGICA (Aurora Boreal 3 camadas e nevasca com gélidas rajadas)
+        // ----------------------------------------------------------------------
+        else if (weather === 'mountain_snow') {
+          // 1. Estrelas cintilantes no céu alpino
+          stars.forEach((s) => {
+            const twinkle = 0.4 + 0.6 * (0.5 + 0.5 * Math.sin(s.seed + now * 0.003));
+            this.fxCtx.fillStyle = `rgba(255, 255, 255, ${twinkle})`;
+            this.fxCtx.beginPath();
+            this.fxCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            this.fxCtx.fill();
+          });
+
+          // 2. Ondulações da Aurora Boreal (Verde Esmeralda e Violeta)
+          const w1 = Math.sin(now * 0.0009) * 35;
+          const w2 = Math.cos(now * 0.0013) * 25;
+
+          this.fxCtx.save();
+          // Fita 1: Verde Polar
+          const g1 = this.fxCtx.createLinearGradient(0, 20, 0, 260);
+          g1.addColorStop(0, 'rgba(16, 185, 129, 0.28)');
+          g1.addColorStop(0.5, 'rgba(52, 211, 153, 0.16)');
+          g1.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          this.fxCtx.fillStyle = g1;
+          this.fxCtx.beginPath();
+          this.fxCtx.moveTo(0, 60 + w1);
+          this.fxCtx.bezierCurveTo(400, 130 - w2, 850, 40 + w1, 1366, 80 - w2);
+          this.fxCtx.lineTo(1366, 260);
+          this.fxCtx.lineTo(0, 260);
+          this.fxCtx.closePath();
+          this.fxCtx.fill();
+
+          // Fita 2: Violeta
+          const g2 = this.fxCtx.createLinearGradient(0, 30, 0, 240);
+          g2.addColorStop(0, 'rgba(168, 85, 247, 0.22)');
+          g2.addColorStop(0.6, 'rgba(192, 132, 252, 0.12)');
+          g2.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          this.fxCtx.fillStyle = g2;
+          this.fxCtx.beginPath();
+          this.fxCtx.moveTo(0, 110 - w2);
+          this.fxCtx.bezierCurveTo(450, 50 + w1, 950, 150 - w1, 1366, 70 + w2);
+          this.fxCtx.lineTo(1366, 240);
+          this.fxCtx.lineTo(0, 240);
+          this.fxCtx.closePath();
+          this.fxCtx.fill();
+
+          // Fita 3: Cortina de raios de luz ciano
+          const rayOffset = (now * 0.02) % 140;
+          for (let rx = -50 + rayOffset; rx < 1400; rx += 140) {
+            const rAlpha = 0.04 + 0.03 * Math.sin(rx + now * 0.002);
+            const rGrad = this.fxCtx.createLinearGradient(rx, 30, rx, 250);
+            rGrad.addColorStop(0, `rgba(56, 189, 248, ${rAlpha})`);
+            rGrad.addColorStop(1, 'rgba(56, 189, 248, 0)');
+            this.fxCtx.fillStyle = rGrad;
+            this.fxCtx.fillRect(rx, 30, 35, 220);
+          }
+          this.fxCtx.restore();
+
+          // 3. Flocos de nevasca contínuos
+          const wind = -130 - Math.sin(now * 0.002) * 60;
+          if (this.particles.length < 120) {
             this.particles.push({
-              x: Math.random() * 1366,
-              y: 768 + 10,
-              vx: (Math.random() - 0.5) * 35,
-              vy: -(Math.random() * 55 + 30),
-              size: Math.random() * 3.5 + 1.5,
-              color: Math.random() > 0.4 ? '#f97316' : '#facc15',
-              alpha: 0.85,
-              life: Math.random() * 3 + 2,
-            });
-          } else if (weather === 'mountain_snow') {
-            this.particles.push({
-              x: Math.random() * 1366,
+              x: Math.random() * 1500 - 50,
               y: -10,
-              vx: Math.sin(now * 0.0018) * 30 + (Math.random() - 0.5) * 20,
-              vy: Math.random() * 50 + 25,
-              size: Math.random() * 3.5 + 1.8,
+              vx: wind + (Math.random() - 0.5) * 35,
+              vy: Math.random() * 55 + 35,
+              size: Math.random() * 3.8 + 1.8,
               color: '#ffffff',
-              alpha: 0.9,
+              alpha: 0.88,
               life: Math.random() * 5 + 3,
-            });
-          } else if (weather === 'desert_sand') {
-            this.particles.push({
-              x: 1366 + 10,
-              y: Math.random() * 768,
-              vx: -(Math.random() * 120 + 80),
-              vy: (Math.random() - 0.4) * 30,
-              size: Math.random() * 3 + 1,
-              color: Math.random() > 0.5 ? '#f59e0b' : '#d97706',
-              alpha: 0.75,
-              life: Math.random() * 4 + 2,
-            });
-          } else if (weather === 'village_leaves') {
-            this.particles.push({
-              x: Math.random() * 1366,
-              y: -10,
-              vx: Math.sin(now * 0.002) * 25 + (Math.random() - 0.5) * 30,
-              vy: Math.random() * 40 + 20,
-              size: Math.random() * 4 + 2,
-              color: Math.random() > 0.5 ? '#22c55e' : '#eab308',
-              alpha: 0.85,
-              life: Math.random() * 4 + 3,
-            });
-          } else if (weather === 'void_cosmic') {
-            this.particles.push({
-              x: 683 + (Math.random() - 0.5) * 950,
-              y: 384 + (Math.random() - 0.5) * 650,
-              vx: (Math.random() - 0.5) * 25,
-              vy: (Math.random() - 0.5) * 25,
-              size: Math.random() * 4.5 + 1.5,
-              color: Math.random() > 0.5 ? '#a855f7' : '#38bdf8',
-              alpha: 0.9,
-              life: Math.random() * 3.5 + 1.5,
             });
           }
         }
 
-        // 2. Renderiza Efeito Especial de Aurora Boreal na Montanha
-        if (weather === 'mountain_snow') {
-          this.fxCtx.save();
-          const wave = Math.sin(now * 0.001) * 30;
-          const grad = this.fxCtx.createLinearGradient(0, 0, 1366, 300);
-          grad.addColorStop(0, 'rgba(56, 189, 248, 0.05)');
-          grad.addColorStop(0.5, 'rgba(168, 85, 247, 0.08)');
-          grad.addColorStop(1, 'rgba(34, 197, 94, 0.04)');
-          this.fxCtx.fillStyle = grad;
+        // ----------------------------------------------------------------------
+        // C. CENÁRIO: DESERTO PRIMORDIAL (Sol pulsante, miragem de calor e tempestade de areia)
+        // ----------------------------------------------------------------------
+        else if (weather === 'desert_sand') {
+          // 1. Clarão solar no canto superior
+          const sunRadius = 140 + Math.sin(now * 0.002) * 20;
+          const sunGlow = this.fxCtx.createRadialGradient(1180, 90, 10, 1180, 90, sunRadius);
+          sunGlow.addColorStop(0, 'rgba(254, 240, 138, 0.35)');
+          sunGlow.addColorStop(0.4, 'rgba(251, 191, 36, 0.16)');
+          sunGlow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          this.fxCtx.fillStyle = sunGlow;
           this.fxCtx.beginPath();
-          this.fxCtx.moveTo(0, 80 + wave);
-          this.fxCtx.bezierCurveTo(450, 140 - wave, 900, 40 + wave, 1366, 100 - wave);
-          this.fxCtx.lineTo(1366, 0);
-          this.fxCtx.lineTo(0, 0);
-          this.fxCtx.closePath();
+          this.fxCtx.arc(1180, 90, sunRadius, 0, Math.PI * 2);
           this.fxCtx.fill();
-          this.fxCtx.restore();
+
+          // 2. Ondas de calor sobre as dunas
+          this.fxCtx.strokeStyle = 'rgba(251, 191, 36, 0.12)';
+          this.fxCtx.lineWidth = 2;
+          for (let ly = 420; ly <= 480; ly += 20) {
+            this.fxCtx.beginPath();
+            for (let lx = 0; lx <= 1366; lx += 40) {
+              const heatY = ly + Math.sin(lx * 0.02 + now * 0.005) * 4;
+              if (lx === 0) this.fxCtx.moveTo(lx, heatY);
+              else this.fxCtx.lineTo(lx, heatY);
+            }
+            this.fxCtx.stroke();
+          }
+
+          // 3. Areia rápida varrendo da direita para esquerda
+          if (this.particles.length < 130) {
+            this.particles.push({
+              x: 1366 + 10,
+              y: Math.random() * 650 + 100,
+              vx: -(Math.random() * 260 + 180),
+              vy: (Math.random() - 0.45) * 35,
+              size: Math.random() * 3 + 1.2,
+              color: Math.random() > 0.4 ? '#f59e0b' : '#d97706',
+              alpha: 0.8,
+              life: Math.random() * 3.5 + 2,
+            });
+          }
         }
 
-        // 3. Renderiza e movimenta as partículas
+        // ----------------------------------------------------------------------
+        // D. CENÁRIO: VILA ANCESTRAL (Vaga-lumes brilhantes e folhas caindo)
+        // ----------------------------------------------------------------------
+        else if (weather === 'village_leaves') {
+          // 1. Vaga-lumes bioluminescentes
+          fireflies.forEach((f) => {
+            f.x += Math.sin(f.seed + now * 0.0018) * 1.5;
+            f.y += Math.cos(f.seed * 1.3 + now * 0.0014) * 1.2;
+            if (f.x < -20) f.x = 1386;
+            if (f.x > 1386) f.x = -20;
+            if (f.y < 30) f.y = 650;
+            if (f.y > 670) f.y = 40;
+
+            const alpha = 0.25 + 0.65 * (0.5 + 0.5 * Math.sin(f.seed * 4 + now * 0.004));
+
+            const halo = this.fxCtx.createRadialGradient(f.x, f.y, 1, f.x, f.y, f.size * 6);
+            halo.addColorStop(0, `rgba(190, 242, 100, ${alpha * 0.45})`);
+            halo.addColorStop(1, 'rgba(0, 0, 0, 0)');
+            this.fxCtx.fillStyle = halo;
+            this.fxCtx.beginPath();
+            this.fxCtx.arc(f.x, f.y, f.size * 6, 0, Math.PI * 2);
+            this.fxCtx.fill();
+
+            this.fxCtx.fillStyle = f.color;
+            this.fxCtx.globalAlpha = alpha;
+            this.fxCtx.beginPath();
+            this.fxCtx.arc(f.x, f.y, f.size, 0, Math.PI * 2);
+            this.fxCtx.fill();
+            this.fxCtx.globalAlpha = 1.0;
+          });
+
+          // 2. Folhas de outono caindo e girando suavemente
+          autumnLeaves.forEach((l) => {
+            l.x += l.vx * dt + Math.sin(l.angle) * 25 * dt;
+            l.y += l.vy * dt;
+            l.angle += l.va * dt;
+
+            if (l.y > 780 || l.x > 1400) {
+              l.y = -20;
+              l.x = Math.random() * 1366;
+            }
+
+            this.fxCtx.save();
+            this.fxCtx.translate(l.x, l.y);
+            this.fxCtx.rotate(l.angle);
+            this.fxCtx.fillStyle = l.color;
+            this.fxCtx.beginPath();
+            this.fxCtx.ellipse(0, 0, l.size, l.size * 0.55, 0, 0, Math.PI * 2);
+            this.fxCtx.fill();
+            this.fxCtx.restore();
+          });
+        }
+
+        // ----------------------------------------------------------------------
+        // E. CENÁRIO: VAZIO CÓSMICO (Singularidade, horizonte de eventos e poeira estelar)
+        // ----------------------------------------------------------------------
+        else if (weather === 'void_cosmic') {
+          // 1. Estrelas cósmicas
+          stars.forEach((s) => {
+            const twinkle = 0.35 + 0.65 * (0.5 + 0.5 * Math.sin(s.seed + now * 0.0035));
+            this.fxCtx.fillStyle = `rgba(224, 231, 255, ${twinkle})`;
+            this.fxCtx.beginPath();
+            this.fxCtx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+            this.fxCtx.fill();
+          });
+
+          // 2. Vórtice de acreção da singularidade cósmica
+          const cx = 683, cy = 310;
+          voidVortex.forEach((v) => {
+            v.angle += (140 / Math.max(30, v.dist)) * dt * v.speed;
+            v.dist -= 14 * dt;
+            if (v.dist < 22) v.dist = Math.random() * 260 + 80;
+
+            const px = cx + Math.cos(v.angle) * v.dist * 1.8;
+            const py = cy + Math.sin(v.angle) * v.dist * 0.65;
+
+            this.fxCtx.fillStyle = v.color;
+            this.fxCtx.globalAlpha = Math.min(1, v.dist / 80);
+            this.fxCtx.beginPath();
+            this.fxCtx.arc(px, py, v.size, 0, Math.PI * 2);
+            this.fxCtx.fill();
+          });
+          this.fxCtx.globalAlpha = 1.0;
+
+          // 3. Pulso radial do horizonte de eventos
+          const vPulse = 45 + Math.sin(now * 0.003) * 8;
+          const vGrad = this.fxCtx.createRadialGradient(cx, cy, 10, cx, cy, vPulse);
+          vGrad.addColorStop(0, 'rgba(168, 85, 247, 0.35)');
+          vGrad.addColorStop(0.7, 'rgba(56, 189, 248, 0.15)');
+          vGrad.addColorStop(1, 'rgba(0, 0, 0, 0)');
+          this.fxCtx.fillStyle = vGrad;
+          this.fxCtx.beginPath();
+          this.fxCtx.arc(cx, cy, vPulse, 0, Math.PI * 2);
+          this.fxCtx.fill();
+        }
+
+        // ----------------------------------------------------------------------
+        // F. ATUALIZAÇÃO E RENDERIZAÇÃO DAS PARTÍCULAS ATIVAS
+        // ----------------------------------------------------------------------
         for (let i = this.particles.length - 1; i >= 0; i--) {
           const p = this.particles[i];
           p.x += p.vx * dt;
@@ -1469,18 +1753,20 @@
           p.life -= dt;
 
           this.fxCtx.fillStyle = p.color;
-          this.fxCtx.globalAlpha = Math.max(0, Math.min(1, p.alpha * (p.life / 3)));
+          this.fxCtx.globalAlpha = Math.max(0, Math.min(1, p.alpha * (p.life / 2.5)));
           this.fxCtx.beginPath();
           this.fxCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
           this.fxCtx.fill();
 
-          if (p.life <= 0 || p.x < -20 || p.x > 1386 || p.y < -20 || p.y > 788) {
+          if (p.life <= 0 || p.x < -30 || p.x > 1400 || p.y < -30 || p.y > 800) {
             this.particles.splice(i, 1);
           }
         }
         this.fxCtx.globalAlpha = 1.0;
 
-        // 4. Renderiza Linhas de Corte do Golpe Supremo
+        // ----------------------------------------------------------------------
+        // G. CORTES DO GOLPE SUPREMO (Linhas Luminosas)
+        // ----------------------------------------------------------------------
         for (let i = this.cinematicSlashes.length - 1; i >= 0; i--) {
           const s = this.cinematicSlashes[i];
           s.life -= dt;
@@ -1500,7 +1786,9 @@
           }
         }
 
-        // 5. Renderiza Textos Flutuantes (com suporte a "ERROU!")
+        // ----------------------------------------------------------------------
+        // H. TEXTOS FLUTUANTES (Dano, Críticos e "ERROU!")
+        // ----------------------------------------------------------------------
         for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
           const ft = this.floatingTexts[i];
           ft.y -= dt * 45;
