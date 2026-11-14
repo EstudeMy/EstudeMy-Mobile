@@ -38,7 +38,9 @@ api.interceptors.request.use(
 
     // Se for método de mutação sensível, anexa chave de idempotência se ainda não existir (RC09)
     if (config.method && ['post', 'put', 'delete'].includes(config.method.toLowerCase())) {
-      if (config.headers && !config.headers['Idempotency-Key']) {
+      // Rotas de autenticação (login, registro, confirmação) não devem receber Idempotency-Key
+      const isAuthRoute = config.url && (config.url.includes('/api/auth/') || config.url.includes('/auth/'));
+      if (!isAuthRoute && config.headers && !config.headers['Idempotency-Key']) {
         config.headers['Idempotency-Key'] = asyncLock.generateIdempotencyKey();
       }
     }

@@ -89,7 +89,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            EXPO_PUBLIC_API_URL=https://api.estudemy.com
+            EXPO_PUBLIC_API_URL=
 
   # ============================================================================
   # 3. Deploy Remoto na Nuvem AWS / Host via SSH

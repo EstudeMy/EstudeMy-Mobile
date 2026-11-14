@@ -1,21 +1,24 @@
 import { Platform } from 'react-native';
 
 const getBaseUrl = (): string => {
-  // 1. Variável de ambiente explícita definida no .env (para builds nativos Android/iOS, Expo Go e Web)
+  // 1. Web no navegador: Em produção, SEMPRE utiliza a mesma origem ('') para o proxy reverso do Nginx
+  // Isso elimina qualquer problema de CORS, divergência de protocolo (HTTP/HTTPS) ou portas
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return process.env.EXPO_PUBLIC_API_URL || 'http://localhost:5000';
+    }
+    // Em produção na web (seja pelo IP 18.222.3.101 ou domínio estudemy.com),
+    // usa a mesma origem via proxy reverso Nginx (/api)
+    return '';
+  }
+
+  // 2. Mobile (Android Studio, APK nativo, iOS, Expo Go em celular físico ou emulador)
+  // Se houver variável de ambiente explícita definida no .env/build, utiliza ela
   if (process.env.EXPO_PUBLIC_API_URL && process.env.EXPO_PUBLIC_API_URL.trim() !== '') {
     return process.env.EXPO_PUBLIC_API_URL.trim();
   }
 
-  // 2. Web no navegador
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
-    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-      return 'http://localhost:5000';
-    }
-    // Em produção na web (AWS ou domínio), usa a mesma origem via proxy reverso Nginx (/api)
-    return '';
-  }
-
-  // 3. Padrão universal para Mobile (Android Studio, Expo Go no celular físico, emuladores e produção)
+  // 3. Padrão universal para Mobile apontando para a nuvem AWS EC2
   return 'http://18.222.3.101';
 };
 
