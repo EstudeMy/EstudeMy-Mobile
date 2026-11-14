@@ -56,8 +56,8 @@ import {
   CheckCircle2,
   SlidersHorizontal,
   RotateCcw,
-  Accessibility,
 } from 'lucide-react-native';
+import { AccessibilityIcon } from '../../components/AccessibilityIcon';
 import QRCodeModal from '../../components/QRCodeModal';
 import QRScannerModal from '../../components/QRScannerModal';
 import { APP_FULL_VERSION_STRING } from '../../constants/version';
@@ -723,20 +723,18 @@ export default function HomeScreen() {
             />
             <View>
               <Text style={[styles.greeting, { color: colors.text }]}>{t('common.hello') || 'Olá'}, {user?.nome || t('common.student') || 'Estudante'}!</Text>
-              <Text style={[styles.avatarLabel, { color: colors.textMuted }]}>{t('common.class') || 'Classe'}: {user?.personagem ? (t(`characterPage.classes.${user.personagem.toLowerCase()}`) || user.personagem) : (t('characterPage.classes.samurai') || 'Samurai')}</Text>
+              <Text style={[styles.avatarLabel, { color: colors.textSecondary }]}>{t('common.class') || 'Classe'}: {user?.personagem ? (t(`characterPage.classes.${user.personagem.toLowerCase()}`) || user.personagem) : (t('characterPage.classes.samurai') || 'Samurai')}</Text>
             </View>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
             <TouchableOpacity
               onPress={openAccessibilityModal}
-              style={[
-                styles.accessibilityHeaderBtn,
-                { backgroundColor: colors.cardSecondary, borderColor: colors.border },
-              ]}
+              style={styles.accessibilityHeaderBtn}
               accessibilityRole="button"
-              accessibilityLabel="Acessibilidade"
+              accessibilityLabel="Acessibilidade e Alto Contraste"
+              activeOpacity={0.85}
             >
-              <Accessibility size={18} color={colors.primary} />
+              <AccessibilityIcon size={24} color="#000000" accentColor="#00AEEF" />
             </TouchableOpacity>
             <View style={styles.levelBadge}>
               <Text style={styles.levelBadgeText}>Lvl {level}</Text>
@@ -1811,12 +1809,19 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   accessibilityHeaderBtn: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    borderWidth: 2.5,
+    borderColor: '#0284C7',
+    backgroundColor: '#FFFFFF',
     alignItems: 'center',
     justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 0,
+    elevation: 4,
   },
   levelBadge: {
     backgroundColor: '#4F46E5', // indigo-600
@@ -2246,17 +2251,17 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
   },
   enterCodePill: {
-    backgroundColor: '#18181B',
+    backgroundColor: '#F59E0B',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 10,
-    paddingVertical: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 7,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: '#F59E0B',
+    borderColor: '#000000',
   },
   enterCodePillText: {
-    color: '#F59E0B',
+    color: '#000000',
     fontSize: 12,
     fontWeight: '900',
   },
@@ -2582,12 +2587,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#EC4899',
   },
   quickFilterChipText: {
-    color: '#D1D5DB',
-    fontSize: 12,
+    color: '#FFFFFF',
+    fontSize: 13,
     fontWeight: '800',
   },
   quickFilterChipTextActive: {
-    color: '#ffffff',
+    color: '#FFFFFF',
   },
   filteredSectionHeaderRow: {
     flexDirection: 'row',

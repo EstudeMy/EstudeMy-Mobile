@@ -30,13 +30,13 @@ export interface ThemeColors {
 const baseDarkColors: ThemeColors = {
   background: '#0F172A', // Slate 900
   card: '#1E293B',       // Slate 800
-  cardSecondary: '#273549',
-  text: '#FFFFFF',       // 16.5:1
-  textSecondary: '#E2E8F0', // 12.0:1
-  textMuted: '#CBD5E1',     // 8.5:1 (Muito legível, sem ficar apagado)
-  border: '#334155',     // Slate 700
+  cardSecondary: '#2D3B4F', // Destaque visual secundário limpo
+  text: '#FFFFFF',       // 16.5:1 (Branco puro)
+  textSecondary: '#F8FAFC', // 15.5:1 (Quase branco nítido)
+  textMuted: '#E2E8F0',     // 12.0:1 (Muito legível de longe e de perto)
+  border: '#475569',     // Slate 600 (Bordas nítidas)
   inputBg: '#1E293B',
-  primary: '#4338CA',    // Indigo EstudeMy
+  primary: '#818CF8',    // Indigo 400 (Vibrante e nítido em fundo escuro)
   accent: '#F59E0B',     // Amber
   success: '#10B981',    // Emerald
   warning: '#F59E0B',
@@ -48,10 +48,10 @@ const baseLightColors: ThemeColors = {
   background: '#F8FAFC', // Slate 50
   card: '#FFFFFF',
   cardSecondary: '#F1F5F9', // Slate 100
-  text: '#0F172A',       // Slate 900 (16.0:1)
-  textSecondary: '#334155', // Slate 700 (10.0:1)
-  textMuted: '#475569',     // Slate 600 (7.0:1)
-  border: '#CBD5E1',     // Slate 300
+  text: '#020617',       // Slate 950 (19.5:1 contraste máximo)
+  textSecondary: '#1E293B', // Slate 800 (14.0:1)
+  textMuted: '#334155',     // Slate 700 (9.5:1)
+  border: '#94A3B8',     // Slate 400
   inputBg: '#FFFFFF',
   primary: '#4338CA',    // Indigo EstudeMy
   accent: '#D97706',
@@ -65,14 +65,14 @@ const baseLightColors: ThemeColors = {
 const highContrastDarkColors: ThemeColors = {
   ...baseDarkColors,
   background: '#000000',
-  card: '#121212',
-  cardSecondary: '#1E1E1E',
+  card: '#0A0A0A',
+  cardSecondary: '#171717',
   text: '#FFFFFF',
   textSecondary: '#FFFFFF',
-  textMuted: '#FDE047', // Amarelo de alto contraste para leitura à distância
+  textMuted: '#FFFFFF', // Máximo contraste
   border: '#FFFFFF',
   inputBg: '#000000',
-  primary: '#818CF8',
+  primary: '#A5B4FC',
   accent: '#FDE047',
   success: '#34D399',
   danger: '#F87171',
@@ -85,7 +85,7 @@ const highContrastLightColors: ThemeColors = {
   cardSecondary: '#F3F4F6',
   text: '#000000',
   textSecondary: '#000000',
-  textMuted: '#1E293B',
+  textMuted: '#000000',
   border: '#000000',
   inputBg: '#FFFFFF',
   primary: '#312E81',

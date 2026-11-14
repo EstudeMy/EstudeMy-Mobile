@@ -9,7 +9,8 @@ import {
   Switch,
   Platform,
 } from 'react-native';
-import { Accessibility, X, Eye } from 'lucide-react-native';
+import { X, Eye } from 'lucide-react-native';
+import { AccessibilityIcon } from './AccessibilityIcon';
 import { useTheme, DaltonismMode, FontScale } from '../contexts/ThemeContext';
 
 interface AccessibilityModalProps {
@@ -61,8 +62,8 @@ export const AccessibilityModal: React.FC<AccessibilityModalProps> = ({ visible,
           {/* Header com ícone universal de acessibilidade */}
           <View style={[styles.header, { borderBottomColor: colors.border }]}>
             <View style={styles.headerLeft}>
-              <View style={[styles.iconCircle, { backgroundColor: colors.primary }]}>
-                <Accessibility size={22} color="#FFFFFF" />
+              <View style={[styles.iconCircle, { backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#0284C7' }]}>
+                <AccessibilityIcon size={24} color="#000000" accentColor="#00AEEF" />
               </View>
               <View>
                 <Text style={[styles.title, { color: colors.text }]}>Acessibilidade</Text>

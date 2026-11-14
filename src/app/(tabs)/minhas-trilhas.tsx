@@ -43,8 +43,8 @@ import {
   ArrowRight,
   TrendingUp,
   Wallet,
-  Accessibility,
 } from 'lucide-react-native';
+import { AccessibilityIcon } from '../../components/AccessibilityIcon';
 
 export default function MinhasTrilhasScreen() {
   const router = useRouter();
@@ -233,20 +233,26 @@ export default function MinhasTrilhasScreen() {
             <TouchableOpacity
               onPress={openAccessibilityModal}
               style={{
-                width: 36,
-                height: 36,
-                borderRadius: 18,
-                borderWidth: 1,
-                borderColor: colors.border,
-                backgroundColor: colors.cardSecondary,
+                width: 42,
+                height: 42,
+                borderRadius: 21,
+                borderWidth: 2.5,
+                borderColor: '#0284C7',
+                backgroundColor: '#FFFFFF',
                 alignItems: 'center',
                 justifyContent: 'center',
-                marginLeft: 8,
+                marginLeft: 10,
+                shadowColor: '#000000',
+                shadowOffset: { width: 2, height: 2 },
+                shadowOpacity: 0.8,
+                shadowRadius: 0,
+                elevation: 4,
               }}
               accessibilityRole="button"
-              accessibilityLabel="Acessibilidade"
+              accessibilityLabel="Acessibilidade e Alto Contraste"
+              activeOpacity={0.85}
             >
-              <Accessibility size={18} color={colors.primary} />
+              <AccessibilityIcon size={24} color="#000000" accentColor="#00AEEF" />
             </TouchableOpacity>
           </View>
 

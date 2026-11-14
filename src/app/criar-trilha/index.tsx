@@ -34,6 +34,8 @@ import {
   RefreshCw,
   Sparkles,
   QrCode,
+  Calendar,
+  CalendarCheck,
 } from 'lucide-react-native';
 import { sanitizeInput } from '../../utils/security';
 import asyncLock from '../../utils/asyncLock';
@@ -83,6 +85,11 @@ export default function CriarTrilhaScreen() {
   const [createdTrilha, setCreatedTrilha] = useState<Trilha | null>(null);
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const [idioma, setIdioma] = useState('Português');
+
+  // Período da Trilha: Data de Início e Data Fim (opcional)
+  const todayStr = new Date().toISOString().split('T')[0];
+  const [dataInicio, setDataInicio] = useState(todayStr);
+  const [dataFim, setDataFim] = useState('');
 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -134,9 +141,21 @@ export default function CriarTrilhaScreen() {
   const handleCriarTrilha = async () => {
     const cleanTitulo = sanitizeInput(titulo).trim();
     const cleanDescricao = sanitizeInput(descricao).trim();
+    const cleanDataInicio = sanitizeInput(dataInicio).trim();
+    const cleanDataFim = sanitizeInput(dataFim).trim();
 
     if (!cleanTitulo || !cleanDescricao) {
       setErrorMsg('Título e descrição são obrigatórios.');
+      return;
+    }
+
+    if (!cleanDataInicio) {
+      setErrorMsg('A data de início da trilha é obrigatória.');
+      return;
+    }
+
+    if (cleanDataFim && cleanDataFim < cleanDataInicio) {
+      setErrorMsg('A data de término não pode ser anterior à data de início.');
       return;
     }
 
@@ -160,6 +179,8 @@ export default function CriarTrilhaScreen() {
           faseSelecionada,
           imagem: cenarioPath,
           idioma,
+          dataInicio: cleanDataInicio,
+          dataFim: cleanDataFim || undefined,
         });
 
         if (disponibilidade === 'Privado' && finalCodigo) {
@@ -294,6 +315,61 @@ export default function CriarTrilhaScreen() {
                 </TouchableOpacity>
               );
             })}
+          </View>
+        </View>
+
+        {/* Período da Trilha: Data de Início e Data Fim (Opcional) */}
+        <View style={styles.inputGroup}>
+          <Text style={[styles.label, { color: colors.text }]}>Período de Realização (Datas) *</Text>
+          <Text style={[styles.fieldSublabel, { color: colors.textMuted }]}>
+            Defina o período em que a trilha estará ativa para os alunos. A data de término é opcional.
+          </Text>
+
+          <View style={styles.dateInputsRow}>
+            {/* Data de Início */}
+            <View style={styles.dateInputCol}>
+              <Text style={[styles.dateSublabel, { color: colors.text }]}>Data de Início *</Text>
+              <View style={[styles.dateInputWrapper, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
+                <Calendar size={18} color="#4F46E5" style={{ marginRight: 8 }} />
+                <TextInput
+                  style={[styles.dateTextInput, { color: colors.text }]}
+                  placeholder="AAAA-MM-DD"
+                  placeholderTextColor={colors.textMuted}
+                  value={dataInicio}
+                  onChangeText={setDataInicio}
+                  maxLength={10}
+                />
+              </View>
+              <Text style={[styles.dateHelperText, { color: colors.textMuted }]}>
+                Início das atividades
+              </Text>
+            </View>
+
+            {/* Data Fim (Opcional) */}
+            <View style={styles.dateInputCol}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                <Text style={[styles.dateSublabel, { color: colors.text }]}>Data Fim (Opcional)</Text>
+                {dataFim ? (
+                  <TouchableOpacity onPress={() => setDataFim('')} activeOpacity={0.7}>
+                    <Text style={styles.clearDateBtnText}>Limpar</Text>
+                  </TouchableOpacity>
+                ) : null}
+              </View>
+              <View style={[styles.dateInputWrapper, { backgroundColor: colors.cardSecondary, borderColor: colors.border }]}>
+                <CalendarCheck size={18} color={dataFim ? '#10B981' : colors.textMuted} style={{ marginRight: 8 }} />
+                <TextInput
+                  style={[styles.dateTextInput, { color: colors.text }]}
+                  placeholder="AAAA-MM-DD"
+                  placeholderTextColor={colors.textMuted}
+                  value={dataFim}
+                  onChangeText={setDataFim}
+                  maxLength={10}
+                />
+              </View>
+              <Text style={[styles.dateHelperText, { color: colors.textMuted }]}>
+                {dataFim ? 'Prazo final de encerramento' : 'Opcional (sem data limite)'}
+              </Text>
+            </View>
           </View>
         </View>
 
@@ -747,6 +823,44 @@ const styles = StyleSheet.create({
   textActive: {
     color: '#ffffff',
     fontWeight: '900',
+  },
+  dateInputsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    flexWrap: 'wrap',
+  },
+  dateInputCol: {
+    flex: 1,
+    minWidth: 140,
+  },
+  dateSublabel: {
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  dateInputWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    borderRadius: 10,
+    borderWidth: 2.5,
+    paddingHorizontal: 12,
+    height: 46,
+  },
+  dateTextInput: {
+    flex: 1,
+    fontSize: 14,
+    fontWeight: '700',
+    height: '100%',
+  },
+  dateHelperText: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 4,
+  },
+  clearDateBtnText: {
+    fontSize: 11,
+    fontWeight: '800',
+    color: '#EF4444',
   },
   scenariosGrid: {
     flexDirection: 'row',

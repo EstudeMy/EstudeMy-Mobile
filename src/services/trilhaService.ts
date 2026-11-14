@@ -27,6 +27,8 @@ export interface Trilha {
   preco?: number;
   codigoAcesso?: string;
   idioma?: string;
+  dataInicio?: string;
+  dataFim?: string;
   createdAt?: string;
   secoesCount?: number;
   fasesCount?: number;
@@ -67,6 +69,8 @@ export const criarTrilhaManual = async (dados: {
   faseSelecionada?: number;
   imagem?: string;
   idioma?: string;
+  dataInicio?: string;
+  dataFim?: string;
 }): Promise<Trilha> => {
   // RC02: Sanitização de entradas
   const cleanCode = dados.codigoAcesso ? sanitizeInput(dados.codigoAcesso).trim().toUpperCase() : undefined;
@@ -76,6 +80,8 @@ export const criarTrilhaManual = async (dados: {
     descricao: sanitizeInput(dados.descricao),
     materia: sanitizeInput(dados.materia),
     codigoAcesso: cleanCode,
+    dataInicio: dados.dataInicio ? sanitizeInput(dados.dataInicio).trim() : undefined,
+    dataFim: dados.dataFim ? sanitizeInput(dados.dataFim).trim() : undefined,
   };
   const response = await api.post('/api/trilhas', safeData);
   const trilhaCriada: Trilha = response.data;

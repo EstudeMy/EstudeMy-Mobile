@@ -33,9 +33,9 @@ import {
   CheckCircle2,
   ChevronRight,
   ExternalLink,
-  Accessibility,
   Eye,
 } from 'lucide-react-native';
+import { AccessibilityIcon } from '../components/AccessibilityIcon';
 import api from '../services/api';
 import { APP_FULL_VERSION_STRING, APP_ENVIRONMENT } from '../constants/version';
 
@@ -216,9 +216,12 @@ export default function ConfiguracoesScreen() {
 
       {/* Seção: Acessibilidade & Visão */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          <Accessibility size={18} color={colors.primary} style={styles.sectionIcon} /> Acessibilidade & Visão
-        </Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
+          <AccessibilityIcon size={20} color={isDark ? '#FFFFFF' : '#000000'} accentColor="#00AEEF" style={{ marginRight: 8 }} />
+          <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 0 }]}>
+            Acessibilidade & Visão
+          </Text>
+        </View>
         <TouchableOpacity
           style={[
             styles.optionRow,
