@@ -1,156 +1,135 @@
 /**
- * ESTUDEMY OVERHAULED GAME ENGINE
- * Motor de Jogo Pedagógico Completo (Web Audio + Canvas 2D + QTE + Multi-Bosses + Modos de Jogo)
+ * ESTUDEMY RPG ENGINE - VERSÃO COMPLETA OVERHAUL
+ * Integração de Sprites Reais, Backgrounds Temáticos, Trilha Sonora Sintetizada, Skins e QTEs
  */
 
 (function () {
   'use strict';
 
   // ============================================================================
-  // 1. DADOS DE PERSONAGENS, SKINS E MODOS
+  // 1. CONFIGURAÇÕES VISUAIS: SPRITES, SKINS E CENÁRIOS
   // ============================================================================
-  const SKINS_CONFIG = {
-    samurai_ronin: {
-      name: 'Kaito Ronin',
-      char: 'samurai',
-      primaryColor: '#0ea5e9',
-      accentColor: '#38bdf8',
-      auraColor: 'rgba(14, 165, 233, 0.4)',
-      atkBonus: 0,
-      critRate: 0.25,
-      moves: ['Corte de Katana (Iaijutsu)', 'Estocada da Flor de Lótus', 'Dança das Mil Lâminas'],
-      qtePattern: ['A', 'D', 'SPACE'],
+  const THEMES_CONFIG = {
+    castelo: {
+      name: 'Castelo dos Dados',
+      bgImg: 'assets/backgrounds/castelo.jpg',
+      defaultBoss: 'spectre',
+      musicKey: 'battle',
     },
-    samurai_cyber_void: {
-      name: 'Kaito Cyber-Void',
-      char: 'samurai',
-      primaryColor: '#a855f7',
-      accentColor: '#ec4899',
-      auraColor: 'rgba(168, 85, 247, 0.55)',
-      atkBonus: 8,
-      critRate: 0.4,
-      moves: ['Lâmina de Plasma Fóton', 'Corte Dimensional do Vazio', 'Julgamento Omnislash'],
-      qtePattern: ['W', 'S', 'A', 'D', 'SPACE'],
+    montanha: {
+      name: 'Pico da Lógica',
+      bgImg: 'assets/backgrounds/montanha.jpg',
+      defaultBoss: 'mago',
+      musicKey: 'battle',
     },
-    guerreiro_templario: {
-      name: 'Boran da Ordem',
-      char: 'guerreiro',
-      primaryColor: '#3b82f6',
-      accentColor: '#60a5fa',
-      auraColor: 'rgba(59, 130, 246, 0.35)',
-      atkBonus: 0,
-      critRate: 0.15,
-      moves: ['Golpe de Espada Longa', 'Pancada com Escudo Férreo', 'Investida Sagrada'],
-      qtePattern: ['SPACE', 'W', 'SPACE'],
+    deserto: {
+      name: 'Deserto Primordial',
+      bgImg: 'assets/backgrounds/deserto.jpg',
+      defaultBoss: 'spectre',
+      musicKey: 'battle',
     },
-    guerreiro_berserker_lava: {
-      name: 'Boran Vulcânico',
-      char: 'guerreiro',
-      primaryColor: '#ef4444',
-      accentColor: '#f97316',
-      auraColor: 'rgba(239, 68, 68, 0.5)',
-      atkBonus: 10,
-      critRate: 0.25,
-      moves: ['Machado Incandescente', 'Fenda Sísmica de Magma', 'Erupção Titânica'],
-      qtePattern: ['SPACE', 'SPACE', 'A', 'D'],
+    vila: {
+      name: 'Vila Ancestral',
+      bgImg: 'assets/backgrounds/vila.jpg',
+      defaultBoss: 'cavaleiro',
+      musicKey: 'battle',
     },
-    mago_arcanista: {
-      name: 'Valerius Arcano',
-      char: 'mago',
-      primaryColor: '#6366f1',
-      accentColor: '#818cf8',
-      auraColor: 'rgba(99, 102, 241, 0.4)',
-      atkBonus: 0,
-      critRate: 0.2,
-      moves: ['Dardo de Energia Pura', 'Orbe Incandescente', 'Meteoro Cósmico'],
-      qtePattern: ['W', 'A', 'SPACE'],
+    vazio_cosmico: {
+      name: 'Vazio Cósmico',
+      bgImg: 'assets/backgrounds/vazio_cosmico.jpg',
+      defaultBoss: 'chefe_final',
+      musicKey: 'final_boss',
     },
-    mago_necromante_espectral: {
-      name: 'Valerius das Sombras',
-      char: 'mago',
-      primaryColor: '#10b981',
-      accentColor: '#059669',
-      auraColor: 'rgba(16, 185, 129, 0.45)',
-      atkBonus: 12,
-      critRate: 0.3,
-      moves: ['Chama Abissal', 'Garras do Submundo', 'Apocalipse das Almas'],
-      qtePattern: ['A', 'W', 'D', 'SPACE'],
+  };
+
+  const CHARACTERS_CONFIG = {
+    samurai: {
+      name: 'Kaito',
+      spriteFolder: 'assets/sprites/samurai',
+      skins: [
+        { id: 'samurai_ronin', name: 'Kaito Ronin', cssClass: '', ultName: 'Dança das Mil Lâminas' },
+        { id: 'samurai_cyber_void', name: 'Kaito Cyber-Void', cssClass: 'skin-cyber-void', ultName: 'Julgamento Omnislash' },
+      ],
     },
-    arqueira_silvestre: {
-      name: 'Lyra dos Bosques',
-      char: 'arqueira',
-      primaryColor: '#22c55e',
-      accentColor: '#4ade80',
-      auraColor: 'rgba(34, 197, 94, 0.35)',
-      atkBonus: 0,
-      critRate: 0.22,
-      moves: ['Tiro Rápido de Precisão', 'Disparo Múltiplo Disperso', 'Chuva de Flechas'],
-      qtePattern: ['W', 'SPACE', 'W'],
+    guerreiro: {
+      name: 'Boran',
+      spriteFolder: 'assets/sprites/cavaleiro',
+      skins: [
+        { id: 'guerreiro_templario', name: 'Boran da Ordem', cssClass: '', ultName: 'Investida Sagrada' },
+        { id: 'guerreiro_berserker_lava', name: 'Boran Vulcânico', cssClass: 'skin-berserker-lava', ultName: 'Erupção Titânica' },
+      ],
     },
-    arqueira_sniper_sonica: {
-      name: 'Lyra Railgun',
-      char: 'arqueira',
-      primaryColor: '#06b6d4',
-      accentColor: '#38bdf8',
-      auraColor: 'rgba(6, 182, 212, 0.45)',
-      atkBonus: 9,
-      critRate: 0.35,
-      moves: ['Projétil Eletromagnético Railgun', 'Flecha de Alta Frequência', 'Canhão Orbital'],
-      qtePattern: ['D', 'A', 'W', 'SPACE'],
+    mago: {
+      name: 'Valerius',
+      spriteFolder: 'assets/sprites/mago',
+      skins: [
+        { id: 'mago_arcanista', name: 'Valerius Arcano', cssClass: '', ultName: 'Meteoro Cósmico' },
+        { id: 'mago_necromante_espectral', name: 'Valerius das Sombras', cssClass: 'skin-necromante', ultName: 'Apocalipse das Almas' },
+      ],
+    },
+    arqueira: {
+      name: 'Lyra',
+      spriteFolder: 'assets/sprites/arqueira',
+      skins: [
+        { id: 'arqueira_silvestre', name: 'Lyra dos Bosques', cssClass: '', ultName: 'Chuva de Flechas' },
+        { id: 'arqueira_sniper_sonica', name: 'Lyra Railgun', cssClass: 'skin-sniper-sonica', ultName: 'Disparo Orbital Sônico' },
+      ],
     },
   };
 
   const BOSSES_CONFIG = {
     spectre: {
       name: 'Spectre do Código',
-      theme: 'castelo',
+      spriteFolder: 'assets/sprites/spectre',
       phases: [
-        { name: 'Manifestação Ectoplasmática', hpMax: 100, barColor: '#38bdf8', atk: 18, qteChance: 0.35 },
+        { name: 'Manifestação Ectoplasmática', hpMax: 100, barColor: '#38bdf8', atk: 18 },
       ],
     },
     cavaleiro: {
       name: 'Cavaleiro Decaído',
-      theme: 'castelo',
+      spriteFolder: 'assets/sprites/cavaleiro',
       phases: [
-        { name: 'Fase I: Postura Implacável', hpMax: 120, barColor: '#3b82f6', atk: 20, qteChance: 0.4 },
-        { name: 'Fase II: Fúria da Armadura Quebrada', hpMax: 140, barColor: '#ef4444', atk: 28, qteChance: 0.6 },
+        { name: 'Fase I: Postura Implacável', hpMax: 120, barColor: '#3b82f6', atk: 20 },
+        { name: 'Fase II: Fúria da Armadura Quebrada', hpMax: 150, barColor: '#ef4444', atk: 30 },
       ],
     },
     mago: {
       name: 'Mago Corrompido',
-      theme: 'montanha',
+      spriteFolder: 'assets/sprites/mago',
       phases: [
-        { name: 'Fase I: Ilusão de Fórmulas', hpMax: 110, barColor: '#a855f7', atk: 22, qteChance: 0.4 },
-        { name: 'Fase II: Tempestade de Caos Cósmico', hpMax: 150, barColor: '#d946ef', atk: 32, qteChance: 0.65 },
+        { name: 'Fase I: Ilusão de Fórmulas', hpMax: 110, barColor: '#a855f7', atk: 22 },
+        { name: 'Fase II: Tempestade de Caos', hpMax: 160, barColor: '#d946ef', atk: 34 },
       ],
     },
     chefe_final: {
       name: 'O Arquivista do Vazio',
-      theme: 'vazio_cosmico',
+      spriteFolder: 'assets/sprites/mago', // Usa sprite de mago com aura dourada
       phases: [
-        { name: 'Fase I: Tomos Esquecidos', hpMax: 150, barColor: '#8b5cf6', atk: 25, qteChance: 0.5 },
-        { name: 'Fase II: Fúria da Entropia', hpMax: 180, barColor: '#ef4444', atk: 35, qteChance: 0.7 },
-        { name: 'Fase III: Singularidade Primordial', hpMax: 220, barColor: '#eab308', atk: 45, qteChance: 0.85 },
+        { name: 'Fase I: Tomos Apagados', hpMax: 140, barColor: '#8b5cf6', atk: 24 },
+        { name: 'Fase II: Fúria da Entropia', hpMax: 180, barColor: '#ef4444', atk: 36 },
+        { name: 'Fase III: Singularidade Primordial', hpMax: 220, barColor: '#eab308', atk: 48 },
       ],
     },
   };
 
   // ============================================================================
-  // 2. SISTEMA DE ÁUDIO SINTÉTICO (WEB AUDIO API)
+  // 2. SISTEMA DE TRILHA SONORA & SFX COMPLETO (SINTETIZADOR MULTICANAL)
   // ============================================================================
-  class AudioSynth {
+  class SynthesizedSoundtrack {
     constructor() {
       this.ctx = null;
       this.isMuted = false;
-      this.bgmTimer = null;
+      this.timer = null;
+      this.currentTrack = 'battle';
+      this.step = 0;
     }
 
     init() {
       if (this.ctx && this.ctx.state === 'running') return;
       try {
-        const AudioContext = window.AudioContext || window.webkitAudioContext;
-        if (AudioContext) {
-          this.ctx = new AudioContext();
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        if (AudioCtx) {
+          this.ctx = new AudioCtx();
           if (this.ctx.state === 'suspended') {
             this.ctx.resume().catch(() => {});
           }
@@ -158,107 +137,199 @@
       } catch (e) {}
     }
 
-    playTone(freq, duration, type = 'sine', volume = 0.25) {
-      if (this.isMuted) return;
+    start(track = 'battle') {
       this.init();
-      if (!this.ctx) return;
-      const t = this.ctx.currentTime;
+      this.stop();
+      this.currentTrack = track;
+      if (this.isMuted) return;
+
+      // Escalas de batalha empolgantes no estilo 16-bit
+      const melodyBattle = [
+        440, 493.88, 523.25, 587.33, 659.25, 587.33, 523.25, 493.88,
+        440, 523.25, 659.25, 783.99, 659.25, 523.25, 440, 392,
+      ];
+      const melodyBoss = [
+        220, 246.94, 261.63, 293.66, 329.63, 293.66, 261.63, 246.94,
+        220, 261.63, 329.63, 392.00, 329.63, 261.63, 220, 196,
+      ];
+      const bassBattle = [110, 110, 130.81, 130.81, 146.83, 146.83, 110, 110];
+
+      const intervalMs = track === 'final_boss' ? 140 : 180;
+
+      this.timer = setInterval(() => {
+        if (this.isMuted || !this.ctx) return;
+        const t = this.ctx.currentTime;
+        const melody = track === 'final_boss' ? melodyBoss : melodyBattle;
+        const note = melody[this.step % melody.length];
+        const bassNote = bassBattle[Math.floor(this.step / 2) % bassBattle.length];
+
+        // 1. Canal de Melodia Líder (Square wave com vibrato leve)
+        this.playTone(note, t, 0.12, 'square', 0.12);
+
+        // 2. Canal de Baixo Pulsante (Triangle wave)
+        if (this.step % 2 === 0) {
+          this.playTone(bassNote, t, 0.16, 'triangle', 0.22);
+        }
+
+        // 3. Canal de Percussão (Ruído branco como chimbal/caixa)
+        if (this.step % 2 === 1) {
+          this.playNoise(t, 0.05, 0.08);
+        }
+
+        this.step++;
+      }, intervalMs);
+    }
+
+    stop() {
+      if (this.timer) {
+        clearInterval(this.timer);
+        this.timer = null;
+      }
+    }
+
+    toggle() {
+      this.isMuted = !this.isMuted;
+      if (this.isMuted) {
+        this.stop();
+      } else {
+        this.start(this.currentTrack);
+      }
+      return !this.isMuted;
+    }
+
+    playTone(freq, time, duration, type, vol) {
+      if (!this.ctx || this.isMuted) return;
       const osc = this.ctx.createOscillator();
       const gain = this.ctx.createGain();
 
       osc.type = type;
-      osc.frequency.setValueAtTime(freq, t);
+      osc.frequency.setValueAtTime(freq, time);
 
-      gain.gain.setValueAtTime(volume, t);
-      gain.gain.exponentialRampToValueAtTime(0.0001, t + duration);
+      gain.gain.setValueAtTime(vol, time);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
 
       osc.connect(gain);
       gain.connect(this.ctx.destination);
 
-      osc.start(t);
-      osc.stop(t + duration);
+      osc.start(time);
+      osc.stop(time + duration);
+    }
+
+    playNoise(time, duration, vol) {
+      if (!this.ctx || this.isMuted) return;
+      const bufferSize = this.ctx.sampleRate * duration;
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const data = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) data[i] = Math.random() * 2 - 1;
+
+      const noise = this.ctx.createBufferSource();
+      noise.buffer = buffer;
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(vol, time);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+      noise.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      noise.start(time);
+      noise.stop(time + duration);
     }
 
     playSFX(name) {
-      if (this.isMuted) return;
       this.init();
-      if (!this.ctx) return;
+      if (!this.ctx || this.isMuted) return;
       const t = this.ctx.currentTime;
 
-      if (name === 'hit') {
-        this.playTone(140, 0.12, 'sawtooth', 0.4);
-      } else if (name === 'slash') {
-        this.playTone(380, 0.1, 'sawtooth', 0.3);
+      if (name === 'slash') {
+        this.playTone(340, t, 0.12, 'sawtooth', 0.4);
+        this.playTone(180, t + 0.05, 0.15, 'sawtooth', 0.45);
+      } else if (name === 'hit') {
+        this.playTone(120, t, 0.18, 'sawtooth', 0.5);
+        this.playNoise(t, 0.1, 0.35);
       } else if (name === 'crit') {
-        this.playTone(880, 0.18, 'square', 0.4);
-        this.playTone(180, 0.22, 'sawtooth', 0.5);
+        this.playTone(880, t, 0.2, 'square', 0.45);
+        this.playTone(140, t + 0.02, 0.25, 'sawtooth', 0.55);
       } else if (name === 'qte_alert') {
-        this.playTone(700, 0.08, 'square', 0.35);
-        this.playTone(1000, 0.12, 'square', 0.4);
+        this.playTone(700, t, 0.08, 'square', 0.4);
+        this.playTone(1050, t + 0.07, 0.14, 'square', 0.45);
       } else if (name === 'qte_success') {
-        this.playTone(523, 0.08, 'sine', 0.3);
-        this.playTone(659, 0.08, 'sine', 0.3);
-        this.playTone(1046, 0.2, 'triangle', 0.45);
+        this.playTone(523, t, 0.08, 'sine', 0.35);
+        this.playTone(659, t + 0.08, 0.08, 'sine', 0.35);
+        this.playTone(1046, t + 0.16, 0.25, 'triangle', 0.5);
       } else if (name === 'qte_fail') {
-        this.playTone(220, 0.15, 'sawtooth', 0.4);
-        this.playTone(160, 0.2, 'sawtooth', 0.45);
+        this.playTone(220, t, 0.15, 'sawtooth', 0.4);
+        this.playTone(160, t + 0.12, 0.22, 'sawtooth', 0.45);
       } else if (name === 'correct') {
-        this.playTone(440, 0.08, 'sine', 0.3);
-        this.playTone(659, 0.18, 'sine', 0.4);
+        this.playTone(440, t, 0.09, 'sine', 0.35);
+        this.playTone(659, t + 0.08, 0.2, 'sine', 0.45);
       } else if (name === 'wrong') {
-        this.playTone(180, 0.22, 'sawtooth', 0.35);
+        this.playTone(200, t, 0.18, 'sawtooth', 0.4);
+        this.playTone(150, t + 0.12, 0.22, 'sawtooth', 0.45);
       } else if (name === 'victory') {
-        this.playTone(523, 0.12, 'triangle', 0.4);
-        this.playTone(659, 0.12, 'triangle', 0.4);
-        this.playTone(783, 0.35, 'triangle', 0.5);
-      }
-    }
-
-    startBGM(isBoss = false) {
-      this.stopBGM();
-      const notes = isBoss ? [110, 130.81, 146.83, 110, 164.81] : [130.81, 164.81, 196.0, 220.0];
-      let step = 0;
-      this.bgmTimer = setInterval(() => {
-        if (this.isMuted || !this.ctx) return;
-        const freq = notes[step % notes.length];
-        this.playTone(freq, 0.15, 'triangle', 0.08);
-        step++;
-      }, isBoss ? 280 : 380);
-    }
-
-    stopBGM() {
-      if (this.bgmTimer) {
-        clearInterval(this.bgmTimer);
-        this.bgmTimer = null;
+        this.playTone(523, t, 0.12, 'triangle', 0.4);
+        this.playTone(659, t + 0.12, 0.12, 'triangle', 0.4);
+        this.playTone(783, t + 0.24, 0.35, 'triangle', 0.55);
       }
     }
   }
 
   // ============================================================================
-  // 3. CLASSE PRINCIPAL DO JOGO
+  // 3. CONTROLADOR COMPLETO DA BATALHA
   // ============================================================================
-  class EstudeMyGame {
+  class EstudeMyOverhaulGame {
     constructor() {
-      this.canvas = document.getElementById('canvas');
-      this.ctx = this.canvas.getContext('2d');
-      this.audio = new AudioSynth();
+      this.soundtrack = new SynthesizedSoundtrack();
+      this.fxCanvas = document.getElementById('fx-canvas');
+      this.fxCtx = this.fxCanvas.getContext('2d');
 
-      // Configuração Widescreen Virtual
-      this.width = 1366;
-      this.height = 768;
-      this.canvas.width = this.width;
-      this.canvas.height = this.height;
+      // Elementos do DOM
+      this.bgLayer = document.getElementById('bg-layer');
+      this.playerSprite = document.getElementById('player-sprite');
+      this.bossSprite = document.getElementById('boss-sprite');
+      this.playerWrapper = document.getElementById('player-wrapper');
+      this.bossWrapper = document.getElementById('boss-wrapper');
+      this.playerNameplate = document.getElementById('player-nameplate');
+      this.bossNameplate = document.getElementById('boss-nameplate');
 
-      // Estado do Jogo
-      this.gameData = null;
-      this.mode = 'campanha'; // campanha | speedrun | sobrevivencia | boss_rush
-      this.activeSkinKey = 'samurai_ronin';
-      this.activeSkin = SKINS_CONFIG.samurai_ronin;
-      this.activeBossKey = 'spectre';
-      this.activeBoss = BOSSES_CONFIG.spectre;
+      // HUD Elements
+      this.bossTitleText = document.getElementById('boss-title-text');
+      this.bossPhaseText = document.getElementById('boss-phase-text');
+      this.bossBarFill = document.getElementById('boss-bar-fill');
+      this.bossHpText = document.getElementById('boss-hp-text');
+      this.playerHpFill = document.getElementById('player-hp-fill');
+      this.playerHpNum = document.getElementById('player-hp-num');
+      this.playerUltFill = document.getElementById('player-ult-fill');
+      this.playerUltNum = document.getElementById('player-ult-num');
+      this.btnUltimate = document.getElementById('btn-ultimate');
+      this.btnSkinToggle = document.getElementById('btn-skin-toggle');
+      this.btnAudioToggle = document.getElementById('btn-audio-toggle');
+
+      // Quiz Elements
+      this.questionTitle = document.getElementById('question-title');
+      this.pedagogicalFeedback = document.getElementById('pedagogical-feedback');
+      this.altTexts = [
+        document.getElementById('alt-text-0'),
+        document.getElementById('alt-text-1'),
+        document.getElementById('alt-text-2'),
+        document.getElementById('alt-text-3'),
+      ];
+
+      // QTE Elements
+      this.qteModal = document.getElementById('qte-modal');
+      this.qtePromptLabel = document.getElementById('qte-prompt-label');
+      this.qteKeysContainer = document.getElementById('qte-keys-container');
+      this.qteTimerFill = document.getElementById('qte-timer-fill');
+
+      // Estados
+      this.gameMode = 'campanha';
+      this.activeTheme = 'castelo';
+      this.selectedCharKey = 'samurai';
+      this.selectedSkinIndex = 0;
+      this.selectedBossKey = 'spectre';
       this.currentPhaseIndex = 0;
 
-      // Atributos de Batalha
+      // Pontos de Combate
       this.playerHp = 100;
       this.playerMaxHp = 100;
       this.ultCharge = 0;
@@ -266,667 +337,499 @@
       this.streak = 0;
       this.bossHp = 100;
       this.bossMaxHp = 100;
-      this.isStaggered = false;
 
-      // Timer (Speedrun Mode)
-      this.timerSeconds = 60;
-      this.speedrunInterval = null;
+      // QTE State
+      this.qteActive = false;
+      this.qteKeys = [];
+      this.qteCurrentKeyIdx = 0;
+      this.qteDuration = 2200;
+      this.qteTimeRemaining = 0;
+      this.qteTimerInterval = null;
+      this.qteCallback = null;
 
       // Perguntas
       this.questions = [];
-      this.currentQuestionIndex = 0;
-      this.questionFeedback = null;
-      this.feedbackTimer = null;
+      this.currentQuestionIdx = 0;
 
-      // QTE (Quick Time Event)
-      this.qte = {
-        active: false,
-        keys: [],
-        currentIndex: 0,
-        timeRemaining: 0,
-        totalTime: 0,
-        label: '',
-        onSuccess: null,
-      };
-
-      // Textos Flutuantes de Dano
+      // Partículas e Números Flutuantes
       this.floatingTexts = [];
-
-      // Animações
-      this.animTime = 0;
-      this.playerAnim = 'idle';
+      this.particles = [];
 
       this.initEvents();
-      this.loadGameDataFromBridge();
-      this.startLoop();
+      this.loadGameData();
+      this.startFxLoop();
     }
 
     initEvents() {
-      window.addEventListener('keydown', (e) => {
-        this.audio.init();
+      // Inicia áudio na primeira interação
+      const unlockAudio = () => {
+        this.soundtrack.init();
+        if (!this.soundtrack.timer && !this.soundtrack.isMuted) {
+          this.soundtrack.start(THEMES_CONFIG[this.activeTheme].musicKey);
+        }
+      };
+      window.addEventListener('pointerdown', unlockAudio, { once: true });
+      window.addEventListener('keydown', unlockAudio, { once: true });
 
-        // 1. QTE Input
-        if (this.qte.active) {
+      // Teclado
+      window.addEventListener('keydown', (e) => {
+        if (this.qteActive) {
           const key = e.code === 'Space' ? 'SPACE' : e.key.toUpperCase();
-          this.handleQTEInput(key);
+          this.handleQTEKey(key);
           return;
         }
 
-        // 2. Acionamento de Ultimate com Barra de Espaço
         if (e.code === 'Space' && this.isUltReady) {
           this.triggerUltimate();
           return;
         }
 
-        // 3. Teclas 1, 2, 3, 4 para responder perguntas
         if (['1', '2', '3', '4'].includes(e.key)) {
-          const idx = parseInt(e.key, 10) - 1;
-          this.submitAnswer(idx);
+          this.submitAnswer(parseInt(e.key, 10) - 1);
         }
-      });
-
-      this.canvas.addEventListener('pointerdown', (e) => {
-        this.audio.init();
-        const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.width / rect.width;
-        const scaleY = this.height / rect.height;
-        const clickX = (e.clientX - rect.left) * scaleX;
-        const clickY = (e.clientY - rect.top) * scaleY;
-
-        this.handleClick(clickX, clickY);
       });
     }
 
-    loadGameDataFromBridge() {
-      let rawData = null;
+    loadGameData() {
+      let raw = null;
       if (typeof window.obter_dados_fase_js === 'function') {
         try {
           const s = window.obter_dados_fase_js();
-          if (s) rawData = JSON.parse(s);
+          if (s) raw = JSON.parse(s);
         } catch (e) {}
       }
-      if (!rawData && window.gameData) {
-        rawData = window.gameData;
+      if (!raw && window.gameData) {
+        raw = window.gameData;
       }
 
-      this.gameData = rawData || {
-        titulo: 'Fase de Avaliação',
-        cenario: 'castelo',
-        personagem_selecionado: 'samurai',
-        perguntas: [
-          {
-            enunciado: 'Qual a principal vantagem da computação em nuvem?',
-            alternativas: ['Escalabilidade sob demanda', 'Custo fixo alto', 'Perda de controle', 'Necessidade de servidor físico local'],
-            respostaCorreta: 'Escalabilidade sob demanda',
-            indiceRespostaCorreta: 0,
-            explicacao: 'A nuvem permite provisionar e desprovisionar recursos conforme a necessidade real.',
-          },
-          {
-            enunciado: 'O que caracteriza um banco de dados relacional (SQL)?',
-            alternativas: ['Tabelas com chaves primárias e relacionamentos', 'Documentos JSON livres', 'Chaves e valores sem esquema', 'Grafos não estruturados'],
-            respostaCorreta: 'Tabelas com chaves primárias e relacionamentos',
-            indiceRespostaCorreta: 0,
-            explicacao: 'Bancos relacionais utilizam tabelas estruturadas com integridade referencial.',
-          },
-        ],
-      };
-
-      // Configuração de Personagem e Skin
-      const char = (this.gameData.personagem_selecionado || 'samurai').toLowerCase();
+      const char = (raw?.personagem_selecionado || 'samurai').toLowerCase();
       if (char.includes('guerreiro') || char.includes('cavaleiro')) {
-        this.activeSkinKey = 'guerreiro_templario';
+        this.selectedCharKey = 'guerreiro';
       } else if (char.includes('mago')) {
-        this.activeSkinKey = 'mago_arcanista';
+        this.selectedCharKey = 'mago';
       } else if (char.includes('arqueira')) {
-        this.activeSkinKey = 'arqueira_silvestre';
+        this.selectedCharKey = 'arqueira';
       } else {
-        this.activeSkinKey = 'samurai_ronin';
+        this.selectedCharKey = 'samurai';
       }
-      this.activeSkin = SKINS_CONFIG[this.activeSkinKey];
 
-      // Configuração de Boss
-      const cenario = (this.gameData.cenario || 'castelo').toLowerCase();
-      if (cenario.includes('montanha')) {
-        this.activeBossKey = 'mago';
-      } else if (cenario.includes('deserto')) {
-        this.activeBossKey = 'spectre';
-      } else if (cenario.includes('final') || cenario.includes('vazio')) {
-        this.activeBossKey = 'chefe_final';
-      } else {
-        this.activeBossKey = 'cavaleiro';
+      const cenario = (raw?.cenario || 'castelo').toLowerCase();
+      if (cenario.includes('montanha')) this.activeTheme = 'montanha';
+      else if (cenario.includes('deserto')) this.activeTheme = 'deserto';
+      else if (cenario.includes('vila')) this.activeTheme = 'vila';
+      else if (cenario.includes('vazio') || cenario.includes('final')) this.activeTheme = 'vazio_cosmico';
+      else this.activeTheme = 'castelo';
+
+      this.questions = raw?.perguntas && raw.perguntas.length > 0 ? raw.perguntas : [
+        {
+          enunciado: 'Qual a principal vantagem da computação em nuvem?',
+          alternativas: ['Escalabilidade sob demanda', 'Custo fixo alto', 'Perda de controle', 'Necessidade de servidor físico local'],
+          respostaCorreta: 'Escalabilidade sob demanda',
+          indiceRespostaCorreta: 0,
+          explicacao: 'A nuvem permite provisionar e desprovisionar recursos conforme a necessidade real.',
+        },
+        {
+          enunciado: 'O que caracteriza um banco de dados relacional (SQL)?',
+          alternativas: ['Tabelas com chaves primárias e relacionamentos', 'Documentos JSON livres', 'Chaves e valores sem esquema', 'Grafos não estruturados'],
+          respostaCorreta: 'Tabelas com chaves primárias e relacionamentos',
+          indiceRespostaCorreta: 0,
+          explicacao: 'Bancos relacionais utilizam tabelas estruturadas com integridade referencial.',
+        },
+        {
+          enunciado: 'Em arquitetura de microsserviços, qual a função de um API Gateway?',
+          alternativas: ['Roteamento e segurança centralizados', 'Armazenar o banco de dados principal', 'Substituir a rede física', 'Eliminar requisições HTTP'],
+          respostaCorreta: 'Roteamento e segurança centralizados',
+          indiceRespostaCorreta: 0,
+          explicacao: 'O Gateway unifica autenticação, rate limiting e roteamento para múltiplos serviços.',
+        },
+      ];
+
+      this.applyTheme(this.activeTheme);
+      this.applySkin();
+      this.renderQuestion();
+    }
+
+    applyTheme(themeKey) {
+      this.activeTheme = themeKey;
+      const theme = THEMES_CONFIG[themeKey] || THEMES_CONFIG.castelo;
+
+      // Troca a imagem de background real
+      this.bgLayer.src = theme.bgImg;
+
+      // Define o Boss temático
+      this.selectedBossKey = theme.defaultBoss;
+      this.setupBoss(this.selectedBossKey);
+
+      // Inicia a música da trilha
+      this.soundtrack.start(theme.musicKey);
+    }
+
+    setTheme(themeKey) {
+      document.querySelectorAll('#top-control-bar .ctrl-btn').forEach((btn) => {
+        if (btn.textContent.toLowerCase().includes(themeKey.replace('_', ' '))) {
+          btn.classList.add('active');
+        } else if (['castelo', 'montanha', 'deserto', 'vila', 'vazio'].some(t => btn.textContent.toLowerCase().includes(t))) {
+          btn.classList.remove('active');
+        }
+      });
+      this.applyTheme(themeKey);
+    }
+
+    setGameMode(modeKey) {
+      this.gameMode = modeKey;
+      document.querySelectorAll('#top-control-bar .ctrl-btn').forEach((btn) => {
+        if (['campanha', 'speedrun', 'sobrevivência', 'boss rush'].some(m => btn.textContent.toLowerCase().includes(m))) {
+          btn.classList.toggle('active', btn.textContent.toLowerCase().includes(modeKey.replace('_', ' ')));
+        }
+      });
+
+      if (modeKey === 'boss_rush') {
+        this.setupBoss('chefe_final');
       }
-      this.activeBoss = BOSSES_CONFIG[this.activeBossKey] || BOSSES_CONFIG.cavaleiro;
+      this.addFloatingText(`MODO: ${modeKey.toUpperCase()}!`, '#facc15', 683, 300);
+    }
+
+    setupBoss(bossKey) {
+      this.selectedBossKey = bossKey;
+      const boss = BOSSES_CONFIG[bossKey] || BOSSES_CONFIG.spectre;
       this.currentPhaseIndex = 0;
       this.setupBossPhase(0);
-
-      // Perguntas
-      this.questions = this.gameData.perguntas || [];
-      this.currentQuestionIndex = 0;
-
-      // BGM
-      this.audio.startBGM(true);
     }
 
     setupBossPhase(idx) {
-      const phase = this.activeBoss.phases[idx];
+      const boss = BOSSES_CONFIG[this.selectedBossKey];
+      const phase = boss.phases[idx];
+
+      this.currentPhaseIndex = idx;
       this.bossHp = phase.hpMax;
       this.bossMaxHp = phase.hpMax;
-      this.isStaggered = false;
-      this.addFloatingText(`ENTROU NA ${phase.name}!`, phase.barColor, 1020, 320);
+
+      this.bossSprite.src = `${boss.spriteFolder}/idle.gif`;
+      this.bossNameplate.textContent = boss.name;
+      this.bossTitleText.textContent = `👑 ${boss.name.toUpperCase()} — ${phase.name}`;
+      this.bossPhaseText.textContent = `FASE ${idx + 1}/${boss.phases.length}`;
+      this.bossBarFill.style.backgroundColor = phase.barColor;
+
+      this.updateHUD();
+      this.addFloatingText(`FASE ${idx + 1}: ${phase.name}!`, phase.barColor, 1020, 300);
     }
 
-    handleClick(x, y) {
-      // 1. QTE Click/Touch
-      if (this.qte.active) {
-        this.handleQTEInput('TAP');
-        return;
-      }
+    cycleSkin() {
+      const char = CHARACTERS_CONFIG[this.selectedCharKey];
+      this.selectedSkinIndex = (this.selectedSkinIndex + 1) % char.skins.length;
+      this.applySkin();
+      this.soundtrack.playSFX('slash');
+    }
 
-      // 2. Clique no Botão de Ultimate
-      if (this.isUltReady && x >= 40 + 280 + 15 && x <= 40 + 280 + 130 && y >= 670 && y <= 725) {
-        this.triggerUltimate();
-        return;
-      }
+    applySkin() {
+      const char = CHARACTERS_CONFIG[this.selectedCharKey];
+      const skin = char.skins[this.selectedSkinIndex];
 
-      // 3. Clique nas Opções de Resposta
-      const cardStartX = 340;
-      const cardStartY = 610;
-      const cardW = 330;
-      const cardH = 55;
-      const gapX = 20;
-      const gapY = 12;
+      // Remove classes antigas de skins e aplica a nova
+      this.playerSprite.className = `actor-sprite ${skin.cssClass}`;
+      this.playerSprite.src = `${char.spriteFolder}/idle.gif`;
+      this.playerNameplate.textContent = skin.name;
+      this.btnSkinToggle.textContent = `👘 Skin: ${skin.name.split(' ')[1] || 'Padrão'}`;
 
-      for (let i = 0; i < 4; i++) {
-        const col = i % 2;
-        const row = Math.floor(i / 2);
-        const bx = cardStartX + col * (cardW + gapX);
-        const by = cardStartY + row * (cardH + gapY);
+      this.addFloatingText(`SKIN ATIVADA: ${skin.name}!`, '#38bdf8', 340, 300);
+    }
 
-        if (x >= bx && x <= bx + cardW && y >= by && y <= by + cardH) {
-          this.submitAnswer(i);
-          return;
+    toggleAudio() {
+      const isPlaying = this.soundtrack.toggle();
+      this.btnAudioToggle.textContent = isPlaying ? '🔊 Música: ON' : '🔇 Música: OFF';
+    }
+
+    renderQuestion() {
+      const q = this.questions[this.currentQuestionIdx % this.questions.length];
+      if (!q) return;
+
+      this.questionTitle.textContent = q.enunciado;
+      q.alternativas.forEach((alt, i) => {
+        if (this.altTexts[i]) {
+          this.altTexts[i].textContent = alt;
         }
-      }
+      });
     }
 
     submitAnswer(idx) {
-      if (this.qte.active) return;
-      const q = this.questions[this.currentQuestionIndex % this.questions.length];
+      if (this.qteActive) return;
+      const q = this.questions[this.currentQuestionIdx % this.questions.length];
       if (!q) return;
 
       const isCorrect = idx === q.indiceRespostaCorreta;
 
       if (isCorrect) {
-        this.audio.playSFX('correct');
+        this.soundtrack.playSFX('correct');
         this.streak++;
         this.chargeUltimate(25);
-        this.playerAnim = 'attack';
-        setTimeout(() => (this.playerAnim = 'idle'), 400);
 
-        // Chance de QTE em Streak >= 2
-        if (this.streak >= 2 && Math.random() < 0.5) {
+        // Animação de Golpe do Herói (Lunge + Attack GIF)
+        const char = CHARACTERS_CONFIG[this.selectedCharKey];
+        this.playerSprite.src = `${char.spriteFolder}/attack1.gif`;
+        this.playerWrapper.style.transform = 'translateX(55px)';
+
+        setTimeout(() => {
+          this.playerSprite.src = `${char.spriteFolder}/idle.gif`;
+          this.playerWrapper.style.transform = 'translateX(0)';
+        }, 450);
+
+        // Chance de QTE em Streak
+        if (this.streak >= 2) {
           this.triggerQTE(['A', 'D', 'SPACE'], 'COMBO CRÍTICO! [A] -> [D] -> [ESPAÇO]!', (success) => {
             const mult = success ? 2.5 : 1.0;
-            this.damageBoss(Math.round(25 * mult), success);
+            this.damageBoss(Math.round(28 * mult), success);
           });
         } else {
-          this.damageBoss(25, false);
+          this.damageBoss(28, false);
         }
 
-        this.setFeedback('Correto! Golpe desferido com sucesso!', '#22c55e');
+        this.showFeedback('Excelente! Resposta correta e golpe desferido!', '#22c55e');
       } else {
-        this.audio.playSFX('wrong');
+        this.soundtrack.playSFX('wrong');
         this.streak = 0;
-        this.playerAnim = 'hurt';
-        setTimeout(() => (this.playerAnim = 'idle'), 400);
 
-        // Contra-ataque do Boss
-        this.damagePlayer(this.activeBoss.phases[this.currentPhaseIndex].atk);
-        this.setFeedback(`Incorreto! Dica: ${q.explicacao || 'Revise a matéria.'}`, '#ef4444');
+        // Animação de Contra-Ataque do Boss
+        const boss = BOSSES_CONFIG[this.selectedBossKey];
+        this.bossSprite.src = `${boss.spriteFolder}/attack1.gif`;
+        this.bossWrapper.style.transform = 'translateX(-55px)';
+
+        setTimeout(() => {
+          this.bossSprite.src = `${boss.spriteFolder}/idle.gif`;
+          this.bossWrapper.style.transform = 'translateX(0)';
+        }, 450);
+
+        const phase = boss.phases[this.currentPhaseIndex];
+        this.damagePlayer(phase.atk);
+        this.showFeedback(`Incorreto! Dica: ${q.explicacao || 'Revise a matéria.'}`, '#ef4444');
       }
 
-      // Avança pergunta
-      this.currentQuestionIndex++;
+      this.currentQuestionIdx++;
+      this.renderQuestion();
     }
 
-    setFeedback(text, color) {
-      if (this.feedbackTimer) clearTimeout(this.feedbackTimer);
-      this.questionFeedback = { text, color };
-      this.feedbackTimer = setTimeout(() => {
-        this.questionFeedback = null;
-      }, 3500);
+    showFeedback(text, color) {
+      this.pedagogicalFeedback.textContent = text;
+      this.pedagogicalFeedback.style.color = color;
+      this.pedagogicalFeedback.style.backgroundColor = 'rgba(15, 23, 42, 0.95)';
+      this.pedagogicalFeedback.style.border = `1px solid ${color}`;
+      this.pedagogicalFeedback.style.display = 'block';
+
+      setTimeout(() => {
+        this.pedagogicalFeedback.style.display = 'none';
+      }, 4000);
     }
 
     damageBoss(dmg, isCrit) {
       this.bossHp = Math.max(0, this.bossHp - dmg);
-      this.audio.playSFX(isCrit ? 'crit' : 'hit');
-      this.addFloatingText(`-${dmg}`, isCrit ? '#facc15' : '#38bdf8', 1020, 420);
+      this.soundtrack.playSFX(isCrit ? 'crit' : 'hit');
+      this.addFloatingText(`-${dmg}`, isCrit ? '#facc15' : '#38bdf8', 1020, 360, isCrit);
+
+      // Flash do Boss
+      this.bossSprite.style.filter = 'brightness(2) contrast(1.5)';
+      setTimeout(() => {
+        this.bossSprite.style.filter = '';
+      }, 180);
+
+      this.updateHUD();
 
       if (this.bossHp <= 0) {
-        if (this.currentPhaseIndex + 1 < this.activeBoss.phases.length) {
-          this.currentPhaseIndex++;
-          this.setupBossPhase(this.currentPhaseIndex);
+        const boss = BOSSES_CONFIG[this.selectedBossKey];
+        if (this.currentPhaseIndex + 1 < boss.phases.length) {
+          this.setupBossPhase(this.currentPhaseIndex + 1);
         } else {
-          // Vitória Total!
-          this.audio.playSFX('victory');
-          this.addFloatingText('VITÓRIA!', '#22c55e', this.width / 2, this.height / 2);
+          // Vitória da Fase!
+          this.soundtrack.playSFX('victory');
+          this.addFloatingText('VITÓRIA ÉPICA!', '#22c55e', 683, 350, true);
           setTimeout(() => {
             if (typeof window.notificar_vitoria_js === 'function') {
               window.notificar_vitoria_js();
             }
-          }, 1800);
+          }, 2000);
         }
       }
     }
 
     damagePlayer(dmg) {
       this.playerHp = Math.max(0, this.playerHp - dmg);
-      this.addFloatingText(`-${dmg}`, '#ef4444', 340, 420);
+      this.soundtrack.playSFX('hit');
+      this.addFloatingText(`-${dmg}`, '#ef4444', 340, 360, false);
+
+      // Flash do Jogador
+      this.playerSprite.style.filter = 'brightness(2.2) drop-shadow(0 0 15px red)';
+      setTimeout(() => {
+        this.applySkin();
+      }, 220);
+
+      this.updateHUD();
 
       if (this.playerHp <= 0) {
-        this.addFloatingText('DERROTA...', '#ef4444', this.width / 2, this.height / 2);
+        this.soundtrack.playSFX('wrong');
+        this.addFloatingText('DERROTA...', '#ef4444', 683, 350, true);
         setTimeout(() => {
           if (typeof window.notificar_derrota_js === 'function') {
             window.notificar_derrota_js();
           }
-        }, 1800);
+        }, 2000);
       }
     }
 
     chargeUltimate(val) {
       this.ultCharge = Math.min(100, this.ultCharge + val);
       this.isUltReady = this.ultCharge >= 100;
-      if (this.isUltReady) {
-        this.audio.playSFX('qte_alert');
-      }
+      this.btnUltimate.style.display = this.isUltReady ? 'block' : 'none';
+      this.updateHUD();
     }
 
     triggerUltimate() {
       if (!this.isUltReady) return;
       this.ultCharge = 0;
       this.isUltReady = false;
+      this.btnUltimate.style.display = 'none';
+      this.updateHUD();
 
-      this.triggerQTE(this.activeSkin.qtePattern, `ULTIMATE: ${this.activeSkin.moves[2]}!`, (success) => {
-        const dmg = success ? 85 : 45;
+      const char = CHARACTERS_CONFIG[this.selectedCharKey];
+      const skin = char.skins[this.selectedSkinIndex];
+
+      this.triggerQTE(['W', 'S', 'A', 'D', 'SPACE'], `GOLPE SUPREMO: ${skin.ultName}!`, (success) => {
+        const dmg = success ? 110 : 55;
         this.damageBoss(dmg, true);
       });
     }
 
     triggerQTE(keys, label, callback) {
-      this.audio.playSFX('qte_alert');
-      this.qte = {
-        active: true,
-        keys,
-        currentIndex: 0,
-        timeRemaining: 2400,
-        totalTime: 2400,
-        label,
-        onSuccess: callback,
-      };
+      this.soundtrack.playSFX('qte_alert');
+      this.qteActive = true;
+      this.qteKeys = keys;
+      this.qteCurrentKeyIdx = 0;
+      this.qteDuration = 2400;
+      this.qteTimeRemaining = 2400;
+      this.qteCallback = callback;
+
+      this.qtePromptLabel.textContent = label;
+      this.qteKeysContainer.innerHTML = '';
+
+      keys.forEach((k, idx) => {
+        const box = document.createElement('div');
+        box.className = `qte-key-box ${idx === 0 ? 'active' : ''}`;
+        box.textContent = k;
+        box.onclick = () => this.handleQTEKey(k);
+        this.qteKeysContainer.appendChild(box);
+      });
+
+      this.qteModal.style.display = 'flex';
+
+      if (this.qteTimerInterval) clearInterval(this.qteTimerInterval);
+      const step = 40;
+      this.qteTimerInterval = setInterval(() => {
+        this.qteTimeRemaining -= step;
+        const pct = Math.max(0, (this.qteTimeRemaining / this.qteDuration) * 100);
+        this.qteTimerFill.style.width = `${pct}%`;
+
+        if (this.qteTimeRemaining <= 0) {
+          this.resolveQTE(false);
+        }
+      }, step);
     }
 
-    handleQTEInput(key) {
-      if (!this.qte.active) return;
-      const expected = this.qte.keys[this.qte.currentIndex];
+    handleQTEKey(key) {
+      if (!this.qteActive) return;
+      const expected = this.qteKeys[this.qteCurrentKeyIdx];
       const match = key === expected || (expected === 'SPACE' && (key === ' ' || key === 'TAP'));
 
       if (match) {
-        this.audio.playSFX('slash');
-        this.qte.currentIndex++;
-        if (this.qte.currentIndex >= this.qte.keys.length) {
+        this.soundtrack.playSFX('slash');
+        const boxes = this.qteKeysContainer.children;
+        if (boxes[this.qteCurrentKeyIdx]) {
+          boxes[this.qteCurrentKeyIdx].className = 'qte-key-box completed';
+        }
+        this.qteCurrentKeyIdx++;
+
+        if (this.qteCurrentKeyIdx < this.qteKeys.length) {
+          if (boxes[this.qteCurrentKeyIdx]) {
+            boxes[this.qteCurrentKeyIdx].className = 'qte-key-box active';
+          }
+        } else {
           this.resolveQTE(true);
         }
       }
     }
 
     resolveQTE(success) {
-      const cb = this.qte.onSuccess;
-      this.qte.active = false;
-      this.audio.playSFX(success ? 'qte_success' : 'qte_fail');
-      if (cb) cb(success);
+      if (this.qteTimerInterval) {
+        clearInterval(this.qteTimerInterval);
+        this.qteTimerInterval = null;
+      }
+      this.qteActive = false;
+      this.qteModal.style.display = 'none';
+      this.soundtrack.playSFX(success ? 'qte_success' : 'qte_fail');
+
+      if (this.qteCallback) {
+        this.qteCallback(success);
+        this.qteCallback = null;
+      }
     }
 
-    addFloatingText(text, color, x, y) {
+    updateHUD() {
+      // Boss HUD
+      const bossRatio = Math.max(0, this.bossHp / this.bossMaxHp);
+      this.bossBarFill.style.width = `${bossRatio * 100}%`;
+      this.bossHpText.textContent = `${this.bossHp} / ${this.bossMaxHp} HP`;
+
+      // Player HUD
+      const playerRatio = Math.max(0, this.playerHp / this.playerMaxHp);
+      this.playerHpFill.style.width = `${playerRatio * 100}%`;
+      this.playerHpNum.textContent = `${this.playerHp}/${this.playerMaxHp}`;
+
+      this.playerUltFill.style.width = `${this.ultCharge}%`;
+      this.playerUltNum.textContent = `${this.ultCharge}%`;
+    }
+
+    addFloatingText(text, color, x, y, isCrit = false) {
       this.floatingTexts.push({
         text,
         color,
         x,
         y,
         life: 1.0,
+        isCrit,
       });
     }
 
-    startLoop() {
-      let lastTime = performance.now();
-      const frame = (now) => {
-        const dt = Math.min(0.1, (now - lastTime) / 1000);
-        lastTime = now;
-        this.update(dt);
-        this.render();
-        requestAnimationFrame(frame);
+    startFxLoop() {
+      let last = performance.now();
+      const loop = (now) => {
+        const dt = (now - last) / 1000;
+        last = now;
+
+        this.fxCtx.clearRect(0, 0, 1366, 768);
+
+        // Renderiza Textos Flutuantes
+        for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
+          const ft = this.floatingTexts[i];
+          ft.y -= dt * 45;
+          ft.life -= dt * 0.9;
+
+          this.fxCtx.save();
+          this.fxCtx.font = ft.isCrit ? '900 28px Inter, sans-serif' : 'bold 20px Inter, sans-serif';
+          this.fxCtx.textAlign = 'center';
+          this.fxCtx.fillStyle = '#000000';
+          this.fxCtx.fillText(ft.text, ft.x + 2, ft.y + 2);
+          this.fxCtx.fillStyle = ft.color;
+          this.fxCtx.fillText(ft.text, ft.x, ft.y);
+          this.fxCtx.restore();
+
+          if (ft.life <= 0) {
+            this.floatingTexts.splice(i, 1);
+          }
+        }
+
+        requestAnimationFrame(loop);
       };
-      requestAnimationFrame(frame);
-    }
-
-    update(dt) {
-      this.animTime += dt;
-
-      // QTE Timer
-      if (this.qte.active) {
-        this.qte.timeRemaining -= dt * 1000;
-        if (this.qte.timeRemaining <= 0) {
-          this.resolveQTE(false);
-        }
-      }
-
-      // Floating Texts
-      for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
-        const ft = this.floatingTexts[i];
-        ft.y -= dt * 35;
-        ft.life -= dt * 0.9;
-        if (ft.life <= 0) {
-          this.floatingTexts.splice(i, 1);
-        }
-      }
-    }
-
-    render() {
-      const ctx = this.ctx;
-      const w = this.width;
-      const h = this.height;
-
-      // 1. Fundo Parallax
-      const grad = ctx.createLinearGradient(0, 0, 0, h);
-      grad.addColorStop(0, '#090a0f');
-      grad.addColorStop(0.7, '#0f172a');
-      grad.addColorStop(1, '#1e293b');
-      ctx.fillStyle = grad;
-      ctx.fillRect(0, 0, w, h);
-
-      // Linha do Chão
-      const groundY = 560;
-      ctx.fillStyle = '#0f172a';
-      ctx.fillRect(0, groundY, w, h - groundY);
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(0, groundY);
-      ctx.lineTo(w, groundY);
-      ctx.stroke();
-
-      // 2. Render do Jogador
-      const px = 340;
-      const py = groundY - 10;
-      const breath = Math.sin(this.animTime * 4) * 3;
-
-      // Sombra
-      ctx.fillStyle = 'rgba(0,0,0,0.4)';
-      ctx.beginPath();
-      ctx.ellipse(px, py + 10, 40, 12, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Aura da Skin
-      const aura = ctx.createRadialGradient(px, py - 40, 10, px, py - 40, 60);
-      aura.addColorStop(0, this.activeSkin.auraColor);
-      aura.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = aura;
-      ctx.beginPath();
-      ctx.arc(px, py - 40, 60, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Corpo
-      ctx.fillStyle = this.activeSkin.primaryColor;
-      ctx.fillRect(px - 16, py - 60 + breath, 32, 42);
-
-      // Cabeça
-      ctx.fillStyle = '#f8fafc';
-      ctx.beginPath();
-      ctx.arc(px, py - 72 + breath, 14, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Olhos
-      ctx.fillStyle = this.activeSkin.accentColor;
-      ctx.fillRect(px + 2, py - 75 + breath, 8, 4);
-
-      // Nome da Skin
-      ctx.font = 'bold 13px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(this.activeSkin.name, px, py - 95);
-
-      // 3. Render do Boss
-      const bx = 1020;
-      const by = groundY - 10;
-      const phase = this.activeBoss.phases[this.currentPhaseIndex];
-
-      // Sombra
-      ctx.fillStyle = 'rgba(0,0,0,0.5)';
-      ctx.beginPath();
-      ctx.ellipse(bx, by + 12, 60, 18, 0, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Aura do Boss
-      const bossAura = ctx.createRadialGradient(bx, by - 50, 15, bx, by - 50, 80);
-      bossAura.addColorStop(0, phase.barColor + '66');
-      bossAura.addColorStop(1, 'rgba(0,0,0,0)');
-      ctx.fillStyle = bossAura;
-      ctx.beginPath();
-      ctx.arc(bx, by - 50, 80, 0, Math.PI * 2);
-      ctx.fill();
-
-      // Silhueta do Boss
-      ctx.fillStyle = phase.barColor;
-      ctx.beginPath();
-      ctx.moveTo(bx, by - 120);
-      ctx.lineTo(bx + 40, by - 60);
-      ctx.lineTo(bx + 30, by);
-      ctx.lineTo(bx - 30, by);
-      ctx.lineTo(bx - 40, by - 60);
-      ctx.closePath();
-      ctx.fill();
-
-      // Olhos do Boss
-      ctx.fillStyle = '#fef08a';
-      ctx.fillRect(bx - 14, by - 80, 8, 4);
-      ctx.fillRect(bx + 6, by - 80, 8, 4);
-
-      // 4. Barra de Vida do Boss (Topo)
-      const bBarW = 480;
-      const bBarX = (w - bBarW) / 2;
-      ctx.fillStyle = 'rgba(15,23,42,0.85)';
-      ctx.fillRect(bBarX - 10, 20, bBarW + 20, 50);
-
-      ctx.font = 'bold 14px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(`👑 ${this.activeBoss.name} — ${phase.name}`, bBarX, 38);
-
-      ctx.textAlign = 'right';
-      ctx.fillStyle = '#facc15';
-      ctx.fillText(`FASE ${this.currentPhaseIndex + 1}/${this.activeBoss.phases.length}`, bBarX + bBarW, 38);
-
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(bBarX, 46, bBarW, 16);
-      ctx.fillStyle = phase.barColor;
-      ctx.fillRect(bBarX, 46, bBarW * (this.bossHp / this.bossMaxHp), 16);
-
-      // 5. HUD do Jogador (Esquerda Baixo)
-      const pBarX = 40;
-      const pBarY = 660;
-      ctx.fillStyle = 'rgba(15,23,42,0.85)';
-      ctx.fillRect(pBarX - 10, pBarY - 20, 280 + 130, 80);
-
-      ctx.font = 'bold 12px sans-serif';
-      ctx.textAlign = 'left';
-      ctx.fillStyle = '#ffffff';
-      ctx.fillText(`VIDA: ${this.playerHp}/${this.playerMaxHp}`, pBarX, pBarY - 5);
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(pBarX, pBarY, 260, 16);
-      ctx.fillStyle = '#22c55e';
-      ctx.fillRect(pBarX, pBarY, 260 * (this.playerHp / this.playerMaxHp), 16);
-
-      // Ultimate Bar
-      ctx.fillStyle = this.isUltReady ? '#facc15' : '#94a3b8';
-      ctx.fillText(`ULTIMATE: ${this.ultCharge}%`, pBarX, pBarY + 32);
-      ctx.fillStyle = '#1e293b';
-      ctx.fillRect(pBarX, pBarY + 38, 260, 12);
-      ctx.fillStyle = this.isUltReady ? '#facc15' : '#38bdf8';
-      ctx.fillRect(pBarX, pBarY + 38, 260 * (this.ultCharge / 100), 12);
-
-      // Botão Ultimate
-      if (this.isUltReady) {
-        const uX = pBarX + 260 + 15;
-        const uY = pBarY - 10;
-        ctx.fillStyle = '#eab308';
-        ctx.fillRect(uX, uY, 110, 55);
-        ctx.strokeStyle = '#ffffff';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(uX, uY, 110, 55);
-        ctx.font = 'bold 13px sans-serif';
-        ctx.fillStyle = '#000000';
-        ctx.textAlign = 'center';
-        ctx.fillText('⚡ ULTIMATE', uX + 55, uY + 24);
-        ctx.font = '10px sans-serif';
-        ctx.fillText('[ESPAÇO/TOUCH]', uX + 55, uY + 42);
-      }
-
-      // 6. Cartão Pedagógico de Pergunta e Respostas
-      this.renderQuestionCard();
-
-      // 7. QTE Overlay (se ativo)
-      if (this.qte.active) {
-        this.renderQTE();
-      }
-
-      // 8. Textos Flutuantes
-      this.floatingTexts.forEach((ft) => {
-        ctx.save();
-        ctx.font = '900 22px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = ft.color;
-        ctx.fillText(ft.text, ft.x, ft.y);
-        ctx.restore();
-      });
-    }
-
-    renderQuestionCard() {
-      const ctx = this.ctx;
-      const q = this.questions[this.currentQuestionIndex % this.questions.length];
-      if (!q) return;
-
-      const qX = 340;
-      const qY = 575;
-      const totalW = 680;
-
-      // Card de Enunciado
-      ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
-      ctx.strokeStyle = '#38bdf8';
-      ctx.lineWidth = 2;
-      ctx.fillRect(qX, qY - 45, totalW, 40);
-      ctx.strokeRect(qX, qY - 45, totalW, 40);
-
-      ctx.font = 'bold 14px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#f8fafc';
-      ctx.fillText(q.enunciado, qX + totalW / 2, qY - 20);
-
-      // Alternativas
-      const cardW = 330;
-      const cardH = 55;
-      const gapX = 20;
-      const gapY = 12;
-
-      for (let i = 0; i < 4; i++) {
-        const col = i % 2;
-        const row = Math.floor(i / 2);
-        const bx = qX + col * (cardW + gapX);
-        const by = qY + 5 + row * (cardH + gapY);
-
-        ctx.fillStyle = '#1e293b';
-        ctx.strokeStyle = '#475569';
-        ctx.lineWidth = 1.5;
-        ctx.fillRect(bx, by, cardW, cardH);
-        ctx.strokeRect(bx, by, cardW, cardH);
-
-        // Tecla de atalho
-        ctx.fillStyle = '#38bdf8';
-        ctx.fillRect(bx + 8, by + 8, 22, 22);
-        ctx.font = 'bold 12px monospace';
-        ctx.fillStyle = '#000000';
-        ctx.textAlign = 'center';
-        ctx.fillText(`${i + 1}`, bx + 19, by + 23);
-
-        // Texto da alternativa
-        const altText = q.alternativas && q.alternativas[i] ? q.alternativas[i] : `Opção ${i + 1}`;
-        ctx.font = '12px sans-serif';
-        ctx.fillStyle = '#ffffff';
-        ctx.textAlign = 'left';
-        ctx.fillText(altText.slice(0, 38), bx + 38, by + 32);
-      }
-
-      // Feedback Pedagógico (se ativo)
-      if (this.questionFeedback) {
-        ctx.fillStyle = 'rgba(15, 23, 42, 0.95)';
-        ctx.fillRect(qX, qY - 90, totalW, 36);
-        ctx.font = 'bold 13px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.fillStyle = this.questionFeedback.color;
-        ctx.fillText(this.questionFeedback.text, qX + totalW / 2, qY - 67);
-      }
-    }
-
-    renderQTE() {
-      const ctx = this.ctx;
-      const cx = this.width / 2;
-      const cy = this.height * 0.42;
-
-      ctx.fillStyle = 'rgba(0, 0, 0, 0.5)';
-      ctx.fillRect(0, 0, this.width, this.height);
-
-      ctx.fillStyle = '#0f172a';
-      ctx.strokeStyle = '#facc15';
-      ctx.lineWidth = 3;
-      ctx.fillRect(cx - 260, cy - 70, 520, 140);
-      ctx.strokeRect(cx - 260, cy - 70, 520, 140);
-
-      ctx.font = 'bold 16px sans-serif';
-      ctx.textAlign = 'center';
-      ctx.fillStyle = '#facc15';
-      ctx.fillText(this.qte.label, cx, cy - 35);
-
-      // Teclas
-      const total = this.qte.keys.length;
-      const bSize = 50;
-      const gap = 16;
-      const startX = cx - ((total * bSize + (total - 1) * gap) / 2) + bSize / 2;
-
-      this.qte.keys.forEach((k, idx) => {
-        const kx = startX + idx * (bSize + gap);
-        const ky = cy + 10;
-        const isPast = idx < this.qte.currentIndex;
-        const isCur = idx === this.qte.currentIndex;
-
-        ctx.fillStyle = isPast ? '#22c55e' : isCur ? '#38bdf8' : '#1e293b';
-        ctx.fillRect(kx - bSize / 2, ky - bSize / 2, bSize, bSize);
-        ctx.strokeStyle = isCur ? '#ffffff' : '#64748b';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(kx - bSize / 2, ky - bSize / 2, bSize, bSize);
-
-        ctx.font = '900 18px monospace';
-        ctx.fillStyle = isPast ? '#000000' : '#ffffff';
-        ctx.fillText(k, kx, ky + 6);
-      });
-
-      // Timer
-      const p = Math.max(0, this.qte.timeRemaining / this.qte.totalTime);
-      ctx.fillStyle = '#334155';
-      ctx.fillRect(cx - 220, cy + 50, 440, 8);
-      ctx.fillStyle = p > 0.3 ? '#38bdf8' : '#ef4444';
-      ctx.fillRect(cx - 220, cy + 50, 440 * p, 8);
+      requestAnimationFrame(loop);
     }
   }
 
   window.addEventListener('load', () => {
-    window.estudemyGame = new EstudeMyGame();
+    window.estudemyGame = new EstudeMyOverhaulGame();
   });
 })();

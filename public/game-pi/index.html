@@ -1,127 +1,613 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="pt-BR">
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
+    <title>EstudeMy - Arena de Batalha RPG</title>
 
-    <!-- Custom PreHead code is injected here -->
-    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Jaro&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet">
 
-    <head>
-        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name ="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-        <meta charset="utf-8"/>
+    <style>
+        * {
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
 
-        <!-- Builtin injector for disabling cache -->
-        <meta http-equiv="pragma" content="no-cache"/>
+        html, body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050608;
+            font-family: 'Inter', sans-serif;
+            color: #ffffff;
+        }
 
-        <!-- Set the title bar of the page -->
-        <title>GamePi</title>
+        #game-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 100%;
+            height: 100%;
+            max-width: 1366px;
+            max-height: 768px;
+            aspect-ratio: 16 / 9;
+            overflow: hidden;
+            box-shadow: 0 0 50px rgba(0, 0, 0, 0.9);
+            background-color: #0a0d18;
+        }
 
-        <!-- Custom PreStyle code is injected here -->
-        
+        /* Camada 1: Background Cenário com Parallax */
+        #bg-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center bottom;
+            filter: brightness(0.72) contrast(1.15);
+            transition: opacity 0.5s ease-in-out;
+            z-index: 1;
+        }
 
-        <!-- Set the background colour of the document -->
-        <style>
-            body {
-                background: #0;
-                color: #cccccc;
-                margin: 0px;
-                padding: 0px;
-                border: 0px;
-            }
+        #bg-vignette {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at center, rgba(0,0,0,0) 40%, rgba(0,0,0,0.85) 100%),
+                        linear-gradient(to top, rgba(10,13,24,0.95) 0%, rgba(0,0,0,0) 35%);
+            z-index: 2;
+            pointer-events: none;
+        }
 
-            canvas {
-                image-rendering: optimizeSpeed;
-                -webkit-interpolation-mode: nearest-neighbor;
-                -ms-touch-action: none;
-                touch-action: none;
-                margin: 0px;
-                padding: 0px;
-                border: 0px;
-            }
-            :-webkit-full-screen #canvas {
-                width: 100%;
-                height: 100%;
-            }
-            :-webkit-full-screen {
-                width: 100%;
-                height: 100%;
-            }
-            
-            /* Custom Runner Styles */
-            div.gm4html5_div_class {
-                margin: 0px;
-                padding: 0px;
-                border: 0px;
-            }
-            div.gm4html5_login {
-                padding: 20px;
-                position: absolute;
-                border: solid 2px #000000;
-                background-color: #404040;
-                color:#00ff00;
-                border-radius: 15px;
-                box-shadow: #101010 20px 20px 40px;
-            }
-            div.gm4html5_cancel_button {
-                float: right;
-            }
-            div.gm4html5_login_button {
-                float: left;
-            }
-            div.gm4html5_login_header {
-                text-align: center;
-            }
-            /* END - Custom Runner Styles */
-            
-        </style>
+        /* Camada 2: Canvas de Efeitos, Partículas e HUD */
+        #fx-canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 3;
+            pointer-events: none;
+        }
 
-        <!-- Custom PostStyle code is injected here -->
-        
+        /* Camada 3: Sprites dos Personagens (GIFs Reais com Animações) */
+        .stage-actors {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 4;
+            pointer-events: none;
+        }
 
-        <!-- Builtin injector for injecting flurry analytics code -->
-        
-    </head>
+        .actor-wrapper {
+            position: absolute;
+            bottom: 24%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            transition: transform 0.25s ease-out, filter 0.3s ease;
+        }
 
-    <!-- Custom PostHead code is injected here -->
-    
+        #player-wrapper {
+            left: 14%;
+        }
 
-    <!-- Custom PreBody code is injected here -->
-    
+        #boss-wrapper {
+            right: 14%;
+        }
 
-    <body>
-        <!-- Custom BodyStart code is injected here -->
-        
+        .actor-sprite {
+            max-height: 230px;
+            image-rendering: pixelated;
+            image-rendering: crisp-edges;
+            filter: drop-shadow(0 10px 15px rgba(0, 0, 0, 0.7));
+            transition: filter 0.3s ease, transform 0.2s ease;
+        }
 
-        <div class="gm4html5_div_class" id="gm4html5_div_id">
-            
-            <!-- Builtin injector for splash screen -->
-            
+        /* Auras de Skins para o Jogador */
+        .skin-cyber-void {
+            filter: drop-shadow(0 0 20px #a855f7) hue-rotate(180deg) brightness(1.2) !important;
+        }
+        .skin-berserker-lava {
+            filter: drop-shadow(0 0 25px #f97316) saturate(1.8) hue-rotate(-25deg) !important;
+        }
+        .skin-necromante {
+            filter: drop-shadow(0 0 20px #10b981) hue-rotate(85deg) contrast(1.3) !important;
+        }
+        .skin-sniper-sonica {
+            filter: drop-shadow(0 0 22px #06b6d4) hue-rotate(150deg) brightness(1.15) !important;
+        }
 
-            <!-- Custom PreCanvas code is injected here -->
-            
+        .actor-nameplate {
+            margin-top: 8px;
+            padding: 3px 12px;
+            background: rgba(15, 23, 42, 0.85);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 6px;
+            font-size: 13px;
+            font-weight: 800;
+            letter-spacing: 1px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.6);
+        }
 
-            <!-- Create the canvas element the game draws to -->
-            <canvas id="canvas" width="1366" height="768" style="position: absolute; top: 50%; left: 50%; bottom: -50%; right: -50%; transform: translate(-50%, -50%);">
-                
-                <p>Your browser doesn't support HTML5 canvas.</p>
-            </canvas>
-            
-            <!-- Custom PostCanvas code is injected here -->
-            
+        /* Camada 4: Barra Superior de Controles e Modos */
+        #top-control-bar {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            right: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 10;
+            pointer-events: auto;
+        }
+
+        .control-pill-group {
+            display: flex;
+            gap: 6px;
+            background: rgba(10, 13, 24, 0.85);
+            padding: 4px 8px;
+            border-radius: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            backdrop-filter: blur(8px);
+        }
+
+        .ctrl-btn {
+            background: #1e293b;
+            color: #cbd5e1;
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .ctrl-btn:hover {
+            background: #334155;
+            color: #ffffff;
+            border-color: #38bdf8;
+        }
+
+        .ctrl-btn.active {
+            background: #0284c7;
+            color: #ffffff;
+            border-color: #38bdf8;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        }
+
+        /* Camada 5: HUD de Batalha (Top Boss HP e Bottom Player HUD) */
+        #boss-hud {
+            position: absolute;
+            top: 56px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 520px;
+            background: rgba(10, 13, 24, 0.9);
+            border: 2px solid #334155;
+            border-radius: 10px;
+            padding: 10px 16px;
+            z-index: 5;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.7);
+        }
+
+        .boss-info-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+            font-size: 14px;
+            font-weight: 900;
+        }
+
+        .boss-bar-track {
+            width: 100%;
+            height: 18px;
+            background: #1e293b;
+            border-radius: 6px;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .boss-bar-fill {
+            height: 100%;
+            width: 100%;
+            background: #38bdf8;
+            transition: width 0.3s ease-out, background-color 0.4s;
+        }
+
+        .boss-hp-text {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            font-size: 11px;
+            font-weight: 900;
+            color: #ffffff;
+            text-shadow: 0 1px 3px #000000;
+        }
+
+        #player-hud {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            background: rgba(10, 13, 24, 0.9);
+            border: 2px solid #334155;
+            border-radius: 10px;
+            padding: 12px 18px;
+            z-index: 5;
+        }
+
+        .bar-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+            width: 220px;
+        }
+
+        .bar-label {
+            font-size: 11px;
+            font-weight: 800;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .player-bar-track {
+            height: 14px;
+            background: #1e293b;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .hp-fill {
+            height: 100%;
+            background: #22c55e;
+            width: 100%;
+            transition: width 0.25s;
+        }
+
+        .ult-fill {
+            height: 100%;
+            background: #eab308;
+            width: 0%;
+            transition: width 0.25s;
+        }
+
+        #btn-ultimate {
+            background: linear-gradient(135deg, #eab308, #ca8a04);
+            color: #000000;
+            border: 2px solid #ffffff;
+            border-radius: 8px;
+            padding: 10px 16px;
+            font-size: 13px;
+            font-weight: 900;
+            cursor: pointer;
+            box-shadow: 0 0 15px rgba(234, 179, 8, 0.6);
+            display: none;
+            animation: pulse-glow 1s infinite alternate;
+        }
+
+        @keyframes pulse-glow {
+            from { transform: scale(1); box-shadow: 0 0 10px #eab308; }
+            to { transform: scale(1.06); box-shadow: 0 0 22px #facc15; }
+        }
+
+        /* Camada 6: Cartão de Perguntas Pedagógicas */
+        #quiz-box {
+            position: absolute;
+            bottom: 20px;
+            right: 20px;
+            left: 450px;
+            background: rgba(10, 13, 24, 0.92);
+            border: 2px solid #38bdf8;
+            border-radius: 12px;
+            padding: 14px 20px;
+            z-index: 6;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(8px);
+        }
+
+        #question-title {
+            font-size: 15px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 12px;
+            color: #f8fafc;
+            min-height: 22px;
+        }
+
+        #alternatives-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+
+        .alt-btn {
+            background: #1e293b;
+            border: 1.5px solid #475569;
+            color: #f8fafc;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.2s;
+            text-align: left;
+        }
+
+        .alt-btn:hover {
+            background: #334155;
+            border-color: #38bdf8;
+            transform: translateY(-2px);
+        }
+
+        .alt-key-badge {
+            background: #0284c7;
+            color: #ffffff;
+            font-size: 11px;
+            font-weight: 900;
+            padding: 2px 7px;
+            border-radius: 4px;
+        }
+
+        #pedagogical-feedback {
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: 700;
+            text-align: center;
+            padding: 6px;
+            border-radius: 6px;
+            display: none;
+        }
+
+        /* Camada 7: Overlay de QTE (Quick Time Event) */
+        #qte-modal {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.6);
+            z-index: 20;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .qte-card {
+            background: #0f172a;
+            border: 3px solid #facc15;
+            border-radius: 16px;
+            padding: 24px 36px;
+            text-align: center;
+            box-shadow: 0 0 40px rgba(250, 204, 21, 0.4);
+        }
+
+        .qte-title {
+            font-size: 20px;
+            font-weight: 900;
+            color: #facc15;
+            margin-bottom: 16px;
+            letter-spacing: 1.5px;
+        }
+
+        .qte-keys-row {
+            display: flex;
+            gap: 16px;
+            justify-content: center;
+            margin-bottom: 20px;
+        }
+
+        .qte-key-box {
+            width: 60px;
+            height: 60px;
+            background: #1e293b;
+            border: 2px solid #64748b;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 900;
+            cursor: pointer;
+            transition: all 0.15s;
+        }
+
+        .qte-key-box.active {
+            background: #0284c7;
+            border-color: #ffffff;
+            transform: scale(1.15);
+            box-shadow: 0 0 15px #38bdf8;
+        }
+
+        .qte-key-box.completed {
+            background: #22c55e;
+            border-color: #86efac;
+            color: #000000;
+        }
+
+        .qte-timer-bar {
+            width: 100%;
+            height: 8px;
+            background: #334155;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .qte-timer-fill {
+            height: 100%;
+            background: #facc15;
+            width: 100%;
+        }
+
+        /* Efeito de Flash na Tela */
+        #screen-flash {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 15;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <!-- 1. Background Dinâmico da Trilha -->
+        <img id="bg-layer" src="assets/backgrounds/castelo.jpg" alt="Cenário de Batalha" />
+        <div id="bg-vignette"></div>
+
+        <!-- 2. Canvas de Efeitos Especiais, Dano Flutuante e Raios -->
+        <canvas id="fx-canvas" width="1366" height="768"></canvas>
+        <div id="screen-flash"></div>
+
+        <!-- 3. Atores do Jogo com Spritesheets Reais -->
+        <div class="stage-actors">
+            <!-- Herói -->
+            <div id="player-wrapper" class="actor-wrapper">
+                <img id="player-sprite" class="actor-sprite" src="assets/sprites/samurai/idle.gif" alt="Herói" />
+                <div id="player-nameplate" class="actor-nameplate">Kaito Ronin</div>
+            </div>
+
+            <!-- Chefe da Fase -->
+            <div id="boss-wrapper" class="actor-wrapper">
+                <img id="boss-sprite" class="actor-sprite" src="assets/sprites/spectre/idle.gif" alt="Chefe" />
+                <div id="boss-nameplate" class="actor-nameplate">Spectre do Código</div>
+            </div>
         </div>
 
-        <!-- Run the game code -->
-        <script type="text/javascript" src="html5game/tph_pontedados.js?v=20261114_overhaul"></script>
-        <script type="text/javascript" src="html5game/estudemy_game_engine.js?v=20261114_overhaul"></script>
+        <!-- 4. Barra Superior de Controles de Modo, Skin, Cenário e Áudio -->
+        <div id="top-control-bar">
+            <!-- Modos de Jogo -->
+            <div class="control-pill-group">
+                <button class="ctrl-btn active" onclick="window.estudemyGame.setGameMode('campanha')">⚔️ Campanha</button>
+                <button class="ctrl-btn" onclick="window.estudemyGame.setGameMode('speedrun')">⏱️ Speedrun</button>
+                <button class="ctrl-btn" onclick="window.estudemyGame.setGameMode('sobrevivencia')">🛡️ Sobrevivência</button>
+                <button class="ctrl-btn" onclick="window.estudemyGame.setGameMode('boss_rush')">👑 Boss Rush</button>
+            </div>
 
-        <!-- Builtin injector for injecting google analytics code -->
-        
+            <!-- Seleção Rápida de Cenários / Trilhas -->
+            <div class="control-pill-group">
+                <button class="ctrl-btn active" onclick="window.estudemyGame.setTheme('castelo')">🏰 Castelo</button>
+                <button class="ctrl-btn" onclick="window.estudemyGame.setTheme('montanha')">⛰️ Montanha</button>
+                <button class="ctrl-btn" onclick="window.estudemyGame.setTheme('deserto')">🏜️ Deserto</button>
+                <button class="ctrl-btn" onclick="window.estudemyGame.setTheme('vila')">🏡 Vila</button>
+                <button class="ctrl-btn" onclick="window.estudemyGame.setTheme('vazio_cosmico')">🌌 Vazio</button>
+            </div>
 
-        <!-- Custom BodyEnd code is injected here -->
-        
-    </body>
+            <!-- Troca de Skins & Áudio -->
+            <div class="control-pill-group">
+                <button class="ctrl-btn" id="btn-skin-toggle" onclick="window.estudemyGame.cycleSkin()">👘 Skin: Padrão</button>
+                <button class="ctrl-btn" id="btn-audio-toggle" onclick="window.estudemyGame.toggleAudio()">🔊 Música: ON</button>
+                <button class="ctrl-btn" onclick="window.jogar_voltar_js ? window.jogar_voltar_js() : history.back()">🚪 Sair</button>
+            </div>
+        </div>
 
-    <!-- Custom PostBody code is injected here -->
-    
+        <!-- 5. Barra Superior de Vida do Chefe Multi-Fase -->
+        <div id="boss-hud">
+            <div class="boss-info-row">
+                <span id="boss-title-text">👑 SPECTRE DO CÓDIGO</span>
+                <span id="boss-phase-text" style="color: #facc15;">FASE 1/1</span>
+            </div>
+            <div class="boss-bar-track">
+                <div id="boss-bar-fill" class="boss-bar-fill"></div>
+                <div id="boss-hp-text" class="boss-hp-text">100 / 100 HP</div>
+            </div>
+        </div>
+
+        <!-- 6. HUD Inferior do Jogador (Vida e Ultimate) -->
+        <div id="player-hud">
+            <div class="bar-group">
+                <div class="bar-label">
+                    <span>VIDA DO HERÓI</span>
+                    <span id="player-hp-num">100/100</span>
+                </div>
+                <div class="player-bar-track">
+                    <div id="player-hp-fill" class="hp-fill"></div>
+                </div>
+                <div class="bar-label" style="margin-top: 4px;">
+                    <span id="ult-label">ULTIMATE</span>
+                    <span id="player-ult-num">0%</span>
+                </div>
+                <div class="player-bar-track" style="height: 10px;">
+                    <div id="player-ult-fill" class="ult-fill"></div>
+                </div>
+            </div>
+
+            <button id="btn-ultimate" onclick="window.estudemyGame.triggerUltimate()">⚡ ULTIMATE [ESPAÇO]</button>
+        </div>
+
+        <!-- 7. Cartão Pedagógico de Perguntas e Respostas -->
+        <div id="quiz-box">
+            <div id="question-title">Carregando pergunta de aprendizado...</div>
+            <div id="alternatives-grid">
+                <button class="alt-btn" onclick="window.estudemyGame.submitAnswer(0)">
+                    <span class="alt-key-badge">1</span>
+                    <span id="alt-text-0">Opção 1</span>
+                </button>
+                <button class="alt-btn" onclick="window.estudemyGame.submitAnswer(1)">
+                    <span class="alt-key-badge">2</span>
+                    <span id="alt-text-1">Opção 2</span>
+                </button>
+                <button class="alt-btn" onclick="window.estudemyGame.submitAnswer(2)">
+                    <span class="alt-key-badge">3</span>
+                    <span id="alt-text-2">Opção 3</span>
+                </button>
+                <button class="alt-btn" onclick="window.estudemyGame.submitAnswer(3)">
+                    <span class="alt-key-badge">4</span>
+                    <span id="alt-text-3">Opção 4</span>
+                </button>
+            </div>
+            <div id="pedagogical-feedback"></div>
+        </div>
+
+        <!-- 8. Overlay de Quick Time Events (QTE) -->
+        <div id="qte-modal">
+            <div class="qte-card">
+                <div id="qte-prompt-label" class="qte-title">COMBO RELÂMPAGO!</div>
+                <div id="qte-keys-container" class="qte-keys-row"></div>
+                <div class="qte-timer-bar">
+                    <div id="qte-timer-fill" class="qte-timer-fill"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts de Ponte e Motor de Jogo -->
+    <script type="text/javascript" src="html5game/tph_pontedados.js?v=20261114_overhaul"></script>
+    <script type="text/javascript" src="html5game/estudemy_game_engine.js?v=20261114_overhaul"></script>
+
+</body>
 </html>
