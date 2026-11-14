@@ -9,7 +9,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { isProfileCompleted } from '../../services/authHelpers';
 
 export default function TabLayout() {
-  const { isDark } = useTheme();
+  const { isDark, colors } = useTheme();
   const { t } = useLanguage();
   const insets = useSafeAreaInsets();
   const { user, isAuthenticated, loading } = useAuth();
@@ -43,18 +43,18 @@ export default function TabLayout() {
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: isDark ? '#1a1a2a' : '#ffffff',
-          borderTopWidth: 3,
-          borderTopColor: '#1b1b1b',
+          backgroundColor: isDark ? colors.card : '#ffffff',
+          borderTopWidth: 2.5,
+          borderTopColor: colors.border,
           height: tabHeight,
           paddingBottom: safeBottom + 2,
           paddingTop: 8,
         },
-        tabBarActiveTintColor: '#4F46E5', // indigo-600
-        tabBarInactiveTintColor: isDark ? '#9CA3AF' : '#6B7280',
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: isDark ? '#E2E8F0' : '#475569',
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: '800',
+          fontWeight: '900',
         },
         tabBarItemStyle: {
           paddingBottom: 2,

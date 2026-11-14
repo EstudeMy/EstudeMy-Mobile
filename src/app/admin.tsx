@@ -63,12 +63,13 @@ import {
   TrendingUp,
   Receipt,
 } from 'lucide-react-native';
+import { AccessibilityIcon } from '../components/AccessibilityIcon';
 
 export default function AdminScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, loading: authLoading } = useAuth();
-  const { colors } = useTheme();
+  const { colors, openAccessibilityModal } = useTheme();
   const { t } = useLanguage();
 
   const [activeTab, setActiveTab] = useState<'trilhas' | 'usuarios' | 'materias' | 'financeiro'>('trilhas');
@@ -418,10 +419,19 @@ export default function AdminScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.headerTitle, { color: colors.text }]}>Painel Administrativo</Text>
-              <Text style={[styles.headerSub, { color: colors.textMuted }]}>
+              <Text style={[styles.headerSub, { color: colors.textSecondary }]}>
                 Visão global da plataforma: Usuários, Trilhas e Matérias
               </Text>
             </View>
+            <TouchableOpacity
+              style={styles.accessibilityBtn}
+              onPress={openAccessibilityModal}
+              accessibilityRole="button"
+              accessibilityLabel="Acessibilidade e Alto Contraste"
+              activeOpacity={0.85}
+            >
+              <AccessibilityIcon size={24} color="#000000" accentColor="#00AEEF" />
+            </TouchableOpacity>
           </View>
 
           {/* Cards de Métricas Globais */}
@@ -1069,6 +1079,21 @@ const styles = StyleSheet.create({
     marginTop: 2,
     lineHeight: 16,
   },
+  accessibilityBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2.5,
+    borderColor: '#0284C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 0,
+    elevation: 4,
+  },
   metricsRow: {
     flexDirection: 'row',
     gap: 10,
@@ -1115,7 +1140,7 @@ const styles = StyleSheet.create({
   segmentedTabText: {
     fontSize: 12,
     fontWeight: '800',
-    color: '#94A3B8',
+    color: '#E2E8F0',
   },
   segmentedTabTextActive: {
     color: '#ffffff',

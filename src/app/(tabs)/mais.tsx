@@ -13,12 +13,13 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { APP_VERSION, APP_BUILD, APP_ENVIRONMENT } from '../../constants/version';
 import { User, Settings, ChevronRight, BookOpen, Bookmark, ShieldCheck, HelpCircle, Info } from 'lucide-react-native';
+import { AccessibilityIcon } from '../../components/AccessibilityIcon';
 
 export default function MaisScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { t } = useLanguage();
-  const { colors } = useTheme();
+  const { colors, openAccessibilityModal } = useTheme();
   const { user } = useAuth();
 
   const rawRole = (user?.tipoUsuario || (user as any)?.role || (user as any)?.tipo || (user as any)?.tipo_usuario || '').toString().toUpperCase();
@@ -90,6 +91,28 @@ export default function MaisScreen() {
             </Text>
           </View>
           <ChevronRight size={20} color={colors.textMuted} />
+        </TouchableOpacity>
+
+        {/* Opção Acessibilidade & Visão */}
+        <TouchableOpacity
+          style={[styles.menuItem, { backgroundColor: colors.card }]}
+          onPress={openAccessibilityModal}
+          activeOpacity={0.85}
+        >
+          <View style={styles.menuItemLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: '#FFFFFF', borderWidth: 2, borderColor: '#0284C7' }]}>
+              <AccessibilityIcon size={20} color="#000000" accentColor="#00AEEF" />
+            </View>
+            <View>
+              <Text style={[styles.menuItemLabel, { color: colors.text }]}>
+                Acessibilidade & Visão
+              </Text>
+              <Text style={[styles.menuItemSublabel, { color: colors.textSecondary }]}>
+                Alto contraste, tamanho da fonte e daltonismo
+              </Text>
+            </View>
+          </View>
+          <ChevronRight size={20} color={colors.textSecondary} />
         </TouchableOpacity>
 
         {/* Opção Configurações */}

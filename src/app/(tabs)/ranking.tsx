@@ -15,6 +15,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { getCharacterImage, EXTRA_IMAGES } from '../../constants/assets';
 import api from '../../services/api';
 import { Trophy, Award, Medal } from 'lucide-react-native';
+import { AccessibilityIcon } from '../../components/AccessibilityIcon';
 
 interface LeaderboardUser {
   _id: string;
@@ -29,7 +30,7 @@ interface LeaderboardUser {
 
 export default function RankingScreen() {
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, openAccessibilityModal } = useTheme();
   const { t } = useLanguage();
   const { user } = useAuth();
 
@@ -130,13 +131,25 @@ export default function RankingScreen() {
         },
       ]}
     >
-      {/* Título */}
+      {/* Título com Botão de Acessibilidade */}
       <View style={styles.header}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
-          <Image source={EXTRA_IMAGES.trofeu} style={styles.trophyHeaderImg} resizeMode="contain" />
-          <Text style={[styles.title, { color: colors.text }]}>{t('common.ranking') || 'Hall da Fama'}</Text>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+          <View style={{ width: 42 }} />
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 10 }}>
+            <Image source={EXTRA_IMAGES.trofeu} style={styles.trophyHeaderImg} resizeMode="contain" />
+            <Text style={[styles.title, { color: colors.text }]}>{t('common.ranking') || 'Hall da Fama'}</Text>
+          </View>
+          <TouchableOpacity
+            style={styles.accessibilityBtn}
+            onPress={openAccessibilityModal}
+            accessibilityRole="button"
+            accessibilityLabel="Acessibilidade e Alto Contraste"
+            activeOpacity={0.85}
+          >
+            <AccessibilityIcon size={24} color="#000000" accentColor="#00AEEF" />
+          </TouchableOpacity>
         </View>
-        <Text style={[styles.subtitle, { color: colors.textMuted }]}>{t('ranking.subtitle') || 'Os melhores heróis da semana'}</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('ranking.subtitle') || 'Os melhores heróis da semana'}</Text>
       </View>
 
       {/* Tabs */}
@@ -194,6 +207,21 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 20,
   },
+  accessibilityBtn: {
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2.5,
+    borderColor: '#0284C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 0,
+    elevation: 4,
+  },
   title: {
     fontSize: 26,
     fontWeight: '900',
@@ -227,7 +255,7 @@ const styles = StyleSheet.create({
     backgroundColor: '#4F46E5', // indigo-600
   },
   tabButtonText: {
-    color: '#9CA3AF',
+    color: '#E2E8F0',
     fontWeight: '800',
     fontSize: 14,
   },

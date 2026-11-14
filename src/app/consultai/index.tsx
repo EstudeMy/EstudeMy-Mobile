@@ -37,6 +37,7 @@ import {
   copyToClipboard,
 } from '../../services/trilhaAcessoService';
 import { QRCodeModal } from '../../components/QRCodeModal';
+import { AccessibilityIcon } from '../../components/AccessibilityIcon';
 import { logger } from '../../utils/logger';
 
 interface SugestaoTrilha {
@@ -70,7 +71,7 @@ export default function ConsultAiScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { colors } = useTheme();
+  const { colors, openAccessibilityModal } = useTheme();
 
   // Dados básicos
   const [materiasList, setMateriasList] = useState<string[]>([]);
@@ -284,10 +285,21 @@ export default function ConsultAiScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Voltar */}
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
-          <ArrowLeft size={24} color="#ffffff" />
-        </TouchableOpacity>
+        {/* Topo com Voltar e Acessibilidade */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
+            <ArrowLeft size={24} color="#ffffff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.accessibilityBtn}
+            onPress={openAccessibilityModal}
+            accessibilityRole="button"
+            accessibilityLabel="Acessibilidade e Alto Contraste"
+            activeOpacity={0.85}
+          >
+            <AccessibilityIcon size={24} color="#000000" accentColor="#00AEEF" />
+          </TouchableOpacity>
+        </View>
 
         {/* Header */}
         <View style={[styles.headerCard, { backgroundColor: colors.card }]}>
@@ -295,7 +307,7 @@ export default function ConsultAiScreen() {
             <Brain size={28} color="#818CF8" />
             <Text style={[styles.title, { color: colors.text }]}>Consult.Ai</Text>
           </View>
-          <Text style={[styles.desc, { color: colors.textMuted }]}>
+          <Text style={[styles.desc, { color: colors.textSecondary }]}>
             Gere trilhas de estudo completas com quiz integrado usando IA e configure o novo padrão de acesso.
           </Text>
         </View>
@@ -822,9 +834,23 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
     borderWidth: 2,
     borderColor: '#ffffff',
+  },
+  accessibilityBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2.5,
+    borderColor: '#0284C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 0,
+    elevation: 4,
   },
   headerCard: {
     padding: 20,

@@ -60,12 +60,13 @@ import {
   Book,
 } from 'lucide-react-native';
 import * as SecureStore from 'expo-secure-store';
+import { AccessibilityIcon } from '../../components/AccessibilityIcon';
 
 export default function TrilhaDetailScreen() {
   const { id, code: urlCode } = useLocalSearchParams<{ id: string; code?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { colors, isDark } = useTheme();
+  const { colors, isDark, openAccessibilityModal } = useTheme();
   const { user } = useAuth();
   const { t } = useLanguage();
 
@@ -405,6 +406,17 @@ export default function TrilhaDetailScreen() {
         </TouchableOpacity>
         
         <View style={{ flexDirection: 'row', gap: 10 }}>
+          {/* Botão Acessibilidade */}
+          <TouchableOpacity
+            style={[styles.headerCircleBtn, { backgroundColor: '#FFFFFF', borderColor: '#0284C7', borderWidth: 2 }]}
+            onPress={openAccessibilityModal}
+            accessibilityRole="button"
+            accessibilityLabel="Acessibilidade e Alto Contraste"
+            activeOpacity={0.8}
+          >
+            <AccessibilityIcon size={22} color="#000000" accentColor="#00AEEF" />
+          </TouchableOpacity>
+
           {/* Botão Guia */}
           <TouchableOpacity style={styles.headerCircleBtn} onPress={() => setShowGuide(true)} activeOpacity={0.8}>
             <HelpCircle size={22} color="#ffffff" />

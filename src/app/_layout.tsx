@@ -7,6 +7,7 @@ import { LanguageProvider } from '../contexts/LanguageContext';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { ActivityIndicator, View } from 'react-native';
 import { AccessibilityModal } from '../components/AccessibilityModal';
+import { FloatingAccessibilityButton } from '../components/FloatingAccessibilityButton';
 
 function RootLayoutContent() {
   const { loading } = useAuth();
@@ -46,6 +47,7 @@ function RootLayoutContent() {
         <Stack.Screen name="seguranca-privacidade" />
         <Stack.Screen name="ajuda" />
       </Stack>
+      <FloatingAccessibilityButton />
       <AccessibilityModal
         visible={isAccessibilityModalVisible}
         onClose={closeAccessibilityModal}

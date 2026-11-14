@@ -7,11 +7,12 @@ import { useTheme } from '../contexts/ThemeContext';
 import { BACKGROUND_IMAGES } from '../constants/assets';
 import { SvgXml } from 'react-native-svg';
 import { ESTUDE_MY_LOGO_XML } from '../constants/svgs';
+import { AccessibilityIcon } from '../components/AccessibilityIcon';
 
 export default function LandingPage() {
   const router = useRouter();
   const { isAuthenticated, user } = useAuth();
-  const { isDark } = useTheme();
+  const { isDark, openAccessibilityModal } = useTheme();
   const insets = useSafeAreaInsets();
 
   // Redireciona na LandingPage apenas uma única vez na inicialização
@@ -43,6 +44,17 @@ export default function LandingPage() {
     >
 
       <View style={[styles.overlay, { paddingTop: Math.max(insets.top, 24), paddingBottom: Math.max(insets.bottom, 16) }]}>
+        {/* Botão de Acessibilidade no topo */}
+        <TouchableOpacity
+          style={[styles.accessibilityTopBtn, { top: Math.max(insets.top + 10, 20) }]}
+          onPress={openAccessibilityModal}
+          accessibilityRole="button"
+          accessibilityLabel="Acessibilidade e Alto Contraste"
+          activeOpacity={0.85}
+        >
+          <AccessibilityIcon size={24} color="#000000" accentColor="#00AEEF" />
+        </TouchableOpacity>
+
         {/* Logo/Título */}
         <View style={styles.header}>
           <View style={{ marginBottom: 10 }}>
@@ -87,6 +99,24 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
+  },
+  accessibilityTopBtn: {
+    position: 'absolute',
+    right: 20,
+    width: 42,
+    height: 42,
+    borderRadius: 21,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2.5,
+    borderColor: '#0284C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 0,
+    elevation: 5,
   },
   header: {
     alignItems: 'center',

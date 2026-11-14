@@ -106,3 +106,4 @@ export const AccessibilityIcon: React.FC<AccessibilityIconProps> = ({
 };
 
 export default AccessibilityIcon;
+

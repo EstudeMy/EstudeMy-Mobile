@@ -18,6 +18,7 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { BACKGROUND_IMAGES } from '../../constants/assets';
 import api from '../../services/api';
 import { ArrowLeft, Lock } from 'lucide-react-native';
+import { AccessibilityIcon } from '../../components/AccessibilityIcon';
 import {
   sanitizeInput,
   checkLoginRateLimit,
@@ -30,7 +31,7 @@ export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { login } = useAuth();
-  const { isDark } = useTheme();
+  const { isDark, colors, openAccessibilityModal } = useTheme();
 
   const [identifier, setIdentifier] = useState('');
   const [senha, setSenha] = useState('');
@@ -134,6 +135,17 @@ export default function LoginScreen() {
           <ArrowLeft size={24} color="#ffffff" />
         </TouchableOpacity>
 
+        {/* Botão de Acessibilidade no Topo */}
+        <TouchableOpacity
+          style={[styles.accessibilityTopBtn, { top: Math.max(insets.top + 10, 48) }]}
+          onPress={openAccessibilityModal}
+          accessibilityRole="button"
+          accessibilityLabel="Acessibilidade e Alto Contraste"
+          activeOpacity={0.85}
+        >
+          <AccessibilityIcon size={24} color="#000000" accentColor="#00AEEF" />
+        </TouchableOpacity>
+
         <KeyboardAvoidingView
           behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
           style={styles.keyboardContainer}
@@ -163,7 +175,7 @@ export default function LoginScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Seu e-mail "
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor="#CBD5E1"
                   value={identifier}
                   onChangeText={setIdentifier}
                   autoCapitalize="none"
@@ -177,7 +189,7 @@ export default function LoginScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="Sua senha"
-                  placeholderTextColor="#9CA3AF"
+                  placeholderTextColor="#CBD5E1"
                   value={senha}
                   onChangeText={setSenha}
                   secureTextEntry
@@ -391,5 +403,24 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#ffffff',
     zIndex: 10,
+  },
+  accessibilityTopBtn: {
+    position: 'absolute',
+    top: 52,
+    right: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2.5,
+    borderColor: '#0284C7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 0,
+    elevation: 5,
   },
 });

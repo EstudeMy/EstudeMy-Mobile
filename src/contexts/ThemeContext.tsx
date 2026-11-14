@@ -234,6 +234,112 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return Math.round(baseSize * fontSizeMultiplier);
   };
 
+  // Efeito global de Acessibilidade no DOM (Web / PWA / Browser)
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof document !== 'undefined') {
+      const body = document.body;
+      if (!body) return;
+
+      // 1. Zoom e Escala de Fonte Geral
+      if (fontScale === 'large') {
+        body.style.zoom = '1.14';
+      } else if (fontScale === 'extra-large') {
+        body.style.zoom = '1.28';
+      } else {
+        body.style.zoom = '1.0';
+      }
+
+      // 2. Alto Contraste no DOM
+      if (highContrast) {
+        body.setAttribute('data-high-contrast', 'true');
+      } else {
+        body.removeAttribute('data-high-contrast');
+      }
+
+      // 3. Daltonismo
+      body.setAttribute('data-daltonism', daltonism);
+
+      // Injeta folha de estilos dinâmica de acessibilidade
+      let styleTag = document.getElementById('estudemy-a11y-global-style');
+      if (!styleTag) {
+        styleTag = document.createElement('style');
+        styleTag.id = 'estudemy-a11y-global-style';
+        document.head.appendChild(styleTag);
+      }
+
+      // Cria filtros SVG caso ainda não existam no DOM
+      let svgFilters = document.getElementById('estudemy-daltonism-filters');
+      if (!svgFilters) {
+        svgFilters = document.createElement('div');
+        svgFilters.id = 'estudemy-daltonism-filters';
+        svgFilters.style.position = 'absolute';
+        svgFilters.style.height = '0';
+        svgFilters.style.width = '0';
+        svgFilters.style.overflow = 'hidden';
+        svgFilters.innerHTML = `
+          <svg xmlns="http://www.w3.org/2000/svg">
+            <filter id="protanopia-filter">
+              <feColorMatrix type="matrix" values="0.567, 0.433, 0, 0, 0  0.558, 0.442, 0, 0, 0  0, 0.242, 0.758, 0, 0  0, 0, 0, 1, 0"/>
+            </filter>
+            <filter id="deuteranopia-filter">
+              <feColorMatrix type="matrix" values="0.625, 0.375, 0, 0, 0  0.7, 0.3, 0, 0, 0  0, 0.3, 0.7, 0, 0  0, 0, 0, 1, 0"/>
+            </filter>
+            <filter id="tritanopia-filter">
+              <feColorMatrix type="matrix" values="0.95, 0.05, 0, 0, 0  0, 0.433, 0.567, 0, 0  0, 0.475, 0.525, 0, 0  0, 0, 0, 1, 0"/>
+            </filter>
+          </svg>
+        `;
+        document.body.appendChild(svgFilters);
+      }
+
+      let css = '';
+      if (daltonism === 'achromatopsia') {
+        css += `
+          body {
+            filter: grayscale(100%) contrast(125%) !important;
+          }
+        `;
+      } else if (daltonism === 'protanopia') {
+        css += `
+          body {
+            filter: url(#protanopia-filter) !important;
+          }
+        `;
+      } else if (daltonism === 'deuteranopia') {
+        css += `
+          body {
+            filter: url(#deuteranopia-filter) !important;
+          }
+        `;
+      } else if (daltonism === 'tritanopia') {
+        css += `
+          body {
+            filter: url(#tritanopia-filter) !important;
+          }
+        `;
+      } else {
+        css += `
+          body {
+            filter: none !important;
+          }
+        `;
+      }
+
+      if (highContrast) {
+        css += `
+          [data-high-contrast="true"] input,
+          [data-high-contrast="true"] textarea {
+            border: 2px solid #FFFFFF !important;
+            background-color: #000000 !important;
+            color: #FFFFFF !important;
+          }
+        `;
+      }
+
+      styleTag.innerHTML = css;
+    }
+  }, [fontScale, highContrast, daltonism]);
+
   const setThemePreference = async (pref: ThemePreference, saveToBackend: boolean = true) => {
     setThemePreferenceState(pref);
     await setStorageItem('app_theme_preference', pref);

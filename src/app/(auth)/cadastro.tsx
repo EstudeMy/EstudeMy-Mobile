@@ -15,9 +15,11 @@ import {
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import { BACKGROUND_IMAGES } from '../../constants/assets';
 import api from '../../services/api';
 import { ArrowLeft, Calendar, ChevronLeft, ChevronRight } from 'lucide-react-native';
+import { AccessibilityIcon } from '../../components/AccessibilityIcon';
 import { sanitizeInput, validatePasswordStrength } from '../../utils/security';
 import logger from '../../utils/logger';
 
@@ -33,6 +35,7 @@ export default function CadastroScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { login } = useAuth();
+  const { openAccessibilityModal } = useTheme();
 
   const [nome, setNome] = useState('');
   const [email, setEmail] = useState('');
@@ -284,6 +287,17 @@ export default function CadastroScreen() {
           activeOpacity={0.8}
         >
           <ArrowLeft size={24} color="#ffffff" />
+        </TouchableOpacity>
+
+        {/* Botão de Acessibilidade no Topo */}
+        <TouchableOpacity
+          style={[styles.accessibilityTopBtn, { top: Math.max(insets.top + 10, 48) }]}
+          onPress={openAccessibilityModal}
+          accessibilityRole="button"
+          accessibilityLabel="Acessibilidade e Alto Contraste"
+          activeOpacity={0.85}
+        >
+          <AccessibilityIcon size={24} color="#000000" accentColor="#00AEEF" />
         </TouchableOpacity>
 
         <KeyboardAvoidingView
@@ -1039,5 +1053,24 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#ffffff',
     zIndex: 10,
+  },
+  accessibilityTopBtn: {
+    position: 'absolute',
+    top: 52,
+    right: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2.5,
+    borderColor: '#0284C7',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 10,
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 0,
+    elevation: 5,
   },
 });

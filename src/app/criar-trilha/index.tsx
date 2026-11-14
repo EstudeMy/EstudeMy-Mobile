@@ -18,7 +18,8 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { criarTrilhaManual, Trilha } from '../../services/trilhaService';
 import { generateAccessCode, copyToClipboard } from '../../services/trilhaAcessoService';
 import { FASE_BACKGROUNDS } from '../../constants/assets';
-import QRCodeModal from '../../components/QRCodeModal';
+import { QRCodeModal } from '../../components/QRCodeModal';
+import { AccessibilityIcon } from '../../components/AccessibilityIcon';
 import {
   ArrowLeft,
   BookOpen,
@@ -68,7 +69,7 @@ export default function CriarTrilhaScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { colors } = useTheme();
+  const { colors, openAccessibilityModal } = useTheme();
 
   const [titulo, setTitulo] = useState('');
   const [descricao, setDescricao] = useState('');
@@ -213,10 +214,21 @@ export default function CriarTrilhaScreen() {
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
       >
-        {/* Botão Voltar */}
-        <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
-          <ArrowLeft size={24} color="#ffffff" />
-        </TouchableOpacity>
+        {/* Topo com Voltar e Acessibilidade */}
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+          <TouchableOpacity style={styles.backBtn} onPress={() => router.back()} activeOpacity={0.8}>
+            <ArrowLeft size={24} color="#ffffff" />
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.accessibilityBtn}
+            onPress={openAccessibilityModal}
+            accessibilityRole="button"
+            accessibilityLabel="Acessibilidade e Alto Contraste"
+            activeOpacity={0.85}
+          >
+            <AccessibilityIcon size={24} color="#000000" accentColor="#00AEEF" />
+          </TouchableOpacity>
+        </View>
 
       {/* Header */}
       <View style={[styles.headerCard, { backgroundColor: colors.card }]}>
@@ -224,7 +236,7 @@ export default function CriarTrilhaScreen() {
           <BookOpen size={28} color="#4F46E5" />
           <Text style={[styles.title, { color: colors.text }]}>Criar Trilha</Text>
         </View>
-        <Text style={[styles.desc, { color: colors.textMuted }]}>
+        <Text style={[styles.desc, { color: colors.textSecondary }]}>
           Monte uma jornada personalizada de aprendizado com seus próprios temas e matérias.
         </Text>
       </View>
@@ -712,9 +724,23 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     justifyContent: 'center',
     alignItems: 'center',
-    marginBottom: 16,
     borderWidth: 2,
     borderColor: '#ffffff',
+  },
+  accessibilityBtn: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: '#FFFFFF',
+    borderWidth: 2.5,
+    borderColor: '#0284C7',
+    alignItems: 'center',
+    justifyContent: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 0,
+    elevation: 4,
   },
   headerCard: {
     padding: 20,
