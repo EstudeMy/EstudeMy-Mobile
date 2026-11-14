@@ -9,7 +9,7 @@ import {
   Switch,
   Platform,
 } from 'react-native';
-import { X, Eye } from 'lucide-react-native';
+import { X } from 'lucide-react-native';
 import { AccessibilityIcon } from './AccessibilityIcon';
 import { useTheme, DaltonismMode, FontScale } from '../contexts/ThemeContext';
 

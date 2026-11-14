@@ -344,46 +344,40 @@ npm run cloud:backup
 EstudeMy-Mobile/
 ├── .github/
 │   └── workflows/
-│       ├── ci.yml                    # Pipeline de validação estática e testes
-│       └── deploy.yml                # Pipeline completo de build, GHCR e deploy remoto
-├── assets/                           # Ícones, ilustrações RPG e splash screens
-├── cloudstack/
-│   └── user-data.sh                  # Script Cloud-Init para provisionamento no Apache CloudStack
-├── monitoring/
-│   ├── prometheus/
-│   │   ├── prometheus.yml            # Configuração de raspagem de métricas
-│   │   └── alert.rules.yml           # Regra de alarme para CPU > 80% e queda de nós
-│   └── grafana/
-│       ├── dashboards/
-│       │   └── estudemy_overview.json# Dashboard visual com gauges e séries temporais
-│       └── provisioning/             # Auto-provisionamento de datasources e pastas
-├── scripts/
-│   ├── backup.sh                     # Rotina de backup com mongodump gzip e Object Storage
-│   ├── restore.sh                    # Rotina de restauração e Disaster Recovery (RTO < 15m)
-│   ├── mongo-init.js                 # Inicialização de usuário e índices do MongoDB
-│   ├── setup-cloud-vm.sh             # Automação de setup de host Ubuntu 24.04 LTS
-│   ├── init-ssl.sh                   # Gerenciamento de certificados SSL/TLS Let's Encrypt
-│   ├── test-cloud-environment.sh     # Bateria de testes de validação do ambiente de nuvem
-│   └── reset-project.js              # Script utilitário do Expo
-├── src/                              # Código-fonte do aplicativo React Native
+│       └── deploy.yml                # CI/CD: Validação, Docker GHCR, Deploy AWS EC2 e EAS Build APK
+├── assets/                           # Identidade visual, ícones, fundos e sprites RPG
+│   ├── images/                       # Ícones oficiais, logos, splash e símbolo de acessibilidade
+│   ├── img/                          # Ilustrações de matérias, fases e fundos de tela
+│   ├── sprites/                      # Sprites e animações de personagens e chefes RPG
+│   └── svg/                          # SVGs oficiais do EstudeMy e ConsultAi
+├── deploy/                           # Arquivos auxiliares e histórico de implantação em nuvem
+│   └── aws/                          # Configurações AWS EC2, Nginx e Docker Compose
+├── docs/                             # Documentação técnica centralizada do projeto
+│   ├── architecture/                 # Arquitetura multi-cloud, CloudStack, Docker e diagramas
+│   ├── reports/                      # Relatórios formatados para impressão acadêmica
+│   └── security/                     # Análise de riscos AppSec (OWASP Top 10), matrizes e PDFs
+├── ml/                               # Machine Learning: Notebooks, datasets, scripts e métricas
+├── monitoring/                       # Observabilidade com Prometheus e Grafana
+│   ├── prometheus/                   # Regras de alerta e scraping de métricas
+│   └── grafana/                      # Dashboards e auto-provisionamento de datasources
+├── scripts/                          # Automação de infraestrutura, backups, SSL e testes
+├── src/                              # Código-fonte do aplicativo React Native & Expo Router
 │   ├── app/                          # Rotas baseadas em arquivos (Expo Router)
-│   ├── components/                   # Componentes reutilizáveis com estética retro-flat
-│   ├── config/                       # Configurações globais e cliente Axios (api.config.ts)
-│   ├── contexts/                     # AuthContext, ThemeContext, LocaleContext
-│   ├── locales/                      # Dicionários de tradução (pt-BR, en-US, es-ES)
-│   ├── services/                     # Serviços de integração com a API REST
-│   └── utils/                        # Utilitários de log e concorrência segura
-├── .env.example                      # Exemplo de variáveis para desenvolvimento
-├── .env.production.example           # Exemplo seguro de variáveis para produção em nuvem
-├── CLOUDSTACK.md                     # Guia completo de implantação no Apache CloudStack
-├── IMPLEMENTACAO_NUVEM.md            # Documentação técnica consolidada da Entrega 2
-├── PLANEJAMENTO_IMPLANTACAO_NUVEM.md # Relatório de planejamento e análise da Entrega 1
+│   ├── components/                   # Componentes reutilizáveis, modais e acessibilidade
+│   ├── config/                       # Configurações de API e ambiente
+│   ├── constants/                    # Mapeamento de assets, cores e estilos
+│   ├── contexts/                     # AuthContext, ThemeContext e LocaleContext
+│   ├── hooks/                        # Custom React hooks
+│   ├── locales/                      # Internacionalização (pt-BR, en-US, es-ES)
+│   ├── services/                     # Serviços de integração com a API e banco de dados
+│   ├── types/                        # Definições de tipos TypeScript
+│   └── utils/                        # Utilitários de rede, acessibilidade e concorrência
+├── app.json                          # Configuração do Expo, permissões nativas e plugins
+├── eas.json                          # Perfis de compilação EAS (preview APK & produção AAB)
 ├── Dockerfile                        # Multi-stage Dockerfile (Compilação Expo Web + Nginx)
 ├── docker-compose.yml                # Compose padrão para desenvolvimento local
-├── docker-compose.dev.yml            # Extensão do Compose para Metro Bundler com live reload
-├── docker-compose.prod.yml           # Compose de produção com stack completa de observabilidade
-├── nginx.conf                        # Configuração padrão do Nginx com proxy e headers
-├── nginx.prod.conf                   # Configuração de produção com SSL 443 e redirecionamento 80
+├── docker-compose.prod.yml           # Compose de produção com stack completa
+├── nginx.conf                        # Configuração do Nginx Gateway com proxy reverso e headers
 ├── package.json                      # Dependências e scripts npm integrados
 └── tsconfig.json                     # Configurações de tipagem estrita do TypeScript
 ```
@@ -392,10 +386,15 @@ EstudeMy-Mobile/
 
 ## 📑 Documentos e Relatórios do Projeto
 
-*   📘 **[IMPLEMENTACAO_NUVEM.md](file:///c:/Users/Alunos/Documents/GitHub/EstudeMy-Mobile/IMPLEMENTACAO_NUVEM.md):** Relatório técnico completo de implantação com evidências e matriz de conformidade com os 14 itens do edital de Computação em Nuvem I.
-*   ☁️ **[CLOUDSTACK.md](file:///c:/Users/Alunos/Documents/GitHub/EstudeMy-Mobile/CLOUDSTACK.md):** Manual detalhado de provisionamento de nuvem privada no Apache CloudStack 4.22 LTS com Virtual Router e MinIO.
-*   📋 **[PLANEJAMENTO_IMPLANTACAO_NUVEM.md](file:///c:/Users/Alunos/Documents/GitHub/EstudeMy-Mobile/PLANEJAMENTO_IMPLANTACAO_NUVEM.md):** Diagnóstico inicial do ambiente (*AS-IS*) e planejamento da Entrega 1.
-*   🛡️ **[relatorio_riscos_imprimir.html](file:///c:/Users/Alunos/Documents/GitHub/EstudeMy-Mobile/relatorio_riscos_imprimir.html):** Relatório de Análise de Riscos de Segurança (AppSec / OWASP Top 10) formatado para impressão em A4.
+Todos os documentos e relatórios técnicos estão organizados no diretório [`docs/`](./docs/README.md):
+
+*   📘 **[IMPLEMENTACAO_NUVEM.md](./docs/architecture/IMPLEMENTACAO_NUVEM.md):** Relatório técnico completo de implantação com evidências e matriz de conformidade com os 14 itens do edital de Computação em Nuvem I.
+*   ☁️ **[CLOUDSTACK.md](./docs/architecture/CLOUDSTACK.md):** Manual detalhado de provisionamento de nuvem privada no Apache CloudStack 4.22 LTS com Virtual Router e MinIO.
+*   📋 **[PLANEJAMENTO_IMPLANTACAO_NUVEM.md](./docs/architecture/PLANEJAMENTO_IMPLANTACAO_NUVEM.md):** Diagnóstico inicial do ambiente (*AS-IS*) e planejamento da Entrega 1.
+*   🛡️ **[Relatorio_Riscos_Seguranca_EstudeMy.md](./docs/security/Relatorio_Riscos_Seguranca_EstudeMy.md):** Relatório de Análise de Riscos de Segurança (AppSec / OWASP Top 10) e matriz de probabilidade e impacto.
+*   🖨️ **[relatorio_riscos_imprimir.html](./docs/security/relatorio_riscos_imprimir.html):** Relatório de riscos formatado para impressão em A4.
+*   🖨️ **[relatorio_nuvem_imprimir.html](./docs/reports/relatorio_nuvem_imprimir.html):** Relatório acadêmico de nuvem formatado para impressão em A4.
+*   🤖 **[RELATORIO_MACHINE_LEARNING.md](./ml/RELATORIO_MACHINE_LEARNING.md):** Relatório técnico completo de Machine Learning (K-Means, PCA, Random Forest).
 
 ---
 

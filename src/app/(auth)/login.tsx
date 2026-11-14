@@ -31,7 +31,7 @@ export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { login } = useAuth();
-  const { isDark, colors, openAccessibilityModal } = useTheme();
+  const { isDark, openAccessibilityModal } = useTheme();
 
   const [identifier, setIdentifier] = useState('');
   const [senha, setSenha] = useState('');

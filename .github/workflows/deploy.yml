@@ -37,11 +37,11 @@ jobs:
       - name: Instalar Dependências
         run: npm ci
 
-      - name: Verificação de Linting
-        run: npm run lint
-
       - name: Verificação de Tipos TypeScript (TypeCheck)
         run: npx tsc --noEmit
+
+      - name: Verificação de Linting
+        run: npx eslint src
 
       - name: Validação do Build SPA Expo Web
         run: npx expo export -p web
@@ -52,7 +52,7 @@ jobs:
   build-and-push:
     name: 🐳 Build Docker Multi-stage & GHCR Push
     needs: validate
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout do código
@@ -97,7 +97,7 @@ jobs:
   deploy:
     name: 🚀 Deploy Remoto na Nuvem (AWS EC2)
     needs: build-and-push
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     steps:
       - name: Validar Configuração de Secrets
@@ -150,3 +150,53 @@ jobs:
               docker compose logs --tail=50 mobile
               exit 1
             fi
+
+  # ============================================================================
+  # 4. Build Automático do APK Android no Expo Application Services (EAS)
+  # ============================================================================
+  build-apk:
+    name: 📱 Build Automático do APK Android (EAS)
+    needs: validate
+    if: (github.ref == 'refs/heads/main' && github.event_name == 'push') || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Node.js 22 LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+
+      - name: Configurar EAS CLI
+        uses: expo/expo-github-action@v8
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - name: Instalar Dependências
+        run: npm ci
+
+      - name: Validar Secret EXPO_TOKEN & Disparar Build no EAS
+        run: |
+          if [ -z "${{ secrets.EXPO_TOKEN }}" ]; then
+            echo "::error::Secret EXPO_TOKEN não configurada no repositório!"
+            echo "Para habilitar o build automático de APK:"
+            echo "1. Gere um access token pessoal em https://expo.dev/settings/access-tokens"
+            echo "2. Adicione no GitHub em Settings > Secrets and variables > Actions com o nome EXPO_TOKEN"
+            exit 1
+          fi
+          echo "🚀 Disparando build do APK Android no EAS (perfil: preview)..."
+          eas build --platform android --profile preview --non-interactive --no-wait
+
+      - name: Publicar Resumo do Build do APK no Job Summary
+        run: |
+          echo "### 📱 Build do APK Android Disparado com Sucesso!" >> $GITHUB_STEP_SUMMARY
+          echo "O pipeline acionou a compilação do APK nativo nos servidores do Expo Application Services (EAS)." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Perfil:** \`preview\` (Gera arquivo .apk standalone direto para instalação)" >> $GITHUB_STEP_SUMMARY
+          echo "- **Plataforma:** Android" >> $GITHUB_STEP_SUMMARY
+          echo "- **Projeto EAS:** \`@estudemys-team/EstudeMy-Mobile\`" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🔗 **Acompanhe o status e baixe o APK gerado:** [Expo Dashboard - Builds](https://expo.dev/accounts/estudemys-team/projects/EstudeMy-Mobile/builds)" >> $GITHUB_STEP_SUMMARY

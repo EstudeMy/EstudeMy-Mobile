@@ -5,7 +5,18 @@ const expoConfig = require("eslint-config-expo/flat");
 module.exports = defineConfig([
   expoConfig,
   {
-    ignores: ["dist/*"],
+    ignores: [
+      "dist/**",
+      ".expo/**",
+      "public/**",
+      "scripts/**",
+      "ml/**",
+      "deploy/**",
+      "android/**",
+      "assets/**",
+      "plugins/**",
+      "docs/**",
+    ],
     rules: {
       "react-hooks/set-state-in-effect": "warn",
       "react-hooks/immutability": "warn",

@@ -1,6 +1,6 @@
 import React from 'react';
-import { View, StyleSheet, ViewStyle } from 'react-native';
-import Svg, { Circle, Path, G } from 'react-native-svg';
+import { View, ViewStyle } from 'react-native';
+import Svg, { Circle, Path } from 'react-native-svg';
 
 export interface AccessibilityIconProps {
   size?: number;
