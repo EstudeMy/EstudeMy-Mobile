@@ -7,38 +7,62 @@
   'use strict';
 
   // ============================================================================
-  // 1. CONFIGURAÇÕES VISUAIS: SPRITES, SKINS E CENÁRIOS
+  // 1. CONFIGURAÇÕES VISUAIS: SPRITES, SKINS E CENÁRIOS EXCLUSIVOS POR FASE
   // ============================================================================
   const THEMES_CONFIG = {
     castelo: {
       name: 'Castelo dos Dados',
-      bgImg: 'assets/backgrounds/castelo.jpg',
       defaultBoss: 'spectre',
       musicKey: 'battle',
+      phases: [
+        { id: 1, name: 'Muralha e Portão dos Algoritmos', bgImg: 'assets/backgrounds/castelo_fase1_portao.jpg', weather: 'embers' },
+        { id: 2, name: 'Grande Salão dos Dados', bgImg: 'assets/backgrounds/castelo_fase2_salao.jpg', weather: 'embers' },
+        { id: 3, name: 'Catacumbas da Memória RAM', bgImg: 'assets/backgrounds/castelo_fase3_masmorra.jpg', weather: 'embers' },
+        { id: 4, name: 'Torre do Trono do Spectre', bgImg: 'assets/backgrounds/castelo_fase4_trono.jpg', weather: 'embers' },
+      ],
     },
     montanha: {
       name: 'Pico da Lógica',
-      bgImg: 'assets/backgrounds/montanha.jpg',
       defaultBoss: 'mago',
       musicKey: 'battle',
+      phases: [
+        { id: 1, name: 'Encosta Nevada dos Vetores', bgImg: 'assets/backgrounds/montanha_fase1_encosta.jpg', weather: 'snow' },
+        { id: 2, name: 'Desfiladeiro da Gravidade', bgImg: 'assets/backgrounds/montanha_fase2_desfiladeiro.jpg', weather: 'snow' },
+        { id: 3, name: 'Caverna dos Cristais Lógicos', bgImg: 'assets/backgrounds/montanha_fase3_caverna.jpg', weather: 'snow' },
+        { id: 4, name: 'Pico Cósmico da Lógica', bgImg: 'assets/backgrounds/montanha_fase4_pico.jpg', weather: 'snow' },
+      ],
     },
     deserto: {
       name: 'Deserto Primordial',
-      bgImg: 'assets/backgrounds/deserto.jpg',
       defaultBoss: 'spectre',
       musicKey: 'battle',
+      phases: [
+        { id: 1, name: 'Dunas Escaldantes da Erosão', bgImg: 'assets/backgrounds/deserto_fase1_dunas.jpg', weather: 'sand' },
+        { id: 2, name: 'Oásis dos Fósseis Antigos', bgImg: 'assets/backgrounds/deserto_fase2_oasis.jpg', weather: 'sand' },
+        { id: 3, name: 'Templo Solar do Arenito', bgImg: 'assets/backgrounds/deserto_fase3_ruinas.jpg', weather: 'sand' },
+        { id: 4, name: 'Cratera da Tempestade Solar', bgImg: 'assets/backgrounds/deserto_fase4_cratera.jpg', weather: 'sand' },
+      ],
     },
     vila: {
       name: 'Vila Ancestral',
-      bgImg: 'assets/backgrounds/vila.jpg',
       defaultBoss: 'cavaleiro',
       musicKey: 'battle',
+      phases: [
+        { id: 1, name: 'Praça do Mercado das Crônicas', bgImg: 'assets/backgrounds/vila_fase1_mercado.jpg', weather: 'leaves' },
+        { id: 2, name: 'Grande Arquivo e Biblioteca Arcana', bgImg: 'assets/backgrounds/vila_fase2_biblioteca.jpg', weather: 'leaves' },
+        { id: 3, name: 'Cripta dos Filósofos', bgImg: 'assets/backgrounds/vila_fase3_cripta.jpg', weather: 'leaves' },
+        { id: 4, name: 'Campanário do Cavaleiro', bgImg: 'assets/backgrounds/vila_fase4_campanario.jpg', weather: 'leaves' },
+      ],
     },
     vazio_cosmico: {
       name: 'Vazio Cósmico',
-      bgImg: 'assets/backgrounds/vazio_cosmico.jpg',
       defaultBoss: 'chefe_final',
       musicKey: 'final_boss',
+      phases: [
+        { id: 1, name: 'Fragmentos dos Tomos Perdidos', bgImg: 'assets/backgrounds/vazio_fase1_fragmentos.jpg', weather: 'cosmic' },
+        { id: 2, name: 'Nebulosa da Entropia Cósmica', bgImg: 'assets/backgrounds/vazio_fase2_nebulosa.jpg', weather: 'cosmic' },
+        { id: 3, name: 'Singularidade do Infinito', bgImg: 'assets/backgrounds/vazio_fase3_singularidade.jpg', weather: 'cosmic' },
+      ],
     },
   };
 
@@ -293,6 +317,8 @@
       this.bossNameplate = document.getElementById('boss-nameplate');
 
       // HUD Elements
+      this.phaseBannerText = document.getElementById('phase-banner-text');
+      this.audioUnlockOverlay = document.getElementById('audio-unlock-overlay');
       this.bossTitleText = document.getElementById('boss-title-text');
       this.bossPhaseText = document.getElementById('boss-phase-text');
       this.bossBarFill = document.getElementById('boss-bar-fill');
@@ -324,6 +350,7 @@
       // Estados
       this.gameMode = 'campanha';
       this.activeTheme = 'castelo';
+      this.currentThemePhase = 0;
       this.selectedCharKey = 'samurai';
       this.selectedSkinIndex = 0;
       this.selectedBossKey = 'spectre';
@@ -449,38 +476,97 @@
       this.renderQuestion();
     }
 
-    applyTheme(themeKey) {
+    unlockAudioUserAction() {
+      this.soundtrack.init();
+      const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
+      this.soundtrack.start(theme.musicKey);
+      if (this.audioUnlockOverlay) {
+        this.audioUnlockOverlay.style.display = 'none';
+      }
+      if (this.btnAudioToggle) {
+        this.btnAudioToggle.textContent = '🔊 Música: ON';
+      }
+      this.addFloatingText('ÁUDIO HABILITADO!', '#22c55e', 683, 220);
+    }
+
+    setPhase(phaseIdx) {
+      const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
+      const maxPhases = theme.phases ? theme.phases.length : 1;
+      const safeIdx = Math.max(0, Math.min(phaseIdx, maxPhases - 1));
+      this.currentThemePhase = safeIdx;
+      const phase = theme.phases ? theme.phases[safeIdx] : { name: theme.name, bgImg: theme.bgImg };
+
+      // Transição suave de cenário com fade rápido
+      this.bgLayer.style.opacity = '0.35';
+      setTimeout(() => {
+        this.bgLayer.src = phase.bgImg;
+        this.bgLayer.style.opacity = '1';
+      }, 120);
+
+      // Atualiza botões de fase no topo
+      for (let i = 0; i < 4; i++) {
+        const btn = document.getElementById(`btn-fase-${i}`);
+        if (btn) {
+          btn.classList.toggle('active', i === safeIdx);
+          btn.style.display = i < maxPhases ? 'inline-flex' : 'none';
+        }
+      }
+
+      // Atualiza banner de fase e cenário
+      if (this.phaseBannerText) {
+        this.phaseBannerText.textContent = `${phase.name} — Fase ${safeIdx + 1}/${maxPhases}`;
+      }
+
+      this.addFloatingText(`CENÁRIO: ${phase.name}!`, '#38bdf8', 683, 220);
+    }
+
+    setCharacter(charKey) {
+      if (!CHARACTERS_CONFIG[charKey]) return;
+      this.selectedCharKey = charKey;
+      this.selectedSkinIndex = 0;
+
+      // Atualiza botões de personagens
+      ['samurai', 'guerreiro', 'mago', 'arqueira'].forEach((c) => {
+        const btn = document.getElementById(`btn-char-${c}`);
+        if (btn) btn.classList.toggle('active', c === charKey);
+      });
+
+      this.applySkin();
+      this.soundtrack.playSFX('slash');
+    }
+
+    applyTheme(themeKey, phaseIndex = 0) {
       this.activeTheme = themeKey;
       const theme = THEMES_CONFIG[themeKey] || THEMES_CONFIG.castelo;
 
-      // Troca a imagem de background real
-      this.bgLayer.src = theme.bgImg;
+      // Atualiza botões de tema na barra superior
+      ['castelo', 'montanha', 'deserto', 'vila', 'vazio'].forEach((t) => {
+        const btn = document.getElementById(`btn-theme-${t}`);
+        if (btn) btn.classList.toggle('active', themeKey.includes(t));
+      });
+
+      // Aplica a fase solicitada com o cenário dedicado
+      this.setPhase(phaseIndex);
 
       // Define o Boss temático
       this.selectedBossKey = theme.defaultBoss;
       this.setupBoss(this.selectedBossKey);
 
       // Inicia a música da trilha
-      this.soundtrack.start(theme.musicKey);
+      if (this.soundtrack.ctx && !this.soundtrack.isMuted) {
+        this.soundtrack.start(theme.musicKey);
+      }
     }
 
     setTheme(themeKey) {
-      document.querySelectorAll('#top-control-bar .ctrl-btn').forEach((btn) => {
-        if (btn.textContent.toLowerCase().includes(themeKey.replace('_', ' '))) {
-          btn.classList.add('active');
-        } else if (['castelo', 'montanha', 'deserto', 'vila', 'vazio'].some(t => btn.textContent.toLowerCase().includes(t))) {
-          btn.classList.remove('active');
-        }
-      });
-      this.applyTheme(themeKey);
+      this.applyTheme(themeKey, 0);
     }
 
     setGameMode(modeKey) {
       this.gameMode = modeKey;
-      document.querySelectorAll('#top-control-bar .ctrl-btn').forEach((btn) => {
-        if (['campanha', 'speedrun', 'sobrevivência', 'boss rush'].some(m => btn.textContent.toLowerCase().includes(m))) {
-          btn.classList.toggle('active', btn.textContent.toLowerCase().includes(modeKey.replace('_', ' ')));
-        }
+      ['campanha', 'speedrun', 'sobrevivencia', 'boss_rush'].forEach((m) => {
+        const btn = document.getElementById(`btn-mode-${m}`);
+        if (btn) btn.classList.toggle('active', m === modeKey);
       });
 
       if (modeKey === 'boss_rush') {
@@ -529,7 +615,9 @@
       this.playerSprite.className = `actor-sprite ${skin.cssClass}`;
       this.playerSprite.src = `${char.spriteFolder}/idle.gif`;
       this.playerNameplate.textContent = skin.name;
-      this.btnSkinToggle.textContent = `👘 Skin: ${skin.name.split(' ')[1] || 'Padrão'}`;
+      if (this.btnSkinToggle) {
+        this.btnSkinToggle.textContent = `👘 Skin: ${skin.name.split(' ')[1] || 'Padrão'}`;
+      }
 
       this.addFloatingText(`SKIN ATIVADA: ${skin.name}!`, '#38bdf8', 340, 300);
     }
@@ -562,6 +650,13 @@
         this.soundtrack.playSFX('correct');
         this.streak++;
         this.chargeUltimate(25);
+
+        // A cada 2 acertos, avança o cenário para a próxima fase da trilha
+        if (this.streak > 0 && this.streak % 2 === 0) {
+          const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
+          const nextPhase = (this.currentThemePhase + 1) % theme.phases.length;
+          this.setPhase(nextPhase);
+        }
 
         // Animação de Golpe do Herói (Lunge + Attack GIF)
         const char = CHARACTERS_CONFIG[this.selectedCharKey];
@@ -636,6 +731,11 @@
         const boss = BOSSES_CONFIG[this.selectedBossKey];
         if (this.currentPhaseIndex + 1 < boss.phases.length) {
           this.setupBossPhase(this.currentPhaseIndex + 1);
+
+          // Avança também o cenário da trilha para a nova fase
+          const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
+          const nextStagePhase = Math.min(this.currentPhaseIndex, theme.phases.length - 1);
+          this.setPhase(nextStagePhase);
         } else {
           // Vitória da Fase!
           this.soundtrack.playSFX('victory');
@@ -803,7 +903,90 @@
 
         this.fxCtx.clearRect(0, 0, 1366, 768);
 
-        // Renderiza Textos Flutuantes
+        // 1. Partículas Climáticas Temáticas da Fase do Cenário
+        const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
+        const phase = theme.phases ? theme.phases[this.currentThemePhase] : null;
+        const weather = phase ? phase.weather : 'embers';
+
+        if (this.particles.length < 50) {
+          if (weather === 'embers') {
+            this.particles.push({
+              x: Math.random() * 1366,
+              y: 768 + 10,
+              vx: (Math.random() - 0.5) * 40,
+              vy: -(Math.random() * 45 + 30),
+              size: Math.random() * 3 + 1.5,
+              color: Math.random() > 0.4 ? '#f97316' : '#facc15',
+              alpha: 0.85,
+              life: Math.random() * 3 + 2,
+            });
+          } else if (weather === 'snow') {
+            this.particles.push({
+              x: Math.random() * 1366,
+              y: -10,
+              vx: Math.sin(now * 0.002) * 20 - 10,
+              vy: Math.random() * 45 + 25,
+              size: Math.random() * 3.5 + 2,
+              color: '#ffffff',
+              alpha: 0.9,
+              life: Math.random() * 5 + 3,
+            });
+          } else if (weather === 'sand') {
+            this.particles.push({
+              x: 1366 + 10,
+              y: Math.random() * 768,
+              vx: -(Math.random() * 100 + 75),
+              vy: (Math.random() - 0.4) * 25,
+              size: Math.random() * 2.5 + 1,
+              color: Math.random() > 0.5 ? '#f59e0b' : '#d97706',
+              alpha: 0.75,
+              life: Math.random() * 4 + 2,
+            });
+          } else if (weather === 'leaves') {
+            this.particles.push({
+              x: Math.random() * 1366,
+              y: -10,
+              vx: (Math.random() - 0.5) * 35,
+              vy: Math.random() * 35 + 20,
+              size: Math.random() * 4 + 2,
+              color: Math.random() > 0.5 ? '#22c55e' : '#a16207',
+              alpha: 0.8,
+              life: Math.random() * 4 + 3,
+            });
+          } else if (weather === 'cosmic') {
+            this.particles.push({
+              x: 683 + (Math.random() - 0.5) * 900,
+              y: 384 + (Math.random() - 0.5) * 600,
+              vx: (Math.random() - 0.5) * 20,
+              vy: (Math.random() - 0.5) * 20,
+              size: Math.random() * 4 + 1.5,
+              color: Math.random() > 0.5 ? '#a855f7' : '#38bdf8',
+              alpha: 0.9,
+              life: Math.random() * 3 + 1.5,
+            });
+          }
+        }
+
+        // Renderiza e movimenta as partículas climáticas
+        for (let i = this.particles.length - 1; i >= 0; i--) {
+          const p = this.particles[i];
+          p.x += p.vx * dt;
+          p.y += p.vy * dt;
+          p.life -= dt;
+
+          this.fxCtx.fillStyle = p.color;
+          this.fxCtx.globalAlpha = Math.max(0, Math.min(1, p.alpha * (p.life / 3)));
+          this.fxCtx.beginPath();
+          this.fxCtx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+          this.fxCtx.fill();
+
+          if (p.life <= 0 || p.x < -20 || p.x > 1386 || p.y < -20 || p.y > 788) {
+            this.particles.splice(i, 1);
+          }
+        }
+        this.fxCtx.globalAlpha = 1.0;
+
+        // 2. Renderiza Textos Flutuantes
         for (let i = this.floatingTexts.length - 1; i >= 0; i--) {
           const ft = this.floatingTexts[i];
           ft.y -= dt * 45;

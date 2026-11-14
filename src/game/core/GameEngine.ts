@@ -20,6 +20,7 @@ export class GameEngine {
   private lastTime: number = 0;
   private animTime: number = 0;
   private activeScenery: string = 'castelo';
+  private activeBgImage: string = 'assets/backgrounds/castelo_fase1_portao.jpg';
   private playerAnimationState: string = 'idle';
   private activeMode: GameModeId = 'campanha';
 
@@ -72,6 +73,7 @@ export class GameEngine {
     const cenarioRaw = (gameData?.cenario || 'castelo').toLowerCase();
     const stage = STAGES_DATA[cenarioRaw] || STAGES_DATA.castelo;
     this.activeScenery = stage.sceneryId;
+    this.activeBgImage = stage.fases && stage.fases[0] ? stage.fases[0].bgImage : `assets/backgrounds/${stage.sceneryId}.jpg`;
 
     // 3. Carregar Perguntas Pedagógicas da Fase
     const perguntas = gameData?.perguntas || [];
@@ -94,6 +96,13 @@ export class GameEngine {
     requestAnimationFrame((t) => this.loop(t));
   }
 
+  public setStagePhase(phaseIndex: number): void {
+    const stage = STAGES_DATA[this.activeScenery] || STAGES_DATA.castelo;
+    if (stage.fases && stage.fases[phaseIndex]) {
+      this.activeBgImage = stage.fases[phaseIndex].bgImage;
+    }
+  }
+
   private loop(currentTime: number): void {
     if (!this.isRunning) return;
 
@@ -113,8 +122,8 @@ export class GameEngine {
   private render(deltaTime: number): void {
     canvasRenderer.clear();
 
-    // 1. Fundo em Parallax Scrolling
-    canvasRenderer.renderParallax(this.activeScenery, deltaTime);
+    // 1. Fundo em Parallax Scrolling com imagem real da fase
+    canvasRenderer.renderParallax(this.activeScenery, deltaTime, this.activeBgImage);
 
     // 2. Renderização do Jogador
     const skin = skinSystem.getActiveSkin();

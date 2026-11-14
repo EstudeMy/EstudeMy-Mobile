@@ -147,31 +147,49 @@
         /* Camada 4: Barra Superior de Controles e Modos */
         #top-control-bar {
             position: absolute;
-            top: 10px;
+            top: 8px;
             left: 10px;
             right: 10px;
             display: flex;
-            justify-content: space-between;
-            align-items: center;
+            flex-direction: column;
+            gap: 6px;
             z-index: 10;
             pointer-events: auto;
         }
 
+        .control-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            width: 100%;
+        }
+
         .control-pill-group {
             display: flex;
-            gap: 6px;
-            background: rgba(10, 13, 24, 0.85);
+            align-items: center;
+            gap: 5px;
+            background: rgba(10, 13, 24, 0.88);
             padding: 4px 8px;
             border-radius: 8px;
             border: 1px solid rgba(255, 255, 255, 0.15);
             backdrop-filter: blur(8px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .group-label {
+            font-size: 10px;
+            font-weight: 900;
+            color: #38bdf8;
+            letter-spacing: 0.8px;
+            padding: 0 4px;
+            text-transform: uppercase;
         }
 
         .ctrl-btn {
             background: #1e293b;
             color: #cbd5e1;
             border: 1px solid rgba(255, 255, 255, 0.15);
-            padding: 6px 12px;
+            padding: 5px 10px;
             border-radius: 6px;
             font-size: 11px;
             font-weight: 700;
@@ -193,6 +211,50 @@
             color: #ffffff;
             border-color: #38bdf8;
             box-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        }
+
+        /* Banner de Notificação de Fase */
+        #phase-banner {
+            position: absolute;
+            top: 76px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid #38bdf8;
+            border-radius: 20px;
+            padding: 4px 16px;
+            font-size: 11px;
+            font-weight: 800;
+            color: #f8fafc;
+            letter-spacing: 1px;
+            z-index: 5;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.7);
+            pointer-events: none;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        /* Banner de Ativação de Áudio */
+        #audio-unlock-overlay {
+            position: absolute;
+            top: 108px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #1e293b, #0f172a);
+            border: 1.5px solid #facc15;
+            border-radius: 24px;
+            padding: 6px 18px;
+            font-size: 12px;
+            font-weight: 800;
+            color: #fef08a;
+            cursor: pointer;
+            z-index: 25;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 0 20px rgba(250, 204, 21, 0.4);
+            animation: pulse-glow 1.2s infinite alternate;
         }
 
         /* Camada 5: HUD de Batalha (Top Boss HP e Bottom Player HUD) */
@@ -510,29 +572,62 @@
 
         <!-- 4. Barra Superior de Controles de Modo, Skin, Cenário e Áudio -->
         <div id="top-control-bar">
-            <!-- Modos de Jogo -->
-            <div class="control-pill-group">
-                <button class="ctrl-btn active" onclick="window.estudemyGame.setGameMode('campanha')">⚔️ Campanha</button>
-                <button class="ctrl-btn" onclick="window.estudemyGame.setGameMode('speedrun')">⏱️ Speedrun</button>
-                <button class="ctrl-btn" onclick="window.estudemyGame.setGameMode('sobrevivencia')">🛡️ Sobrevivência</button>
-                <button class="ctrl-btn" onclick="window.estudemyGame.setGameMode('boss_rush')">👑 Boss Rush</button>
+            <!-- Linha 1: Trilhas Temáticas, Fases do Cenário e Áudio -->
+            <div class="control-row">
+                <div class="control-pill-group">
+                    <span class="group-label">Trilha:</span>
+                    <button class="ctrl-btn active" id="btn-theme-castelo" onclick="window.estudemyGame.setTheme('castelo')">🏰 Castelo</button>
+                    <button class="ctrl-btn" id="btn-theme-montanha" onclick="window.estudemyGame.setTheme('montanha')">⛰️ Montanha</button>
+                    <button class="ctrl-btn" id="btn-theme-deserto" onclick="window.estudemyGame.setTheme('deserto')">🏜️ Deserto</button>
+                    <button class="ctrl-btn" id="btn-theme-vila" onclick="window.estudemyGame.setTheme('vila')">🏡 Vila</button>
+                    <button class="ctrl-btn" id="btn-theme-vazio" onclick="window.estudemyGame.setTheme('vazio_cosmico')">🌌 Vazio</button>
+                </div>
+
+                <div class="control-pill-group" id="phases-pill-group">
+                    <span class="group-label">Fase / Cenário:</span>
+                    <button class="ctrl-btn active" id="btn-fase-0" onclick="window.estudemyGame.setPhase(0)">Fase 1</button>
+                    <button class="ctrl-btn" id="btn-fase-1" onclick="window.estudemyGame.setPhase(1)">Fase 2</button>
+                    <button class="ctrl-btn" id="btn-fase-2" onclick="window.estudemyGame.setPhase(2)">Fase 3</button>
+                    <button class="ctrl-btn" id="btn-fase-3" onclick="window.estudemyGame.setPhase(3)">Fase 4</button>
+                </div>
+
+                <div class="control-pill-group">
+                    <button class="ctrl-btn" id="btn-audio-toggle" onclick="window.estudemyGame.toggleAudio()">🔊 Música: ON</button>
+                    <button class="ctrl-btn" onclick="window.jogar_voltar_js ? window.jogar_voltar_js() : history.back()">🚪 Sair</button>
+                </div>
             </div>
 
-            <!-- Seleção Rápida de Cenários / Trilhas -->
-            <div class="control-pill-group">
-                <button class="ctrl-btn active" onclick="window.estudemyGame.setTheme('castelo')">🏰 Castelo</button>
-                <button class="ctrl-btn" onclick="window.estudemyGame.setTheme('montanha')">⛰️ Montanha</button>
-                <button class="ctrl-btn" onclick="window.estudemyGame.setTheme('deserto')">🏜️ Deserto</button>
-                <button class="ctrl-btn" onclick="window.estudemyGame.setTheme('vila')">🏡 Vila</button>
-                <button class="ctrl-btn" onclick="window.estudemyGame.setTheme('vazio_cosmico')">🌌 Vazio</button>
-            </div>
+            <!-- Linha 2: Modos de Jogo, Personagem e Skins Exclusivas -->
+            <div class="control-row">
+                <div class="control-pill-group">
+                    <span class="group-label">Modo:</span>
+                    <button class="ctrl-btn active" id="btn-mode-campanha" onclick="window.estudemyGame.setGameMode('campanha')">⚔️ Campanha</button>
+                    <button class="ctrl-btn" id="btn-mode-speedrun" onclick="window.estudemyGame.setGameMode('speedrun')">⏱️ Speedrun</button>
+                    <button class="ctrl-btn" id="btn-mode-sobrevivencia" onclick="window.estudemyGame.setGameMode('sobrevivencia')">🛡️ Sobrevivência</button>
+                    <button class="ctrl-btn" id="btn-mode-boss_rush" onclick="window.estudemyGame.setGameMode('boss_rush')">👑 Boss Rush</button>
+                </div>
 
-            <!-- Troca de Skins & Áudio -->
-            <div class="control-pill-group">
-                <button class="ctrl-btn" id="btn-skin-toggle" onclick="window.estudemyGame.cycleSkin()">👘 Skin: Padrão</button>
-                <button class="ctrl-btn" id="btn-audio-toggle" onclick="window.estudemyGame.toggleAudio()">🔊 Música: ON</button>
-                <button class="ctrl-btn" onclick="window.jogar_voltar_js ? window.jogar_voltar_js() : history.back()">🚪 Sair</button>
+                <div class="control-pill-group">
+                    <span class="group-label">Herói:</span>
+                    <button class="ctrl-btn active" id="btn-char-samurai" onclick="window.estudemyGame.setCharacter('samurai')">🥋 Kaito</button>
+                    <button class="ctrl-btn" id="btn-char-guerreiro" onclick="window.estudemyGame.setCharacter('guerreiro')">🛡️ Boran</button>
+                    <button class="ctrl-btn" id="btn-char-mago" onclick="window.estudemyGame.setCharacter('mago')">🧙 Valerius</button>
+                    <button class="ctrl-btn" id="btn-char-arqueira" onclick="window.estudemyGame.setCharacter('arqueira')">🏹 Lyra</button>
+                    <button class="ctrl-btn" id="btn-skin-toggle" onclick="window.estudemyGame.cycleSkin()" style="border-color: #facc15; color: #facc15;">👘 Trocar Skin</button>
+                </div>
             </div>
+        </div>
+
+        <!-- Banner Indicador de Fase e Cenário -->
+        <div id="phase-banner">
+            <span>📍</span>
+            <span id="phase-banner-text">Muralha e Portão dos Algoritmos — Fase 1/4</span>
+        </div>
+
+        <!-- Botão Flutuante de Inicialização de Som caso o navegador bloqueie autoplay -->
+        <div id="audio-unlock-overlay" onclick="window.estudemyGame.unlockAudioUserAction()">
+            <span>🎵</span>
+            <span>Ativar Trilha Sonora e Efeitos</span>
         </div>
 
         <!-- 5. Barra Superior de Vida do Chefe Multi-Fase -->

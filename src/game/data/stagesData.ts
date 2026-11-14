@@ -12,6 +12,14 @@ export interface StageEnemyConfig {
   tauntQuote: string;
 }
 
+export interface StagePhaseInfo {
+  faseNumber: number;
+  name: string;
+  bgImage: string;
+  description: string;
+  ambientEffect?: 'torch_embers' | 'falling_snow' | 'sand_dust' | 'leaves_rain' | 'cosmic_vortex';
+}
+
 export interface StageThemeConfig {
   id: string;
   title: string;
@@ -25,6 +33,7 @@ export interface StageThemeConfig {
     platformColor: string;
   };
   musicTrack: 'peaceful_camp' | 'battle_stage' | 'boss_clash' | 'final_showdown';
+  fases: StagePhaseInfo[];
   enemies: StageEnemyConfig[];
   bossId: string;
 }
@@ -46,6 +55,36 @@ export const STAGES_DATA: Record<string, StageThemeConfig> = {
       platformColor: '#334155',
     },
     musicTrack: 'battle_stage',
+    fases: [
+      {
+        faseNumber: 1,
+        name: 'Muralha e Portão dos Algoritmos',
+        bgImage: 'assets/backgrounds/castelo_fase1_portao.jpg',
+        description: 'Muralhas impenetráveis guardadas por sentinelas de código binário.',
+        ambientEffect: 'torch_embers',
+      },
+      {
+        faseNumber: 2,
+        name: 'Grande Salão dos Dados',
+        bgImage: 'assets/backgrounds/castelo_fase2_salao.jpg',
+        description: 'Colunas de pedra ancestral e estandartes rúnicos iluminados por tochas arcanas.',
+        ambientEffect: 'torch_embers',
+      },
+      {
+        faseNumber: 3,
+        name: 'Catacumbas da Memória RAM',
+        bgImage: 'assets/backgrounds/castelo_fase3_masmorra.jpg',
+        description: 'Masmorras góticas com chamas azuis espectrais onde ponteiros perdidos vagueiam.',
+        ambientEffect: 'torch_embers',
+      },
+      {
+        faseNumber: 4,
+        name: 'Torre do Trono do Spectre',
+        bgImage: 'assets/backgrounds/castelo_fase4_trono.jpg',
+        description: 'O topo supremo do castelo onde o Spectre do Código aguarda os mais audaciosos.',
+        ambientEffect: 'torch_embers',
+      },
+    ],
     enemies: [
       {
         id: 'bug_sintaxe',
@@ -85,6 +124,36 @@ export const STAGES_DATA: Record<string, StageThemeConfig> = {
       platformColor: '#2d4a6f',
     },
     musicTrack: 'battle_stage',
+    fases: [
+      {
+        faseNumber: 1,
+        name: 'Encosta Nevada dos Vetores',
+        bgImage: 'assets/backgrounds/montanha_fase1_encosta.jpg',
+        description: 'Encostas congeladas onde a gravidade e o atrito desafiam cada passo do herói.',
+        ambientEffect: 'falling_snow',
+      },
+      {
+        faseNumber: 2,
+        name: 'Desfiladeiro da Gravidade',
+        bgImage: 'assets/backgrounds/montanha_fase2_desfiladeiro.jpg',
+        description: 'Ponte pênsil de cordas suspensa sobre um precipício imensurável coberto de névoa.',
+        ambientEffect: 'falling_snow',
+      },
+      {
+        faseNumber: 3,
+        name: 'Caverna dos Cristais Lógicos',
+        bgImage: 'assets/backgrounds/montanha_fase3_caverna.jpg',
+        description: 'Interior de mina de gelo reluzente com geodos azuis e prismas de refração.',
+        ambientEffect: 'falling_snow',
+      },
+      {
+        faseNumber: 4,
+        name: 'Pico Cósmico dos Astros',
+        bgImage: 'assets/backgrounds/montanha_fase4_pico.jpg',
+        description: 'O topo absoluto da cordilheira tocando as auroras boreais e as constelações.',
+        ambientEffect: 'falling_snow',
+      },
+    ],
     enemies: [
       {
         id: 'golem_vetores',
@@ -124,6 +193,36 @@ export const STAGES_DATA: Record<string, StageThemeConfig> = {
       platformColor: '#44403c',
     },
     musicTrack: 'battle_stage',
+    fases: [
+      {
+        faseNumber: 1,
+        name: 'Praça do Mercado das Crônicas',
+        bgImage: 'assets/backgrounds/vila_fase1_mercado.jpg',
+        description: 'Vila medieval aconchegante com chão de pedra e janelas iluminadas.',
+        ambientEffect: 'leaves_rain',
+      },
+      {
+        faseNumber: 2,
+        name: 'Grande Arquivo e Biblioteca',
+        bgImage: 'assets/backgrounds/vila_fase2_biblioteca.jpg',
+        description: 'Imensas estantes de tomos antigos, pergaminhos filosóficos e mesas de estudo.',
+        ambientEffect: 'leaves_rain',
+      },
+      {
+        faseNumber: 3,
+        name: 'Cripta dos Filósofos',
+        bgImage: 'assets/backgrounds/vila_fase3_cripta.jpg',
+        description: 'Cripta gótica sombria e lápides ancestrais sob o luar prateado.',
+        ambientEffect: 'leaves_rain',
+      },
+      {
+        faseNumber: 4,
+        name: 'Campanário do Cavaleiro',
+        bgImage: 'assets/backgrounds/vila_fase4_campanario.jpg',
+        description: 'O topo da torre do sino com visão de toda a vila e os campos enevoados.',
+        ambientEffect: 'leaves_rain',
+      },
+    ],
     enemies: [
       {
         id: 'guardiao_concordancia',
@@ -163,6 +262,36 @@ export const STAGES_DATA: Record<string, StageThemeConfig> = {
       platformColor: '#92400e',
     },
     musicTrack: 'battle_stage',
+    fases: [
+      {
+        faseNumber: 1,
+        name: 'Dunas Escaldantes da Erosão',
+        bgImage: 'assets/backgrounds/deserto_fase1_dunas.jpg',
+        description: 'Vasto mar de areia dourada e miragens sob o calor escaldante.',
+        ambientEffect: 'sand_dust',
+      },
+      {
+        faseNumber: 2,
+        name: 'Oásis dos Fósseis Antigos',
+        bgImage: 'assets/backgrounds/deserto_fase2_oasis.jpg',
+        description: 'Lago de águas cristalinas turquesa, palmeiras e tendas rústicas de viajantes.',
+        ambientEffect: 'sand_dust',
+      },
+      {
+        faseNumber: 3,
+        name: 'Templo Solar do Arenito',
+        bgImage: 'assets/backgrounds/deserto_fase3_ruinas.jpg',
+        description: 'Ruínas monumentais com colunas entalhadas em hieróglifos de ouro e braseiros.',
+        ambientEffect: 'sand_dust',
+      },
+      {
+        faseNumber: 4,
+        name: 'Cratera da Tempestade Solar',
+        bgImage: 'assets/backgrounds/deserto_fase4_cratera.jpg',
+        description: 'Vale árido com fendas incandescentes e tempestade de vento cósmico.',
+        ambientEffect: 'sand_dust',
+      },
+    ],
     enemies: [
       {
         id: 'escorpiao_fossil',
@@ -202,6 +331,29 @@ export const STAGES_DATA: Record<string, StageThemeConfig> = {
       platformColor: '#3b1c6e',
     },
     musicTrack: 'final_showdown',
+    fases: [
+      {
+        faseNumber: 1,
+        name: 'Fragmentos dos Tomos Perdidos',
+        bgImage: 'assets/backgrounds/vazio_fase1_fragmentos.jpg',
+        description: 'Plataformas de matéria escura flutuando no abismo estelar.',
+        ambientEffect: 'cosmic_vortex',
+      },
+      {
+        faseNumber: 2,
+        name: 'Nebulosa da Entropia',
+        bgImage: 'assets/backgrounds/vazio_fase2_nebulosa.jpg',
+        description: 'Campos de radiação violeta onde o tempo e o espaço se distorcem.',
+        ambientEffect: 'cosmic_vortex',
+      },
+      {
+        faseNumber: 3,
+        name: 'Singularidade do Infinito',
+        bgImage: 'assets/backgrounds/vazio_fase3_singularidade.jpg',
+        description: 'O horizonte de eventos supremo onde o Arquivista do Vazio rege o destino do conhecimento.',
+        ambientEffect: 'cosmic_vortex',
+      },
+    ],
     enemies: [],
     bossId: 'chefe_final',
   },

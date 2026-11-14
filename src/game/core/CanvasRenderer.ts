@@ -26,11 +26,23 @@ export class CanvasRenderer {
   private virtualHeight = 768;
   private particles: Particle[] = [];
   private parallaxOffset = 0;
+  private imageCache: Map<string, HTMLImageElement> = new Map();
 
   public init(canvas: HTMLCanvasElement): void {
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
     this.resize();
+  }
+
+  public getImage(src: string): HTMLImageElement | null {
+    if (typeof window === 'undefined' || typeof Image === 'undefined') return null;
+    let img = this.imageCache.get(src);
+    if (!img) {
+      img = new Image();
+      img.src = src;
+      this.imageCache.set(src, img);
+    }
+    return img.complete && img.naturalWidth > 0 ? img : null;
   }
 
   public resize(): void {
@@ -45,9 +57,9 @@ export class CanvasRenderer {
   }
 
   /**
-   * Renderiza o fundo em Parallax Scrolling baseado no cenário temático
+   * Renderiza o fundo temático com imagem real de alta resolução e camada de Parallax
    */
-  public renderParallax(scenery: string, deltaTime: number): void {
+  public renderParallax(scenery: string, deltaTime: number, bgImageSrc?: string): void {
     if (!this.ctx) return;
     const ctx = this.ctx;
     const w = this.virtualWidth;
@@ -55,64 +67,77 @@ export class CanvasRenderer {
 
     this.parallaxOffset += deltaTime * 20;
 
-    // 1. Céu Gradiente Base
-    const skyGradient = ctx.createLinearGradient(0, 0, 0, h);
-    if (scenery === 'montanha') {
-      skyGradient.addColorStop(0, '#020617');
-      skyGradient.addColorStop(0.7, '#0f172a');
-      skyGradient.addColorStop(1, '#1e3a8a');
-    } else if (scenery === 'deserto') {
-      skyGradient.addColorStop(0, '#1c1917');
-      skyGradient.addColorStop(0.6, '#451a03');
-      skyGradient.addColorStop(1, '#9a3412');
-    } else if (scenery === 'vazio_cosmico') {
-      skyGradient.addColorStop(0, '#000000');
-      skyGradient.addColorStop(0.5, '#090514');
-      skyGradient.addColorStop(1, '#2e1065');
-    } else {
-      // Castelo / Padrão
-      skyGradient.addColorStop(0, '#090a0f');
-      skyGradient.addColorStop(0.6, '#0f172a');
-      skyGradient.addColorStop(1, '#1e1b4b');
-    }
-    ctx.fillStyle = skyGradient;
-    ctx.fillRect(0, 0, w, h);
+    // Tenta renderizar imagem real do cenário de fundo da fase
+    const targetSrc = bgImageSrc || `assets/backgrounds/${scenery}_fase1_portao.jpg` || `assets/backgrounds/${scenery}.jpg`;
+    const realBg = this.getImage(targetSrc) || this.getImage(`assets/backgrounds/${scenery}.jpg`);
 
-    // 2. Estrelas / Fragmentos Flutuantes no Céu
+    if (realBg) {
+      // Desenha imagem real de alta resolução
+      ctx.drawImage(realBg, 0, 0, w, h);
+
+      // Vignette radial e gradiente inferior para destacar os personagens
+      const vignette = ctx.createRadialGradient(w / 2, h / 2, w * 0.25, w / 2, h / 2, w * 0.7);
+      vignette.addColorStop(0, 'rgba(0, 0, 0, 0)');
+      vignette.addColorStop(1, 'rgba(5, 7, 15, 0.65)');
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, w, h);
+
+      const bottomShadow = ctx.createLinearGradient(0, h * 0.65, 0, h);
+      bottomShadow.addColorStop(0, 'rgba(5, 7, 15, 0)');
+      bottomShadow.addColorStop(1, 'rgba(5, 7, 15, 0.85)');
+      ctx.fillStyle = bottomShadow;
+      ctx.fillRect(0, h * 0.65, w, h * 0.35);
+    } else {
+      // Céu Gradiente Base (Fallback elegante enquanto a imagem carrega)
+      const skyGradient = ctx.createLinearGradient(0, 0, 0, h);
+      if (scenery === 'montanha') {
+        skyGradient.addColorStop(0, '#020617');
+        skyGradient.addColorStop(0.7, '#0f172a');
+        skyGradient.addColorStop(1, '#1e3a8a');
+      } else if (scenery === 'deserto') {
+        skyGradient.addColorStop(0, '#1c1917');
+        skyGradient.addColorStop(0.6, '#451a03');
+        skyGradient.addColorStop(1, '#9a3412');
+      } else if (scenery === 'vazio_cosmico') {
+        skyGradient.addColorStop(0, '#000000');
+        skyGradient.addColorStop(0.5, '#090514');
+        skyGradient.addColorStop(1, '#2e1065');
+      } else {
+        skyGradient.addColorStop(0, '#090a0f');
+        skyGradient.addColorStop(0.6, '#0f172a');
+        skyGradient.addColorStop(1, '#1e1b4b');
+      }
+      ctx.fillStyle = skyGradient;
+      ctx.fillRect(0, 0, w, h);
+
+      // Montanhas / Muralhas Distantes
+      ctx.fillStyle = scenery === 'deserto' ? '#78350f' : scenery === 'montanha' ? '#1e293b' : '#1e1b4b';
+      ctx.beginPath();
+      ctx.moveTo(0, h * 0.65);
+      for (let x = 0; x <= w; x += 150) {
+        const peakHeight = Math.sin((x + this.parallaxOffset * 0.2) * 0.005) * 80 + (h * 0.55);
+        ctx.lineTo(x, peakHeight);
+      }
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.fill();
+    }
+
+    // Estrelas / Fragmentos Flutuantes no Céu
     ctx.fillStyle = '#ffffff';
-    for (let i = 0; i < 40; i++) {
-      const starX = (i * 37 + (this.parallaxOffset * 0.1) * (i % 3 + 1)) % w;
-      const starY = (i * 23) % (h * 0.55);
+    for (let i = 0; i < 35; i++) {
+      const starX = (i * 41 + (this.parallaxOffset * 0.1) * (i % 3 + 1)) % w;
+      const starY = (i * 29) % (h * 0.5);
       const radius = (i % 3 === 0) ? 2 : 1;
-      ctx.globalAlpha = 0.3 + (Math.sin(this.parallaxOffset * 0.05 + i) * 0.3 + 0.3);
+      ctx.globalAlpha = 0.25 + (Math.sin(this.parallaxOffset * 0.05 + i) * 0.25 + 0.25);
       ctx.beginPath();
       ctx.arc(starX, starY, radius, 0, Math.PI * 2);
       ctx.fill();
     }
     ctx.globalAlpha = 1.0;
 
-    // 3. Montanhas / Muralhas Distantes (Camada Lenta)
-    ctx.fillStyle = scenery === 'deserto' ? '#78350f' : scenery === 'montanha' ? '#1e293b' : '#1e1b4b';
-    ctx.beginPath();
-    ctx.moveTo(0, h * 0.65);
-    for (let x = 0; x <= w; x += 150) {
-      const peakHeight = Math.sin((x + this.parallaxOffset * 0.2) * 0.005) * 80 + (h * 0.55);
-      ctx.lineTo(x, peakHeight);
-    }
-    ctx.lineTo(w, h);
-    ctx.lineTo(0, h);
-    ctx.fill();
-
-    // 4. Plataforma de Batalha (Chão Frontal)
-    const groundY = h * 0.72;
-    const groundGradient = ctx.createLinearGradient(0, groundY, 0, h);
-    groundGradient.addColorStop(0, '#1e293b');
-    groundGradient.addColorStop(0.15, '#0f172a');
-    groundGradient.addColorStop(1, '#020617');
-    ctx.fillStyle = groundGradient;
-    ctx.fillRect(0, groundY, w, h - groundY);
-
     // Linha de luz neon na borda da arena
+    const groundY = h * 0.72;
     ctx.strokeStyle = scenery === 'deserto' ? '#f59e0b' : '#38bdf8';
     ctx.lineWidth = 3;
     ctx.beginPath();
@@ -163,46 +188,69 @@ export class CanvasRenderer {
       ctx.setLineDash([]);
     }
 
-    // Desenha o corpo / silhueta RPG do herói estilizado
+    // Desenha o corpo / sprite do herói
+    const charFolder = skin.characterId ? `assets/sprites/${skin.characterId}` : 'assets/sprites/samurai';
+    const spriteAction = animationState.includes('golpe') ? 'attack1.gif' : 'idle.gif';
+    const playerImg = this.getImage(`${charFolder}/${spriteAction}`) ||
+                      this.getImage(`${charFolder}/idle.gif`) ||
+                      this.getImage('assets/sprites/samurai/idle.gif');
+
     ctx.save();
     ctx.translate(x, y);
 
-    // Pequeno pulso de respiração (Idle breathing)
-    const breath = animationState === 'idle' ? Math.sin(animTime * 3) * 2 : 0;
+    if (playerImg) {
+      const lunge = animationState.includes('golpe') ? 35 : 0;
+      ctx.drawImage(playerImg, -70 + lunge, -165, 140, 140);
+    } else {
+      // Fallback gráfico detalhado (Pixel Knight Hero) enquanto a imagem carrega
+      const breath = animationState === 'idle' ? Math.sin(animTime * 3) * 2 : 0;
 
-    // Capa / Detalhes de Costas
-    ctx.fillStyle = skin.spriteTheme.accentColor;
-    ctx.beginPath();
-    ctx.moveTo(-18, -60 + breath);
-    ctx.lineTo(-32, 0);
-    ctx.lineTo(-12, 10);
-    ctx.lineTo(0, -50 + breath);
-    ctx.fill();
+      // Capa esvoaçante
+      ctx.fillStyle = skin.spriteTheme.accentColor;
+      ctx.beginPath();
+      ctx.moveTo(-18, -60 + breath);
+      ctx.lineTo(-34, 5);
+      ctx.lineTo(-12, 10);
+      ctx.lineTo(0, -50 + breath);
+      ctx.fill();
 
-    // Tronco / Armadura Principal
-    ctx.fillStyle = skin.spriteTheme.primaryColor;
-    ctx.fillRect(-16, -65 + breath, 32, 42);
+      // Armadura Principal
+      ctx.fillStyle = skin.spriteTheme.primaryColor;
+      ctx.fillRect(-16, -65 + breath, 32, 42);
 
-    // Cabeça / Elmo
-    ctx.fillStyle = '#ffffff';
-    ctx.beginPath();
-    ctx.arc(0, -78 + breath, 15, 0, Math.PI * 2);
-    ctx.fill();
+      // Cinto e Fivela de Ouro
+      ctx.fillStyle = '#facc15';
+      ctx.fillRect(-14, -25 + breath, 28, 5);
 
-    // Viseira / Olhos iluminados
-    ctx.fillStyle = skin.spriteTheme.accentColor;
-    ctx.fillRect(2, -81 + breath, 10, 4);
+      // Elmo e Plumas
+      ctx.fillStyle = '#e2e8f0';
+      ctx.beginPath();
+      ctx.arc(0, -78 + breath, 16, 0, Math.PI * 2);
+      ctx.fill();
 
-    // Lâmina / Arma da Skin
-    const weaponAngle = animationState.includes('golpe') ? Math.PI * 0.35 : -Math.PI * 0.15;
-    ctx.save();
-    ctx.translate(14, -45 + breath);
-    ctx.rotate(weaponAngle);
-    ctx.fillStyle = '#f8fafc';
-    ctx.fillRect(0, -38, 6, 44);
-    ctx.fillStyle = skin.spriteTheme.accentColor;
-    ctx.fillRect(-4, 0, 14, 5);
-    ctx.restore();
+      // Crista do Elmo
+      ctx.fillStyle = skin.spriteTheme.accentColor;
+      ctx.beginPath();
+      ctx.moveTo(-5, -94 + breath);
+      ctx.lineTo(5, -94 + breath);
+      ctx.lineTo(0, -78 + breath);
+      ctx.fill();
+
+      // Viseira Iluminada
+      ctx.fillStyle = skin.spriteTheme.accentColor;
+      ctx.fillRect(2, -81 + breath, 11, 4);
+
+      // Espada Rúnica
+      const weaponAngle = animationState.includes('golpe') ? Math.PI * 0.45 : -Math.PI * 0.15;
+      ctx.save();
+      ctx.translate(14, -45 + breath);
+      ctx.rotate(weaponAngle);
+      ctx.fillStyle = '#f8fafc';
+      ctx.fillRect(0, -42, 6, 48);
+      ctx.fillStyle = skin.spriteTheme.accentColor;
+      ctx.fillRect(-4, 0, 14, 5);
+      ctx.restore();
+    }
 
     ctx.restore();
 
@@ -256,21 +304,52 @@ export class CanvasRenderer {
     ctx.arc(0, -60, 95, 0, Math.PI * 2);
     ctx.fill();
 
-    // Silhueta Imponente do Chefe
-    ctx.fillStyle = isStaggered ? '#94a3b8' : barColor;
-    ctx.beginPath();
-    ctx.moveTo(0, -145);
-    ctx.lineTo(45, -70);
-    ctx.lineTo(35, 10);
-    ctx.lineTo(-35, 10);
-    ctx.lineTo(-45, -70);
-    ctx.closePath();
-    ctx.fill();
+    // Tenta carregar sprite animado real do Chefe
+    const bossFolder = name.toLowerCase().includes('mago') ? 'assets/sprites/mago' :
+                       name.toLowerCase().includes('cavaleiro') ? 'assets/sprites/cavaleiro' :
+                       name.toLowerCase().includes('arquivista') ? 'assets/sprites/mago' :
+                       'assets/sprites/spectre';
+    const bossImg = this.getImage(`${bossFolder}/idle.gif`) || this.getImage('assets/sprites/spectre/idle.gif');
 
-    // Olhos flamejantes
-    ctx.fillStyle = '#fef08a';
-    ctx.fillRect(-18, -100, 10, 5);
-    ctx.fillRect(8, -100, 10, 5);
+    if (bossImg) {
+      ctx.drawImage(bossImg, -85, -190, 170, 170);
+    } else {
+      // Silhueta Imponente e detalhada do Chefe
+      ctx.fillStyle = isStaggered ? '#94a3b8' : barColor;
+      ctx.beginPath();
+      ctx.moveTo(0, -145);
+      ctx.lineTo(48, -75);
+      ctx.lineTo(36, 10);
+      ctx.lineTo(-36, 10);
+      ctx.lineTo(-48, -75);
+      ctx.closePath();
+      ctx.fill();
+
+      // Chifres do Chefe
+      ctx.fillStyle = '#f8fafc';
+      ctx.beginPath();
+      ctx.moveTo(-25, -135);
+      ctx.lineTo(-45, -165);
+      ctx.lineTo(-20, -145);
+      ctx.fill();
+
+      ctx.beginPath();
+      ctx.moveTo(25, -135);
+      ctx.lineTo(45, -165);
+      ctx.lineTo(20, -145);
+      ctx.fill();
+
+      // Olhos flamejantes
+      ctx.fillStyle = '#fef08a';
+      ctx.fillRect(-18, -100, 10, 5);
+      ctx.fillRect(8, -100, 10, 5);
+
+      // Núcleo de Energia no Peito
+      ctx.fillStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.arc(0, -50, 12, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     ctx.restore();
 
