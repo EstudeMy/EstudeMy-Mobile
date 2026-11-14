@@ -215,7 +215,7 @@ export default function CompletarPerfilScreen() {
                 {loading ? (
                   <ActivityIndicator color="#ffffff" />
                 ) : (
-                  <Text style={styles.buttonText}>Começar a Jogar! 🚀</Text>
+                  <Text style={styles.buttonText}>Começar a Jogar!</Text>
                 )}
               </TouchableOpacity>
 

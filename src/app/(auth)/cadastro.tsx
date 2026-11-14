@@ -630,7 +630,7 @@ export default function CadastroScreen() {
                 {loading ? (
                   <ActivityIndicator color="#ffffff" />
                 ) : (
-                  <Text style={styles.buttonText}>Continuar Cadastro 🚀</Text>
+                  <Text style={styles.buttonText}>Continuar Cadastro</Text>
                 )}
               </TouchableOpacity>
 

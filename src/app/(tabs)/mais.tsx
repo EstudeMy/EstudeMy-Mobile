@@ -41,7 +41,7 @@ export default function MaisScreen() {
     >
       {/* Título */}
       <View style={styles.header}>
-        <Text style={[styles.title, { color: colors.text }]}>{t('common.more') || 'Mais'} ⚙️</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('common.more') || 'Mais'}</Text>
       </View>
 
       {/* Opções de Menu */}

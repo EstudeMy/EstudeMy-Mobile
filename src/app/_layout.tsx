@@ -6,10 +6,11 @@ import { AuthProvider, useAuth } from '../contexts/AuthContext';
 import { LanguageProvider } from '../contexts/LanguageContext';
 import { ThemeProvider, useTheme } from '../contexts/ThemeContext';
 import { ActivityIndicator, View } from 'react-native';
+import { AccessibilityModal } from '../components/AccessibilityModal';
 
 function RootLayoutContent() {
   const { loading } = useAuth();
-  const { isDark, colors } = useTheme();
+  const { isDark, colors, isAccessibilityModalVisible, closeAccessibilityModal } = useTheme();
 
   if (loading) {
     return (
@@ -45,6 +46,10 @@ function RootLayoutContent() {
         <Stack.Screen name="seguranca-privacidade" />
         <Stack.Screen name="ajuda" />
       </Stack>
+      <AccessibilityModal
+        visible={isAccessibilityModalVisible}
+        onClose={closeAccessibilityModal}
+      />
     </>
   );
 }

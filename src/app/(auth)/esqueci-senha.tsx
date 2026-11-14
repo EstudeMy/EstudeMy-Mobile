@@ -153,7 +153,7 @@ export default function EsqueciSenhaScreen() {
                     {loading ? (
                       <ActivityIndicator color="#ffffff" />
                     ) : (
-                      <Text style={styles.buttonText}>Enviar E-mail 📬</Text>
+                      <Text style={styles.buttonText}>Enviar E-mail</Text>
                     )}
                   </TouchableOpacity>
                 </>

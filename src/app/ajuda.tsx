@@ -125,7 +125,7 @@ export default function AjudaScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton} activeOpacity={0.7}>
           <ArrowLeft size={26} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>Central de Ajuda 💡</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Central de Ajuda</Text>
         <View style={{ width: 26 }} />
       </View>
 

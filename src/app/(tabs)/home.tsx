@@ -23,6 +23,7 @@ import {
   obterPopulares,
   buscarTrilhas,
   buscarTrilhaPorId,
+  buscarTrilhaPorCodigo,
   getMappedIdioma,
   Trilha,
 } from '../../services/trilhaService';
@@ -55,6 +56,7 @@ import {
   CheckCircle2,
   SlidersHorizontal,
   RotateCcw,
+  Accessibility,
 } from 'lucide-react-native';
 import QRCodeModal from '../../components/QRCodeModal';
 import QRScannerModal from '../../components/QRScannerModal';
@@ -66,7 +68,7 @@ export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, token } = useAuth();
-  const { isDark, colors } = useTheme();
+  const { isDark, colors, openAccessibilityModal } = useTheme();
   const { language, t } = useLanguage();
 
   const canCreateTrack =
@@ -362,38 +364,13 @@ export default function HomeScreen() {
     setDirectCodeError(null);
 
     try {
-      const allLoaded = [...continueTrilhas, ...populares, ...novidades];
-      let match = allLoaded.find((t) => {
-        const c = (t.codigoAcesso || knownCodes[t._id])?.toUpperCase();
-        return c === clean;
-      });
-
-      if (!match) {
-        const foundId = Object.keys(knownCodes).find(
-          (id) => knownCodes[id]?.toUpperCase() === clean
-        );
-        if (foundId) {
-          try {
-            match = await buscarTrilhaPorId(foundId);
-          } catch {
-            // Silencioso
-          }
-        }
-      }
-
-      if (!match) {
-        try {
-          const results = await buscarTrilhas(clean);
-          match = results.find((t) => (t.codigoAcesso || knownCodes[t._id])?.toUpperCase() === clean) || results[0];
-        } catch {
-          // Silencioso
-        }
-      }
+      const match = await buscarTrilhaPorCodigo(clean);
 
       if (match) {
         await unlockTrail(match._id);
         await refreshAccessState();
         setEnterCodeModalVisible(false);
+        setDirectCode('');
         router.push(`/trilha/${match._id}`);
       } else {
         setDirectCodeError('Nenhuma trilha encontrada para este código. Verifique se digitou corretamente.');
@@ -422,33 +399,7 @@ export default function HomeScreen() {
       }
 
       if (cleanCode) {
-        const allLoaded = [...continueTrilhas, ...populares, ...novidades];
-        let match = allLoaded.find((t) => {
-          const c = (t.codigoAcesso || knownCodes[t._id])?.toUpperCase();
-          return c === cleanCode;
-        });
-
-        if (!match) {
-          const foundId = Object.keys(knownCodes).find(
-            (id) => knownCodes[id]?.toUpperCase() === cleanCode
-          );
-          if (foundId) {
-            try {
-              match = await buscarTrilhaPorId(foundId);
-            } catch {
-              // Silencioso
-            }
-          }
-        }
-
-        if (!match) {
-          try {
-            const results = await buscarTrilhas(cleanCode);
-            match = results.find((t) => (t.codigoAcesso || knownCodes[t._id])?.toUpperCase() === cleanCode) || results[0];
-          } catch {
-            // Silencioso
-          }
-        }
+        const match = await buscarTrilhaPorCodigo(cleanCode);
 
         if (match) {
           await unlockTrail(match._id);
@@ -775,8 +726,21 @@ export default function HomeScreen() {
               <Text style={[styles.avatarLabel, { color: colors.textMuted }]}>{t('common.class') || 'Classe'}: {user?.personagem ? (t(`characterPage.classes.${user.personagem.toLowerCase()}`) || user.personagem) : (t('characterPage.classes.samurai') || 'Samurai')}</Text>
             </View>
           </View>
-          <View style={styles.levelBadge}>
-            <Text style={styles.levelBadgeText}>Lvl {level}</Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <TouchableOpacity
+              onPress={openAccessibilityModal}
+              style={[
+                styles.accessibilityHeaderBtn,
+                { backgroundColor: colors.cardSecondary, borderColor: colors.border },
+              ]}
+              accessibilityRole="button"
+              accessibilityLabel="Acessibilidade"
+            >
+              <Accessibility size={18} color={colors.primary} />
+            </TouchableOpacity>
+            <View style={styles.levelBadge}>
+              <Text style={styles.levelBadgeText}>Lvl {level}</Text>
+            </View>
           </View>
         </View>
 
@@ -861,7 +825,7 @@ export default function HomeScreen() {
           activeOpacity={0.8}
         >
           <Text style={[styles.quickFilterChipText, filtroPagamento === 'gratuitas' && styles.quickFilterChipTextActive]}>
-            {t('homeFilters.filterPillFree') || '🎁 Gratuitas'}
+            {t('homeFilters.filterPillFree') || 'Gratuitas'}
           </Text>
         </TouchableOpacity>
 
@@ -871,7 +835,7 @@ export default function HomeScreen() {
           activeOpacity={0.8}
         >
           <Text style={[styles.quickFilterChipText, filtroPagamento === 'pagas' && styles.quickFilterChipTextActive]}>
-            {t('homeFilters.filterPillPaid') || '💰 Pagas'}
+            {t('homeFilters.filterPillPaid') || 'Pagas'}
           </Text>
         </TouchableOpacity>
 
@@ -881,7 +845,7 @@ export default function HomeScreen() {
           activeOpacity={0.8}
         >
           <Text style={[styles.quickFilterChipText, filtroDisponibilidade === 'abertas' && styles.quickFilterChipTextActive]}>
-            {t('homeFilters.filterPillPublic') || '🌐 Abertas'}
+            {t('homeFilters.filterPillPublic') || 'Abertas'}
           </Text>
         </TouchableOpacity>
 
@@ -891,7 +855,7 @@ export default function HomeScreen() {
           activeOpacity={0.8}
         >
           <Text style={[styles.quickFilterChipText, filtroDisponibilidade === 'privadas' && styles.quickFilterChipTextActive]}>
-            {t('homeFilters.filterPillPrivate') || '🔒 Privadas'}
+            {t('homeFilters.filterPillPrivate') || 'Privadas'}
           </Text>
         </TouchableOpacity>
 
@@ -902,7 +866,7 @@ export default function HomeScreen() {
         >
           <SlidersHorizontal size={13} color="#ffffff" style={{ marginRight: 4 }} />
           <Text style={[styles.quickFilterChipText, { color: '#ffffff' }]}>
-            Filtros {activeFiltersCount > 0 ? `(${activeFiltersCount})` : '⚙️'}
+            Filtros {activeFiltersCount > 0 ? `(${activeFiltersCount})` : ''}
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -929,7 +893,6 @@ export default function HomeScreen() {
               }}
               activeOpacity={0.85}
             >
-              <Key size={13} color="#F59E0B" style={{ marginRight: 4 }} />
               <Text style={styles.enterCodePillText}>
                 {t('homeFilters.insertCode') || 'Inserir Código'}
               </Text>
@@ -940,9 +903,8 @@ export default function HomeScreen() {
               onPress={() => setScannerModalVisible(true)}
               activeOpacity={0.85}
             >
-              <Camera size={13} color="#ffffff" style={{ marginRight: 4 }} />
               <Text style={styles.enterQrPillText}>
-                {t('homeFilters.readQrCode') || 'Ler QR Code 📷'}
+                {t('homeFilters.readQrCode') || 'Ler QR Code'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -960,10 +922,9 @@ export default function HomeScreen() {
           >
             <Image source={EXTRA_IMAGES.consultai} style={styles.aiCardImg} resizeMode="contain" />
             <View style={styles.aiTextContainer}>
-              <Text style={styles.aiButtonTitle}>{t('home.aiTitle') || 'Consult.Ai 🤖'}</Text>
+              <Text style={styles.aiButtonTitle}>{t('home.aiTitle') || 'Consult.Ai'}</Text>
               <Text style={styles.aiButtonSub}>{t('home.aiDesc') || 'Gerador de trilhas e desafios com Inteligência Artificial'}</Text>
             </View>
-            <Sparkles size={22} color="#FBBF24" />
           </TouchableOpacity>
 
           {/* Botão Criar Trilha Manual (Sem IA) */}
@@ -976,10 +937,9 @@ export default function HomeScreen() {
               <BookOpen size={24} color="#ffffff" />
             </View>
             <View style={styles.aiTextContainer}>
-              <Text style={styles.aiButtonTitle}>{t('home.manualTitle') || 'Criar Trilha Manual ✍️'}</Text>
+              <Text style={styles.aiButtonTitle}>{t('home.manualTitle') || 'Criar Trilha Manual'}</Text>
               <Text style={styles.aiButtonSub}>{t('home.manualDesc') || 'Monte sua trilha com seus próprios temas e matérias'}</Text>
             </View>
-            <PlusCircle size={22} color="#86EFAC" />
           </TouchableOpacity>
         </View>
       )}
@@ -1035,7 +995,7 @@ export default function HomeScreen() {
                 onPress={() => setFiltroDisponibilidade('todas')}
               >
                 <Text style={styles.activeFilterTagText}>
-                  {filtroDisponibilidade === 'abertas' ? '🌐 Apenas Abertas' : '🔒 Apenas Privadas'} ✕
+                  {filtroDisponibilidade === 'abertas' ? 'Apenas Abertas' : 'Apenas Privadas'} ✕
                 </Text>
               </TouchableOpacity>
             )}
@@ -1045,7 +1005,7 @@ export default function HomeScreen() {
                 onPress={() => setFiltroPagamento('todas')}
               >
                 <Text style={styles.activeFilterTagText}>
-                  {filtroPagamento === 'gratuitas' ? '🎁 Apenas Gratuitas' : '💰 Apenas Pagas'} ✕
+                  {filtroPagamento === 'gratuitas' ? 'Apenas Gratuitas' : 'Apenas Pagas'} ✕
                 </Text>
               </TouchableOpacity>
             )}
@@ -1123,7 +1083,7 @@ export default function HomeScreen() {
           {continueTrilhas.length > 0 && (
             <View style={styles.section}>
               <View style={[styles.sectionHeaderPill, { backgroundColor: isDark ? '#262626' : '#E5E7EB' }]}>
-                <Text style={[styles.sectionHeaderPillText, { color: colors.text }]}>{t('home.continueLearning') || 'Continuar Estudando 📖'}</Text>
+                <Text style={[styles.sectionHeaderPillText, { color: colors.text }]}>{t('home.continueLearning') || 'Continuar Estudando'}</Text>
               </View>
               <FlatList
                 horizontal
@@ -1140,7 +1100,7 @@ export default function HomeScreen() {
           {/* Carrossel Trilhas Populares */}
           <View style={styles.section}>
             <View style={[styles.sectionHeaderPill, { backgroundColor: isDark ? '#262626' : '#E5E7EB' }]}>
-              <Text style={[styles.sectionHeaderPillText, { color: colors.text }]}>{t('home.popularTrails') || 'Melhores para você 🔥'}</Text>
+              <Text style={[styles.sectionHeaderPillText, { color: colors.text }]}>{t('home.popularTrails') || 'Melhores para você'}</Text>
             </View>
             {populares.length === 0 ? (
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('home.noPopularTrails') || 'Nenhuma trilha disponível.'}</Text>
@@ -1160,7 +1120,7 @@ export default function HomeScreen() {
           {/* Carrossel Novidades */}
           <View style={styles.section}>
             <View style={[styles.sectionHeaderPill, { backgroundColor: isDark ? '#262626' : '#E5E7EB' }]}>
-              <Text style={[styles.sectionHeaderPillText, { color: colors.text }]}>{t('home.newTrails') || 'Novidades 🌟'}</Text>
+              <Text style={[styles.sectionHeaderPillText, { color: colors.text }]}>{t('home.newTrails') || 'Novidades'}</Text>
             </View>
             {novidades.length === 0 ? (
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('home.noNewTrails') || 'Nenhuma trilha nova por enquanto.'}</Text>
@@ -1192,7 +1152,7 @@ export default function HomeScreen() {
               <Lock size={32} color="#ffffff" />
             </View>
 
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Trilha Privada 🔒</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Trilha Privada</Text>
             <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
               A trilha <Text style={{ fontWeight: '800', color: colors.text }}>&ldquo;{targetTrailForUnlock?.titulo}&rdquo;</Text> requer um código de acesso fornecido pelo professor para ser liberada.
             </Text>
@@ -1205,7 +1165,7 @@ export default function HomeScreen() {
 
             {unlockSuccess && (
               <View style={styles.modalSuccessCard}>
-                <Text style={styles.modalSuccessText}>Código Correto! Desbloqueando trilha... 🎉</Text>
+                <Text style={styles.modalSuccessText}>Código Correto! Desbloqueando trilha...</Text>
               </View>
             )}
 
@@ -1256,7 +1216,7 @@ export default function HomeScreen() {
               activeOpacity={0.85}
             >
               <Camera size={16} color="#ffffff" style={{ marginRight: 6 }} />
-              <Text style={styles.modalScanQrBtnText}>Ler QR Code da Trilha 📷</Text>
+              <Text style={styles.modalScanQrBtnText}>Ler QR Code da Trilha</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1275,7 +1235,7 @@ export default function HomeScreen() {
               <Key size={32} color="#ffffff" />
             </View>
 
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Acessar Trilha por Código 🔑</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Acessar Trilha por Código</Text>
             <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
               Digite o código fornecido pelo professor da sua turma para localizar e desbloquear a trilha automaticamente.
             </Text>
@@ -1340,7 +1300,7 @@ export default function HomeScreen() {
               activeOpacity={0.85}
             >
               <Camera size={16} color="#ffffff" style={{ marginRight: 6 }} />
-              <Text style={styles.modalScanQrBtnText}>Escanear com Câmera (QR Code) 📷</Text>
+              <Text style={styles.modalScanQrBtnText}>Escanear com Câmera (QR Code)</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1359,7 +1319,7 @@ export default function HomeScreen() {
               <Key size={32} color="#ffffff" />
             </View>
 
-            <Text style={[styles.modalTitle, { color: colors.text }]}>Código da sua Trilha 🔑</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>Código da sua Trilha</Text>
             <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
               Trilha: <Text style={{ fontWeight: '800', color: colors.text }}>&ldquo;{viewCodeTrail?.titulo}&rdquo;</Text>
             </Text>
@@ -1401,7 +1361,7 @@ export default function HomeScreen() {
               activeOpacity={0.85}
             >
               <QrCode size={18} color="#ffffff" style={{ marginRight: 8 }} />
-              <Text style={styles.modalQrBtnText}>Exibir QR Code da Trilha 📱</Text>
+              <Text style={styles.modalQrBtnText}>Exibir QR Code da Trilha</Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -1457,7 +1417,7 @@ export default function HomeScreen() {
                 </View>
                 <View>
                   <Text style={[styles.filterModalTitle, { color: colors.text }]}>
-                    Filtrar Trilhas 🎯
+                    Filtrar Trilhas
                   </Text>
                   <Text style={[styles.filterModalSub, { color: colors.textMuted }]}>
                     Personalize os critérios de visualização
@@ -1575,7 +1535,7 @@ export default function HomeScreen() {
                         filtroPagamento === 'gratuitas' && styles.filterSegmentBtnTextActive,
                       ]}
                     >
-                      Gratuitas 🎁
+                      Gratuitas
                     </Text>
                   </TouchableOpacity>
                   <TouchableOpacity
@@ -1596,7 +1556,7 @@ export default function HomeScreen() {
                         filtroPagamento === 'pagas' && styles.filterSegmentBtnTextActive,
                       ]}
                     >
-                      Pagas 💰
+                      Pagas
                     </Text>
                   </TouchableOpacity>
                 </View>
@@ -1849,6 +1809,14 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     fontWeight: '700',
     marginTop: 4,
+  },
+  accessibilityHeaderBtn: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    borderWidth: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   levelBadge: {
     backgroundColor: '#4F46E5', // indigo-600

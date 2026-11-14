@@ -133,7 +133,7 @@ export default function LicoesSalvasScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft size={26} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>{t('savedLessons.title') || 'Lições Salvas'} 🔖</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('savedLessons.title') || 'Lições Salvas'}</Text>
         <View style={{ width: 26 }} />
       </View>
 

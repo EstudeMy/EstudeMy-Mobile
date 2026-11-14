@@ -201,7 +201,7 @@ export default function CriarTrilhaScreen() {
       <View style={[styles.headerCard, { backgroundColor: colors.card }]}>
         <View style={styles.headerTitleRow}>
           <BookOpen size={28} color="#4F46E5" />
-          <Text style={[styles.title, { color: colors.text }]}>Criar Trilha ✍️</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Criar Trilha</Text>
         </View>
         <Text style={[styles.desc, { color: colors.textMuted }]}>
           Monte uma jornada personalizada de aprendizado com seus próprios temas e matérias.
@@ -448,7 +448,7 @@ export default function CriarTrilhaScreen() {
             <View style={styles.codeGeneratedCard}>
               <View style={styles.codeHeaderRow}>
                 <Key size={20} color="#F59E0B" />
-                <Text style={styles.codeCardTitle}>Código de Acesso Exclusivo 🔑</Text>
+                <Text style={styles.codeCardTitle}>Código de Acesso Exclusivo</Text>
               </View>
               <Text style={styles.codeCardDesc}>
                 Este é o código exclusivo gerado para sua turma. Somente alunos que inserirem este código poderão desbloquear e cursar esta trilha.
@@ -559,7 +559,7 @@ export default function CriarTrilhaScreen() {
           <View style={styles.successIconBubble}>
             <Sparkles size={36} color="#ffffff" />
           </View>
-          <Text style={[styles.successModalTitle, { color: colors.text }]}>Trilha Privada Criada! 🎉</Text>
+          <Text style={[styles.successModalTitle, { color: colors.text }]}>Trilha Privada Criada!</Text>
           <Text style={[styles.successModalDesc, { color: colors.textMuted }]}>
             Sua trilha foi configurada com sucesso. Copie o código abaixo e compartilhe com seus alunos para que eles possam desbloqueá-la:
           </Text>
@@ -592,7 +592,7 @@ export default function CriarTrilhaScreen() {
             activeOpacity={0.85}
           >
             <QrCode size={18} color="#ffffff" style={{ marginRight: 8 }} />
-            <Text style={styles.modalQrBtnText}>Ver QR Code da Trilha 📱</Text>
+            <Text style={styles.modalQrBtnText}>Ver QR Code da Trilha</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -607,7 +607,7 @@ export default function CriarTrilhaScreen() {
             }}
             activeOpacity={0.85}
           >
-            <Text style={styles.modalProceedBtnText}>Acessar Trilha Agora 🚀</Text>
+            <Text style={styles.modalProceedBtnText}>Acessar Trilha Agora</Text>
           </TouchableOpacity>
         </View>
       </View>

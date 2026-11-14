@@ -293,7 +293,7 @@ export default function ConsultAiScreen() {
         <View style={[styles.headerCard, { backgroundColor: colors.card }]}>
           <View style={styles.headerTitleRow}>
             <Brain size={28} color="#818CF8" />
-            <Text style={[styles.title, { color: colors.text }]}>Consult.Ai 🤖</Text>
+            <Text style={[styles.title, { color: colors.text }]}>Consult.Ai</Text>
           </View>
           <Text style={[styles.desc, { color: colors.textMuted }]}>
             Gere trilhas de estudo completas com quiz integrado usando IA e configure o novo padrão de acesso.

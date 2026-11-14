@@ -194,7 +194,7 @@ export function CheckoutModal({ visible, onClose, trilha, onSuccess, initialMeto
           <View style={styles.modalHeader}>
             <View style={styles.headerLeft}>
               <Receipt size={24} color="#4F46E5" />
-              <Text style={[styles.modalTitle, { color: colors.text }]}>Checkout Seguro 💳</Text>
+              <Text style={[styles.modalTitle, { color: colors.text }]}>Checkout Seguro</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={styles.closeBtn} activeOpacity={0.8}>
               <X size={20} color={colors.text} />
@@ -210,7 +210,7 @@ export function CheckoutModal({ visible, onClose, trilha, onSuccess, initialMeto
                 </View>
 
                 <Text style={[styles.successTitle, { color: colors.text }]}>
-                  Pagamento Confirmado! 🎉
+                  Pagamento Confirmado!
                 </Text>
                 <Text style={[styles.successSubtitle, { color: colors.textMuted }]}>
                   Parabéns! Sua trilha foi adquirida e liberada com sucesso.

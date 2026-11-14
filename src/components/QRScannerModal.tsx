@@ -207,7 +207,7 @@ export default function QRScannerModal({
               <View style={styles.cameraIconBubble}>
                 <Camera size={20} color="#ffffff" />
               </View>
-              <Text style={[styles.title, { color: colors.text }]}>Escanear QR Code 📷</Text>
+              <Text style={[styles.title, { color: colors.text }]}>Escanear QR Code</Text>
             </View>
             <TouchableOpacity
               style={styles.closeBtn}
@@ -253,7 +253,7 @@ export default function QRScannerModal({
           {scanSuccess ? (
             <View style={styles.successBox}>
               <CheckCircle size={56} color="#10B981" />
-              <Text style={[styles.successTitle, { color: colors.text }]}>QR Code Lido com Sucesso! 🎉</Text>
+              <Text style={[styles.successTitle, { color: colors.text }]}>QR Code Lido com Sucesso!</Text>
               <Text style={[styles.successDesc, { color: colors.textMuted }]}>
                 Localizando e desbloqueando a trilha...
               </Text>
@@ -306,7 +306,7 @@ export default function QRScannerModal({
                       activeOpacity={0.85}
                     >
                       <Text style={styles.permissionBtnText}>
-                        {t('scanner.allowCamera') || 'Ativar Câmera 📸'}
+                        {t('scanner.allowCamera') || 'Ativar Câmera'}
                       </Text>
                     </TouchableOpacity>
                   </View>

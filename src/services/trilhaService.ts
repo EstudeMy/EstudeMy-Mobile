@@ -2,7 +2,13 @@ import api from './api';
 import { API_ENDPOINTS } from '../config/api.config';
 import { isValidId, sanitizeInput } from '../utils/security';
 import { logger } from '../utils/logger';
-import { saveTrailAccessCode, getOrGenerateTrailAccessCode, removeTrailAccessCode } from './trilhaAcessoService';
+import {
+  saveTrailAccessCode,
+  getOrGenerateTrailAccessCode,
+  removeTrailAccessCode,
+  getDeterministicTrailCode,
+  getTrailAccessCode,
+} from './trilhaAcessoService';
 
 export interface Trilha {
   _id: string;
@@ -91,6 +97,69 @@ export const buscarTrilhas = async (query: string): Promise<Trilha[]> => {
   if (!cleanQuery) return [];
   const response = await api.get(`${API_ENDPOINTS.TRILHAS.BUSCAR}?q=${encodeURIComponent(cleanQuery)}`);
   return response.data || [];
+};
+
+/**
+ * Busca uma trilha por código de acesso ou ID, verificando tanto o backend quanto o código determinístico.
+ * Resolve de forma infalível quando o aluno cola o código de acesso recebido do professor.
+ */
+export const buscarTrilhaPorCodigo = async (codigo: string): Promise<Trilha | null> => {
+  if (!codigo || !codigo.trim()) return null;
+  const clean = sanitizeInput(codigo).trim().toUpperCase();
+  const withPrefix = clean.startsWith('TRL-') ? clean : `TRL-${clean}`;
+  const withoutPrefix = clean.startsWith('TRL-') ? clean.replace(/^TRL-/, '') : clean;
+
+  // 1. Se for diretamente um ObjectId de 24 hex chars
+  if (isValidId(clean)) {
+    try {
+      const direct = await buscarTrilhaPorId(clean);
+      if (direct) return direct;
+    } catch {}
+  }
+
+  // 2. Busca na lista de todas as trilhas disponíveis no sistema
+  try {
+    const todas = await listarTrilhas();
+    for (const t of todas) {
+      if (!t || !t._id) continue;
+      const sCode = t.codigoAcesso?.trim().toUpperCase();
+      const detCode = getDeterministicTrailCode(t._id);
+      const localCode = (await getTrailAccessCode(t._id))?.trim().toUpperCase();
+
+      if (
+        t._id === clean ||
+        (sCode && (sCode === clean || sCode === withPrefix || sCode === withoutPrefix)) ||
+        detCode === clean || detCode === withPrefix || detCode === withoutPrefix ||
+        (localCode && (localCode === clean || localCode === withPrefix || localCode === withoutPrefix))
+      ) {
+        return t;
+      }
+    }
+  } catch (err) {
+    logger.warn('Erro ao listar todas as trilhas na busca por código:', err);
+  }
+
+  // 3. Fallback: buscar na API por texto caso listarTrilhas seja paginado ou filtrado
+  try {
+    const results = await buscarTrilhas(clean);
+    for (const t of results) {
+      if (!t || !t._id) continue;
+      const sCode = t.codigoAcesso?.trim().toUpperCase();
+      const detCode = getDeterministicTrailCode(t._id);
+      if (
+        t._id === clean ||
+        (sCode && (sCode === clean || sCode === withPrefix || sCode === withoutPrefix)) ||
+        detCode === clean || detCode === withPrefix || detCode === withoutPrefix
+      ) {
+        return t;
+      }
+    }
+    if (results.length === 1 && (results[0].disponibilidade === 'Privado' || results[0].codigoAcesso)) {
+      return results[0];
+    }
+  } catch {}
+
+  return null;
 };
 
 export const getMappedIdioma = (lang: string) => {

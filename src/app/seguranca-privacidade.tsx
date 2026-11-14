@@ -118,7 +118,7 @@ export default function SegurancaPrivacidadeScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton} activeOpacity={0.7}>
           <ArrowLeft size={26} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>Segurança & Privacidade 🛡️</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Segurança & Privacidade</Text>
         <View style={{ width: 26 }} />
       </View>
 
@@ -275,7 +275,7 @@ export default function SegurancaPrivacidadeScreen() {
 
       {/* Dicas de Proteção ao Estudante */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>💡 Dicas de Segurança para Estudantes</Text>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>Dicas de Segurança para Estudantes</Text>
         <View style={[styles.tipsCard, { backgroundColor: isDark ? '#1E1E2F' : '#FEF3C7' }]}>
           <Text style={[styles.tipTitle, { color: isDark ? '#F59E0B' : '#92400E' }]}>
             Nunca compartilhe sua senha
@@ -324,7 +324,7 @@ export default function SegurancaPrivacidadeScreen() {
                 <>
                   <View style={[styles.noticeBox, { backgroundColor: isDark ? '#1E1E2F' : '#FEF3C7' }]}>
                     <Text style={[styles.noticeTitle, { color: isDark ? '#F59E0B' : '#B45309' }]}>
-                      🛡️ Domínios e Canais Oficiais do EstudeMy:
+                      Domínios e Canais Oficiais do EstudeMy:
                     </Text>
                     <Text style={[styles.noticeList, { color: isDark ? '#E2E8F0' : '#78350F' }]}>
                       • Site Oficial: https://estudemy.com{'\n'}

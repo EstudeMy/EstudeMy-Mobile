@@ -1,11 +1,13 @@
 import React, { createContext, useContext, useState, useEffect, useMemo, ReactNode } from 'react';
-import { useColorScheme as useRNColorScheme } from 'react-native';
+import { useColorScheme as useRNColorScheme, Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { useAuth } from './AuthContext';
 import api from '../services/api';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 export type ActiveTheme = 'light' | 'dark';
+export type DaltonismMode = 'none' | 'protanopia' | 'deuteranopia' | 'tritanopia' | 'achromatopsia';
+export type FontScale = 'normal' | 'large' | 'extra-large';
 
 export interface ThemeColors {
   background: string;
@@ -24,39 +26,96 @@ export interface ThemeColors {
   isDark: boolean;
 }
 
-const darkColors: ThemeColors = {
-  background: '#11111f',
-  card: '#2D2D44',
-  cardSecondary: '#1E1E2F',
-  text: '#ffffff',
-  textSecondary: '#E2E8F0',
-  textMuted: '#9CA3AF',
-  border: '#1b1b1b',
-  inputBg: '#1E1E2F',
-  primary: '#4F46E5',
-  accent: '#F59E0B',
-  success: '#10B981',
+// Paleta Padronizada Harmoniosa (WCAG AAA - Alto Contraste e Elegância)
+const baseDarkColors: ThemeColors = {
+  background: '#0F172A', // Slate 900
+  card: '#1E293B',       // Slate 800
+  cardSecondary: '#273549',
+  text: '#FFFFFF',       // 16.5:1
+  textSecondary: '#E2E8F0', // 12.0:1
+  textMuted: '#CBD5E1',     // 8.5:1 (Muito legível, sem ficar apagado)
+  border: '#334155',     // Slate 700
+  inputBg: '#1E293B',
+  primary: '#4338CA',    // Indigo EstudeMy
+  accent: '#F59E0B',     // Amber
+  success: '#10B981',    // Emerald
   warning: '#F59E0B',
-  danger: '#EF4444',
+  danger: '#EF4444',     // Red
   isDark: true,
 };
 
-const lightColors: ThemeColors = {
-  background: '#F3F4F6',
+const baseLightColors: ThemeColors = {
+  background: '#F8FAFC', // Slate 50
   card: '#FFFFFF',
-  cardSecondary: '#E5E7EB',
-  text: '#111827',
-  textSecondary: '#374151',
-  textMuted: '#6B7280',
-  border: '#1b1b1b',
-  inputBg: '#F9FAFB',
-  primary: '#4F46E5',
+  cardSecondary: '#F1F5F9', // Slate 100
+  text: '#0F172A',       // Slate 900 (16.0:1)
+  textSecondary: '#334155', // Slate 700 (10.0:1)
+  textMuted: '#475569',     // Slate 600 (7.0:1)
+  border: '#CBD5E1',     // Slate 300
+  inputBg: '#FFFFFF',
+  primary: '#4338CA',    // Indigo EstudeMy
   accent: '#D97706',
-  success: '#16A34A',
+  success: '#059669',
   warning: '#D97706',
   danger: '#DC2626',
   isDark: false,
 };
+
+// Variações para Alto Contraste
+const highContrastDarkColors: ThemeColors = {
+  ...baseDarkColors,
+  background: '#000000',
+  card: '#121212',
+  cardSecondary: '#1E1E1E',
+  text: '#FFFFFF',
+  textSecondary: '#FFFFFF',
+  textMuted: '#FDE047', // Amarelo de alto contraste para leitura à distância
+  border: '#FFFFFF',
+  inputBg: '#000000',
+  primary: '#818CF8',
+  accent: '#FDE047',
+  success: '#34D399',
+  danger: '#F87171',
+};
+
+const highContrastLightColors: ThemeColors = {
+  ...baseLightColors,
+  background: '#FFFFFF',
+  card: '#FFFFFF',
+  cardSecondary: '#F3F4F6',
+  text: '#000000',
+  textSecondary: '#000000',
+  textMuted: '#1E293B',
+  border: '#000000',
+  inputBg: '#FFFFFF',
+  primary: '#312E81',
+  accent: '#92400E',
+  success: '#065F46',
+  danger: '#991B1B',
+};
+
+async function getStorageItem(key: string): Promise<string | null> {
+  try {
+    if (Platform.OS === 'web') {
+      return typeof window !== 'undefined' && window.localStorage ? window.localStorage.getItem(key) : null;
+    }
+    return await SecureStore.getItemAsync(key);
+  } catch {
+    return null;
+  }
+}
+
+async function setStorageItem(key: string, value: string): Promise<void> {
+  try {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined' && window.localStorage) {
+        window.localStorage.setItem(key, value);
+      }
+      return;
+    }
+    await SecureStore.setItemAsync(key, value);
+  } catch {}
+}
 
 interface ThemeContextType {
   theme: ActiveTheme;
@@ -64,6 +123,18 @@ interface ThemeContextType {
   themePreference: ThemePreference;
   setThemePreference: (pref: ThemePreference, saveToBackend?: boolean) => Promise<void>;
   colors: ThemeColors;
+  daltonism: DaltonismMode;
+  setDaltonism: (mode: DaltonismMode) => Promise<void>;
+  fontScale: FontScale;
+  setFontScale: (scale: FontScale) => Promise<void>;
+  fontSizeMultiplier: number;
+  scaledFontSize: (baseSize: number) => number;
+  highContrast: boolean;
+  setHighContrast: (enabled: boolean) => Promise<void>;
+  isAccessibilityModalVisible: boolean;
+  setIsAccessibilityModalVisible: (visible: boolean) => void;
+  openAccessibilityModal: () => void;
+  closeAccessibilityModal: () => void;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -73,31 +144,47 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
   const { user, isAuthenticated, refreshUser } = useAuth();
 
   const [themePreference, setThemePreferenceState] = useState<ThemePreference>('system');
+  const [daltonism, setDaltonismState] = useState<DaltonismMode>('none');
+  const [fontScale, setFontScaleState] = useState<FontScale>('normal');
+  const [highContrast, setHighContrastState] = useState<boolean>(false);
+  const [isAccessibilityModalVisible, setIsAccessibilityModalVisible] = useState<boolean>(false);
 
-  // Carrega a preferência de tema salva inicialmente
+  // Carrega preferências salvas
   useEffect(() => {
-    const loadTheme = async () => {
-      // 1. Se logado e possui tema salvo no banco
+    const loadPreferences = async () => {
+      // 1. Tema
       if (user?.tema && (user.tema === 'light' || user.tema === 'dark')) {
         setThemePreferenceState(user.tema as ThemePreference);
-        return;
+      } else {
+        const savedTheme = await getStorageItem('app_theme_preference');
+        if (savedTheme && (savedTheme === 'system' || savedTheme === 'light' || savedTheme === 'dark')) {
+          setThemePreferenceState(savedTheme as ThemePreference);
+        }
       }
 
-      // 2. Se não, tenta recuperar do SecureStore
-      try {
-        const saved = await SecureStore.getItemAsync('app_theme_preference');
-        if (saved && (saved === 'system' || saved === 'light' || saved === 'dark')) {
-          setThemePreferenceState(saved as ThemePreference);
-        }
-      } catch (e) {
-        console.error('Erro ao carregar tema local:', e);
+      // 2. Daltonismo
+      const savedDaltonism = await getStorageItem('app_daltonism_mode');
+      if (savedDaltonism && ['none', 'protanopia', 'deuteranopia', 'tritanopia', 'achromatopsia'].includes(savedDaltonism)) {
+        setDaltonismState(savedDaltonism as DaltonismMode);
+      }
+
+      // 3. Tamanho da Fonte
+      const savedFont = await getStorageItem('app_font_scale');
+      if (savedFont && ['normal', 'large', 'extra-large'].includes(savedFont)) {
+        setFontScaleState(savedFont as FontScale);
+      }
+
+      // 4. Alto Contraste
+      const savedHighContrast = await getStorageItem('app_high_contrast');
+      if (savedHighContrast === 'true') {
+        setHighContrastState(true);
       }
     };
 
-    loadTheme();
+    loadPreferences();
   }, [user?.tema]);
 
-  // Determina o tema ativo
+  // Determina tema ativo
   const activeTheme: ActiveTheme = useMemo(() => {
     if (themePreference === 'system') {
       return systemScheme === 'dark' ? 'dark' : 'light';
@@ -105,18 +192,51 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return themePreference;
   }, [themePreference, systemScheme]);
 
-  const colors = useMemo(() => {
-    return activeTheme === 'dark' ? darkColors : lightColors;
-  }, [activeTheme]);
+  // Aplica alto contraste e filtros de daltonismo sobre a paleta
+  const colors: ThemeColors = useMemo(() => {
+    let base = activeTheme === 'dark'
+      ? (highContrast ? { ...highContrastDarkColors } : { ...baseDarkColors })
+      : (highContrast ? { ...highContrastLightColors } : { ...baseLightColors });
+
+    if (daltonism === 'protanopia') {
+      base.primary = '#2563EB'; // Azul Cobalto nítido
+      base.accent = '#CA8A04';  // Ouro
+      base.success = '#0284C7'; // Cyan
+      base.danger = '#D97706';  // Âmbar
+    } else if (daltonism === 'deuteranopia') {
+      base.primary = '#4338CA'; // Indigo
+      base.accent = '#D97706';  // Âmbar
+      base.success = '#0284C7'; // Cyan contrastante
+      base.danger = '#EA580C';  // Laranja
+    } else if (daltonism === 'tritanopia') {
+      base.primary = '#E11D48'; // Carmesim
+      base.accent = '#0D9488';  // Teal
+      base.success = '#059669'; // Esmeralda
+      base.danger = '#DC2626';  // Vermelho
+    } else if (daltonism === 'achromatopsia') {
+      base.primary = base.isDark ? '#E2E8F0' : '#1E293B';
+      base.accent = base.isDark ? '#CBD5E1' : '#334155';
+      base.success = base.isDark ? '#F8FAFC' : '#0F172A';
+      base.warning = base.isDark ? '#CBD5E1' : '#475569';
+      base.danger = base.isDark ? '#94A3B8' : '#64748B';
+    }
+
+    return base;
+  }, [activeTheme, highContrast, daltonism]);
+
+  const fontSizeMultiplier = useMemo(() => {
+    if (fontScale === 'large') return 1.18;
+    if (fontScale === 'extra-large') return 1.35;
+    return 1.0;
+  }, [fontScale]);
+
+  const scaledFontSize = (baseSize: number) => {
+    return Math.round(baseSize * fontSizeMultiplier);
+  };
 
   const setThemePreference = async (pref: ThemePreference, saveToBackend: boolean = true) => {
     setThemePreferenceState(pref);
-
-    try {
-      await SecureStore.setItemAsync('app_theme_preference', pref);
-    } catch (e) {
-      console.error('Erro ao salvar tema no storage:', e);
-    }
+    await setStorageItem('app_theme_preference', pref);
 
     if (saveToBackend && isAuthenticated && user) {
       const backendTema = pref === 'system' ? (systemScheme === 'dark' ? 'dark' : 'light') : pref;
@@ -129,6 +249,24 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const setDaltonism = async (mode: DaltonismMode) => {
+    setDaltonismState(mode);
+    await setStorageItem('app_daltonism_mode', mode);
+  };
+
+  const setFontScale = async (scale: FontScale) => {
+    setFontScaleState(scale);
+    await setStorageItem('app_font_scale', scale);
+  };
+
+  const setHighContrast = async (enabled: boolean) => {
+    setHighContrastState(enabled);
+    await setStorageItem('app_high_contrast', enabled ? 'true' : 'false');
+  };
+
+  const openAccessibilityModal = () => setIsAccessibilityModalVisible(true);
+  const closeAccessibilityModal = () => setIsAccessibilityModalVisible(false);
+
   return (
     <ThemeContext.Provider
       value={{
@@ -137,6 +275,18 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
         themePreference,
         setThemePreference,
         colors,
+        daltonism,
+        setDaltonism,
+        fontScale,
+        setFontScale,
+        fontSizeMultiplier,
+        scaledFontSize,
+        highContrast,
+        setHighContrast,
+        isAccessibilityModalVisible,
+        setIsAccessibilityModalVisible,
+        openAccessibilityModal,
+        closeAccessibilityModal,
       }}
     >
       {children}

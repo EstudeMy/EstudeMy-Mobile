@@ -213,7 +213,7 @@ export default function PerfilScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft size={26} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>{t('profilePage.title') || 'Meu Perfil'} 👤</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('profilePage.title') || 'Meu Perfil'}</Text>
         <View style={{ width: 26 }} />
       </View>
 
@@ -262,7 +262,7 @@ export default function PerfilScreen() {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={[styles.statsCardTitle, { color: colors.text }]}>
-              {t('profile.learningStats') || 'Estatísticas de Aprendizado 📊'}
+              {t('profile.learningStats') || 'Estatísticas de Aprendizado'}
             </Text>
             <Text style={[styles.statsCardSubtitle, { color: colors.textMuted }]}>
               {t('profile.learningStatsDesc') || 'Seu progresso e conquistas na jornada EstudeMy'}
@@ -309,7 +309,7 @@ export default function PerfilScreen() {
             <Text style={[styles.statItemValue, { color: '#EF4444' }]}>
               {(user as any)?.ofensiva || (user as any)?.streak || 3} {t('common.days') || 'dias'}
             </Text>
-            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>{t('profile.streak') || 'Ofensiva 🔥'}</Text>
+            <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>{t('profile.streak') || 'Ofensiva'}</Text>
           </View>
 
           {/* Card 6: Conquistas */}

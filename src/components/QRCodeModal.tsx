@@ -75,7 +75,7 @@ export default function QRCodeModal({
               <View style={styles.qrIconBubble}>
                 <QrCode size={20} color="#ffffff" />
               </View>
-              <Text style={[styles.title, { color: colors.text }]}>QR Code da Trilha 📱</Text>
+              <Text style={[styles.title, { color: colors.text }]}>QR Code da Trilha</Text>
             </View>
             <TouchableOpacity
               style={styles.closeIconBtn}

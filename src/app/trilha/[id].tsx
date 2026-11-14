@@ -53,6 +53,11 @@ import {
   CheckCircle2,
   Sparkles,
   Percent,
+  Heart,
+  Coins,
+  Zap,
+  Trophy,
+  Book,
 } from 'lucide-react-native';
 import * as SecureStore from 'expo-secure-store';
 
@@ -483,7 +488,7 @@ export default function TrilhaDetailScreen() {
               {loadingAction ? (
                 <ActivityIndicator color="#ffffff" />
               ) : (
-                <Text style={styles.actionBtnText}>Iniciar Trilha 🚀</Text>
+                <Text style={styles.actionBtnText}>Iniciar Trilha</Text>
               )}
             </TouchableOpacity>
           ) : (
@@ -509,7 +514,7 @@ export default function TrilhaDetailScreen() {
         <View style={styles.teacherCodeCard}>
           <View style={styles.teacherCodeHeader}>
             <Key size={22} color="#F59E0B" />
-            <Text style={styles.teacherCodeTitle}>Código de Acesso dos Alunos 🔑</Text>
+            <Text style={styles.teacherCodeTitle}>Código de Acesso dos Alunos</Text>
           </View>
           <Text style={styles.teacherCodeDesc}>
             Apenas você (professor criador) e administradores conseguem ver este código. Passe para seus alunos para que eles possam desbloquear esta trilha:
@@ -544,7 +549,7 @@ export default function TrilhaDetailScreen() {
               activeOpacity={0.85}
             >
               <QrCode size={18} color="#ffffff" style={{ marginRight: 6 }} />
-              <Text style={styles.teacherQrBtnText}>Ver QR Code 📱</Text>
+              <Text style={styles.teacherQrBtnText}>Ver QR Code</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -557,7 +562,7 @@ export default function TrilhaDetailScreen() {
             <View style={styles.lockedIconBubblePaid}>
               <CreditCard size={36} color="#ffffff" />
             </View>
-            <Text style={[styles.lockedTitle, { color: colors.text }]}>Trilha Paga Exclusiva 💎</Text>
+            <Text style={[styles.lockedTitle, { color: colors.text }]}>Trilha Paga Exclusiva</Text>
             <Text style={[styles.lockedDesc, { color: colors.textMuted }]}>
               Esta trilha requer aquisição para liberação de todas as fases, exercícios e quizzes interativos.
             </Text>
@@ -607,7 +612,7 @@ export default function TrilhaDetailScreen() {
                 </View>
                 <View style={{ flex: 1, marginLeft: 10 }}>
                   <Text style={[styles.paymentMethodTitle, { color: colors.text }]}>Pagar com PIX</Text>
-                  <Text style={styles.paymentMethodSubtitle}>Liberação imediata via QR Code ⚡</Text>
+                  <Text style={styles.paymentMethodSubtitle}>Liberação imediata via QR Code</Text>
                 </View>
                 <ArrowRight size={18} color="#10B981" />
               </TouchableOpacity>
@@ -628,7 +633,7 @@ export default function TrilhaDetailScreen() {
                 </View>
                 <View style={{ flex: 1, marginLeft: 10 }}>
                   <Text style={[styles.paymentMethodTitle, { color: colors.text }]}>Cartão de Crédito</Text>
-                  <Text style={styles.paymentMethodSubtitle}>Parcelamento em até 12x 💳</Text>
+                  <Text style={styles.paymentMethodSubtitle}>Parcelamento em até 12x</Text>
                 </View>
                 <ArrowRight size={18} color="#4F46E5" />
               </TouchableOpacity>
@@ -643,7 +648,6 @@ export default function TrilhaDetailScreen() {
               }}
               activeOpacity={0.88}
             >
-              <Sparkles size={20} color="#ffffff" style={{ marginRight: 8 }} />
               <Text style={styles.buyNowBtnText}>
                 Comprar por R$ {Number(trilha.preco || 29.9).toFixed(2).replace('.', ',')}
               </Text>
@@ -689,10 +693,7 @@ export default function TrilhaDetailScreen() {
               {studentUnlocking ? (
                 <ActivityIndicator color="#ffffff" />
               ) : (
-                <>
-                  <Key size={18} color="#ffffff" style={{ marginRight: 8 }} />
-                  <Text style={styles.lockedSubmitBtnText}>Liberar com Código</Text>
-                </>
+                <Text style={styles.lockedSubmitBtnText}>Liberar com Código</Text>
               )}
             </TouchableOpacity>
           </View>
@@ -701,7 +702,7 @@ export default function TrilhaDetailScreen() {
             <View style={styles.lockedIconBubble}>
               <Lock size={36} color="#ffffff" />
             </View>
-            <Text style={[styles.lockedTitle, { color: colors.text }]}>Conteúdo Bloqueado 🔒</Text>
+            <Text style={[styles.lockedTitle, { color: colors.text }]}>Conteúdo Bloqueado</Text>
             <Text style={[styles.lockedDesc, { color: colors.textMuted }]}>
               Esta trilha é privada e requer o código de acesso exclusivo fornecido pelo seu professor para liberar o conteúdo e as lições.
             </Text>
@@ -738,10 +739,7 @@ export default function TrilhaDetailScreen() {
                 {studentUnlocking ? (
                   <ActivityIndicator color="#ffffff" />
                 ) : (
-                  <>
-                    <Key size={18} color="#ffffff" style={{ marginRight: 8 }} />
-                    <Text style={styles.lockedSubmitBtnText}>Desbloquear com Código</Text>
-                  </>
+                  <Text style={styles.lockedSubmitBtnText}>Desbloquear com Código</Text>
                 )}
               </TouchableOpacity>
 
@@ -750,8 +748,7 @@ export default function TrilhaDetailScreen() {
                 onPress={() => setScannerModalVisible(true)}
                 activeOpacity={0.85}
               >
-                <Camera size={18} color="#ffffff" style={{ marginRight: 8 }} />
-                <Text style={styles.lockedScanQrBtnText}>Ler QR Code da Trilha 📷</Text>
+                <Text style={styles.lockedScanQrBtnText}>Ler QR Code da Trilha</Text>
               </TouchableOpacity>
             </View>
           </View>
@@ -906,7 +903,7 @@ export default function TrilhaDetailScreen() {
                     guideTab === 'trail' && { color: '#4F46E5', fontWeight: '900' },
                   ]}
                 >
-                  {t('trail.guideTabTrail') || '🗺️ A Trilha'}
+                  {t('trail.guideTabTrail') || 'A Trilha'}
                 </Text>
               </TouchableOpacity>
 
@@ -924,7 +921,7 @@ export default function TrilhaDetailScreen() {
                     guideTab === 'game' && { color: '#F59E0B', fontWeight: '900' },
                   ]}
                 >
-                  {t('trail.guideTabGame') || '⚔️ O Jogo'}
+                  {t('trail.guideTabGame') || 'O Jogo'}
                 </Text>
               </TouchableOpacity>
 
@@ -942,7 +939,7 @@ export default function TrilhaDetailScreen() {
                     guideTab === 'tips' && { color: '#10B981', fontWeight: '900' },
                   ]}
                 >
-                  {t('trail.guideTabTips') || '🏆 Dicas'}
+                  {t('trail.guideTabTips') || 'Dicas'}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -1007,7 +1004,7 @@ export default function TrilhaDetailScreen() {
                   </Text>
 
                   <View style={[styles.guideCard, { borderColor: isDark ? '#1b1b1b' : '#E5E7EB', backgroundColor: isDark ? '#262626' : '#F3F4F6' }]}>
-                    <Text style={{ fontSize: 24 }}>❤️</Text>
+                    <Heart size={24} color="#EF4444" />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.guideCardTitle, { color: colors.text }]}>
                         {t('trail.guideGameLivesTitle') || 'Vidas'}
@@ -1019,7 +1016,7 @@ export default function TrilhaDetailScreen() {
                   </View>
 
                   <View style={[styles.guideCard, { borderColor: isDark ? '#1b1b1b' : '#E5E7EB', backgroundColor: isDark ? '#262626' : '#F3F4F6' }]}>
-                    <Text style={{ fontSize: 24 }}>🪙</Text>
+                    <Coins size={24} color="#F59E0B" />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.guideCardTitle, { color: colors.text }]}>
                         {t('trail.guideGameCoinsTitle') || 'Moedas'}
@@ -1031,7 +1028,7 @@ export default function TrilhaDetailScreen() {
                   </View>
 
                   <View style={[styles.guideCard, { borderColor: isDark ? '#1b1b1b' : '#E5E7EB', backgroundColor: isDark ? '#262626' : '#F3F4F6' }]}>
-                    <Text style={{ fontSize: 24 }}>✨</Text>
+                    <Zap size={24} color="#3B82F6" />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.guideCardTitle, { color: colors.text }]}>
                         {t('trail.guideGameXpTitle') || 'Experiência (XP)'}
@@ -1051,7 +1048,7 @@ export default function TrilhaDetailScreen() {
                   </Text>
 
                   <View style={[styles.guideCard, { borderColor: isDark ? '#1b1b1b' : '#E5E7EB', backgroundColor: isDark ? '#262626' : '#F3F4F6' }]}>
-                    <Text style={{ fontSize: 24 }}>🏆</Text>
+                    <Trophy size={24} color="#EAB308" />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.guideCardTitle, { color: colors.text }]}>
                         {t('trail.guideTipsRankingTitle') || 'Lidere o Ranking'}
@@ -1063,7 +1060,7 @@ export default function TrilhaDetailScreen() {
                   </View>
 
                   <View style={[styles.guideCard, { borderColor: isDark ? '#1b1b1b' : '#E5E7EB', backgroundColor: isDark ? '#262626' : '#F3F4F6' }]}>
-                    <Text style={{ fontSize: 24 }}>📖</Text>
+                    <Book size={24} color="#10B981" />
                     <View style={{ flex: 1 }}>
                       <Text style={[styles.guideCardTitle, { color: colors.text }]}>
                         {t('trail.guideTipsReadTitle') || 'Teoria Primeiro'}

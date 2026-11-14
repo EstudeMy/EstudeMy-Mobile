@@ -226,7 +226,7 @@ export default function LoginScreen() {
 
               {/* Lembrete Anti-Phishing (RC05) */}
               <Text style={styles.phishingDisclaimer}>
-                🔒 Nunca compartilhe sua senha. O EstudeMy não pede senhas por e-mail ou redes sociais.
+                Nunca compartilhe sua senha. O EstudeMy não pede senhas por e-mail ou redes sociais.
               </Text>
             </View>
           </ScrollView>

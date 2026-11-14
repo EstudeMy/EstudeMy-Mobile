@@ -134,7 +134,7 @@ export default function MeusCursosScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
           <ArrowLeft size={26} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>{t('myCourses.title') || 'Meus Cursos'} 📚</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('myCourses.title') || 'Meus Cursos'}</Text>
         <View style={{ width: 26 }} />
       </View>
 

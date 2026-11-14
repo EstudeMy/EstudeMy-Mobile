@@ -43,13 +43,14 @@ import {
   ArrowRight,
   TrendingUp,
   Wallet,
+  Accessibility,
 } from 'lucide-react-native';
 
 export default function MinhasTrilhasScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
-  const { colors } = useTheme();
+  const { colors, openAccessibilityModal } = useTheme();
   const { t } = useLanguage();
 
   const [trilhas, setTrilhas] = useState<Trilha[]>([]);
@@ -223,12 +224,30 @@ export default function MinhasTrilhasScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.headerTitle, { color: colors.text }]}>
-                {t('myTrails.title') || 'Minhas Trilhas 📚'}
+                {t('myTrails.title') || 'Minhas Trilhas'}
               </Text>
               <Text style={[styles.headerSubtitle, { color: colors.textMuted }]}>
                 {t('myTrails.subtitle') || 'Gerencie suas jornadas pedagógicas, códigos e QR Codes'}
               </Text>
             </View>
+            <TouchableOpacity
+              onPress={openAccessibilityModal}
+              style={{
+                width: 36,
+                height: 36,
+                borderRadius: 18,
+                borderWidth: 1,
+                borderColor: colors.border,
+                backgroundColor: colors.cardSecondary,
+                alignItems: 'center',
+                justifyContent: 'center',
+                marginLeft: 8,
+              }}
+              accessibilityRole="button"
+              accessibilityLabel="Acessibilidade"
+            >
+              <Accessibility size={18} color={colors.primary} />
+            </TouchableOpacity>
           </View>
 
           {/* Cards de Resumo / Métricas */}
@@ -242,19 +261,19 @@ export default function MinhasTrilhasScreen() {
             <View style={[styles.statBox, { backgroundColor: colors.cardSecondary }]}>
               <Text style={[styles.statNumber, { color: '#8B5CF6' }]}>{stats.privadas}</Text>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                {t('myTrails.private') || 'Privadas 🔒'}
+                {t('myTrails.private') || 'Privadas'}
               </Text>
             </View>
             <View style={[styles.statBox, { backgroundColor: colors.cardSecondary }]}>
               <Text style={[styles.statNumber, { color: '#10B981' }]}>{stats.abertas}</Text>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                {t('myTrails.public') || 'Abertas 🌐'}
+                {t('myTrails.public') || 'Abertas'}
               </Text>
             </View>
             <View style={[styles.statBox, { backgroundColor: colors.cardSecondary }]}>
               <Text style={[styles.statNumber, { color: '#F59E0B' }]}>{stats.pagas}</Text>
               <Text style={[styles.statLabel, { color: colors.textMuted }]}>
-                {t('myTrails.paid') || 'Pagas 💰'}
+                {t('myTrails.paid') || 'Pagas'}
               </Text>
             </View>
           </View>
@@ -268,7 +287,7 @@ export default function MinhasTrilhasScreen() {
             >
               <PlusCircle size={18} color="#ffffff" style={{ marginRight: 6 }} />
               <Text style={styles.createBtnText}>
-                {t('myTrails.createManual') || 'Criar Manual ✍️'}
+                {t('myTrails.createManual') || 'Criar Manual'}
               </Text>
             </TouchableOpacity>
 
@@ -279,7 +298,7 @@ export default function MinhasTrilhasScreen() {
             >
               <Sparkles size={18} color="#ffffff" style={{ marginRight: 6 }} />
               <Text style={styles.createBtnText}>
-                {t('myTrails.consultAi') || 'ConsultAi IA 🤖'}
+                {t('myTrails.consultAi') || 'ConsultAi IA'}
               </Text>
             </TouchableOpacity>
           </View>
@@ -293,7 +312,7 @@ export default function MinhasTrilhasScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.financeTitle, { color: colors.text }]}>
-                {t('myTrails.salesBalance') || 'Extrato de Vendas & Saldo 💰'}
+                {t('myTrails.salesBalance') || 'Extrato de Vendas & Saldo'}
               </Text>
               <Text style={[styles.financeSubtitle, { color: colors.textMuted }]}>
                 {t('myTrails.salesSub') || 'Você recebe 85% do valor total de cada compra das suas trilhas'}
@@ -518,7 +537,7 @@ export default function MinhasTrilhasScreen() {
                         >
                           <QrCode size={14} color="#ffffff" style={{ marginRight: 6 }} />
                           <Text style={styles.qrCodeBtnText}>
-                            {t('myTrails.viewQr') || 'Ver QR Code 📱'}
+                            {t('myTrails.viewQr') || 'Ver QR Code'}
                           </Text>
                         </TouchableOpacity>
                       </View>

@@ -148,9 +148,9 @@ export default function GameScreen() {
     setSalvandoProgresso(true);
     try {
       await concluirFase({ faseId, pontuacao: 100, acertos: 4, erros: 0 });
-      console.log('✅ Progresso salvo com sucesso via concluirFase');
+      console.log('[Progresso] Salvo com sucesso via concluirFase');
     } catch (err) {
-      console.warn('⚠️ Tentando rota alternativa de progresso...', err);
+      console.warn('[Progresso] Tentando rota alternativa de progresso...', err);
       try {
         await api.post('/api/progresso/salvar', {
           faseId,
@@ -159,7 +159,7 @@ export default function GameScreen() {
           respostasUsuario: [0, 0, 0, 0],
         });
       } catch (err2) {
-        console.error('❌ Erro ao salvar progresso da fase:', err2);
+        console.error('[Progresso] Erro ao salvar progresso da fase:', err2);
       }
     } finally {
       setSalvandoProgresso(false);
@@ -382,7 +382,7 @@ export default function GameScreen() {
           >
             <Smartphone size={68} color="#38BDF8" />
           </Animated.View>
-          <Text style={styles.rotationTitle}>MODO PAISAGEM ATIVADO 📱🔄</Text>
+          <Text style={styles.rotationTitle}>MODO PAISAGEM ATIVADO</Text>
           <Text style={styles.rotationSubtitle}>
             Segure seu celular na horizontal (tela deitada) para a melhor experiência épica de jogo!
           </Text>
@@ -477,7 +477,7 @@ export default function GameScreen() {
                 {fase?.titulo ? `FASE: ${fase.titulo.toUpperCase()}` : 'FASE CONCLUÍDA'}
               </Text>
             </View>
-            <Text style={styles.modalMainTitle}>Vitória Épica! 🎉</Text>
+            <Text style={styles.modalMainTitle}>Vitória Épica!</Text>
             <Text style={styles.modalDescText}>
               Você derrotou o adversário, provou seu domínio no conteúdo e avançou na sua jornada!
             </Text>

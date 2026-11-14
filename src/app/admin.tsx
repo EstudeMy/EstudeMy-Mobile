@@ -184,7 +184,7 @@ export default function AdminScreen() {
       const updated = await adicionarMateria(nome);
       setMaterias(updated);
       setNovaMateriaNome('');
-      setMateriaFeedback(`Matéria "${nome}" adicionada com sucesso! 🎉`);
+      setMateriaFeedback(`Matéria "${nome}" adicionada com sucesso!`);
       setTimeout(() => setMateriaFeedback(null), 3500);
     } catch (err: any) {
       setMateriaFeedback(err.message || 'Erro ao adicionar matéria.');
@@ -417,7 +417,7 @@ export default function AdminScreen() {
               <ShieldCheck size={26} color="#ffffff" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[styles.headerTitle, { color: colors.text }]}>Painel Administrativo 🛡️</Text>
+              <Text style={[styles.headerTitle, { color: colors.text }]}>Painel Administrativo</Text>
               <Text style={[styles.headerSub, { color: colors.textMuted }]}>
                 Visão global da plataforma: Usuários, Trilhas e Matérias
               </Text>
@@ -496,7 +496,7 @@ export default function AdminScreen() {
           >
             <DollarSign size={13} color={activeTab === 'financeiro' ? '#ffffff' : colors.textMuted} style={{ marginRight: 4 }} />
             <Text style={[styles.segmentedTabText, activeTab === 'financeiro' && styles.segmentedTabTextActive]}>
-              Financeiro 💰
+              Financeiro
             </Text>
           </TouchableOpacity>
         </View>
@@ -789,7 +789,7 @@ export default function AdminScreen() {
             <View style={[styles.addMateriaCard, { backgroundColor: colors.card }]}>
               <View style={styles.addMateriaHeader}>
                 <PlusCircle size={20} color="#10B981" />
-                <Text style={[styles.addMateriaTitle, { color: colors.text }]}>Adicionar Nova Matéria ✍️</Text>
+                <Text style={[styles.addMateriaTitle, { color: colors.text }]}>Adicionar Nova Matéria</Text>
               </View>
               <Text style={[styles.addMateriaDesc, { color: colors.textMuted }]}>
                 Insira o nome da disciplina para disponibilizá-la imediatamente na criação de trilhas.

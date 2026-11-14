@@ -33,6 +33,8 @@ import {
   CheckCircle2,
   ChevronRight,
   ExternalLink,
+  Accessibility,
+  Eye,
 } from 'lucide-react-native';
 import api from '../services/api';
 import { APP_FULL_VERSION_STRING, APP_ENVIRONMENT } from '../constants/version';
@@ -50,11 +52,11 @@ const THEMES = [
 ] as const;
 
 const FEEDBACK_TYPES = [
-  { id: 'sugestao', label: '💡 Sugestão' },
-  { id: 'bug', label: '🐛 Bug / Erro' },
-  { id: 'duvida', label: '❓ Dúvida' },
-  { id: 'elogio', label: '⭐ Elogio' },
-  { id: 'outro', label: '📝 Outro' },
+  { id: 'sugestao', label: 'Sugestão' },
+  { id: 'bug', label: 'Bug / Erro' },
+  { id: 'duvida', label: 'Dúvida' },
+  { id: 'elogio', label: 'Elogio' },
+  { id: 'outro', label: 'Outro' },
 ];
 
 type LanguageCode = 'pt-BR' | 'en-US' | 'es-ES';
@@ -64,7 +66,7 @@ export default function ConfiguracoesScreen() {
   const insets = useSafeAreaInsets();
   const { user, logout, refreshUser } = useAuth();
   const { language, setLanguage, t } = useLanguage();
-  const { themePreference, setThemePreference, colors, isDark } = useTheme();
+  const { themePreference, setThemePreference, colors, isDark, openAccessibilityModal } = useTheme();
 
   // Estados dos Modais
   const [modalContatoVisible, setModalContatoVisible] = useState(false);
@@ -208,8 +210,36 @@ export default function ConfiguracoesScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton} activeOpacity={0.7}>
           <ArrowLeft size={26} color={colors.text} />
         </TouchableOpacity>
-        <Text style={[styles.title, { color: colors.text }]}>{t('settings.title') || 'Configurações'} ⚙️</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{t('settings.title') || 'Configurações'}</Text>
         <View style={{ width: 26 }} />
+      </View>
+
+      {/* Seção: Acessibilidade & Visão */}
+      <View style={styles.section}>
+        <Text style={[styles.sectionTitle, { color: colors.text }]}>
+          <Accessibility size={18} color={colors.primary} style={styles.sectionIcon} /> Acessibilidade & Visão
+        </Text>
+        <TouchableOpacity
+          style={[
+            styles.optionRow,
+            { backgroundColor: colors.card, borderColor: colors.border },
+          ]}
+          onPress={openAccessibilityModal}
+          activeOpacity={0.8}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1 }}>
+            <Eye size={20} color={colors.primary} />
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.optionLabel, { color: colors.text }]}>
+                Ajustes de Acessibilidade
+              </Text>
+              <Text style={{ fontSize: 12, color: colors.textSecondary, marginTop: 2 }}>
+                Alto contraste, tamanho da fonte e modos de daltonismo
+              </Text>
+            </View>
+          </View>
+          <ChevronRight size={18} color={colors.textSecondary} />
+        </TouchableOpacity>
       </View>
 
       {/* 1. Seção: Aparência / Tema */}
@@ -696,7 +726,7 @@ export default function ConfiguracoesScreen() {
                 <>
                   <View style={[styles.infoBanner, { backgroundColor: isDark ? '#1E1E2F' : '#FEF3C7' }]}>
                     <Text style={[styles.bannerTitle, { color: isDark ? '#F59E0B' : '#B45309' }]}>
-                      🛡️ Nossos Canais Oficiais:
+                      Nossos Canais Oficiais:
                     </Text>
                     <Text style={[styles.bannerText, { color: isDark ? '#E2E8F0' : '#78350F' }]}>
                       • Domínio: estudemy.com / api.estudemy.com{'\n'}

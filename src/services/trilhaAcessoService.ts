@@ -220,14 +220,17 @@ export async function validateAndUnlockTrail(trilha: Trilha, inputCode: string):
   await initCache();
 
   const formattedInput = inputCode.trim().toUpperCase();
+  const withPrefix = formattedInput.startsWith('TRL-') ? formattedInput : `TRL-${formattedInput}`;
+  const withoutPrefix = formattedInput.startsWith('TRL-') ? formattedInput.replace(/^TRL-/, '') : formattedInput;
+
   const serverCode = trilha.codigoAcesso?.trim().toUpperCase();
   const localCode = inMemoryCodes[trilha._id]?.trim().toUpperCase();
   const uniqueCode = getDeterministicTrailCode(trilha._id);
 
   const isMatch =
-    (serverCode && serverCode === formattedInput) ||
-    (localCode && localCode === formattedInput) ||
-    (uniqueCode === formattedInput);
+    (serverCode && (serverCode === formattedInput || serverCode === withPrefix || serverCode === withoutPrefix)) ||
+    (localCode && (localCode === formattedInput || localCode === withPrefix || localCode === withoutPrefix)) ||
+    (uniqueCode === formattedInput || uniqueCode === withPrefix || uniqueCode === withoutPrefix);
 
   if (isMatch) {
     await unlockTrail(trilha._id);
