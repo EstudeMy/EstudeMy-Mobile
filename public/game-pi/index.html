@@ -69,7 +69,7 @@
             pointer-events: none;
         }
 
-        /* Camada 2: Canvas de Efeitos e Partículas Climáticas */
+        /* Camada 2: Canvas de Efeitos Especiais, Raios e Partículas */
         #fx-canvas {
             position: absolute;
             top: 0;
@@ -80,7 +80,7 @@
             pointer-events: none;
         }
 
-        /* Camada 3: Atores da Batalha (Heróis e Chefes Firmemente no Chão) */
+        /* Camada 3: Atores da Batalha (Herói e Múltiplos Inimigos com pés no chão) */
         .stage-actors {
             position: absolute;
             top: 0;
@@ -93,7 +93,7 @@
 
         .actor-wrapper {
             position: absolute;
-            bottom: 15%;
+            bottom: 14%;
             display: flex;
             flex-direction: column;
             align-items: center;
@@ -101,12 +101,41 @@
             transition: transform 0.25s ease-out, filter 0.3s ease, bottom 0.4s ease, left 0.4s ease, right 0.4s ease;
         }
 
+        /* Posicionamento do Herói */
         #player-wrapper {
-            left: 18%;
+            left: 17%;
+            z-index: 6;
         }
 
-        #boss-wrapper {
-            right: 18%;
+        /* Container de Múltiplos Inimigos */
+        #enemies-container {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        /* Inimigo 0: Vanguarda (Guerreiro/Cavaleiro) */
+        #enemy-0 {
+            right: 32%;
+            bottom: 14%;
+            z-index: 7;
+        }
+
+        /* Inimigo 1: Chefe Principal (Centro) */
+        #enemy-1 {
+            right: 19%;
+            bottom: 15%;
+            z-index: 5;
+        }
+
+        /* Inimigo 2: Conjurador/Suporte (Retaguarda) */
+        #enemy-2 {
+            right: 7%;
+            bottom: 16%;
+            z-index: 4;
         }
 
         .actor-sprite {
@@ -118,13 +147,23 @@
             z-index: 2;
         }
 
+        /* Inimigos secundários ligeiramente menores para dar profundidade */
+        #enemy-0 .actor-sprite,
+        #enemy-2 .actor-sprite {
+            max-height: 205px;
+        }
+
+        #enemy-1 .actor-sprite {
+            max-height: 250px;
+        }
+
         /* Sombra de Contato Fisiológica com o Chão (Pés firmemente no terreno) */
         .actor-contact-shadow {
             width: 155px;
-            height: 24px;
+            height: 22px;
             background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.9) 0%, rgba(0, 0, 0, 0.5) 45%, rgba(0, 0, 0, 0) 75%);
             border-radius: 50%;
-            margin-top: -14px;
+            margin-top: -12px;
             z-index: 1;
             transform: scale(1);
             transition: transform 0.3s ease, opacity 0.3s ease;
@@ -151,6 +190,91 @@
             100% { transform: scale(0.9); opacity: 0.65; }
         }
 
+        /* Barra de Vida Mini Individual Sobre a Cabeça dos Inimigos */
+        .enemy-mini-hud {
+            position: absolute;
+            top: -26px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 2px;
+            width: 90px;
+            z-index: 5;
+            transition: opacity 0.3s ease;
+        }
+
+        .enemy-mini-title {
+            font-size: 10px;
+            font-weight: 800;
+            color: #cbd5e1;
+            text-shadow: 0 1px 3px #000000;
+            white-space: nowrap;
+        }
+
+        .enemy-mini-bar-track {
+            width: 100%;
+            height: 6px;
+            background: rgba(15, 23, 42, 0.85);
+            border-radius: 3px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .enemy-mini-bar-fill {
+            height: 100%;
+            width: 100%;
+            background: #ef4444;
+            transition: width 0.25s ease-out;
+        }
+
+        /* Animações de Combate: Recuo de Dano, Ataque Rápido e Dash */
+        .actor-recoil {
+            animation: anim-recoil 0.35s ease-out forwards;
+        }
+
+        @keyframes anim-recoil {
+            0% { transform: translateX(0); filter: brightness(2.5) contrast(1.5) drop-shadow(0 0 20px #ef4444); }
+            35% { transform: translateX(-24px) scale(0.96); }
+            70% { transform: translateX(-8px); filter: brightness(1.5); }
+            100% { transform: translateX(0) scale(1); filter: none; }
+        }
+
+        .actor-enemy-recoil {
+            animation: anim-enemy-recoil 0.35s ease-out forwards;
+        }
+
+        @keyframes anim-enemy-recoil {
+            0% { transform: translateX(0); filter: brightness(2.5) contrast(1.5) drop-shadow(0 0 20px #facc15); }
+            35% { transform: translateX(24px) scale(0.96); }
+            70% { transform: translateX(8px); filter: brightness(1.5); }
+            100% { transform: translateX(0) scale(1); filter: none; }
+        }
+
+        .actor-dash-strike {
+            animation: anim-dash-strike 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        @keyframes anim-dash-strike {
+            0% { transform: translateX(0); }
+            40% { transform: translateX(110px) scale(1.08); filter: drop-shadow(0 0 25px #38bdf8); }
+            100% { transform: translateX(0) scale(1); filter: none; }
+        }
+
+        .actor-enemy-strike {
+            animation: anim-enemy-strike 0.5s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+        }
+
+        @keyframes anim-enemy-strike {
+            0% { transform: translateX(0); }
+            40% { transform: translateX(-110px) scale(1.08); filter: drop-shadow(0 0 25px #ef4444); }
+            100% { transform: translateX(0) scale(1); filter: none; }
+        }
+
+        .actor-charge-glow {
+            filter: drop-shadow(0 0 30px #facc15) brightness(1.4) !important;
+            transform: scale(1.06);
+        }
+
         /* Auras de Skins para o Herói */
         .skin-cyber-void {
             filter: drop-shadow(0 0 20px #a855f7) hue-rotate(180deg) brightness(1.2) !important;
@@ -162,21 +286,7 @@
             filter: drop-shadow(0 0 20px #10b981) hue-rotate(85deg) contrast(1.3) !important;
         }
 
-        .actor-nameplate {
-            margin-top: 8px;
-            padding: 4px 14px;
-            background: rgba(15, 23, 42, 0.88);
-            border: 1px solid rgba(255, 255, 255, 0.2);
-            border-radius: 6px;
-            font-size: 13px;
-            font-weight: 800;
-            letter-spacing: 1px;
-            text-transform: uppercase;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.65);
-            z-index: 3;
-        }
-
-        /* Camada 4: Barra Superior Limpa do Jogo (Sem Seletores de Debug) */
+        /* Camada 4: Barra Superior Limpa do Jogo */
         #game-top-bar {
             position: absolute;
             top: 12px;
@@ -228,7 +338,7 @@
             letter-spacing: 0.5px;
         }
 
-        /* Centro: Barra de Vida do Chefe / Inimigo */
+        /* Centro: Barra de Vida do Chefe / Horda de Inimigos */
         #boss-hud {
             width: 480px;
             background: rgba(10, 13, 24, 0.92);
@@ -275,7 +385,7 @@
             text-shadow: 0 1px 3px #000000;
         }
 
-        /* Direita: Controles In-Game (Skin, Áudio e Sair) */
+        /* Direita: Controles In-Game (Áudio e Sair - Skin é gerenciada no Perfil) */
         #top-actions-group {
             display: flex;
             align-items: center;
@@ -306,16 +416,6 @@
             transform: translateY(-1px);
         }
 
-        #btn-skin-toggle {
-            border-color: rgba(250, 204, 21, 0.4);
-            color: #fef08a;
-        }
-
-        #btn-skin-toggle:hover {
-            border-color: #facc15;
-            box-shadow: 0 0 12px rgba(250, 204, 21, 0.4);
-        }
-
         .exit-btn {
             border-color: rgba(239, 68, 68, 0.4);
             color: #fca5a5;
@@ -327,7 +427,7 @@
             color: #ffffff;
         }
 
-        /* Banner de Ativação de Áudio (caso bloqueado pelo navegador) */
+        /* Banner de Ativação de Áudio */
         #audio-unlock-overlay {
             position: absolute;
             top: 86px;
@@ -491,19 +591,20 @@
             display: none;
         }
 
-        /* Camada 7: Overlay de QTE (Quick Time Event) */
+        /* Camada 7: Overlay de QTE (Quick Time Event) - Fecha Imediatamente ao Concluir */
         #qte-modal {
             position: absolute;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: rgba(0, 0, 0, 0.65);
+            background: rgba(0, 0, 0, 0.7);
             z-index: 20;
             display: none;
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            backdrop-filter: blur(4px);
         }
 
         .qte-card {
@@ -512,7 +613,7 @@
             border-radius: 16px;
             padding: 24px 36px;
             text-align: center;
-            box-shadow: 0 0 40px rgba(250, 204, 21, 0.45);
+            box-shadow: 0 0 45px rgba(250, 204, 21, 0.5);
         }
 
         .qte-title {
@@ -572,6 +673,39 @@
             width: 100%;
         }
 
+        /* Camada 8: Overlay Cinemático de Golpe Supremo (Ultimate Exclusivo) */
+        #cinematic-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.75);
+            z-index: 18;
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            pointer-events: none;
+        }
+
+        #ultimate-banner {
+            font-family: 'Jaro', 'Inter', sans-serif;
+            font-size: 42px;
+            font-weight: 900;
+            color: #facc15;
+            text-shadow: 0 0 30px #f59e0b, 0 4px 10px #000000;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            animation: ult-banner-pop 0.6s cubic-bezier(0.17, 0.89, 0.32, 1.28) forwards;
+        }
+
+        @keyframes ult-banner-pop {
+            0% { transform: scale(0.4); opacity: 0; }
+            70% { transform: scale(1.12); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
         /* Efeito de Flash na Tela */
         #screen-flash {
             position: absolute;
@@ -597,24 +731,55 @@
         <canvas id="fx-canvas" width="1366" height="768"></canvas>
         <div id="screen-flash"></div>
 
-        <!-- 3. Atores do Jogo (Herói e Chefe com pés no chão e sombras) -->
+        <!-- 3. Atores do Jogo (Herói à Esquerda e Múltiplos Inimigos à Direita) -->
         <div class="stage-actors">
-            <!-- Herói (Sempre apoiado no piso) -->
+            <!-- Herói Único (Pés no chão com sombra de contato, sem nome embaixo) -->
             <div id="player-wrapper" class="actor-wrapper">
                 <img id="player-sprite" class="actor-sprite" src="assets/sprites/samurai/idle.gif" alt="Herói" />
                 <div class="actor-contact-shadow"></div>
-                <div id="player-nameplate" class="actor-nameplate">Kaito Ronin</div>
             </div>
 
-            <!-- Chefe da Fase (is-flying apenas se voador) -->
-            <div id="boss-wrapper" class="actor-wrapper is-flying">
-                <img id="boss-sprite" class="actor-sprite" src="assets/sprites/spectre/idle.gif" alt="Chefe" />
-                <div class="actor-contact-shadow"></div>
-                <div id="boss-nameplate" class="actor-nameplate">Spectre do Código</div>
+            <!-- Grupo de Múltiplos Inimigos -->
+            <div id="enemies-container">
+                <!-- Inimigo 0: Vanguarda (Guerreiro / Soldado) -->
+                <div id="enemy-0" class="actor-wrapper">
+                    <div class="enemy-mini-hud">
+                        <span class="enemy-mini-title" id="enemy-0-name">Guarda Real</span>
+                        <div class="enemy-mini-bar-track">
+                            <div class="enemy-mini-bar-fill" id="enemy-0-hp-fill"></div>
+                        </div>
+                    </div>
+                    <img id="enemy-0-sprite" class="actor-sprite" src="assets/sprites/cavaleiro/idle.gif" alt="Inimigo" />
+                    <div class="actor-contact-shadow"></div>
+                </div>
+
+                <!-- Inimigo 1: Chefe Principal (Centro) -->
+                <div id="enemy-1" class="actor-wrapper is-flying">
+                    <div class="enemy-mini-hud">
+                        <span class="enemy-mini-title" id="enemy-1-name" style="color: #facc15;">Spectre Líder</span>
+                        <div class="enemy-mini-bar-track">
+                            <div class="enemy-mini-bar-fill" id="enemy-1-hp-fill" style="background: #38bdf8;"></div>
+                        </div>
+                    </div>
+                    <img id="enemy-1-sprite" class="actor-sprite" src="assets/sprites/spectre/idle.gif" alt="Chefe" />
+                    <div class="actor-contact-shadow"></div>
+                </div>
+
+                <!-- Inimigo 2: Conjurador / Suporte (Retaguarda) -->
+                <div id="enemy-2" class="actor-wrapper">
+                    <div class="enemy-mini-hud">
+                        <span class="enemy-mini-title" id="enemy-2-name">Mago Decaído</span>
+                        <div class="enemy-mini-bar-track">
+                            <div class="enemy-mini-bar-fill" id="enemy-2-hp-fill" style="background: #a855f7;"></div>
+                        </div>
+                    </div>
+                    <img id="enemy-2-sprite" class="actor-sprite" src="assets/sprites/mago/idle.gif" alt="Conjurador" />
+                    <div class="actor-contact-shadow"></div>
+                </div>
             </div>
         </div>
 
-        <!-- 4. Barra Superior Limpa do Jogo (Sem Seletores de Debug) -->
+        <!-- 4. Barra Superior Limpa do Jogo -->
         <header id="game-top-bar">
             <!-- Esquerda: Informações da Missão e Trilha -->
             <div id="mission-info-badge">
@@ -625,11 +790,11 @@
                 </div>
             </div>
 
-            <!-- Centro: Barra de Vida do Chefe Multi-Fase -->
+            <!-- Centro: Barra Superior de Vida da Horda / Chefe Principal -->
             <div id="boss-hud">
                 <div class="boss-info-row">
-                    <span id="boss-title-text">👑 SPECTRE DO CÓDIGO</span>
-                    <span id="boss-phase-text" style="color: #facc15;">FASE 1/1</span>
+                    <span id="boss-title-text">👑 HORDA DOS DADOS — FASE 1</span>
+                    <span id="boss-phase-text" style="color: #facc15;">3 INIMIGOS</span>
                 </div>
                 <div class="boss-bar-track">
                     <div id="boss-bar-fill" class="boss-bar-fill"></div>
@@ -637,12 +802,8 @@
                 </div>
             </div>
 
-            <!-- Direita: Controles In-Game (Skin, Áudio e Sair) -->
+            <!-- Direita: Controles In-Game (Áudio e Sair) -->
             <div id="top-actions-group">
-                <button class="top-action-btn" id="btn-skin-toggle" onclick="window.estudemyGame.cycleSkin()" title="Alternar Skin do Herói">
-                    <span>👘</span>
-                    <span id="skin-btn-text">Skin: Padrão</span>
-                </button>
                 <button class="top-action-btn" id="btn-audio-toggle" onclick="window.estudemyGame.toggleAudio()" title="Alternar Áudio">
                     <span id="audio-btn-icon">🔊</span>
                     <span id="audio-btn-text">Som: ON</span>
@@ -657,7 +818,7 @@
         <!-- Botão Flutuante de Inicialização de Som se bloqueado pelo navegador -->
         <div id="audio-unlock-overlay" onclick="window.estudemyGame.unlockAudioUserAction()">
             <span>🎵</span>
-            <span>Ativar Trilha Sonora e Efeitos</span>
+            <span>Ativar Orquestra e Efeitos Sonoros</span>
         </div>
 
         <!-- 5. HUD Inferior do Herói (Vida e Ultimate) -->
@@ -709,18 +870,23 @@
         <!-- 7. Overlay de Quick Time Events (QTE) -->
         <div id="qte-modal">
             <div class="qte-card">
-                <div id="qte-prompt-label" class="qte-title">COMBO RELÂMPAGO!</div>
+                <div id="qte-prompt-label" class="qte-title">DEFESA RELÂMPAGO!</div>
                 <div id="qte-keys-container" class="qte-keys-row"></div>
                 <div class="qte-timer-bar">
                     <div id="qte-timer-fill" class="qte-timer-fill"></div>
                 </div>
             </div>
         </div>
+
+        <!-- 8. Overlay Cinemático de Golpe Supremo -->
+        <div id="cinematic-overlay">
+            <div id="ultimate-banner">⚡ GOLPE SUPREMO!</div>
+        </div>
     </div>
 
     <!-- Scripts de Ponte e Motor de Jogo -->
-    <script type="text/javascript" src="html5game/tph_pontedados.js?v=20261114_overhaul_v2"></script>
-    <script type="text/javascript" src="html5game/estudemy_game_engine.js?v=20261114_overhaul_v2"></script>
+    <script type="text/javascript" src="html5game/tph_pontedados.js?v=20261114_overhaul_v3"></script>
+    <script type="text/javascript" src="html5game/estudemy_game_engine.js?v=20261114_overhaul_v3"></script>
 
 </body>
 </html>
