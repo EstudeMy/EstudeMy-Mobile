@@ -1,0 +1,310 @@
+{
+  "dataset": {
+    "total_registros": 1000,
+    "treino_registros": 800,
+    "teste_registros": 200,
+    "duplicados": 0,
+    "features_x": [
+      "idade",
+      "personagem_cod",
+      "materia_cod",
+      "dificuldade_cod",
+      "cenario_cod",
+      "inimigo_hp_max",
+      "trilhas_iniciadas",
+      "fases_concluidas",
+      "dias_ofensiva",
+      "total_perguntas_respondidas",
+      "total_acertos",
+      "total_erros",
+      "media_acertos_pct",
+      "pontuacao_media",
+      "hp_medio_restante",
+      "tempo_medio_fase_seg",
+      "xp_total",
+      "nivel_heroi"
+    ],
+    "target_y": "classe_y",
+    "distribuicao_classes": {
+      "Intermediario_Regular": 350,
+      "Basico_Risco_Evasao": 330,
+      "Avancado_Mestre": 320
+    }
+  },
+  "supervisionado": {
+    "Arvore_de_Decisao": {
+      "accuracy": 0.975,
+      "cv_mean_accuracy": 0.975,
+      "cv_std": 0.0114,
+      "precision": 0.9751,
+      "recall": 0.975,
+      "f1_score": 0.9749,
+      "confusion_matrix": [
+        [
+          66,
+          0,
+          0
+        ],
+        [
+          1,
+          68,
+          1
+        ],
+        [
+          0,
+          3,
+          61
+        ]
+      ],
+      "classification_report": {
+        "0: Basico_Risco_Evasao": {
+          "precision": 0.9850746268656716,
+          "recall": 1.0,
+          "f1-score": 0.9924812030075187,
+          "support": 66.0
+        },
+        "1: Intermediario_Regular": {
+          "precision": 0.9577464788732394,
+          "recall": 0.9714285714285714,
+          "f1-score": 0.9645390070921985,
+          "support": 70.0
+        },
+        "2: Avancado_Mestre": {
+          "precision": 0.9838709677419355,
+          "recall": 0.953125,
+          "f1-score": 0.9682539682539683,
+          "support": 64.0
+        },
+        "accuracy": 0.975,
+        "macro avg": {
+          "precision": 0.9755640244936155,
+          "recall": 0.9748511904761905,
+          "f1-score": 0.9750913927845618,
+          "support": 200.0
+        },
+        "weighted avg": {
+          "precision": 0.9751246041487248,
+          "recall": 0.975,
+          "f1-score": 0.9749487193160207,
+          "support": 200.0
+        }
+      },
+      "regras_texto": "|--- xp_total <= 909.00\n|   |--- xp_total <= 746.00\n|   |   |--- class: 0\n|   |--- xp_total >  746.00\n|   |   |--- class: 0\n|--- xp_total >  909.00\n|   |--- xp_total <= 3671.50\n|   |   |--- dias_ofensiva <= 29.50\n|   |   |   |--- hp_medio_restante <= 36.90\n|   |   |   |   |--- class: 1\n|   |   |   |--- hp_medio_restante >  36.90\n|   |   |   |   |--- truncated branch of depth 2\n|   |   |--- dias_ofensiva >  29.50\n|   |   |   |--- class: 1\n|   |--- xp_total >  3671.50\n|   |   |--- media_acertos_pct <= 73.75\n|   |   |   |--- class: 1\n|   |   |--- media_acertos_pct >  73.75\n|   |   |   |--- xp_total <= 4338.00\n|   |   |   |   |--- truncated branch of depth 2\n|   |   |   |--- xp_total >  4338.00\n|   |   |   |   |--- class: 2\n"
+    },
+    "Random_Forest": {
+      "accuracy": 0.985,
+      "cv_mean_accuracy": 0.987,
+      "cv_std": 0.0081,
+      "precision": 0.9851,
+      "recall": 0.985,
+      "f1_score": 0.985,
+      "confusion_matrix": [
+        [
+          66,
+          0,
+          0
+        ],
+        [
+          0,
+          69,
+          1
+        ],
+        [
+          0,
+          2,
+          62
+        ]
+      ],
+      "classification_report": {
+        "0: Basico_Risco_Evasao": {
+          "precision": 1.0,
+          "recall": 1.0,
+          "f1-score": 1.0,
+          "support": 66.0
+        },
+        "1: Intermediario_Regular": {
+          "precision": 0.971830985915493,
+          "recall": 0.9857142857142858,
+          "f1-score": 0.9787234042553191,
+          "support": 70.0
+        },
+        "2: Avancado_Mestre": {
+          "precision": 0.9841269841269841,
+          "recall": 0.96875,
+          "f1-score": 0.9763779527559056,
+          "support": 64.0
+        },
+        "accuracy": 0.985,
+        "macro avg": {
+          "precision": 0.9853193233474924,
+          "recall": 0.9848214285714286,
+          "f1-score": 0.9850337856704082,
+          "support": 200.0
+        },
+        "weighted avg": {
+          "precision": 0.9850614799910575,
+          "recall": 0.985,
+          "f1-score": 0.9849941363712514,
+          "support": 200.0
+        }
+      },
+      "feature_importances": {
+        "xp_total": 0.2255,
+        "nivel_heroi": 0.1819,
+        "total_acertos": 0.1723,
+        "media_acertos_pct": 0.1223,
+        "pontuacao_media": 0.104,
+        "fases_concluidas": 0.0474,
+        "dias_ofensiva": 0.0464,
+        "hp_medio_restante": 0.0407,
+        "total_perguntas_respondidas": 0.0203,
+        "tempo_medio_fase_seg": 0.019,
+        "trilhas_iniciadas": 0.0094,
+        "cenario_cod": 0.0051,
+        "inimigo_hp_max": 0.0024,
+        "total_erros": 0.0019,
+        "dificuldade_cod": 0.0008,
+        "idade": 0.0002,
+        "materia_cod": 0.0001,
+        "personagem_cod": 0.0
+      }
+    },
+    "Rede_Neural_MLP": {
+      "accuracy": 0.99,
+      "cv_mean_accuracy": 0.998,
+      "cv_std": 0.0024,
+      "precision": 0.9903,
+      "recall": 0.99,
+      "f1_score": 0.99,
+      "confusion_matrix": [
+        [
+          65,
+          1,
+          0
+        ],
+        [
+          0,
+          70,
+          0
+        ],
+        [
+          0,
+          1,
+          63
+        ]
+      ],
+      "classification_report": {
+        "0: Basico_Risco_Evasao": {
+          "precision": 1.0,
+          "recall": 0.9848484848484849,
+          "f1-score": 0.9923664122137404,
+          "support": 66.0
+        },
+        "1: Intermediario_Regular": {
+          "precision": 0.9722222222222222,
+          "recall": 1.0,
+          "f1-score": 0.9859154929577465,
+          "support": 70.0
+        },
+        "2: Avancado_Mestre": {
+          "precision": 1.0,
+          "recall": 0.984375,
+          "f1-score": 0.9921259842519685,
+          "support": 64.0
+        },
+        "accuracy": 0.99,
+        "macro avg": {
+          "precision": 0.9907407407407408,
+          "recall": 0.9897411616161617,
+          "f1-score": 0.9901359631411518,
+          "support": 200.0
+        },
+        "weighted avg": {
+          "precision": 0.9902777777777777,
+          "recall": 0.99,
+          "f1-score": 0.9900316535263756,
+          "support": 200.0
+        }
+      }
+    }
+  },
+  "nao_supervisionado": {
+    "algoritmo": "K-Means (k=3)",
+    "silhouette_score": 0.2665,
+    "adjusted_rand_index": 0.9491,
+    "normalized_mutual_info": 0.9185,
+    "correspondencia_cluster_classe_pct": 98.3,
+    "pca_variancia_explicada": [
+      0.5739,
+      0.0725
+    ],
+    "avaliacao_k_cotovelo": {
+      "2": {
+        "inertia": 10199.13,
+        "silhouette": 0.3708
+      },
+      "3": {
+        "inertia": 8058.05,
+        "silhouette": 0.2665
+      },
+      "4": {
+        "inertia": 7624.61,
+        "silhouette": 0.2125
+      },
+      "5": {
+        "inertia": 7248.77,
+        "silhouette": 0.1721
+      },
+      "6": {
+        "inertia": 6923.17,
+        "silhouette": 0.1312
+      }
+    },
+    "perfil_medio_clusters": {
+      "0": {
+        "xp_total": 330.94,
+        "nivel_heroi": 3.83,
+        "fases_concluidas": 6.18,
+        "media_acertos_pct": 37.52,
+        "hp_medio_restante": 27.76,
+        "dias_ofensiva": 3.0,
+        "tempo_medio_fase_seg": 246.79
+      },
+      "1": {
+        "xp_total": 2310.29,
+        "nivel_heroi": 23.61,
+        "fases_concluidas": 23.02,
+        "media_acertos_pct": 66.36,
+        "hp_medio_restante": 62.43,
+        "dias_ofensiva": 15.74,
+        "tempo_medio_fase_seg": 165.08
+      },
+      "2": {
+        "xp_total": 6992.06,
+        "nivel_heroi": 70.43,
+        "fases_concluidas": 47.99,
+        "media_acertos_pct": 87.24,
+        "hp_medio_restante": 84.31,
+        "dias_ofensiva": 42.47,
+        "tempo_medio_fase_seg": 109.65
+      }
+    },
+    "contingencia_cluster_vs_classe": {
+      "Avancado_Mestre": {
+        "0": 0,
+        "1": 7,
+        "2": 313
+      },
+      "Basico_Risco_Evasao": {
+        "0": 327,
+        "1": 3,
+        "2": 0
+      },
+      "Intermediario_Regular": {
+        "0": 5,
+        "1": 343,
+        "2": 2
+      }
+    }
+  }
+}

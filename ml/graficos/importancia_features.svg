@@ -1,0 +1,44 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 440 265" width="100%" height="100%" style="font-family: 'Plus Jakarta Sans', Arial, sans-serif; background: #ffffff; border-radius: 8px; border: 1px solid #e2e8f0;">
+<text x="16" y="22" fill="#0f172a" font-size="10.5" font-weight="800">Importância das Características em X (Random Forest)</text>
+<text x="16" y="34" fill="#64748b" font-size="8">Peso percentual de cada atributo do banco na decisão da IA</text>
+<text x="168" y="59" text-anchor="end" fill="#1e293b" font-size="8" font-weight="700">xp_total (users.xpTotal)</text>
+<rect x="174" y="48" width="210" height="14" rx="3" fill="#f1f5f9"/>
+<rect x="174" y="48" width="195.0" height="14" rx="3" fill="#312e81"/>
+<text x="374.0" y="58.5" fill="#0f172a" font-size="8" font-weight="800">22.55%</text>
+<text x="168" y="80" text-anchor="end" fill="#1e293b" font-size="8" font-weight="700">nivel_heroi (Nível RPG)</text>
+<rect x="174" y="69" width="210" height="14" rx="3" fill="#f1f5f9"/>
+<rect x="174" y="69" width="157.3" height="14" rx="3" fill="#3730a3"/>
+<text x="336.3" y="79.5" fill="#0f172a" font-size="8" font-weight="800">18.19%</text>
+<text x="168" y="101" text-anchor="end" fill="#1e293b" font-size="8" font-weight="700">total_acertos (progresso.acertos)</text>
+<rect x="174" y="90" width="210" height="14" rx="3" fill="#f1f5f9"/>
+<rect x="174" y="90" width="149.0" height="14" rx="3" fill="#4338ca"/>
+<text x="328.0" y="100.5" fill="#0f172a" font-size="8" font-weight="800">17.23%</text>
+<text x="168" y="122" text-anchor="end" fill="#1e293b" font-size="8" font-weight="700">media_acertos_pct (rankings %)</text>
+<rect x="174" y="111" width="210" height="14" rx="3" fill="#f1f5f9"/>
+<rect x="174" y="111" width="105.8" height="14" rx="3" fill="#4f46e5"/>
+<text x="284.8" y="121.5" fill="#0f172a" font-size="8" font-weight="800">12.23%</text>
+<text x="168" y="143" text-anchor="end" fill="#1e293b" font-size="8" font-weight="700">pontuacao_media (progresso.pontuacao)</text>
+<rect x="174" y="132" width="210" height="14" rx="3" fill="#f1f5f9"/>
+<rect x="174" y="132" width="89.9" height="14" rx="3" fill="#6366f1"/>
+<text x="268.9" y="142.5" fill="#0f172a" font-size="8" font-weight="800">10.40%</text>
+<text x="168" y="164" text-anchor="end" fill="#1e293b" font-size="8" font-weight="700">fases_concluidas (total de fases)</text>
+<rect x="174" y="153" width="210" height="14" rx="3" fill="#f1f5f9"/>
+<rect x="174" y="153" width="41.0" height="14" rx="3" fill="#059669"/>
+<text x="220.0" y="163.5" fill="#0f172a" font-size="8" font-weight="800">4.74%</text>
+<text x="168" y="185" text-anchor="end" fill="#1e293b" font-size="8" font-weight="700">dias_ofensiva (streak diário)</text>
+<rect x="174" y="174" width="210" height="14" rx="3" fill="#f1f5f9"/>
+<rect x="174" y="174" width="40.1" height="14" rx="3" fill="#10b981"/>
+<text x="219.1" y="184.5" fill="#0f172a" font-size="8" font-weight="800">4.64%</text>
+<text x="168" y="206" text-anchor="end" fill="#1e293b" font-size="8" font-weight="700">hp_medio_restante (vida restante)</text>
+<rect x="174" y="195" width="210" height="14" rx="3" fill="#f1f5f9"/>
+<rect x="174" y="195" width="35.2" height="14" rx="3" fill="#0284c7"/>
+<text x="214.2" y="205.5" fill="#0f172a" font-size="8" font-weight="800">4.07%</text>
+<text x="168" y="227" text-anchor="end" fill="#1e293b" font-size="8" font-weight="700">total_perguntas_respondidas</text>
+<rect x="174" y="216" width="210" height="14" rx="3" fill="#f1f5f9"/>
+<rect x="174" y="216" width="17.6" height="14" rx="3" fill="#0ea5e9"/>
+<text x="196.6" y="226.5" fill="#0f172a" font-size="8" font-weight="800">2.03%</text>
+<text x="168" y="248" text-anchor="end" fill="#1e293b" font-size="8" font-weight="700">tempo_medio_fase_seg (segundos/fase)</text>
+<rect x="174" y="237" width="210" height="14" rx="3" fill="#f1f5f9"/>
+<rect x="174" y="237" width="16.4" height="14" rx="3" fill="#64748b"/>
+<text x="195.4" y="247.5" fill="#0f172a" font-size="8" font-weight="800">1.90%</text>
+</svg>
