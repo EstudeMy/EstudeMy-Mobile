@@ -1,6 +1,6 @@
 import api from './api';
 import { API_ENDPOINTS } from '../config/api.config';
-import { isValidId, sanitizeInput } from '../utils/security';
+import { isValidId } from '../utils/security';
 import logger from '../utils/logger';
 
 export interface Fase {

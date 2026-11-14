@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -7,13 +7,37 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Modal,
 } from 'react-native';
 import { useRouter } from 'expo-router';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import api from '../../services/api';
-import { Sparkles, Brain, ArrowLeft, PlusCircle, ShieldAlert } from 'lucide-react-native';
+import {
+  Sparkles,
+  Brain,
+  ArrowLeft,
+  PlusCircle,
+  ShieldAlert,
+  Lock,
+  Globe,
+  DollarSign,
+  Gift,
+  QrCode,
+  Copy,
+  Check,
+  RefreshCw,
+  Eye,
+} from 'lucide-react-native';
+import { obterMaterias } from '../../services/materiaService';
+import {
+  generateAccessCode,
+  saveTrailAccessCode,
+  copyToClipboard,
+} from '../../services/trilhaAcessoService';
+import { QRCodeModal } from '../../components/QRCodeModal';
+import { logger } from '../../utils/logger';
 
 interface SugestaoTrilha {
   trilha: {
@@ -40,22 +64,55 @@ interface SugestaoTrilha {
   }[];
 }
 
+const IDIOMAS = ['Português', 'Inglês', 'Espanhol'];
+
 export default function ConsultAiScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user } = useAuth();
   const { colors } = useTheme();
 
+  // Dados básicos
+  const [materiasList, setMateriasList] = useState<string[]>([]);
   const [materia, setMateria] = useState('');
+  const [materiaCustom, setMateriaCustom] = useState('');
   const [tema, setTema] = useState('');
   const [dificuldade, setDificuldade] = useState<'Facil' | 'Medio' | 'Dificil'>('Facil');
   const [secoesNum, setSecoesNum] = useState('2');
   const [fasesNum, setFasesNum] = useState('2');
+  const [idioma, setIdioma] = useState('Português');
 
+  // Novo padrão de disponibilidade & pagamento
+  const [disponibilidade, setDisponibilidade] = useState<'Aberto' | 'Privado'>('Aberto');
+  const [pagamento, setPagamento] = useState<'Gratuita' | 'Paga'>('Gratuita');
+  const [preco, setPreco] = useState('29.90');
+  const [codigoAcesso, setCodigoAcesso] = useState('');
+  const [codeCopied, setCodeCopied] = useState(false);
+
+  // Estados de loading e pós-criação
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [sugestao, setSugestao] = useState<SugestaoTrilha | null>(null);
+
+  // Modais
+  const [createdModalVisible, setCreatedModalVisible] = useState(false);
+  const [createdTrilha, setCreatedTrilha] = useState<{ _id: string; titulo: string; codigoAcesso: string } | null>(null);
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+
+  // Carrega lista de matérias dinâmicas
+  useEffect(() => {
+    let isMounted = true;
+    obterMaterias().then((list) => {
+      if (isMounted && list.length > 0) {
+        setMateriasList(list);
+        setMateria(list[0]);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const isAuthorized =
     user?.tipoUsuario === 'PROFESSOR' ||
@@ -88,8 +145,29 @@ export default function ConsultAiScreen() {
     );
   }
 
+  const handleSelectDisponibilidade = (disp: 'Aberto' | 'Privado') => {
+    setDisponibilidade(disp);
+    if (disp === 'Privado' && !codigoAcesso) {
+      setCodigoAcesso(generateAccessCode());
+    }
+  };
+
+  const handleRegenerateCode = () => {
+    const newCode = generateAccessCode();
+    setCodigoAcesso(newCode);
+    setCodeCopied(false);
+  };
+
+  const handleCopyCode = async (codeToCopy: string) => {
+    await copyToClipboard(codeToCopy);
+    setCodeCopied(true);
+    setTimeout(() => setCodeCopied(false), 2000);
+  };
+
+  const materiaFinal = materia === 'Outra' ? materiaCustom.trim() : materia.trim();
+
   const handleGerarTrilha = async () => {
-    if (!materia || !tema) {
+    if (!materiaFinal || !tema.trim()) {
       setErrorMsg('Preencha a matéria e o tema/objetivo de estudo.');
       return;
     }
@@ -100,12 +178,13 @@ export default function ConsultAiScreen() {
 
     try {
       const response = await api.post('/api/trilhas/gerar-com-ia', {
-        materia: materia.trim(),
+        materia: materiaFinal,
         temaOuObjetivo: tema.trim(),
         dificuldade,
-        numeroSecoes: parseInt(secoesNum) || 2,
-        fasesPorSecao: parseInt(fasesNum) || 2,
+        numeroSecoes: parseInt(secoesNum, 10) || 2,
+        fasesPorSecao: parseInt(fasesNum, 10) || 2,
         perguntasPorFase: 3,
+        idioma,
       });
 
       if (response.data && response.data.trilha) {
@@ -114,7 +193,7 @@ export default function ConsultAiScreen() {
         setErrorMsg('Resposta inesperada da IA. Tente novamente.');
       }
     } catch (e: any) {
-      console.error('Erro ao gerar trilha com IA:', e);
+      logger.error('Erro ao gerar trilha com IA:', e);
       setErrorMsg(e.response?.data?.message || 'Erro ao comunicar com a IA.');
     } finally {
       setLoading(false);
@@ -127,12 +206,20 @@ export default function ConsultAiScreen() {
     setErrorMsg(null);
 
     try {
+      const precoNumerico = pagamento === 'Paga' ? parseFloat(preco.replace(',', '.')) || 0 : 0;
+      const finalCodigo = disponibilidade === 'Privado' ? (codigoAcesso || generateAccessCode()) : undefined;
+
       // 1. Criar trilha principal no backend
       const trilhaRes = await api.post('/api/trilhas', {
         titulo: sugestao.trilha.titulo,
-        materia: sugestao.trilha.materia,
+        materia: sugestao.trilha.materia || materiaFinal,
         descricao: sugestao.trilha.descricao,
-        nivelDificuldade: sugestao.trilha.dificuldade,
+        nivelDificuldade: sugestao.trilha.dificuldade || dificuldade,
+        disponibilidade,
+        pagamento,
+        preco: precoNumerico,
+        codigoAcesso: finalCodigo,
+        idioma,
       });
 
       const newTrilhaId = trilhaRes.data._id;
@@ -164,14 +251,21 @@ export default function ConsultAiScreen() {
         }
       }
 
-      // 3. Auto-iniciar a trilha recém-criada
-      await api.post(`/api/trilhas/iniciar/${newTrilhaId}`);
-
-      // Redireciona diretamente para a nova trilha!
-      router.replace(`/trilha/${newTrilhaId}`);
-
+      // 3. Salvar código exclusivo caso seja trilha privada
+      if (disponibilidade === 'Privado' && finalCodigo) {
+        await saveTrailAccessCode(newTrilhaId, finalCodigo);
+        setCreatedTrilha({
+          _id: newTrilhaId,
+          titulo: sugestao.trilha.titulo,
+          codigoAcesso: finalCodigo,
+        });
+        setCreatedModalVisible(true);
+      } else {
+        // Redireciona diretamente para a nova trilha!
+        router.replace(`/trilha/${newTrilhaId}`);
+      }
     } catch (e: any) {
-      console.error('Erro ao salvar trilha no banco:', e);
+      logger.error('Erro ao salvar trilha no banco:', e);
       setErrorMsg('Falha ao persistir a trilha no banco de dados. Tente novamente.');
     } finally {
       setSaving(false);
@@ -195,186 +289,524 @@ export default function ConsultAiScreen() {
           <ArrowLeft size={24} color="#ffffff" />
         </TouchableOpacity>
 
-      {/* Header */}
-      <View style={[styles.headerCard, { backgroundColor: colors.card }]}>
-        <View style={styles.headerTitleRow}>
-          <Brain size={28} color="#818CF8" />
-          <Text style={[styles.title, { color: colors.text }]}>Consult.Ai 🤖</Text>
-        </View>
-        <Text style={[styles.desc, { color: colors.textMuted }]}>
-          Crie trilhas completas de aprendizado gamificado com o poder da Inteligência Artificial.
-        </Text>
-      </View>
-
-      {errorMsg && (
-        <View style={styles.errorCard}>
-          <Text style={styles.errorText}>{errorMsg}</Text>
-        </View>
-      )}
-
-      {/* Form de Geração */}
-      {!sugestao ? (
-        <View style={[styles.formCard, { backgroundColor: colors.card }]}>
-          <Text style={[styles.formTitle, { color: colors.text }]}>Parâmetros da Trilha</Text>
-
-          {/* Matéria */}
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: colors.text }]}>Matéria (Ex: História, Geografia, Química)</Text>
-            <TextInput
-              style={[styles.input, { backgroundColor: colors.cardSecondary, color: colors.text }]}
-              placeholder="Digite a matéria básica"
-              placeholderTextColor={colors.textMuted}
-              value={materia}
-              onChangeText={setMateria}
-            />
+        {/* Header */}
+        <View style={[styles.headerCard, { backgroundColor: colors.card }]}>
+          <View style={styles.headerTitleRow}>
+            <Brain size={28} color="#818CF8" />
+            <Text style={[styles.title, { color: colors.text }]}>Consult.Ai 🤖</Text>
           </View>
+          <Text style={[styles.desc, { color: colors.textMuted }]}>
+            Gere trilhas de estudo completas com quiz integrado usando IA e configure o novo padrão de acesso.
+          </Text>
+        </View>
 
-          {/* Tema / Objetivo */}
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: colors.text }]}>Tema de Estudo ou Objetivo Específico</Text>
-            <TextInput
-              style={[
-                styles.input,
-                styles.textArea,
-                { backgroundColor: colors.cardSecondary, color: colors.text },
-              ]}
-              placeholder="Ex: Revolução Francesa, focado na Queda da Bastilha e Declaração dos Direitos"
-              placeholderTextColor={colors.textMuted}
-              multiline
-              numberOfLines={3}
-              value={tema}
-              onChangeText={setTema}
-            />
+        {errorMsg && (
+          <View style={styles.errorCard}>
+            <Text style={styles.errorText}>{errorMsg}</Text>
           </View>
+        )}
 
-          {/* Dificuldade */}
-          <View style={styles.inputGroup}>
-            <Text style={[styles.label, { color: colors.text }]}>Dificuldade</Text>
-            <View style={styles.selectorRow}>
-              {['Facil', 'Medio', 'Dificil'].map((diff) => (
+        {/* Form de Geração */}
+        {!sugestao ? (
+          <View style={[styles.formCard, { backgroundColor: colors.card }]}>
+            <Text style={[styles.formTitle, { color: colors.text }]}>Parâmetros da Trilha</Text>
+
+            {/* Matéria */}
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.text }]}>Matéria de Estudo</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 8 }}>
+                <View style={{ flexDirection: 'row', gap: 8, paddingVertical: 4 }}>
+                  {materiasList.map((m) => (
+                    <TouchableOpacity
+                      key={m}
+                      style={[
+                        styles.materiaChip,
+                        { backgroundColor: colors.cardSecondary },
+                        materia === m && styles.materiaChipActive,
+                      ]}
+                      onPress={() => setMateria(m)}
+                    >
+                      <Text
+                        style={[
+                          styles.materiaChipText,
+                          { color: colors.textMuted },
+                          materia === m && styles.materiaChipTextActive,
+                        ]}
+                      >
+                        {m}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                  <TouchableOpacity
+                    style={[
+                      styles.materiaChip,
+                      { backgroundColor: colors.cardSecondary },
+                      materia === 'Outra' && styles.materiaChipActive,
+                    ]}
+                    onPress={() => setMateria('Outra')}
+                  >
+                    <Text
+                      style={[
+                        styles.materiaChipText,
+                        { color: colors.textMuted },
+                        materia === 'Outra' && styles.materiaChipTextActive,
+                      ]}
+                    >
+                      + Outra
+                    </Text>
+                  </TouchableOpacity>
+                </View>
+              </ScrollView>
+
+              {materia === 'Outra' && (
+                <TextInput
+                  style={[styles.input, { backgroundColor: colors.cardSecondary, color: colors.text, marginTop: 4 }]}
+                  placeholder="Digite o nome da matéria"
+                  placeholderTextColor={colors.textMuted}
+                  value={materiaCustom}
+                  onChangeText={setMateriaCustom}
+                />
+              )}
+            </View>
+
+            {/* Tema / Objetivo */}
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.text }]}>Tema de Estudo ou Objetivo Específico</Text>
+              <TextInput
+                style={[
+                  styles.input,
+                  styles.textArea,
+                  { backgroundColor: colors.cardSecondary, color: colors.text },
+                ]}
+                placeholder="Ex: Revolução Francesa com foco na Queda da Bastilha e Iluminismo"
+                placeholderTextColor={colors.textMuted}
+                multiline
+                numberOfLines={3}
+                value={tema}
+                onChangeText={setTema}
+              />
+            </View>
+
+            {/* Dificuldade */}
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.text }]}>Nível de Dificuldade</Text>
+              <View style={styles.selectorRow}>
+                {['Facil', 'Medio', 'Dificil'].map((diff) => (
+                  <TouchableOpacity
+                    key={diff}
+                    style={[
+                      styles.selectorBtn,
+                      { backgroundColor: colors.cardSecondary },
+                      dificuldade === diff && styles.selectorBtnActive,
+                    ]}
+                    onPress={() => setDificuldade(diff as any)}
+                  >
+                    <Text
+                      style={[
+                        styles.selectorBtnText,
+                        { color: colors.textMuted },
+                        dificuldade === diff && styles.textActive,
+                      ]}
+                    >
+                      {diff === 'Facil' ? 'Fácil' : diff === 'Medio' ? 'Médio' : 'Difícil'}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Idioma */}
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.text }]}>Idioma da Trilha</Text>
+              <View style={styles.selectorRow}>
+                {IDIOMAS.map((lang) => (
+                  <TouchableOpacity
+                    key={lang}
+                    style={[
+                      styles.selectorBtn,
+                      { backgroundColor: colors.cardSecondary },
+                      idioma === lang && styles.selectorBtnActive,
+                    ]}
+                    onPress={() => setIdioma(lang)}
+                  >
+                    <Text
+                      style={[
+                        styles.selectorBtnText,
+                        { color: colors.textMuted },
+                        idioma === lang && styles.textActive,
+                      ]}
+                    >
+                      {lang}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            {/* Disponibilidade: Aberto vs Privado */}
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.text }]}>Disponibilidade da Trilha</Text>
+              <View style={styles.selectorRow}>
                 <TouchableOpacity
-                  key={diff}
                   style={[
                     styles.selectorBtn,
                     { backgroundColor: colors.cardSecondary },
-                    dificuldade === diff && styles.selectorBtnActive,
+                    disponibilidade === 'Aberto' && styles.selectorBtnActiveGreen,
                   ]}
-                  onPress={() => setDificuldade(diff as any)}
+                  onPress={() => handleSelectDisponibilidade('Aberto')}
                 >
-                  <Text style={[styles.selectorBtnText, { color: colors.textMuted }, dificuldade === diff && styles.textActive]}>
-                    {diff === 'Facil' ? 'Fácil' : diff === 'Medio' ? 'Médio' : 'Difícil'}
+                  <Globe
+                    size={16}
+                    color={disponibilidade === 'Aberto' ? '#ffffff' : colors.textMuted}
+                    style={{ marginBottom: 4 }}
+                  />
+                  <Text
+                    style={[
+                      styles.selectorBtnText,
+                      { color: colors.textMuted },
+                      disponibilidade === 'Aberto' && styles.textActive,
+                    ]}
+                  >
+                    Aberta
                   </Text>
                 </TouchableOpacity>
-              ))}
-            </View>
-          </View>
 
-          {/* Estrutura */}
-          <View style={styles.rowInputs}>
-            <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={[styles.label, { color: colors.text }]}>Nº Seções</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.cardSecondary, color: colors.text }]}
-                keyboardType="number-pad"
-                value={secoesNum}
-                onChangeText={setSecoesNum}
-              />
-            </View>
-            <View style={[styles.inputGroup, { flex: 1 }]}>
-              <Text style={[styles.label, { color: colors.text }]}>Fases / Seção</Text>
-              <TextInput
-                style={[styles.input, { backgroundColor: colors.cardSecondary, color: colors.text }]}
-                keyboardType="number-pad"
-                value={fasesNum}
-                onChangeText={setFasesNum}
-              />
-            </View>
-          </View>
-
-          {/* Botão Gerar */}
-          <TouchableOpacity
-            style={styles.generateBtn}
-            onPress={handleGerarTrilha}
-            disabled={loading}
-            activeOpacity={0.9}
-          >
-            {loading ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <>
-                <Sparkles size={20} color="#ffffff" style={{ marginRight: 8 }} />
-                <Text style={styles.generateBtnText}>Gerar Trilha com IA</Text>
-              </>
-            )}
-          </TouchableOpacity>
-        </View>
-      ) : (
-        /* Resultado da Geração */
-        <View style={styles.resultContainer}>
-          <View style={[styles.resultHeaderCard, { backgroundColor: colors.card }]}>
-            <Sparkles size={32} color="#F59E0B" />
-            <Text style={[styles.resultTitle, { color: colors.text }]}>{sugestao.trilha.titulo}</Text>
-            <Text style={[styles.resultDesc, { color: colors.textMuted }]}>{sugestao.trilha.descricao}</Text>
-            <View style={styles.badgeRow}>
-              <View style={[styles.badge, { backgroundColor: colors.cardSecondary }]}>
-                <Text style={[styles.badgeText, { color: colors.primary }]}>{sugestao.trilha.materia}</Text>
-              </View>
-              <View style={[styles.badge, { backgroundColor: colors.cardSecondary }]}>
-                <Text style={[styles.badgeText, { color: colors.primary }]}>{sugestao.trilha.dificuldade}</Text>
-              </View>
-            </View>
-          </View>
-
-          {/* Estrutura de Seções Geradas */}
-          <Text style={[styles.structureTitle, { color: colors.text }]}>Estrutura da Trilha Gerada</Text>
-          {sugestao.secoes.map((sec, sIdx) => (
-            <View key={sIdx} style={[styles.secaoCard, { backgroundColor: colors.card }]}>
-              <Text style={[styles.secaoName, { color: colors.text }]}>
-                Seção {sec.ordem}: {sec.titulo}
-              </Text>
-              {sec.fases.map((fase, fIdx) => (
-                <View key={fIdx} style={styles.faseItem}>
-                  <Text style={[styles.faseName, { color: colors.text }]}>
-                    Fase {fase.ordem}: {fase.titulo}
+                <TouchableOpacity
+                  style={[
+                    styles.selectorBtn,
+                    { backgroundColor: colors.cardSecondary },
+                    disponibilidade === 'Privado' && styles.selectorBtnActivePurple,
+                  ]}
+                  onPress={() => handleSelectDisponibilidade('Privado')}
+                >
+                  <Lock
+                    size={16}
+                    color={disponibilidade === 'Privado' ? '#ffffff' : colors.textMuted}
+                    style={{ marginBottom: 4 }}
+                  />
+                  <Text
+                    style={[
+                      styles.selectorBtnText,
+                      { color: colors.textMuted },
+                      disponibilidade === 'Privado' && styles.textActive,
+                    ]}
+                  >
+                    Privada (Código)
                   </Text>
-                  <Text style={[styles.faseQuestions, { color: colors.textMuted }]}>
-                    ({fase.perguntas.length} perguntas de quiz geradas)
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Código Exclusivo Gerado para Trilha Privada */}
+            {disponibilidade === 'Privado' && (
+              <View style={[styles.codeBox, { backgroundColor: colors.cardSecondary }]}>
+                <View style={styles.codeHeader}>
+                  <Lock size={16} color="#818CF8" />
+                  <Text style={[styles.codeLabel, { color: colors.text }]}>Código Único de Acesso</Text>
+                </View>
+                <Text style={styles.codeHint}>
+                  Os alunos precisarão digitar este código exclusivo ou escanear o QR Code para acessar.
+                </Text>
+                <View style={styles.codeActionRow}>
+                  <Text style={[styles.codeDisplay, { color: colors.text }]}>{codigoAcesso || '---'}</Text>
+                  <TouchableOpacity
+                    style={[styles.miniBtn, codeCopied && styles.miniBtnSuccess]}
+                    onPress={() => handleCopyCode(codigoAcesso)}
+                  >
+                    {codeCopied ? (
+                      <Check size={16} color="#ffffff" />
+                    ) : (
+                      <Copy size={16} color="#ffffff" />
+                    )}
+                    <Text style={styles.miniBtnText}>{codeCopied ? 'Copiado!' : 'Copiar'}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity style={styles.miniBtnOutline} onPress={handleRegenerateCode}>
+                    <RefreshCw size={16} color={colors.text} />
+                  </TouchableOpacity>
+                </View>
+              </View>
+            )}
+
+            {/* Pagamento: Gratuita vs Paga */}
+            <View style={styles.inputGroup}>
+              <Text style={[styles.label, { color: colors.text }]}>Acesso Financeiro</Text>
+              <View style={styles.selectorRow}>
+                <TouchableOpacity
+                  style={[
+                    styles.selectorBtn,
+                    { backgroundColor: colors.cardSecondary },
+                    pagamento === 'Gratuita' && styles.selectorBtnActiveGreen,
+                  ]}
+                  onPress={() => setPagamento('Gratuita')}
+                >
+                  <Gift
+                    size={16}
+                    color={pagamento === 'Gratuita' ? '#ffffff' : colors.textMuted}
+                    style={{ marginBottom: 4 }}
+                  />
+                  <Text
+                    style={[
+                      styles.selectorBtnText,
+                      { color: colors.textMuted },
+                      pagamento === 'Gratuita' && styles.textActive,
+                    ]}
+                  >
+                    Gratuita
+                  </Text>
+                </TouchableOpacity>
+
+                <TouchableOpacity
+                  style={[
+                    styles.selectorBtn,
+                    { backgroundColor: colors.cardSecondary },
+                    pagamento === 'Paga' && styles.selectorBtnActiveAmber,
+                  ]}
+                  onPress={() => setPagamento('Paga')}
+                >
+                  <DollarSign
+                    size={16}
+                    color={pagamento === 'Paga' ? '#ffffff' : colors.textMuted}
+                    style={{ marginBottom: 4 }}
+                  />
+                  <Text
+                    style={[
+                      styles.selectorBtnText,
+                      { color: colors.textMuted },
+                      pagamento === 'Paga' && styles.textActive,
+                    ]}
+                  >
+                    Paga (R$)
+                  </Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+
+            {/* Preço (se paga) */}
+            {pagamento === 'Paga' && (
+              <View style={styles.inputGroup}>
+                <Text style={[styles.label, { color: colors.text }]}>Preço da Trilha (R$)</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: colors.cardSecondary, color: colors.text }]}
+                  keyboardType="numeric"
+                  placeholder="Ex: 29.90"
+                  placeholderTextColor={colors.textMuted}
+                  value={preco}
+                  onChangeText={setPreco}
+                />
+              </View>
+            )}
+
+            {/* Estrutura */}
+            <View style={styles.rowInputs}>
+              <View style={[styles.inputGroup, { flex: 1 }]}>
+                <Text style={[styles.label, { color: colors.text }]}>Nº Seções</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: colors.cardSecondary, color: colors.text }]}
+                  keyboardType="number-pad"
+                  value={secoesNum}
+                  onChangeText={setSecoesNum}
+                />
+              </View>
+              <View style={[styles.inputGroup, { flex: 1 }]}>
+                <Text style={[styles.label, { color: colors.text }]}>Fases / Seção</Text>
+                <TextInput
+                  style={[styles.input, { backgroundColor: colors.cardSecondary, color: colors.text }]}
+                  keyboardType="number-pad"
+                  value={fasesNum}
+                  onChangeText={setFasesNum}
+                />
+              </View>
+            </View>
+
+            {/* Botão Gerar */}
+            <TouchableOpacity
+              style={styles.generateBtn}
+              onPress={handleGerarTrilha}
+              disabled={loading}
+              activeOpacity={0.9}
+            >
+              {loading ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <>
+                  <Sparkles size={20} color="#ffffff" style={{ marginRight: 8 }} />
+                  <Text style={styles.generateBtnText}>Gerar Trilha com IA</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        ) : (
+          /* Resultado da Geração */
+          <View style={styles.resultContainer}>
+            <View style={[styles.resultHeaderCard, { backgroundColor: colors.card }]}>
+              <Sparkles size={32} color="#F59E0B" />
+              <Text style={[styles.resultTitle, { color: colors.text }]}>{sugestao.trilha.titulo}</Text>
+              <Text style={[styles.resultDesc, { color: colors.textMuted }]}>{sugestao.trilha.descricao}</Text>
+
+              <View style={styles.badgeRow}>
+                <View style={[styles.badge, { backgroundColor: colors.cardSecondary }]}>
+                  <Text style={[styles.badgeText, { color: colors.primary }]}>{sugestao.trilha.materia}</Text>
+                </View>
+                <View style={[styles.badge, { backgroundColor: colors.cardSecondary }]}>
+                  <Text style={[styles.badgeText, { color: '#F59E0B' }]}>{sugestao.trilha.dificuldade}</Text>
+                </View>
+                <View style={[styles.badge, { backgroundColor: colors.cardSecondary }]}>
+                  <Text style={[styles.badgeText, { color: '#10B981' }]}>{idioma}</Text>
+                </View>
+                <View
+                  style={[
+                    styles.badge,
+                    { backgroundColor: disponibilidade === 'Privado' ? '#8B5CF6' : '#10B981' },
+                  ]}
+                >
+                  <Text style={[styles.badgeText, { color: '#ffffff' }]}>{disponibilidade}</Text>
+                </View>
+                <View
+                  style={[
+                    styles.badge,
+                    { backgroundColor: pagamento === 'Paga' ? '#F59E0B' : '#16A34A' },
+                  ]}
+                >
+                  <Text style={[styles.badgeText, { color: '#ffffff' }]}>
+                    {pagamento === 'Paga' ? `R$ ${preco}` : 'Gratuita'}
                   </Text>
                 </View>
-              ))}
+              </View>
             </View>
-          ))}
 
-          {/* Botões de Ação para Salvar */}
-          <TouchableOpacity
-            style={styles.saveBtn}
-            onPress={handleSalvarTrilha}
-            disabled={saving}
-            activeOpacity={0.9}
-          >
-            {saving ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <>
-                <PlusCircle size={20} color="#ffffff" style={{ marginRight: 8 }} />
-                <Text style={styles.saveBtnText}>Salvar e Começar a Jogar!</Text>
-              </>
+            {/* Estrutura de Seções Geradas */}
+            <Text style={[styles.structureTitle, { color: colors.text }]}>Estrutura da Trilha Gerada</Text>
+            {sugestao.secoes.map((sec, sIdx) => (
+              <View key={sIdx} style={[styles.secaoCard, { backgroundColor: colors.card }]}>
+                <Text style={[styles.secaoName, { color: colors.text }]}>
+                  Seção {sec.ordem}: {sec.titulo}
+                </Text>
+                {sec.fases.map((fase, fIdx) => (
+                  <View key={fIdx} style={styles.faseItem}>
+                    <Text style={[styles.faseName, { color: colors.text }]}>
+                      Fase {fase.ordem}: {fase.titulo}
+                    </Text>
+                    <Text style={[styles.faseQuestions, { color: colors.textMuted }]}>
+                      ({fase.perguntas.length} perguntas de quiz geradas)
+                    </Text>
+                  </View>
+                ))}
+              </View>
+            ))}
+
+            {/* Botões de Ação para Salvar */}
+            <TouchableOpacity
+              style={styles.saveBtn}
+              onPress={handleSalvarTrilha}
+              disabled={saving}
+              activeOpacity={0.9}
+            >
+              {saving ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <>
+                  <PlusCircle size={20} color="#ffffff" style={{ marginRight: 8 }} />
+                  <Text style={styles.saveBtnText}>Salvar Trilha</Text>
+                </>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={styles.cancelBtn}
+              onPress={() => setSugestao(null)}
+              disabled={saving}
+            >
+              <Text style={styles.cancelBtnText}>Descartar e Tentar Novamente</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        <View style={{ height: 60 }} />
+      </ScrollView>
+
+      {/* Modal de Sucesso com Código e QR Code para Trilha Privada */}
+      <Modal
+        visible={createdModalVisible}
+        transparent
+        animationType="slide"
+        onRequestClose={() => {
+          setCreatedModalVisible(false);
+          if (createdTrilha) router.replace(`/trilha/${createdTrilha._id}`);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.createdCard, { backgroundColor: colors.card }]}>
+            <View style={styles.createdIconBadge}>
+              <Sparkles size={36} color="#ffffff" />
+            </View>
+
+            <Text style={[styles.createdTitle, { color: colors.text }]}>Trilha Criada com Sucesso!</Text>
+            <Text style={[styles.createdSubtitle, { color: colors.textMuted }]}>
+              {createdTrilha?.titulo}
+            </Text>
+
+            {createdTrilha?.codigoAcesso && (
+              <View style={[styles.createdCodeContainer, { backgroundColor: colors.cardSecondary }]}>
+                <Text style={[styles.createdCodeLabel, { color: colors.textMuted }]}>
+                  CÓDIGO EXCLUSIVO DA TRILHA
+                </Text>
+                <Text style={[styles.createdCodeValue, { color: colors.text }]}>
+                  {createdTrilha.codigoAcesso}
+                </Text>
+                <TouchableOpacity
+                  style={[styles.createdCopyBtn, codeCopied && styles.createdCopyBtnSuccess]}
+                  onPress={() => handleCopyCode(createdTrilha.codigoAcesso)}
+                >
+                  {codeCopied ? (
+                    <>
+                      <Check size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                      <Text style={styles.createdCopyBtnText}>Copiado com Sucesso!</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Copy size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                      <Text style={styles.createdCopyBtnText}>Copiar Código para Alunos</Text>
+                    </>
+                  )}
+                </TouchableOpacity>
+              </View>
             )}
-          </TouchableOpacity>
 
-          <TouchableOpacity
-            style={styles.cancelBtn}
-            onPress={() => setSugestao(null)}
-            disabled={saving}
-          >
-            <Text style={styles.cancelBtnText}>Descartar e Tentar Novamente</Text>
-          </TouchableOpacity>
+            <View style={styles.createdActionButtons}>
+              <TouchableOpacity
+                style={styles.qrCodeBtn}
+                onPress={() => setQrModalVisible(true)}
+              >
+                <QrCode size={20} color="#ffffff" style={{ marginRight: 8 }} />
+                <Text style={styles.qrCodeBtnText}>Visualizar QR Code</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.goToTrailBtn}
+                onPress={() => {
+                  setCreatedModalVisible(false);
+                  if (createdTrilha) router.replace(`/trilha/${createdTrilha._id}`);
+                }}
+              >
+                <Eye size={20} color="#ffffff" style={{ marginRight: 8 }} />
+                <Text style={styles.goToTrailBtnText}>Acessar Trilha Agora</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
         </View>
-      )}
+      </Modal>
 
-      <View style={{ height: 60 }} />
-    </ScrollView>
-  </SafeAreaView>
+      {/* Modal de QR Code */}
+      {createdTrilha && (
+        <QRCodeModal
+          visible={qrModalVisible}
+          onClose={() => setQrModalVisible(false)}
+          trilhaId={createdTrilha._id}
+          trilhaTitulo={createdTrilha.titulo}
+          codigoAcesso={createdTrilha.codigoAcesso}
+        />
+      )}
+    </SafeAreaView>
   );
 }
 
@@ -406,12 +838,6 @@ const styles = StyleSheet.create({
     elevation: 6,
     marginBottom: 24,
   },
-  cardDark: {
-    backgroundColor: '#2D2D44',
-  },
-  cardLight: {
-    backgroundColor: '#ffffff',
-  },
   headerTitleRow: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -421,11 +847,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '900',
-    color: '#ffffff',
   },
   desc: {
     fontSize: 13,
-    color: '#9CA3AF',
     fontWeight: '600',
     lineHeight: 18,
   },
@@ -457,17 +881,33 @@ const styles = StyleSheet.create({
   formTitle: {
     fontSize: 18,
     fontWeight: '900',
-    color: '#ffffff',
     marginBottom: 18,
   },
   inputGroup: {
     marginBottom: 16,
   },
   label: {
-    color: '#F3F4F6',
     fontSize: 13,
-    fontWeight: '700',
-    marginBottom: 6,
+    fontWeight: '800',
+    marginBottom: 8,
+  },
+  materiaChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  materiaChipActive: {
+    backgroundColor: '#4F46E5',
+    borderColor: '#1b1b1b',
+  },
+  materiaChipText: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  materiaChipTextActive: {
+    color: '#ffffff',
   },
   input: {
     fontSize: 15,
@@ -476,14 +916,7 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 3,
     borderColor: '#1b1b1b',
-  },
-  inputDark: {
-    backgroundColor: '#1E1E2F',
-    color: '#ffffff',
-  },
-  inputLight: {
-    backgroundColor: '#ffffff',
-    color: '#1b1b1b',
+    fontWeight: '600',
   },
   textArea: {
     height: 80,
@@ -500,16 +933,87 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#1b1b1b',
     alignItems: 'center',
+    justifyContent: 'center',
   },
   selectorBtnActive: {
-    backgroundColor: '#4F46E5', // indigo-600
+    backgroundColor: '#4F46E5',
+  },
+  selectorBtnActiveGreen: {
+    backgroundColor: '#16A34A',
+  },
+  selectorBtnActivePurple: {
+    backgroundColor: '#8B5CF6',
+  },
+  selectorBtnActiveAmber: {
+    backgroundColor: '#F59E0B',
   },
   selectorBtnText: {
-    color: '#9CA3AF',
     fontWeight: '800',
+    fontSize: 13,
   },
   textActive: {
     color: '#ffffff',
+  },
+  codeBox: {
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    marginBottom: 16,
+  },
+  codeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 4,
+  },
+  codeLabel: {
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  codeHint: {
+    fontSize: 11,
+    color: '#9CA3AF',
+    marginBottom: 10,
+    fontWeight: '600',
+  },
+  codeActionRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  codeDisplay: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '900',
+    letterSpacing: 2,
+  },
+  miniBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#4F46E5',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  miniBtnSuccess: {
+    backgroundColor: '#16A34A',
+  },
+  miniBtnText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '900',
+    marginLeft: 4,
+  },
+  miniBtnOutline: {
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   rowInputs: {
     flexDirection: 'row',
@@ -550,11 +1054,9 @@ const styles = StyleSheet.create({
   resultTitle: {
     fontSize: 20,
     fontWeight: '900',
-    color: '#ffffff',
     textAlign: 'center',
   },
   resultDesc: {
-    color: '#9CA3AF',
     fontSize: 13,
     textAlign: 'center',
     lineHeight: 18,
@@ -562,11 +1064,12 @@ const styles = StyleSheet.create({
   },
   badgeRow: {
     flexDirection: 'row',
-    gap: 8,
+    flexWrap: 'wrap',
+    justifyContent: 'center',
+    gap: 6,
     marginTop: 8,
   },
   badge: {
-    backgroundColor: '#1E1E2F',
     borderWidth: 1.5,
     borderColor: '#1b1b1b',
     paddingHorizontal: 10,
@@ -574,14 +1077,12 @@ const styles = StyleSheet.create({
     borderRadius: 6,
   },
   badgeText: {
-    color: '#A5B4FC',
     fontWeight: '800',
     fontSize: 11,
   },
   structureTitle: {
     fontSize: 18,
     fontWeight: '900',
-    color: '#ffffff',
     marginTop: 8,
   },
   secaoCard: {
@@ -591,7 +1092,6 @@ const styles = StyleSheet.create({
     borderColor: '#1b1b1b',
   },
   secaoName: {
-    color: '#ffffff',
     fontSize: 16,
     fontWeight: '900',
     marginBottom: 8,
@@ -603,18 +1103,16 @@ const styles = StyleSheet.create({
     marginVertical: 4,
   },
   faseName: {
-    color: '#ffffff',
     fontSize: 14,
     fontWeight: '800',
   },
   faseQuestions: {
-    color: '#9CA3AF',
     fontSize: 11,
     fontWeight: '600',
     marginTop: 2,
   },
   saveBtn: {
-    backgroundColor: '#16A34A', // green-600
+    backgroundColor: '#16A34A',
     borderWidth: 3,
     borderColor: '#1b1b1b',
     paddingVertical: 15,
@@ -665,6 +1163,125 @@ const styles = StyleSheet.create({
   backHomeBtnText: {
     color: '#ffffff',
     fontSize: 15,
+    fontWeight: '900',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  createdCard: {
+    width: '100%',
+    maxWidth: 420,
+    padding: 24,
+    borderRadius: 20,
+    borderWidth: 4,
+    borderColor: '#1b1b1b',
+    shadowColor: '#000000',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 6,
+    alignItems: 'center',
+  },
+  createdIconBadge: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#16A34A',
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  createdTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: 6,
+  },
+  createdSubtitle: {
+    fontSize: 14,
+    fontWeight: '700',
+    textAlign: 'center',
+    marginBottom: 18,
+  },
+  createdCodeContainer: {
+    width: '100%',
+    padding: 16,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    alignItems: 'center',
+    marginBottom: 18,
+  },
+  createdCodeLabel: {
+    fontSize: 11,
+    fontWeight: '900',
+    letterSpacing: 1,
+    marginBottom: 6,
+  },
+  createdCodeValue: {
+    fontSize: 26,
+    fontWeight: '900',
+    letterSpacing: 4,
+    marginBottom: 12,
+  },
+  createdCopyBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#4F46E5',
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+    width: '100%',
+  },
+  createdCopyBtnSuccess: {
+    backgroundColor: '#16A34A',
+  },
+  createdCopyBtnText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  createdActionButtons: {
+    width: '100%',
+    gap: 10,
+  },
+  qrCodeBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#8B5CF6',
+    paddingVertical: 14,
+    borderRadius: 10,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+  },
+  qrCodeBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  goToTrailBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#16A34A',
+    paddingVertical: 14,
+    borderRadius: 10,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+  },
+  goToTrailBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
     fontWeight: '900',
   },
 });

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -19,7 +19,7 @@ import { getCharacterImage, BACKGROUND_IMAGES } from '../../constants/assets';
 import api from '../../services/api';
 import { sanitizeInput } from '../../utils/security';
 import logger from '../../utils/logger';
-import { Sparkles, User, ShieldCheck } from 'lucide-react-native';
+import { Sparkles } from 'lucide-react-native';
 
 const CHARACTERS_LIST = [
   { id: 'Samurai', name: 'Samurai', description: 'Guerreiro de honra com ataques rápidos de espada.' },
@@ -30,7 +30,7 @@ const CHARACTERS_LIST = [
 export default function CompletarPerfilScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, refreshUser, updateUserState } = useAuth();
+  const { user, updateUserState } = useAuth();
 
   const [username, setUsername] = useState(user?.username || '');
   const [selectedChar, setSelectedChar] = useState(user?.personagem || 'Samurai');
@@ -71,7 +71,7 @@ export default function CompletarPerfilScreen() {
         if (perfilRes.data?.usuario) {
           updateUserState(perfilRes.data.usuario);
         }
-      } catch (errPerfil: any) {
+      } catch {
         // Fallback para atualizar-personagem caso criarPerfil retorne status de já existente
         try {
           await api.put('/api/users/atualizar-personagem', { personagem: selectedChar });

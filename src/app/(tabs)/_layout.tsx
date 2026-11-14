@@ -1,12 +1,11 @@
 import React from 'react';
 import { Platform } from 'react-native';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
-import { Home, Trophy, MoreHorizontal } from 'lucide-react-native';
+import { Home, Trophy, MoreHorizontal, BookOpen } from 'lucide-react-native';
 import { useAuth } from '../../contexts/AuthContext';
-import { useRouter } from 'expo-router';
 import { isProfileCompleted } from '../../services/authHelpers';
 
 export default function TabLayout() {
@@ -37,6 +36,8 @@ export default function TabLayout() {
   const safeBottom = Math.max(insets.bottom, Platform.OS === 'android' ? 24 : 12);
   const tabHeight = 62 + safeBottom;
 
+  const isProfessor = user?.tipoUsuario === 'PROFESSOR';
+
   return (
     <Tabs
       screenOptions={{
@@ -65,6 +66,14 @@ export default function TabLayout() {
         options={{
           title: t('common.home') || 'Home',
           tabBarIcon: ({ color, size }) => <Home color={color} size={size} />,
+        }}
+      />
+      <Tabs.Screen
+        name="minhas-trilhas"
+        options={{
+          title: t('common.myTrails') || 'Minhas Trilhas',
+          href: isProfessor ? '/minhas-trilhas' : null,
+          tabBarIcon: ({ color, size }) => <BookOpen color={color} size={size} />,
         }}
       />
       <Tabs.Screen

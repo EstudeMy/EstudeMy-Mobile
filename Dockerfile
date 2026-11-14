@@ -5,7 +5,7 @@ FROM node:22-alpine AS builder
 WORKDIR /app
 
 # Instala dependências do projeto
-COPY package.json package-lock.json ./
+COPY package*.json .npmrc* ./
 RUN npm ci
 
 # Copia todo o código-fonte
@@ -44,7 +44,7 @@ CMD ["nginx", "-g", "daemon off;"]
 FROM node:22-alpine AS dev
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package*.json .npmrc* ./
 RUN npm ci
 
 COPY . ./

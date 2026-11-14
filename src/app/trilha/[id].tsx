@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Image,
   Modal,
+  TextInput,
+  Platform,
 } from 'react-native';
 import { useLocalSearchParams, useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -16,15 +18,46 @@ import { useAuth } from '../../contexts/AuthContext';
 import { useLanguage } from '../../contexts/LanguageContext';
 import { getTrackImage, getCharacterImage } from '../../constants/assets';
 import { buscarTrilhaPorId, iniciarTrilha, Trilha } from '../../services/trilhaService';
+import {
+  isTrailUnlocked,
+  validateAndUnlockTrail,
+  copyToClipboard,
+  getTrailAccessCode,
+  isTrilhaPrivada,
+  removeTrailAccessCode,
+} from '../../services/trilhaAcessoService';
 
 import { buscarSecoesPorTrilha, Secao } from '../../services/secaoService';
 import { buscarFasesPorTrilha, Fase } from '../../services/faseService';
 import api from '../../services/api';
-import { Lock, Star, Check, ArrowLeft, Bookmark, HelpCircle, X } from 'lucide-react-native';
+import QRCodeModal from '../../components/QRCodeModal';
+import QRScannerModal from '../../components/QRScannerModal';
+import { CheckoutModal } from '../../components/CheckoutModal';
+import { isTrilhaComprada } from '../../services/pagamentoService';
+import {
+  Lock,
+  Star,
+  Check,
+  ArrowLeft,
+  ArrowRight,
+  Bookmark,
+  HelpCircle,
+  X,
+  Key,
+  Copy,
+  DollarSign,
+  Globe,
+  QrCode,
+  Camera,
+  CreditCard,
+  CheckCircle2,
+  Sparkles,
+  Percent,
+} from 'lucide-react-native';
 import * as SecureStore from 'expo-secure-store';
 
 export default function TrilhaDetailScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, code: urlCode } = useLocalSearchParams<{ id: string; code?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark } = useTheme();
@@ -40,6 +73,23 @@ export default function TrilhaDetailScreen() {
   const [iniciada, setIniciada] = useState(false);
   const [fasesConcluidas, setFasesConcluidas] = useState<string[]>([]);
   const [loadingAction, setLoadingAction] = useState(false);
+
+  // Controle de acesso e código para trilhas privadas
+  const [isUnlocked, setIsUnlocked] = useState(true);
+  const [localAccessCode, setLocalAccessCode] = useState<string | null>(null);
+  const [studentCodeInput, setStudentCodeInput] = useState('');
+  const [studentCodeError, setStudentCodeError] = useState<string | null>(null);
+  const [studentUnlocking, setStudentUnlocking] = useState(false);
+  const [teacherCodeCopied, setTeacherCodeCopied] = useState(false);
+
+  // Pagamento e Checkout
+  const [isPurchased, setIsPurchased] = useState(false);
+  const [checkoutModalVisible, setCheckoutModalVisible] = useState(false);
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'PIX' | 'CARTAO'>('PIX');
+
+  // Modais de QR Code
+  const [qrModalVisible, setQrModalVisible] = useState(false);
+  const [scannerModalVisible, setScannerModalVisible] = useState(false);
 
   const [isSaved, setIsSaved] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
@@ -92,12 +142,66 @@ export default function TrilhaDetailScreen() {
       setLoading(true);
     }
     try {
-      const [trilhaData, secoesData, fasesData] = await Promise.all([
+      const [trilhaData, secoesData, fasesData, localCode, purchased] = await Promise.all([
         buscarTrilhaPorId(id),
         buscarSecoesPorTrilha(id),
         buscarFasesPorTrilha(id),
+        getTrailAccessCode(id),
+        isTrilhaComprada(id, user?._id || user?.id),
       ]);
+      const isPrivate = isTrilhaPrivada(trilhaData);
+      if (!isPrivate) {
+        setLocalAccessCode(null);
+        await removeTrailAccessCode(id);
+      } else {
+        setLocalAccessCode(localCode);
+      }
       setTrilha(trilhaData);
+      setIsPurchased(purchased);
+
+      // Verificação de trilha privada, paga e permissões
+      const isPaid =
+        trilhaData.pagamento === 'Paga' ||
+        Boolean(trilhaData.preco && Number(trilhaData.preco) > 0);
+
+      const currentUserId = user?._id || user?.id;
+      const isCreator = Boolean(
+        currentUserId && (
+          trilhaData.criadoPor === currentUserId ||
+          (typeof trilhaData.criadoPor === 'object' && (trilhaData.criadoPor as any)?._id === currentUserId) ||
+          (trilhaData as any).usuario === currentUserId ||
+          (typeof (trilhaData as any).usuario === 'object' && (trilhaData as any).usuario?._id === currentUserId)
+        )
+      );
+      const isAdminOrOwner =
+        user?.tipoUsuario === 'ADMINISTRADOR' ||
+        user?.tipoUsuario === 'OWNER';
+
+      if (isCreator || isAdminOrOwner) {
+        // Criador da trilha ou Administrador/Owner sempre têm acesso irrestrito
+        setIsUnlocked(true);
+      } else if (isPaid) {
+        // Trilha PAGA: SÓ LIBERA SE O PAGAMENTO FOR EFETUADO!
+        if (purchased) {
+          if (!isPrivate) {
+            setIsUnlocked(true);
+          } else {
+            const unlocked = await isTrailUnlocked(id);
+            setIsUnlocked(unlocked);
+          }
+        } else {
+          // NÃO COMPRADA: Bloqueio estrito! Exibe a tela de pagamento
+          setIsUnlocked(false);
+        }
+      } else if (!isPrivate) {
+        // Trilha aberta e gratuita: 100% liberada sem pedir código
+        setIsUnlocked(true);
+      } else {
+        // Trilha privada e gratuita: requer código de acesso da turma
+        const unlocked = await isTrailUnlocked(id);
+        setIsUnlocked(unlocked);
+      }
+
       const sortedSecoes = secoesData.sort((a, b) => a.ordem - b.ordem);
       setSecoes(sortedSecoes);
 
@@ -138,7 +242,7 @@ export default function TrilhaDetailScreen() {
       setLoading(false);
       isInitialLoadRef.current = false;
     }
-  }, [id]);
+  }, [id, user]);
 
   // useFocusEffect recarrega os dados e o progresso sempre que o usuário volta da tela do jogo!
   useFocusEffect(
@@ -184,6 +288,78 @@ export default function TrilhaDetailScreen() {
       console.error('Erro ao iniciar trilha:', e);
     } finally {
       setLoadingAction(false);
+    }
+  };
+
+  const currentUserId = user?._id || user?.id;
+  const isTeacherOrCreator = Boolean(
+    (currentUserId && (
+      trilha?.criadoPor === currentUserId ||
+      (typeof trilha?.criadoPor === 'object' && (trilha?.criadoPor as any)?._id === currentUserId) ||
+      (trilha as any)?.usuario === currentUserId ||
+      (typeof (trilha as any)?.usuario === 'object' && (trilha as any)?.usuario?._id === currentUserId)
+    )) ||
+    user?.tipoUsuario === 'ADMINISTRADOR' ||
+    user?.tipoUsuario === 'OWNER'
+  );
+
+  const isPrivateTrail = isTrilhaPrivada(trilha);
+
+  const isPaidTrail = Boolean(
+    trilha?.pagamento === 'Paga' ||
+    Boolean(trilha?.preco && Number(trilha.preco) > 0)
+  );
+
+  const effectiveCode = isPrivateTrail ? (trilha?.codigoAcesso || localAccessCode || '') : '';
+
+  const handleTeacherCopy = async (code: string) => {
+    await copyToClipboard(code);
+    setTeacherCodeCopied(true);
+    setTimeout(() => setTeacherCodeCopied(false), 2500);
+  };
+
+  const handleStudentUnlock = async () => {
+    if (!trilha || !studentCodeInput.trim()) {
+      setStudentCodeError('Digite o código de acesso fornecido pelo professor.');
+      return;
+    }
+
+    setStudentUnlocking(true);
+    setStudentCodeError(null);
+
+    const ok = await validateAndUnlockTrail(trilha, studentCodeInput);
+    if (ok) {
+      setIsUnlocked(true);
+      setStudentCodeInput('');
+      setStudentCodeError(null);
+    } else {
+      setStudentCodeError('Código de acesso incorreto. Verifique com seu professor.');
+    }
+    setStudentUnlocking(false);
+  };
+
+  // Se o aluno entrou via link direto de QR Code com parâmetro ?code=
+  useEffect(() => {
+    if (urlCode && trilha && !isUnlocked) {
+      validateAndUnlockTrail(trilha, urlCode).then((ok) => {
+        if (ok) {
+          setIsUnlocked(true);
+        }
+      });
+    }
+  }, [urlCode, trilha, isUnlocked]);
+
+  const handleScannerResult = async (parsed: { trilhaId?: string; code?: string; raw: string }) => {
+    setScannerModalVisible(false);
+    if (!trilha) return;
+
+    const codeToTest = parsed.code || parsed.raw;
+    const ok = await validateAndUnlockTrail(trilha, codeToTest);
+    if (ok) {
+      setIsUnlocked(true);
+      setStudentCodeError(null);
+    } else {
+      setStudentCodeError('QR Code inválido para esta trilha.');
     }
   };
 
@@ -244,150 +420,454 @@ export default function TrilhaDetailScreen() {
           resizeMode="cover"
         />
         <View style={{ padding: 16 }}>
+          {/* Badges de Pagamento e Disponibilidade */}
+          <View style={styles.detailBadgesRow}>
+            {isPaidTrail && isPurchased ? (
+              <View style={[styles.detailBadge, styles.badgePurchased]}>
+                <CheckCircle2 size={12} color="#ffffff" style={{ marginRight: 3 }} />
+                <Text style={styles.detailBadgeText}>Adquirida ✓</Text>
+              </View>
+            ) : (
+              <View style={[styles.detailBadge, isPaidTrail ? styles.badgePaid : styles.badgeFree]}>
+                {isPaidTrail ? <DollarSign size={12} color="#ffffff" style={{ marginRight: 3 }} /> : null}
+                <Text style={styles.detailBadgeText}>
+                  {isPaidTrail
+                    ? `Paga • R$ ${Number(trilha.preco || 29.9).toFixed(2).replace('.', ',')}`
+                    : 'Gratuita'}
+                </Text>
+              </View>
+            )}
+            <View style={[styles.detailBadge, isPrivateTrail ? styles.badgePrivate : styles.badgePublic]}>
+              {isPrivateTrail ? (
+                <>
+                  <Lock size={12} color="#ffffff" style={{ marginRight: 3 }} />
+                  <Text style={styles.detailBadgeText}>Privada</Text>
+                </>
+              ) : (
+                <>
+                  <Globe size={12} color="#ffffff" style={{ marginRight: 3 }} />
+                  <Text style={styles.detailBadgeText}>Aberta</Text>
+                </>
+              )}
+            </View>
+          </View>
+
           <Text style={styles.trackSubject}>{trilha.materia.toUpperCase()}</Text>
           <Text style={[styles.trackTitle, { color: colors.text }]}>{trilha.titulo}</Text>
           {trilha.descricao && <Text style={[styles.trackDesc, { color: colors.textMuted }]}>{trilha.descricao}</Text>}
         </View>
 
-        {/* Botão de Ação / Iniciar */}
-        {!iniciada ? (
+        {/* Botão de Compra no Header (se for paga e não foi comprada) */}
+        {!isUnlocked && isPaidTrail && !isPurchased && (
           <TouchableOpacity
-            style={styles.actionBtn}
-            onPress={handleIniciarTrilha}
-            disabled={loadingAction}
+            style={styles.buyHeaderBtn}
+            onPress={() => setCheckoutModalVisible(true)}
             activeOpacity={0.9}
           >
-            {loadingAction ? (
-              <ActivityIndicator color="#ffffff" />
-            ) : (
-              <Text style={styles.actionBtnText}>Iniciar Trilha 🚀</Text>
-            )}
-          </TouchableOpacity>
-        ) : (
-          <View style={styles.progressSummary}>
-            <Text style={[styles.progressSummaryText, { color: colors.text }]}>
-              Progresso: {fasesConcluidas.length} de {fases.length} fases completadas
+            <CreditCard size={18} color="#ffffff" style={{ marginRight: 8 }} />
+            <Text style={styles.buyHeaderBtnText}>
+              Comprar por R$ {Number(trilha.preco || 29.9).toFixed(2).replace('.', ',')}
             </Text>
-            <View style={[styles.progressBg, { backgroundColor: colors.cardSecondary }]}>
-              <View
-                style={[
-                  styles.progressFill,
-                  { width: `${(fasesConcluidas.length / (fases.length || 1)) * 100}%` },
-                ]}
-              />
+          </TouchableOpacity>
+        )}
+
+        {/* Botão de Ação / Iniciar (apenas se desbloqueada) */}
+        {isUnlocked && (
+          !iniciada ? (
+            <TouchableOpacity
+              style={styles.actionBtn}
+              onPress={handleIniciarTrilha}
+              disabled={loadingAction}
+              activeOpacity={0.9}
+            >
+              {loadingAction ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <Text style={styles.actionBtnText}>Iniciar Trilha 🚀</Text>
+              )}
+            </TouchableOpacity>
+          ) : (
+            <View style={styles.progressSummary}>
+              <Text style={[styles.progressSummaryText, { color: colors.text }]}>
+                Progresso: {fasesConcluidas.length} de {fases.length} fases completadas
+              </Text>
+              <View style={[styles.progressBg, { backgroundColor: colors.cardSecondary }]}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    { width: `${(fasesConcluidas.length / (fases.length || 1)) * 100}%` },
+                  ]}
+                />
+              </View>
             </View>
-          </View>
+          )
         )}
       </View>
 
-      {/* Lista de Seções & Fases */}
-      <Text style={[styles.sectionHeading, { color: colors.text }]}>Jornada de Aprendizado</Text>
-      {secoes.length === 0 ? (
-        <Text style={[styles.emptyText, { color: colors.textMuted }]}>Esta trilha ainda não tem seções estruturadas.</Text>
-      ) : (
-        secoes.map((secao, secaoIdx) => {
-          // Filtrar fases pertencentes a esta seção
-          const fasesDaSecao = fases.filter((f) => f.secaoId === secao._id);
-          const bannerColor = BANNER_COLORS[secaoIdx % BANNER_COLORS.length];
+      {/* Box Exclusiva para o Professor ver o Código da Trilha Privada */}
+      {isPrivateTrail && isTeacherOrCreator && Boolean(effectiveCode) && (
+        <View style={styles.teacherCodeCard}>
+          <View style={styles.teacherCodeHeader}>
+            <Key size={22} color="#F59E0B" />
+            <Text style={styles.teacherCodeTitle}>Código de Acesso dos Alunos 🔑</Text>
+          </View>
+          <Text style={styles.teacherCodeDesc}>
+            Apenas você (professor criador) e administradores conseguem ver este código. Passe para seus alunos para que eles possam desbloquear esta trilha:
+          </Text>
 
-          return (
-            <View key={secao._id} style={styles.secaoBlock}>
-              {/* Header da Seção estilo Duolingo */}
-              <View style={[styles.secaoHeader, { backgroundColor: bannerColor }]}>
-                <Text style={styles.secaoTitle}>{secao.titulo}</Text>
-                {secao.descricao && <Text style={styles.secaoDesc}>{secao.descricao}</Text>}
-              </View>
+          <View style={styles.teacherCodeBox}>
+            <Text style={styles.teacherCodeText}>{effectiveCode}</Text>
+          </View>
 
-              {/* Fases em zigue-zague */}
-              <View style={styles.fasesContainer}>
-                {fasesDaSecao.length === 0 ? (
-                  <Text style={[styles.emptyFases, { color: colors.textMuted }]}>Nenhuma fase nesta seção.</Text>
-                ) : (
-                  fasesDaSecao.map((fase) => {
-                    const isCompleted = fasesConcluidas.includes(fase._id);
-                    const isActive = isPhaseActive(fase);
-                    
-                    // Lógica para desbloquear a fase
-                    let isUnlocked = false;
-                    if (!iniciada) {
-                      isUnlocked = false;
-                    } else if (fases.indexOf(fase) === 0) {
-                      isUnlocked = true;
-                    } else {
-                      const absoluteIndex = fases.indexOf(fase);
-                      const prevFase = fases[absoluteIndex - 1];
-                      isUnlocked = prevFase && fasesConcluidas.includes(prevFase._id);
-                    }
+          <View style={styles.teacherActionsRow}>
+            <TouchableOpacity
+              style={styles.teacherCopyBtn}
+              onPress={() => handleTeacherCopy(effectiveCode)}
+              activeOpacity={0.85}
+            >
+              {teacherCodeCopied ? (
+                <>
+                  <Check size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                  <Text style={styles.teacherCopyBtnText}>Código Copiado!</Text>
+                </>
+              ) : (
+                <>
+                  <Copy size={18} color="#ffffff" style={{ marginRight: 6 }} />
+                  <Text style={styles.teacherCopyBtnText}>Copiar Código</Text>
+                </>
+              )}
+            </TouchableOpacity>
 
-                    if (isCompleted) {
-                      isUnlocked = true;
-                    }
+            <TouchableOpacity
+              style={styles.teacherQrBtn}
+              onPress={() => setQrModalVisible(true)}
+              activeOpacity={0.85}
+            >
+              <QrCode size={18} color="#ffffff" style={{ marginRight: 6 }} />
+              <Text style={styles.teacherQrBtnText}>Ver QR Code 📱</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      )}
 
-                    const globalIdx = fases.indexOf(fase);
-
-                    return (
-                      <View key={fase._id} style={[styles.faseNodeContainer, getZigZagStyle(globalIdx)]}>
-                        {/* Avatar do Personagem Flutuante */}
-                        {isActive && (
-                          <View style={styles.avatarContainer}>
-                            <Image
-                              source={getCharacterImage(user?.personagem)}
-                              style={styles.avatarImg}
-                              resizeMode="contain"
-                            />
-                            <View style={styles.avatarPointer} />
-                          </View>
-                        )}
-
-                        {/* Círculo da Fase */}
-                        <TouchableOpacity
-                          style={[
-                            styles.faseCircle,
-                            {
-                              backgroundColor: isCompleted
-                                ? '#10B981' // Verde concluído
-                                : isUnlocked
-                                ? '#4F46E5' // Azul ativo/desbloqueado
-                                : '#374151', // Cinza bloqueado
-                              borderColor: isCompleted
-                                ? '#059669'
-                                : isUnlocked
-                                ? '#3730A3'
-                                : '#1F2937',
-                            },
-                          ]}
-                          disabled={!isUnlocked}
-                          onPress={() => router.push(`/game/${fase._id}`)}
-                          activeOpacity={0.8}
-                        >
-                          {isCompleted ? (
-                            <Check size={30} color="#ffffff" strokeWidth={3} />
-                          ) : isUnlocked ? (
-                            <Star size={30} color="#ffffff" fill="#ffffff" />
-                          ) : (
-                            <Lock size={26} color="#9CA3AF" />
-                          )}
-                        </TouchableOpacity>
-
-                        {/* Rótulo da Fase */}
-                        <Text
-                          style={[
-                            styles.faseLabel,
-                            { color: colors.text },
-                            !isUnlocked && { color: colors.textMuted },
-                          ]}
-                          numberOfLines={2}
-                        >
-                          {fase.titulo}
-                        </Text>
-                      </View>
-                    );
-                  })
-                )}
-              </View>
+      {/* Conteúdo: Bloqueado (se for paga/privada e aluno não adquiriu) OU Desbloqueado com Jornada */}
+      {!isUnlocked ? (
+        isPaidTrail && !isPurchased ? (
+          <View style={[styles.lockedCard, { backgroundColor: colors.card }]}>
+            <View style={styles.lockedIconBubblePaid}>
+              <CreditCard size={36} color="#ffffff" />
             </View>
-          );
-        })
+            <Text style={[styles.lockedTitle, { color: colors.text }]}>Trilha Paga Exclusiva 💎</Text>
+            <Text style={[styles.lockedDesc, { color: colors.textMuted }]}>
+              Esta trilha requer aquisição para liberação de todas as fases, exercícios e quizzes interativos.
+            </Text>
+
+            {/* Split de Transparência */}
+            <View style={[styles.splitPreviewCard, { backgroundColor: colors.cardSecondary }]}>
+              <View style={styles.splitPreviewHeader}>
+                <Percent size={16} color="#16A34A" />
+                <Text style={[styles.splitPreviewTitle, { color: colors.text }]}>
+                  Divisão de Valores da Compra
+                </Text>
+              </View>
+              <View style={styles.splitPreviewRow}>
+                <View style={styles.splitPreviewItem}>
+                  <Text style={styles.splitPreviewLabel}>Professor (85%):</Text>
+                  <Text style={styles.splitPreviewValProf}>
+                    R$ {(Number(trilha.preco || 29.9) * 0.85).toFixed(2).replace('.', ',')}
+                  </Text>
+                </View>
+                <View style={styles.splitPreviewItem}>
+                  <Text style={styles.splitPreviewLabel}>EstudeMy (15%):</Text>
+                  <Text style={styles.splitPreviewValEstude}>
+                    R$ {(Number(trilha.preco || 29.9) * 0.15).toFixed(2).replace('.', ',')}
+                  </Text>
+                </View>
+              </View>
+              <Text style={styles.splitPreviewHint}>
+                A maior parte da sua compra (85%) remunera diretamente o professor autor.
+              </Text>
+            </View>
+
+            {/* Formas de Pagamento Aceitas (PIX e Cartão de Crédito) */}
+            <View style={styles.paymentMethodsRow}>
+              <TouchableOpacity
+                style={[
+                  styles.paymentMethodOptionBtn,
+                  { backgroundColor: colors.cardSecondary, borderColor: '#10B981' },
+                ]}
+                onPress={() => {
+                  setSelectedPaymentMethod('PIX');
+                  setCheckoutModalVisible(true);
+                }}
+                activeOpacity={0.85}
+              >
+                <View style={styles.paymentMethodIconPix}>
+                  <QrCode size={18} color="#ffffff" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={[styles.paymentMethodTitle, { color: colors.text }]}>Pagar com PIX</Text>
+                  <Text style={styles.paymentMethodSubtitle}>Liberação imediata via QR Code ⚡</Text>
+                </View>
+                <ArrowRight size={18} color="#10B981" />
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.paymentMethodOptionBtn,
+                  { backgroundColor: colors.cardSecondary, borderColor: '#4F46E5' },
+                ]}
+                onPress={() => {
+                  setSelectedPaymentMethod('CARTAO');
+                  setCheckoutModalVisible(true);
+                }}
+                activeOpacity={0.85}
+              >
+                <View style={styles.paymentMethodIconCard}>
+                  <CreditCard size={18} color="#ffffff" />
+                </View>
+                <View style={{ flex: 1, marginLeft: 10 }}>
+                  <Text style={[styles.paymentMethodTitle, { color: colors.text }]}>Cartão de Crédito</Text>
+                  <Text style={styles.paymentMethodSubtitle}>Parcelamento em até 12x 💳</Text>
+                </View>
+                <ArrowRight size={18} color="#4F46E5" />
+              </TouchableOpacity>
+            </View>
+
+            {/* Botão de Compra Principal */}
+            <TouchableOpacity
+              style={styles.buyNowBtn}
+              onPress={() => {
+                setSelectedPaymentMethod('PIX');
+                setCheckoutModalVisible(true);
+              }}
+              activeOpacity={0.88}
+            >
+              <Sparkles size={20} color="#ffffff" style={{ marginRight: 8 }} />
+              <Text style={styles.buyNowBtnText}>
+                Comprar por R$ {Number(trilha.preco || 29.9).toFixed(2).replace('.', ',')}
+              </Text>
+            </TouchableOpacity>
+
+            {/* Se tiver código de cortesia/acesso concedido pelo professor */}
+            <View style={styles.couponDividerRow}>
+              <View style={styles.dividerLine} />
+              <Text style={[styles.dividerText, { color: colors.textMuted }]}>
+                OU POSSUI UM CÓDIGO?
+              </Text>
+              <View style={styles.dividerLine} />
+            </View>
+
+            {studentCodeError && (
+              <View style={styles.lockedErrorCard}>
+                <Text style={styles.lockedErrorText}>{studentCodeError}</Text>
+              </View>
+            )}
+
+            <TextInput
+              style={[
+                styles.lockedCodeInput,
+                { backgroundColor: colors.cardSecondary, color: colors.text },
+              ]}
+              placeholder="Digite o código de acesso"
+              placeholderTextColor={colors.textMuted}
+              value={studentCodeInput}
+              onChangeText={(txt) => {
+                setStudentCodeInput(txt.toUpperCase());
+                setStudentCodeError(null);
+              }}
+              autoCapitalize="characters"
+              autoCorrect={false}
+            />
+
+            <TouchableOpacity
+              style={styles.lockedSubmitBtn}
+              onPress={handleStudentUnlock}
+              disabled={studentUnlocking}
+              activeOpacity={0.85}
+            >
+              {studentUnlocking ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <>
+                  <Key size={18} color="#ffffff" style={{ marginRight: 8 }} />
+                  <Text style={styles.lockedSubmitBtnText}>Liberar com Código</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        ) : (
+          <View style={[styles.lockedCard, { backgroundColor: colors.card }]}>
+            <View style={styles.lockedIconBubble}>
+              <Lock size={36} color="#ffffff" />
+            </View>
+            <Text style={[styles.lockedTitle, { color: colors.text }]}>Conteúdo Bloqueado 🔒</Text>
+            <Text style={[styles.lockedDesc, { color: colors.textMuted }]}>
+              Esta trilha é privada e requer o código de acesso exclusivo fornecido pelo seu professor para liberar o conteúdo e as lições.
+            </Text>
+
+            {studentCodeError && (
+              <View style={styles.lockedErrorCard}>
+                <Text style={styles.lockedErrorText}>{studentCodeError}</Text>
+              </View>
+            )}
+
+            <TextInput
+              style={[
+                styles.lockedCodeInput,
+                { backgroundColor: colors.cardSecondary, color: colors.text },
+              ]}
+              placeholder="Ex: TRL-8K4M9Q"
+              placeholderTextColor={colors.textMuted}
+              value={studentCodeInput}
+              onChangeText={(txt) => {
+                setStudentCodeInput(txt.toUpperCase());
+                setStudentCodeError(null);
+              }}
+              autoCapitalize="characters"
+              autoCorrect={false}
+            />
+
+            <View style={styles.lockedButtonsCol}>
+              <TouchableOpacity
+                style={styles.lockedSubmitBtn}
+                onPress={handleStudentUnlock}
+                disabled={studentUnlocking}
+                activeOpacity={0.85}
+              >
+                {studentUnlocking ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <>
+                    <Key size={18} color="#ffffff" style={{ marginRight: 8 }} />
+                    <Text style={styles.lockedSubmitBtnText}>Desbloquear com Código</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.lockedScanQrBtn}
+                onPress={() => setScannerModalVisible(true)}
+                activeOpacity={0.85}
+              >
+                <Camera size={18} color="#ffffff" style={{ marginRight: 8 }} />
+                <Text style={styles.lockedScanQrBtnText}>Ler QR Code da Trilha 📷</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )
+      ) : (
+        <>
+          {/* Lista de Seções & Fases */}
+          <Text style={[styles.sectionHeading, { color: colors.text }]}>Jornada de Aprendizado</Text>
+          {secoes.length === 0 ? (
+            <Text style={[styles.emptyText, { color: colors.textMuted }]}>Esta trilha ainda não tem seções estruturadas.</Text>
+          ) : (
+            secoes.map((secao, secaoIdx) => {
+              // Filtrar fases pertencentes a esta seção
+              const fasesDaSecao = fases.filter((f) => f.secaoId === secao._id);
+              const bannerColor = BANNER_COLORS[secaoIdx % BANNER_COLORS.length];
+
+              return (
+                <View key={secao._id} style={styles.secaoBlock}>
+                  {/* Header da Seção estilo Duolingo */}
+                  <View style={[styles.secaoHeader, { backgroundColor: bannerColor }]}>
+                    <Text style={styles.secaoTitle}>{secao.titulo}</Text>
+                    {secao.descricao && <Text style={styles.secaoDesc}>{secao.descricao}</Text>}
+                  </View>
+
+                  {/* Fases em zigue-zague */}
+                  <View style={styles.fasesContainer}>
+                    {fasesDaSecao.length === 0 ? (
+                      <Text style={[styles.emptyFases, { color: colors.textMuted }]}>Nenhuma fase nesta seção.</Text>
+                    ) : (
+                      fasesDaSecao.map((fase) => {
+                        const isCompleted = fasesConcluidas.includes(fase._id);
+                        const isActive = isPhaseActive(fase);
+                        
+                        // Lógica para desbloquear a fase individual
+                        let isPhaseUnlocked = false;
+                        if (!iniciada) {
+                          isPhaseUnlocked = false;
+                        } else if (fases.indexOf(fase) === 0) {
+                          isPhaseUnlocked = true;
+                        } else {
+                          const absoluteIndex = fases.indexOf(fase);
+                          const prevFase = fases[absoluteIndex - 1];
+                          isPhaseUnlocked = prevFase && fasesConcluidas.includes(prevFase._id);
+                        }
+
+                        if (isCompleted) {
+                          isPhaseUnlocked = true;
+                        }
+
+                        const globalIdx = fases.indexOf(fase);
+
+                        return (
+                          <View key={fase._id} style={[styles.faseNodeContainer, getZigZagStyle(globalIdx)]}>
+                            {/* Avatar do Personagem Flutuante */}
+                            {isActive && (
+                              <View style={styles.avatarContainer}>
+                                <Image
+                                  source={getCharacterImage(user?.personagem)}
+                                  style={styles.avatarImg}
+                                  resizeMode="contain"
+                                />
+                                <View style={styles.avatarPointer} />
+                              </View>
+                            )}
+
+                            {/* Círculo da Fase */}
+                            <TouchableOpacity
+                              style={[
+                                styles.faseCircle,
+                                {
+                                  backgroundColor: isCompleted
+                                    ? '#10B981' // Verde concluído
+                                    : isPhaseUnlocked
+                                    ? '#4F46E5' // Azul ativo/desbloqueado
+                                    : '#374151', // Cinza bloqueado
+                                  borderColor: isCompleted
+                                    ? '#059669'
+                                    : isPhaseUnlocked
+                                    ? '#3730A3'
+                                    : '#1F2937',
+                                },
+                              ]}
+                              disabled={!isPhaseUnlocked}
+                              onPress={() => router.push(`/game/${fase._id}`)}
+                              activeOpacity={0.8}
+                            >
+                              {isCompleted ? (
+                                <Check size={30} color="#ffffff" strokeWidth={3} />
+                              ) : isPhaseUnlocked ? (
+                                <Star size={30} color="#ffffff" fill="#ffffff" />
+                              ) : (
+                                <Lock size={26} color="#9CA3AF" />
+                              )}
+                            </TouchableOpacity>
+
+                            {/* Rótulo da Fase */}
+                            <Text
+                              style={[
+                                styles.faseLabel,
+                                { color: colors.text },
+                                !isPhaseUnlocked && { color: colors.textMuted },
+                              ]}
+                              numberOfLines={2}
+                            >
+                              {fase.titulo}
+                            </Text>
+                          </View>
+                        );
+                      })
+                    )}
+                  </View>
+                </View>
+              );
+            })
+          )}
+        </>
       )}
 
       {/* Modal do Guia de Estudos estilo Duolingo */}
@@ -604,6 +1084,39 @@ export default function TrilhaDetailScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* Modal de Exibição de QR Code da Trilha */}
+      {trilha && (
+        <QRCodeModal
+          visible={qrModalVisible}
+          onClose={() => setQrModalVisible(false)}
+          trilhaId={trilha._id}
+          trilhaTitulo={trilha.titulo}
+          codigoAcesso={effectiveCode}
+        />
+      )}
+
+      {/* Modal de Leitura de QR Code pelo Aluno */}
+      <QRScannerModal
+        visible={scannerModalVisible}
+        onClose={() => setScannerModalVisible(false)}
+        onScanSuccess={handleScannerResult}
+      />
+
+      {/* Modal de Checkout / Compra da Trilha */}
+      {trilha && (
+        <CheckoutModal
+          visible={checkoutModalVisible}
+          onClose={() => setCheckoutModalVisible(false)}
+          trilha={trilha}
+          initialMetodo={selectedPaymentMethod}
+          onSuccess={async () => {
+            setIsPurchased(true);
+            setIsUnlocked(true);
+            await fetchTrilhaDetails();
+          }}
+        />
+      )}
 
       <View style={{ height: 60 }} />
     </ScrollView>
@@ -930,6 +1443,395 @@ const styles = StyleSheet.create({
   closeButtonText: {
     color: '#ffffff',
     fontSize: 16,
+    fontWeight: '900',
+  },
+  detailBadgesRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 10,
+  },
+  detailBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  detailBadgeText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '900',
+    letterSpacing: 0.3,
+  },
+  badgeFree: {
+    backgroundColor: '#10B981',
+  },
+  badgePaid: {
+    backgroundColor: '#F59E0B',
+  },
+  badgePublic: {
+    backgroundColor: '#3B82F6',
+  },
+  badgePrivate: {
+    backgroundColor: '#8B5CF6',
+  },
+  badgePurchased: {
+    backgroundColor: '#16A34A',
+  },
+  buyHeaderBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#16A34A',
+    paddingVertical: 14,
+    marginHorizontal: 16,
+    marginBottom: 16,
+    borderRadius: 10,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    shadowColor: '#000000',
+    shadowOffset: { width: 3, height: 3 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 3,
+  },
+  buyHeaderBtnText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  lockedIconBubblePaid: {
+    width: 72,
+    height: 72,
+    borderRadius: 36,
+    backgroundColor: '#4F46E5',
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  splitPreviewCard: {
+    width: '100%',
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+    marginVertical: 14,
+  },
+  splitPreviewHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 8,
+  },
+  splitPreviewTitle: {
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  splitPreviewRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginBottom: 6,
+  },
+  splitPreviewItem: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    padding: 8,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: '#1b1b1b',
+  },
+  splitPreviewLabel: {
+    fontSize: 10,
+    fontWeight: '700',
+    color: '#6B7280',
+  },
+  splitPreviewValProf: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#16A34A',
+    marginTop: 2,
+  },
+  splitPreviewValEstude: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: '#4F46E5',
+    marginTop: 2,
+  },
+  splitPreviewHint: {
+    fontSize: 10,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginTop: 4,
+  },
+  paymentMethodsRow: {
+    width: '100%',
+    gap: 10,
+    marginBottom: 14,
+  },
+  paymentMethodOptionBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  paymentMethodIconPix: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#10B981',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  paymentMethodIconCard: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#4F46E5',
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  paymentMethodTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  paymentMethodSubtitle: {
+    fontSize: 11,
+    color: '#6B7280',
+    fontWeight: '600',
+    marginTop: 1,
+  },
+  buyNowBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#16A34A',
+    width: '100%',
+    paddingVertical: 15,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+    marginBottom: 12,
+  },
+  buyNowBtnText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  couponDividerRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginVertical: 12,
+    width: '100%',
+  },
+  dividerLine: {
+    flex: 1,
+    height: 1.5,
+    backgroundColor: '#374151',
+  },
+  dividerText: {
+    fontSize: 10,
+    fontWeight: '800',
+    letterSpacing: 1,
+  },
+  teacherCodeCard: {
+    backgroundColor: '#18181B',
+    borderRadius: 16,
+    borderWidth: 3,
+    borderColor: '#F59E0B',
+    padding: 18,
+    marginBottom: 20,
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+  },
+  teacherCodeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 6,
+  },
+  teacherCodeTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    color: '#F59E0B',
+  },
+  teacherCodeDesc: {
+    fontSize: 12.5,
+    color: '#D4D4D8',
+    lineHeight: 18,
+    marginBottom: 14,
+  },
+  teacherCodeBox: {
+    backgroundColor: '#09090B',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 12,
+    borderWidth: 2.5,
+    borderColor: '#F59E0B',
+    borderStyle: 'dashed',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 12,
+  },
+  teacherCodeText: {
+    fontSize: 26,
+    fontWeight: '900',
+    color: '#FCD34D',
+    letterSpacing: 4,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  teacherCopyBtn: {
+    backgroundColor: '#4F46E5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 2.5,
+    borderColor: '#1b1b1b',
+  },
+  teacherCopyBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  lockedCard: {
+    padding: 24,
+    borderRadius: 18,
+    borderWidth: 4,
+    borderColor: '#1b1b1b',
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 6,
+    marginVertical: 16,
+  },
+  lockedIconBubble: {
+    width: 68,
+    height: 68,
+    borderRadius: 34,
+    backgroundColor: '#8B5CF6',
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 16,
+  },
+  lockedTitle: {
+    fontSize: 20,
+    fontWeight: '900',
+    textAlign: 'center',
+    marginBottom: 8,
+  },
+  lockedDesc: {
+    fontSize: 13,
+    lineHeight: 19,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  lockedErrorCard: {
+    backgroundColor: '#EF4444',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+    width: '100%',
+    marginBottom: 14,
+  },
+  lockedErrorText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '700',
+    textAlign: 'center',
+  },
+  lockedCodeInput: {
+    width: '100%',
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 20,
+    fontWeight: '900',
+    letterSpacing: 3,
+    textAlign: 'center',
+    marginBottom: 14,
+    fontFamily: Platform.OS === 'ios' ? 'Courier' : 'monospace',
+  },
+  lockedSubmitBtn: {
+    backgroundColor: '#4F46E5',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 15,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+  },
+  lockedSubmitBtnText: {
+    color: '#ffffff',
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  teacherActionsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    width: '100%',
+  },
+  teacherQrBtn: {
+    flex: 1,
+    backgroundColor: '#8B5CF6',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 2.5,
+    borderColor: '#1b1b1b',
+  },
+  teacherQrBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  lockedButtonsCol: {
+    width: '100%',
+    gap: 10,
+  },
+  lockedScanQrBtn: {
+    backgroundColor: '#10B981',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    width: '100%',
+    paddingVertical: 14,
+    borderRadius: 12,
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+  },
+  lockedScanQrBtnText: {
+    color: '#ffffff',
+    fontSize: 14,
     fontWeight: '900',
   },
 });

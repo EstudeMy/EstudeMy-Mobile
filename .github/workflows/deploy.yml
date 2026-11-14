@@ -47,7 +47,7 @@ jobs:
         run: npx expo export -p web
 
   # ============================================================================
-  # 2. Build Multi-stage & Publicação de Imagens Docker no GHCR (Seção 10)
+  # 2. Build Multi-stage & Publicação de Imagens Docker no GHCR
   # ============================================================================
   build-and-push:
     name: 🐳 Build Docker Multi-stage & GHCR Push
@@ -89,46 +89,64 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
           build-args: |
-            EXPO_PUBLIC_API_URL=https://api.estudemy.site
+            EXPO_PUBLIC_API_URL=https://api.estudemy.com
 
   # ============================================================================
-  # 3. Deploy Remoto na Nuvem OCI Free Tier / AWS via SSH (Seção 10)
+  # 3. Deploy Remoto na Nuvem AWS / Host via SSH
   # ============================================================================
   deploy:
-    name: 🚀 Deploy Remoto na Nuvem (OCI / AWS)
+    name: 🚀 Deploy Remoto na Nuvem (AWS EC2)
     needs: build-and-push
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
     runs-on: ubuntu-latest
     steps:
+      - name: Validar Configuração de Secrets
+        run: |
+          if [ -z "${{ secrets.CLOUD_SSH_PRIVATE_KEY }}" ]; then
+            echo "::error::Secret CLOUD_SSH_PRIVATE_KEY não está configurada no repositório!"
+            echo "Configure o conteúdo do arquivo C:\AWS\EstudeMy.pem em Settings > Secrets and variables > Actions > CLOUD_SSH_PRIVATE_KEY"
+            exit 1
+          fi
+          echo "✅ Secret CLOUD_SSH_PRIVATE_KEY configurada."
+
       - name: Executar Deploy no Servidor Host via SSH
         uses: appleboy/ssh-action@v1.0.3
         with:
-          host: ${{ secrets.CLOUD_SERVER_HOST }}
+          host: ${{ secrets.CLOUD_SERVER_HOST || '18.222.3.101' }}
           username: ${{ secrets.CLOUD_SERVER_USER || 'ubuntu' }}
           key: ${{ secrets.CLOUD_SSH_PRIVATE_KEY }}
           port: ${{ secrets.CLOUD_SSH_PORT || 22 }}
+          timeout: 45s
           script_stop: true
           script: |
-            echo "Conectado ao servidor host em nuvem: $(hostname)"
-            cd /opt/estudemy
+            echo "Conectado ao servidor host: $(hostname)"
+            
+            # Navegar até o diretório do projeto
+            if [ -d "/home/ubuntu/estudemy_deploy" ]; then
+              cd /home/ubuntu/estudemy_deploy
+            elif [ -d "/opt/estudemy" ]; then
+              cd /opt/estudemy
+            else
+              echo "❌ Diretório de deploy não encontrado!"
+              exit 1
+            fi
 
-            # Login no registry para baixar nova imagem
-            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+            # Login no GHCR caso o pacote seja privado
+            echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin || true
 
-            # Atualiza imagens e recria contêineres sem downtime perceptível
-            echo "Puxando versão mais recente dos contêineres..."
-            docker compose -f docker-compose.prod.yml pull mobile
+            echo "Baixando a versão recém-compilada da imagem Mobile..."
+            docker pull ghcr.io/estudemy/estudemy-mobile:latest
+            docker tag ghcr.io/estudemy/estudemy-mobile:latest estudemy/mobile:latest || true
 
-            echo "Atualizando stack de produção..."
-            docker compose -f docker-compose.prod.yml up -d --remove-orphans
+            echo "Atualizando contêiner do Mobile (sem downtime nos outros serviços)..."
+            docker compose up -d --no-deps --force-recreate mobile
 
-            # Healthcheck automatizado de confirmação pós-deploy
             echo "Aguardando inicialização para verificação de saúde..."
-            sleep 15
+            sleep 10
             if curl -s -f http://127.0.0.1:80/ > /dev/null; then
               echo "✅ Deploy concluído com sucesso! Serviços operacionais e saudáveis."
             else
-              echo "❌ Falha no healthcheck pós-deploy! Iniciando investigação..."
-              docker compose -f docker-compose.prod.yml logs --tail=50
+              echo "❌ Falha no healthcheck pós-deploy! Logs:"
+              docker compose logs --tail=50 mobile
               exit 1
             fi

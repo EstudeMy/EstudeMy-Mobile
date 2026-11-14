@@ -60,9 +60,15 @@ export function getCharacterImage(charName?: string | null): ImageSourcePropType
   return CHARACTER_IMAGES[charName] || CHARACTER_IMAGES.default;
 }
 
-export function getTrackImage(trilha?: { imagem?: string; image?: string; materia?: string } | null): ImageSourcePropType {
+export function getTrackImage(
+  trilha?: { imagem?: string; image?: string; materia?: string } | string | null
+): ImageSourcePropType {
   if (!trilha) return FASE_BACKGROUNDS.montanha;
-  
+
+  if (typeof trilha === 'string') {
+    return getTrackImage({ imagem: trilha, materia: trilha });
+  }
+
   const imgPath = trilha.imagem || trilha.image;
   if (imgPath) {
     if (imgPath.startsWith('http://') || imgPath.startsWith('https://')) {
