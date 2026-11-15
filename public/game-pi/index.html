@@ -46,12 +46,12 @@
         /* Camada 1: Background Cenário com Animação Visível de Câmera e Respiração */
         #bg-layer {
             position: absolute;
-            top: -5%;
+            top: -7%;
             left: -5%;
             width: 110%;
-            height: 110%;
+            height: 114%;
             object-fit: cover;
-            object-position: center bottom;
+            object-position: center 74%;
             filter: brightness(0.85) contrast(1.12);
             transition: opacity 0.4s ease-in-out;
             animation: bg-camera-drift 14s ease-in-out infinite alternate;
@@ -61,8 +61,8 @@
 
         @keyframes bg-camera-drift {
             0% { transform: scale(1) translate(0px, 0px); }
-            50% { transform: scale(1.05) translate(-14px, -8px); }
-            100% { transform: scale(1.08) translate(14px, 6px); }
+            50% { transform: scale(1.05) translate(-14px, -6px); }
+            100% { transform: scale(1.08) translate(14px, 4px); }
         }
 
         #bg-vignette {
@@ -71,10 +71,24 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at center, rgba(0,0,0,0) 45%, rgba(0,0,0,0.85) 100%),
-                        linear-gradient(to top, rgba(10,13,24,0.92) 0%, rgba(0,0,0,0) 28%);
+            background: radial-gradient(circle at center, rgba(0,0,0,0) 50%, rgba(0,0,0,0.85) 100%),
+                        linear-gradient(to top, rgba(10,13,24,0.85) 0%, rgba(10,13,24,0.3) 14%, rgba(0,0,0,0) 24%);
             z-index: 2;
             pointer-events: none;
+        }
+
+        /* Piso Tático da Arena (Garante Pés Firmemente Assentados no Chão) */
+        #ground-plane {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 19%;
+            background: linear-gradient(to top, rgba(10, 13, 24, 0.95) 0%, rgba(15, 23, 42, 0.65) 60%, rgba(30, 41, 59, 0.25) 90%, transparent 100%);
+            border-top: 1.5px solid rgba(148, 163, 184, 0.25);
+            box-shadow: inset 0 2px 8px rgba(255, 255, 255, 0.05), 0 -4px 20px rgba(0, 0, 0, 0.7);
+            pointer-events: none;
+            z-index: 2;
         }
 
         /* Camada de Névoa / Neblina em Movimento Contínuo no Cenário */
@@ -205,13 +219,14 @@
         /* Sombra de Contato Fisiológica com o Chão (Garantindo Pé no Chão) */
         .actor-contact-shadow {
             width: 140px;
-            height: 18px;
-            background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.96) 0%, rgba(0, 0, 0, 0.6) 45%, rgba(0, 0, 0, 0) 75%);
+            height: 16px;
+            background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.96) 0%, rgba(0, 0, 0, 0.65) 45%, rgba(0, 0, 0, 0) 75%);
             border-radius: 50%;
-            margin-top: -8px;
+            margin-top: -10px;
             z-index: 1;
             transform: scale(1);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.7);
+            filter: blur(1.5px);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.7);
             transition: transform 0.3s ease, opacity 0.3s ease;
         }
 
@@ -1022,6 +1037,7 @@
         <div id="bg-vignette"></div>
         <div id="fog-layer"></div>
         <div id="ambient-light-sweep"></div>
+        <div id="ground-plane"></div>
 
         <!-- 2. Canvas de Efeitos Especiais, Tochas Animadas, Aurora e Clima -->
         <canvas id="fx-canvas" width="1366" height="768"></canvas>
@@ -1029,7 +1045,7 @@
 
         <!-- 3. Atores do Jogo (Herói à Esquerda e Inimigos à Direita) -->
         <div class="stage-actors">
-            <!-- Herói (Posicionado firmemente a 27% de altura do chão, 100% livre da caixa de perguntas) -->
+            <!-- Herói (Posicionado firmemente a 18% de altura com pés assentados no piso) -->
             <div id="player-wrapper" class="actor-wrapper">
                 <img id="player-sprite" class="actor-sprite" src="assets/sprites/samurai/idle.gif" alt="Herói" />
                 <div class="actor-contact-shadow"></div>
@@ -1048,7 +1064,7 @@
                     <div class="actor-contact-shadow"></div>
                 </div>
 
-                <div id="enemy-1" class="actor-wrapper is-flying">
+                <div id="enemy-1" class="actor-wrapper">
                     <div class="enemy-mini-hud">
                         <span class="enemy-mini-title" id="enemy-1-name" style="color: #facc15;">Chefe</span>
                         <div class="enemy-mini-bar-track">

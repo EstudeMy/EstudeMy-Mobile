@@ -14,7 +14,8 @@ import * as ScreenOrientation from 'expo-screen-orientation';
 import { WebView } from 'react-native-webview';
 import { buscarFasePorId, buscarFasesPorTrilha, concluirFase, Fase } from '../../services/faseService';
 import { buscarTrilhaPorId, listarTrilhas, Trilha } from '../../services/trilhaService';
-import { getTrilhaTheme, getThematicQuestions, ThemeKey } from '../../game';
+import { registrarFaseConcluida } from '../../services/progressoService';
+import { getTrilhaTheme, getThematicQuestions, ThemeKey } from '../../game/data/thematicQuestions';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import api from '../../services/api';
@@ -144,32 +145,25 @@ export default function GameScreen() {
     }
   }, [router, trilhaId]);
 
-  // 4. Salvar Progresso de Vitória no Backend
-  const salvarProgressoVitoria = useCallback(async () => {
-    if (!faseId) return;
+  // 4. Salvar Progresso de Vitória no Backend e Storage Local
+  const salvarProgressoVitoria = useCallback(async (customFaseId?: string, customTrilhaId?: string) => {
+    const realFaseId = customFaseId || gameData?.faseId || fase?._id || faseId;
+    const realTrilhaId = customTrilhaId || trilhaId || gameData?.trilhaId;
+    if (!realFaseId) return;
+
     setSalvandoProgresso(true);
     try {
-      await concluirFase({ faseId, pontuacao: 100, acertos: 4, erros: 0 });
-      console.log('[Progresso] Salvo com sucesso via concluirFase');
+      await registrarFaseConcluida(realTrilhaId, realFaseId, 100);
+      console.log('[Progresso] Registrado com sucesso:', realFaseId, 'na trilha:', realTrilhaId);
     } catch (err) {
-      console.warn('[Progresso] Tentando rota alternativa de progresso...', err);
-      try {
-        await api.post('/api/progresso/salvar', {
-          faseId,
-          pontuacao: 100,
-          totalPerguntas: 4,
-          respostasUsuario: [0, 0, 0, 0],
-        });
-      } catch (err2) {
-        console.error('[Progresso] Erro ao salvar progresso da fase:', err2);
-      }
+      console.error('[Progresso] Erro ao registrar progresso da fase:', err);
     } finally {
       setSalvandoProgresso(false);
       if (refreshUser) {
         refreshUser().catch(() => {});
       }
     }
-  }, [faseId, refreshUser]);
+  }, [faseId, trilhaId, gameData, fase, refreshUser]);
 
   // 5. Carregamento e Preparação dos Dados da Fase Conectada à Trilha
   useEffect(() => {
@@ -300,6 +294,7 @@ export default function GameScreen() {
           ordem: ordemFase,
           phaseIndex: phaseIndex,
           totalPhasesInTrail: Math.max(1, fasesDaTrilha.length || 4),
+          fasesDaTrilha: fasesDaTrilha.map((f) => ({ _id: f._id, titulo: f.titulo, ordem: f.ordem })),
           titulo: currentFase?.titulo || `${trilhaTituloFinal} — Fase ${phaseIndex + 1}`,
           personagem_selecionado: personagemUsuario,
           skin_selecionada: skinUsuario,
@@ -359,7 +354,7 @@ export default function GameScreen() {
         } else if (data?.type === 'FIM_FASE') {
           if (data?.vitoria) {
             setFimDeJogo('vitoria');
-            await salvarProgressoVitoria();
+            await salvarProgressoVitoria(data?.faseId, data?.trilhaId);
           } else {
             setFimDeJogo('derrota');
           }
@@ -384,12 +379,12 @@ export default function GameScreen() {
       }
     }
 
-    if (payload?.type === 'VOLTAR_PAGINA') {
+    if (payload?.type === 'VOLTAR_PAGINA' || payload?.type === 'VOLTAR_TRILHA') {
       handleVoltar();
     } else if (payload?.type === 'FIM_FASE') {
       if (payload?.vitoria) {
         setFimDeJogo('vitoria');
-        await salvarProgressoVitoria();
+        await salvarProgressoVitoria(payload?.faseId, payload?.trilhaId);
       } else {
         setFimDeJogo('derrota');
       }

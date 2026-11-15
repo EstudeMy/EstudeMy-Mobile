@@ -29,6 +29,7 @@ import {
 
 import { buscarSecoesPorTrilha, Secao } from '../../services/secaoService';
 import { buscarFasesPorTrilha, Fase } from '../../services/faseService';
+import { obterFasesConcluidasLocalmente } from '../../services/progressoService';
 import api from '../../services/api';
 import QRCodeModal from '../../components/QRCodeModal';
 import QRScannerModal from '../../components/QRScannerModal';
@@ -104,41 +105,55 @@ export default function TrilhaDetailScreen() {
   const SAVED_TRAILS_KEY = 'saved_trails_list';
   const isInitialLoadRef = useRef(true);
 
-  // Carrega se a trilha está salva
+  // Carrega se a trilha está salva de forma segura (compatível com Web e Mobile)
+  const getSavedTrailsListSafe = async (): Promise<string[]> => {
+    try {
+      let raw: string | null = null;
+      if (Platform.OS === 'web') {
+        raw = typeof window !== 'undefined' && window.localStorage ? window.localStorage.getItem(SAVED_TRAILS_KEY) : null;
+      } else {
+        raw = await SecureStore.getItemAsync(SAVED_TRAILS_KEY);
+      }
+      return raw ? (JSON.parse(raw) as string[]) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const setSavedTrailsListSafe = async (list: string[]): Promise<void> => {
+    try {
+      const json = JSON.stringify(list);
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem(SAVED_TRAILS_KEY, json);
+        }
+      } else {
+        await SecureStore.setItemAsync(SAVED_TRAILS_KEY, json);
+      }
+    } catch {}
+  };
+
   useEffect(() => {
     const checkSavedStatus = async () => {
       if (!id) return;
-      try {
-        const listJson = await SecureStore.getItemAsync(SAVED_TRAILS_KEY);
-        if (listJson) {
-          const list = JSON.parse(listJson) as string[];
-          setIsSaved(list.includes(id));
-        }
-      } catch (e) {
-        console.error('Error checking saved status:', e);
-      }
+      const list = await getSavedTrailsListSafe();
+      setIsSaved(list.includes(id));
     };
     checkSavedStatus();
   }, [id]);
 
   const handleToggleSave = async () => {
     if (!id) return;
-    try {
-      const listJson = await SecureStore.getItemAsync(SAVED_TRAILS_KEY);
-      let list = listJson ? (JSON.parse(listJson) as string[]) : [];
-      
-      if (list.includes(id)) {
-        list = list.filter((savedId) => savedId !== id);
-        setIsSaved(false);
-      } else {
-        list.push(id);
-        setIsSaved(true);
-      }
-      
-      await SecureStore.setItemAsync(SAVED_TRAILS_KEY, JSON.stringify(list));
-    } catch (e) {
-      console.error('Error toggling save status:', e);
+    const list = await getSavedTrailsListSafe();
+    let updated: string[];
+    if (list.includes(id)) {
+      updated = list.filter((savedId) => savedId !== id);
+      setIsSaved(false);
+    } else {
+      updated = [...list, id];
+      setIsSaved(true);
     }
+    await setSavedTrailsListSafe(updated);
   };
 
   const fetchTrilhaDetails = useCallback(async () => {
@@ -221,27 +236,37 @@ export default function TrilhaDetailScreen() {
       });
       setFases(sortedFases);
 
-      // Buscar progresso atualizado (com timestamp para evitar cache)
+      // 1. Buscar progresso local garantido (offline-first)
+      const localCompleted = await obterFasesConcluidasLocalmente(id);
+
+      // 2. Buscar progresso atualizado no backend (com timestamp para evitar cache)
+      let backendCompleted: string[] = [];
       try {
         const progressoRes = await api.get(`/api/progresso/trilha/${id}?_t=${Date.now()}`);
         if (progressoRes.data) {
           setIniciada(true);
           const progMap = progressoRes.data.progresso;
           if (progMap && typeof progMap === 'object') {
-            const completed = Object.keys(progMap).filter((fId) => progMap[fId] === true);
-            setFasesConcluidas(completed);
+            backendCompleted = Object.keys(progMap).filter((fId) => progMap[fId] === true);
           } else if (Array.isArray(progressoRes.data.fasesConcluidas)) {
-            setFasesConcluidas(progressoRes.data.fasesConcluidas);
+            backendCompleted = progressoRes.data.fasesConcluidas;
           }
         }
       } catch (err: any) {
         if (err.response?.status === 404) {
-          // Trilha não iniciada ainda
-          setIniciada(false);
+          // Trilha não registrada no backend ainda; usa o estado local
+          setIniciada(localCompleted.length > 0);
         } else {
           console.error('Erro ao buscar progresso da trilha:', err);
         }
       }
+
+      // 3. Unifica progresso do backend com o storage local
+      const todasConcluidas = Array.from(new Set([...backendCompleted, ...localCompleted]));
+      if (todasConcluidas.length > 0) {
+        setIniciada(true);
+      }
+      setFasesConcluidas(todasConcluidas);
     } catch (e) {
       console.error('Erro ao carregar detalhes da trilha:', e);
     } finally {
@@ -260,10 +285,6 @@ export default function TrilhaDetailScreen() {
   // Determina se esta é a fase onde o avatar do personagem deve ficar
   const isPhaseActive = (fase: Fase) => {
     if (fases.length === 0) return false;
-    
-    if (!iniciada) {
-      return fases[0]._id === fase._id;
-    }
     
     const firstActive = fases.find((f) => !fasesConcluidas.includes(f._id));
     if (firstActive) {
@@ -840,14 +861,13 @@ export default function TrilhaDetailScreen() {
                         
                         // Lógica para desbloquear a fase individual
                         let isPhaseUnlocked = false;
-                        if (!iniciada) {
-                          isPhaseUnlocked = false;
-                        } else if (fases.indexOf(fase) === 0) {
+                        if (fases.indexOf(fase) === 0) {
+                          // A primeira fase da trilha é sempre desbloqueada para jogar!
                           isPhaseUnlocked = true;
                         } else {
                           const absoluteIndex = fases.indexOf(fase);
                           const prevFase = fases[absoluteIndex - 1];
-                          isPhaseUnlocked = prevFase && fasesConcluidas.includes(prevFase._id);
+                          isPhaseUnlocked = Boolean(prevFase && fasesConcluidas.includes(prevFase._id));
                         }
 
                         if (isCompleted) {

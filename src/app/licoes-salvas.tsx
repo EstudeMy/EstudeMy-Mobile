@@ -7,6 +7,7 @@ import {
   ActivityIndicator,
   Image,
   FlatList,
+  Platform,
 } from 'react-native';
 import { useRouter, Stack } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -28,11 +29,37 @@ export default function LicoesSalvasScreen() {
 
   const SAVED_TRAILS_KEY = 'saved_trails_list';
 
+  const getSavedTrailsListSafe = async (): Promise<string[]> => {
+    try {
+      let raw: string | null = null;
+      if (Platform.OS === 'web') {
+        raw = typeof window !== 'undefined' && window.localStorage ? window.localStorage.getItem(SAVED_TRAILS_KEY) : null;
+      } else {
+        raw = await SecureStore.getItemAsync(SAVED_TRAILS_KEY);
+      }
+      return raw ? (JSON.parse(raw) as string[]) : [];
+    } catch {
+      return [];
+    }
+  };
+
+  const setSavedTrailsListSafe = async (list: string[]): Promise<void> => {
+    try {
+      const json = JSON.stringify(list);
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem(SAVED_TRAILS_KEY, json);
+        }
+      } else {
+        await SecureStore.setItemAsync(SAVED_TRAILS_KEY, json);
+      }
+    } catch {}
+  };
+
   const fetchSavedLessons = async () => {
     setLoading(true);
     try {
-      const listJson = await SecureStore.getItemAsync(SAVED_TRAILS_KEY);
-      const list = listJson ? (JSON.parse(listJson) as string[]) : [];
+      const list = await getSavedTrailsListSafe();
 
       if (list.length === 0) {
         setSavedTrails([]);
@@ -63,13 +90,10 @@ export default function LicoesSalvasScreen() {
 
   const handleUnsave = async (trailId: string) => {
     try {
-      const listJson = await SecureStore.getItemAsync(SAVED_TRAILS_KEY);
-      if (listJson) {
-        let list = JSON.parse(listJson) as string[];
-        list = list.filter((id) => id !== trailId);
-        await SecureStore.setItemAsync(SAVED_TRAILS_KEY, JSON.stringify(list));
-        setSavedTrails((prev) => prev.filter((t) => t._id !== trailId));
-      }
+      const list = await getSavedTrailsListSafe();
+      const updated = list.filter((id) => id !== trailId);
+      await setSavedTrailsListSafe(updated);
+      setSavedTrails((prev) => prev.filter((t) => t._id !== trailId));
     } catch (e) {
       console.error('Erro ao remover trilha salva:', e);
     }

@@ -866,6 +866,8 @@
 
       this.currentTrilhaId = raw?.trilhaId || '';
       this.currentFaseId = raw?.faseId || '';
+      this.fasesDaTrilha = Array.isArray(raw?.fasesDaTrilha) ? raw.fasesDaTrilha : [];
+      this.currentFaseIndex = typeof raw?.phaseIndex === 'number' ? raw.phaseIndex : 0;
 
       // Herói Selecionado (Perfil do Usuário)
       const char = (raw?.personagem_selecionado || 'samurai').toLowerCase();
@@ -1481,6 +1483,25 @@
       if (typeof window.notificar_vitoria_js === 'function') {
         window.notificar_vitoria_js();
       }
+
+      // Salva progresso no localStorage instantaneamente de forma resiliente e offline-first
+      try {
+        const prefix = 'estudemy_progresso_trilha_';
+        if (this.currentTrilhaId && this.currentFaseId && typeof window.localStorage !== 'undefined') {
+          const key = prefix + this.currentTrilhaId;
+          const rawLocal = window.localStorage.getItem(key);
+          let list = [];
+          if (rawLocal) {
+            try { list = JSON.parse(rawLocal); } catch (e) {}
+          }
+          if (Array.isArray(list) && !list.includes(this.currentFaseId)) {
+            list.push(this.currentFaseId);
+            window.localStorage.setItem(key, JSON.stringify(list));
+            console.log('[GameEngine] Salvo progresso local de vitória para fase:', this.currentFaseId);
+          }
+        }
+      } catch (e) {}
+
       try {
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type: 'FIM_FASE', vitoria: true, faseId: this.currentFaseId, trilhaId: this.currentTrilhaId, earnedXP: earnedXP }, '*');
@@ -1500,10 +1521,26 @@
     advanceToNextPhase() {
       if (this.phaseVictoryModal) this.phaseVictoryModal.style.display = 'none';
       const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
-      if (this.currentThemePhase + 1 < theme.phases.length) {
-        this.setPhase(this.currentThemePhase + 1);
-        this.questions = this.getFallbackThematicQuestions(this.activeTheme, this.currentThemePhase);
-        this.currentQuestionIndex = 0;
+      const nextThemePhase = this.currentThemePhase + 1;
+      const maxPhases = (this.fasesDaTrilha && this.fasesDaTrilha.length > 0)
+        ? this.fasesDaTrilha.length
+        : (theme.phases ? theme.phases.length : 1);
+
+      if (nextThemePhase < maxPhases) {
+        // Restaura totalmente a vida do herói para a próxima batalha
+        this.playerHp = this.playerMaxHp;
+        this.updateHUD();
+
+        const themePhaseIdx = nextThemePhase % (theme.phases ? theme.phases.length : 1);
+        this.setPhase(themePhaseIdx);
+
+        // Atualiza o ID da fase ativa para a próxima fase da trilha
+        if (this.fasesDaTrilha && this.fasesDaTrilha[nextThemePhase]) {
+          this.currentFaseId = this.fasesDaTrilha[nextThemePhase]._id;
+        }
+
+        this.questions = this.getFallbackThematicQuestions(this.activeTheme, themePhaseIdx);
+        this.currentQuestionIdx = 0;
         this.renderQuestion();
       } else {
         this.exitBattle();
