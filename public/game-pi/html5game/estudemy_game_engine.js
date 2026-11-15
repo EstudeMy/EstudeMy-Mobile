@@ -852,6 +852,20 @@
       if (!raw && window.gameData) {
         raw = window.gameData;
       }
+      if (!raw && window.parent && window.parent !== window) {
+        try {
+          if (window.parent.gameData) raw = window.parent.gameData;
+        } catch (e) {}
+      }
+      if (!raw) {
+        try {
+          const stored = sessionStorage.getItem('estudemy_game_data') || localStorage.getItem('estudemy_game_data');
+          if (stored) raw = JSON.parse(stored);
+        } catch (e) {}
+      }
+
+      this.currentTrilhaId = raw?.trilhaId || '';
+      this.currentFaseId = raw?.faseId || '';
 
       // Herói Selecionado (Perfil do Usuário)
       const char = (raw?.personagem_selecionado || 'samurai').toLowerCase();
@@ -873,48 +887,218 @@
       const foundIdx = heroConfig.skins.findIndex((s) => s.id.toLowerCase() === skinKey || s.name.toLowerCase().includes(skinKey));
       this.selectedSkinIndex = foundIdx >= 0 ? foundIdx : 0;
 
-      // Trilha / Cenário
-      const cenario = (raw?.cenario || raw?.trilha || 'castelo').toLowerCase();
-      if (cenario.includes('montanha') || cenario.includes('pico')) this.activeTheme = 'montanha';
-      else if (cenario.includes('deserto') || cenario.includes('dunas')) this.activeTheme = 'deserto';
-      else if (cenario.includes('vila') || cenario.includes('mercado')) this.activeTheme = 'vila';
-      else if (cenario.includes('vazio') || cenario.includes('final') || cenario.includes('singularidade')) this.activeTheme = 'vazio_cosmico';
-      else this.activeTheme = 'castelo';
+      // Trilha / Cenário Temático (conectado à matéria e à trilha do app)
+      const cenario = (raw?.trilhaTema || raw?.cenario || raw?.trilha || raw?.materia || 'castelo').toLowerCase();
+      if (
+        cenario.includes('montanha') ||
+        cenario.includes('pico') ||
+        cenario.includes('matematica') ||
+        cenario.includes('matemática') ||
+        cenario.includes('fisica') ||
+        cenario.includes('física') ||
+        cenario.includes('calculo') ||
+        cenario.includes('cálculo') ||
+        cenario.includes('logica') ||
+        cenario.includes('lógica') ||
+        cenario.includes('geometria')
+      ) {
+        this.activeTheme = 'montanha';
+      } else if (
+        cenario.includes('deserto') ||
+        cenario.includes('dunas') ||
+        cenario.includes('oasis') ||
+        cenario.includes('oásis') ||
+        cenario.includes('ciencia') ||
+        cenario.includes('ciência') ||
+        cenario.includes('geografia') ||
+        cenario.includes('biologia') ||
+        cenario.includes('quimica') ||
+        cenario.includes('química')
+      ) {
+        this.activeTheme = 'deserto';
+      } else if (
+        cenario.includes('vila') ||
+        cenario.includes('mercado') ||
+        cenario.includes('portugues') ||
+        cenario.includes('português') ||
+        cenario.includes('historia') ||
+        cenario.includes('história') ||
+        cenario.includes('filosofia') ||
+        cenario.includes('literatura') ||
+        cenario.includes('humanas') ||
+        cenario.includes('bardo')
+      ) {
+        this.activeTheme = 'vila';
+      } else if (
+        cenario.includes('vazio') ||
+        cenario.includes('cosmico') ||
+        cenario.includes('cósmico') ||
+        cenario.includes('final') ||
+        cenario.includes('singularidade') ||
+        cenario.includes('simulado')
+      ) {
+        this.activeTheme = 'vazio_cosmico';
+      } else {
+        this.activeTheme = 'castelo';
+      }
 
-      // Perguntas
-      this.questions = raw?.perguntas && raw.perguntas.length > 0 ? raw.perguntas : [
-        {
-          enunciado: 'Qual a principal vantagem da computação em nuvem?',
-          alternativas: ['Escalabilidade sob demanda', 'Custo fixo alto', 'Perda de controle', 'Necessidade de servidor físico local'],
-          respostaCorreta: 'Escalabilidade sob demanda',
-          indiceRespostaCorreta: 0,
-          explicacao: 'A nuvem permite provisionar recursos sob demanda.',
-        },
-        {
-          enunciado: 'O que caracteriza um banco de dados relacional (SQL)?',
-          alternativas: ['Tabelas com chaves primárias e relacionamentos', 'Documentos JSON livres', 'Chaves e valores sem esquema', 'Grafos não estruturados'],
-          respostaCorreta: 'Tabelas com chaves primárias e relacionamentos',
-          indiceRespostaCorreta: 0,
-          explicacao: 'Bancos relacionais organizam dados em tabelas estruturadas.',
-        },
-        {
-          enunciado: 'Em arquitetura de microsserviços, qual a função de um API Gateway?',
-          alternativas: ['Roteamento e segurança centralizados', 'Armazenar o banco de dados principal', 'Substituir a rede física', 'Eliminar requisições HTTP'],
-          respostaCorreta: 'Roteamento e segurança centralizados',
-          indiceRespostaCorreta: 0,
-          explicacao: 'O Gateway unifica autenticação, rate limiting e roteamento.',
-        },
-      ];
+      if (raw?.trilhaTitulo) {
+        this.trackCustomTitle = `TRILHA: ${raw.trilhaTitulo.toUpperCase()}`;
+      }
 
+      // Determina a Fase da Trilha Temática
       let initialPhase = 0;
-      if (typeof raw?.ordem === 'number' && raw.ordem >= 1) {
-        initialPhase = Math.max(0, (raw.ordem - 1) % 4);
+      if (typeof raw?.phaseIndex === 'number') {
+        initialPhase = Math.max(0, raw.phaseIndex % 4);
+      } else if (typeof raw?.ordem === 'number' && raw.ordem >= 1) {
+        const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
+        const total = theme.phases ? theme.phases.length : 4;
+        initialPhase = Math.max(0, (raw.ordem - 1) % total);
       }
 
       this.currentThemePhase = initialPhase;
+
+      // Perguntas pedagógicas conectadas à trilha e à fase
+      if (raw?.perguntas && raw.perguntas.length > 0) {
+        this.questions = raw.perguntas;
+      } else {
+        this.questions = this.getFallbackThematicQuestions(this.activeTheme, initialPhase);
+      }
+
+      this.currentQuestionIndex = 0;
       this.applyTheme(this.activeTheme, initialPhase);
       this.applyHeroSkin();
       this.renderQuestion();
+    }
+
+    getFallbackThematicQuestions(themeKey, phaseIndex) {
+      const BANK = {
+        castelo: [
+          [
+            { enunciado: 'Qual é a função básica de uma variável em um algoritmo?', alternativas: ['Armazenar dados na memória para processamento', 'Acelerar a placa de vídeo', 'Conectar à rede externa', 'Eliminar erros de sintaxe'], respostaCorreta: 'Armazenar dados na memória para processamento', indiceRespostaCorreta: 0 },
+            { enunciado: 'O que representa uma estrutura condicional (if / else)?', alternativas: ['Um desvio de fluxo baseado em condição lógica', 'Uma repetição infinita de instruções', 'A conversão automática de números em texto', 'A exclusão de arquivos não utilizados'], respostaCorreta: 'Um desvio de fluxo baseado em condição lógica', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual a principal vantagem da computação em nuvem?', alternativas: ['Escalabilidade sob demanda e alta disponibilidade', 'Custo fixo alto sem alteração', 'Necessidade obrigatória de servidor físico local', 'Perda de controle total sobre senhas'], respostaCorreta: 'Escalabilidade sob demanda e alta disponibilidade', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual a complexidade média da busca binária em vetor ordenado?', alternativas: ['O(log n)', 'O(n²)', 'O(n!)', 'O(1)'], respostaCorreta: 'O(log n)', indiceRespostaCorreta: 0 },
+          ],
+          [
+            { enunciado: 'O que caracteriza um banco de dados relacional (SQL)?', alternativas: ['Tabelas com chaves primárias e relacionamentos', 'Documentos JSON livres sem esquema', 'Chaves e valores sem esquema', 'Grafos não estruturados'], respostaCorreta: 'Tabelas com chaves primárias e relacionamentos', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual comando SQL é utilizado para extrair dados de uma tabela?', alternativas: ['SELECT', 'INSERT', 'UPDATE', 'DROP'], respostaCorreta: 'SELECT', indiceRespostaCorreta: 0 },
+            { enunciado: 'Para que serve uma Chave Estrangeira (Foreign Key)?', alternativas: ['Estabelecer vínculo de integridade entre duas tabelas', 'Criptografar senhas na tabela', 'Garantir chave primária não nula', 'Aumentar espaço de armazenamento'], respostaCorreta: 'Estabelecer vínculo de integridade entre duas tabelas', indiceRespostaCorreta: 0 },
+            { enunciado: 'No SQL, qual cláusula filtra resultados agrupados por GROUP BY?', alternativas: ['HAVING', 'WHERE', 'ORDER BY', 'LIMIT'], respostaCorreta: 'HAVING', indiceRespostaCorreta: 0 },
+          ],
+          [
+            { enunciado: 'Qual estrutura opera no princípio LIFO (Last In, First Out)?', alternativas: ['Pilha (Stack)', 'Fila (Queue)', 'Vetor (Array)', 'Árvore Binária'], respostaCorreta: 'Pilha (Stack)', indiceRespostaCorreta: 0 },
+            { enunciado: 'O que é um vazamento de memória (Memory Leak)?', alternativas: ['Memória alocada dinamicamente não liberada após o uso', 'Invasão que rouba arquivos confidenciais', 'Desligamento abrupto por queda de energia', 'Compactação excessiva de arquivos'], respostaCorreta: 'Memória alocada dinamicamente não liberada após o uso', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual a vantagem de acesso médio de uma Tabela Hash?', alternativas: ['Acesso e busca em tempo constante médio O(1)', 'Ordenação alfabética automática', 'Consumo nulo de memória', 'Zero colisões garantido'], respostaCorreta: 'Acesso e busca em tempo constante médio O(1)', indiceRespostaCorreta: 0 },
+            { enunciado: 'Em uma estrutura de Fila (Queue), como ocorrem as inserções e remoções?', alternativas: ['Primeiro a entrar é o primeiro a sair (FIFO)', 'Último a entrar é o primeiro a sair (LIFO)', 'Apenas no centro da lista', 'Em ordem alfabética aleatória'], respostaCorreta: 'Primeiro a entrar é o primeiro a sair (FIFO)', indiceRespostaCorreta: 0 },
+          ],
+          [
+            { enunciado: 'Em arquitetura de microsserviços, qual a função de um API Gateway?', alternativas: ['Roteamento e segurança centralizados', 'Substituir banco de dados relacional', 'Eliminar a camada física de rede', 'Executar compilação em tempo real'], respostaCorreta: 'Roteamento e segurança centralizados', indiceRespostaCorreta: 0 },
+            { enunciado: 'Nas propriedades ACID, o que significa Atomicidade?', alternativas: ['Transação executada por completo ou totalmente revertida', 'Dados gravados em memórias quânticas', 'Transações simultâneas isoladas', 'Dados persistentes após falha física'], respostaCorreta: 'Transação executada por completo ou totalmente revertida', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual padrão arquitetural separa leitura (queries) de escrita (commands)?', alternativas: ['CQRS', 'Monólito Clássico', 'MVC Puro', 'Singleton'], respostaCorreta: 'CQRS', indiceRespostaCorreta: 0 },
+            { enunciado: 'O que caracteriza a Idempotência em uma API RESTful?', alternativas: ['Executar a mesma requisição múltiplas vezes produz o mesmo efeito', 'Requisição feita uma única vez por IP', 'Servidor gera chave nova a cada segundo', 'Respostas sempre em formato XML'], respostaCorreta: 'Executar a mesma requisição múltiplas vezes produz o mesmo efeito', indiceRespostaCorreta: 0 },
+          ],
+        ],
+        montanha: [
+          [
+            { enunciado: 'Qual é o valor da raiz quadrada exata de 144?', alternativas: ['12', '14', '16', '10'], respostaCorreta: '12', indiceRespostaCorreta: 0 },
+            { enunciado: 'Dada a função afim f(x) = 3x - 5, qual o valor numérico de f(4)?', alternativas: ['7', '9', '12', '17'], respostaCorreta: '7', indiceRespostaCorreta: 0 },
+            { enunciado: 'Se uma armadura custa R$ 200,00 e recebe desconto de 15%, quanto custará?', alternativas: ['R$ 170,00', 'R$ 180,00', 'R$ 185,00', 'R$ 160,00'], respostaCorreta: 'R$ 170,00', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual é a soma dos ângulos internos de qualquer triângulo plano?', alternativas: ['180°', '360°', '90°', '270°'], respostaCorreta: '180°', indiceRespostaCorreta: 0 },
+          ],
+          [
+            { enunciado: 'Pela 2ª Lei de Newton, a Força Resultante (F) é dada por:', alternativas: ['F = m × a (Massa vezes aceleração)', 'F = m / a', 'F = m + a', 'F = m × v²'], respostaCorreta: 'F = m × a (Massa vezes aceleração)', indiceRespostaCorreta: 0 },
+            { enunciado: 'Um guerreiro percorre 180 km em exatamente 2 horas. Qual foi sua velocidade média?', alternativas: ['90 km/h', '100 km/h', '80 km/h', '120 km/h'], respostaCorreta: '90 km/h', indiceRespostaCorreta: 0 },
+            { enunciado: 'O que diferencia uma grandeza vetorial de uma grandeza escalar?', alternativas: ['Vetores exigem módulo, direção e sentido', 'Escalares possuem apenas direção', 'Vetores não possuem representação numérica', 'Escalares existem apenas no vácuo'], respostaCorreta: 'Vetores exigem módulo, direção e sentido', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual o valor aproximado da aceleração da gravidade na Terra?', alternativas: ['9,8 m/s²', '1,6 m/s²', '24,8 m/s²', '300.000 km/s'], respostaCorreta: '9,8 m/s²', indiceRespostaCorreta: 0 },
+          ],
+          [
+            { enunciado: 'Em um triângulo retângulo de catetos 3 e 4, a hipotenusa mede:', alternativas: ['5', '6', '7', '8'], respostaCorreta: '5', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual é o valor do seno de um ângulo de 30 graus?', alternativas: ['1/2 (0,5)', '√3/2', '1', '0'], respostaCorreta: '1/2 (0,5)', indiceRespostaCorreta: 0 },
+            { enunciado: 'Como se calcula a área de um círculo em função do raio r?', alternativas: ['A = π × r²', 'A = 2 × π × r', 'A = π × r³', 'A = 4 × π × r²'], respostaCorreta: 'A = π × r²', indiceRespostaCorreta: 0 },
+            { enunciado: 'Quantos vértices e faces possui um cubo regular?', alternativas: ['8 vértices e 6 faces', '6 vértices e 8 faces', '12 vértices e 6 faces', '8 vértices e 12 faces'], respostaCorreta: '8 vértices e 6 faces', indiceRespostaCorreta: 0 },
+          ],
+          [
+            { enunciado: 'Na lógica booleana, a conjunção (A E B) só é verdadeira quando:', alternativas: ['Ambas as proposições A e B forem verdadeiras', 'Pelo menos uma for verdadeira', 'A for verdadeira e B for falsa', 'Ambas forem falsas'], respostaCorreta: 'Ambas as proposições A e B forem verdadeiras', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual a probabilidade de obter a face 6 no lançamento de um dado comum?', alternativas: ['1/6 (aprox. 16,6%)', '1/2 (50%)', '1/3 (aprox. 33,3%)', '1/12 (aprox. 8,3%)'], respostaCorreta: '1/6 (aprox. 16,6%)', indiceRespostaCorreta: 0 },
+            { enunciado: 'Na progressão geométrica (2, 4, 8, 16...), qual o valor da razão?', alternativas: ['2', '4', '8', '1'], respostaCorreta: '2', indiceRespostaCorreta: 0 },
+            { enunciado: 'No cálculo diferencial, qual a derivada da função f(x) = x²?', alternativas: ['2x', 'x', '2', 'x³ / 3'], respostaCorreta: '2x', indiceRespostaCorreta: 0 },
+          ],
+        ],
+        deserto: [
+          [
+            { enunciado: 'Qual agente natural é responsável pela formação e deslocamento das dunas?', alternativas: ['Ação eólica (ventos e transporte de sedimentos)', 'Erosão fluvial de rios subterrâneos', 'Abalos sísmicos contínuos do magma', 'Gravidade lunar'], respostaCorreta: 'Ação eólica (ventos e transporte de sedimentos)', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual camada sólida externa compõe a crosta rochosa da Terra?', alternativas: ['Litosfera', 'Astenosfera', 'Mesosfera', 'Núcleo Interno'], respostaCorreta: 'Litosfera', indiceRespostaCorreta: 0 },
+            { enunciado: 'O que impulsiona o movimento das placas tectônicas terrestres?', alternativas: ['Correntes de convecção térmica de magma no manto', 'Rotação atmosférica de furacões', 'Magnetismo dos polos norte e sul', 'Pressão dos oceanos'], respostaCorreta: 'Correntes de convecção térmica de magma no manto', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual característica climática define os desertos áridos globais?', alternativas: ['Baixa pluviosidade e grande amplitude térmica diária', 'Chuvas constantes em todas as estações', 'Temperaturas congelantes estáveis', 'Umidade relativa do ar de 100%'], respostaCorreta: 'Baixa pluviosidade e grande amplitude térmica diária', indiceRespostaCorreta: 0 },
+          ],
+          [
+            { enunciado: 'Qual processo converte luz solar, água e CO2 em glicose nas plantas?', alternativas: ['Fotossíntese', 'Respiração celular', 'Fermentação láctica', 'Quimiossíntese'], respostaCorreta: 'Fotossíntese', indiceRespostaCorreta: 0 },
+            { enunciado: 'Em uma cadeia alimentar, como se chamam os seres que produzem seu próprio alimento?', alternativas: ['Produtores (Autótrofos)', 'Consumidores primários', 'Decompositores', 'Parasitas estritos'], respostaCorreta: 'Produtores (Autótrofos)', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual gás essencial é liberado para a atmosfera pela fotossíntese?', alternativas: ['Oxigênio (O₂)', 'Dióxido de carbono (CO₂)', 'Metano (CH₄)', 'Hélio (He)'], respostaCorreta: 'Oxigênio (O₂)', indiceRespostaCorreta: 0 },
+            { enunciado: 'O que são fósseis no registro das ciências naturais?', alternativas: ['Restos ou vestígios petrificados de seres vivos pré-históricos', 'Minerais sintéticos industriais', 'Rochas magmáticas expelidas recentemente', 'Cristais de sal evaporados'], respostaCorreta: 'Restos ou vestígios petrificados de seres vivos pré-históricos', indiceRespostaCorreta: 0 },
+          ],
+          [
+            { enunciado: 'Qual partícula atômica possui carga negativa e orbita o núcleo?', alternativas: ['Elétron', 'Próton', 'Nêutron', 'Pósitron'], respostaCorreta: 'Elétron', indiceRespostaCorreta: 0 },
+            { enunciado: 'Na tabela periódica, qual elemento é representado pelo símbolo Fe?', alternativas: ['Ferro', 'Frâncio', 'Flúor', 'Irídio'], respostaCorreta: 'Ferro', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual é a fórmula molecular padrão da substância Água?', alternativas: ['H₂O', 'CO₂', 'NaCl', 'H₂O₂'], respostaCorreta: 'H₂O', indiceRespostaCorreta: 0 },
+            { enunciado: 'Em soluções aquosas a 25°C, qual valor da escala de pH indica neutralidade?', alternativas: ['7', '0', '14', '1'], respostaCorreta: '7', indiceRespostaCorreta: 0 },
+          ],
+          [
+            { enunciado: 'Qual molécula biológica carrega as instruções genéticas de todos os seres vivos?', alternativas: ['DNA', 'Glicose', 'Colesterol', 'Hemoglobina'], respostaCorreta: 'DNA', indiceRespostaCorreta: 0 },
+            { enunciado: 'O que provoca o fenômeno luminoso das auroras boreais e austrais?', alternativas: ['Interação do vento solar com o campo magnético e atmosfera', 'Reflexo da luz nas calotas polares', 'Incêndios florestais nas taigas', 'Colisão de meteoritos na estratosfera'], respostaCorreta: 'Interação do vento solar com o campo magnético e atmosfera', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual planeta do Sistema Solar é conhecido como Planeta Vermelho?', alternativas: ['Marte', 'Júpiter', 'Vênus', 'Mercúrio'], respostaCorreta: 'Marte', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual a principal fonte de energia que move o ciclo da água na Terra?', alternativas: ['A radiação emitida pelo Sol', 'O calor do núcleo terrestre', 'A força de atrito das marés', 'A eletricidade das nuvens'], respostaCorreta: 'A radiação emitida pelo Sol', indiceRespostaCorreta: 0 },
+          ],
+        ],
+        vila: [
+          [
+            { enunciado: 'Em qual frase o uso da crase é plenamente CORRETO?', alternativas: ['Todos os sábios foram à biblioteca consultar tomos.', 'O mensageiro começou à cavalgar ao amanhecer.', 'Entregamos o pergaminho à ele com rapidez.', 'Eles caminharam passo à passo até a praça.'], respostaCorreta: 'Todos os sábios foram à biblioteca consultar tomos.', indiceRespostaCorreta: 0 },
+            { enunciado: 'Assinale a alternativa com a concordância verbal padrão correta:', alternativas: ['Havia muitos cavaleiros reunidos na praça da vila.', 'Haviam muitos cavaleiros reunidos na praça da vila.', 'Fazem dez anos que a biblioteca foi fundada.', 'Devem de haver soluções melhores.'], respostaCorreta: 'Havia muitos cavaleiros reunidos na praça da vila.', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual sinal de pontuação introduz a fala de um personagem no diálogo direto?', alternativas: ['Travessão (—)', 'Reticências (...)', 'Ponto e vírgula (;)', 'Parênteses ()'], respostaCorreta: 'Travessão (—)', indiceRespostaCorreta: 0 },
+            { enunciado: 'Na oração "Chegaram os sábios cronistas ao entardecer", qual é o sujeito?', alternativas: ['Os sábios cronistas', 'Ao entardecer', 'Chegaram', 'Oração sem sujeito'], respostaCorreta: 'Os sábios cronistas', indiceRespostaCorreta: 0 },
+          ],
+          [
+            { enunciado: 'Qual figura de linguagem consiste no exagero intencional de uma ideia?', alternativas: ['Hipérbole', 'Eufemismo', 'Metonímia', 'Paradoxo'], respostaCorreta: 'Hipérbole', indiceRespostaCorreta: 0 },
+            { enunciado: 'Quem escreveu as consagradas obras "Dom Casmurro" e "Memórias Póstumas"?', alternativas: ['Machado de Assis', 'José de Alencar', 'Clarice Lispector', 'Guimarães Rosa'], respostaCorreta: 'Machado de Assis', indiceRespostaCorreta: 0 },
+            { enunciado: 'O que define a coesão textual em uma dissertação argumentativa?', alternativas: ['A articulação harmônica entre frases por conectivos e pronomes', 'O uso de margens padronizadas', 'A quantidade exata de páginas', 'A inserção de imagens coloridas'], respostaCorreta: 'A articulação harmônica entre frases por conectivos e pronomes', indiceRespostaCorreta: 0 },
+            { enunciado: 'A qual grande período literário pertence a epopeia "Os Lusíadas", de Camões?', alternativas: ['Classicismo / Renascimento', 'Romantismo', 'Modernismo', 'Barroco'], respostaCorreta: 'Classicismo / Renascimento', indiceRespostaCorreta: 0 },
+          ],
+          [
+            { enunciado: 'Qual filósofo grego imortalizou a máxima "Só sei que nada sei"?', alternativas: ['Sócrates', 'Platão', 'Aristóteles', 'Heráclito'], respostaCorreta: 'Sócrates', indiceRespostaCorreta: 0 },
+            { enunciado: 'O que preconizava o movimento filosófico do Iluminismo no século XVIII?', alternativas: ['O predomínio da razão, da ciência e dos direitos individuais', 'A submissão absoluta ao dogma medieval', 'O fim de quaisquer leis escritas', 'A proibição do ensino público'], respostaCorreta: 'O predomínio da razão, da ciência e dos direitos individuais', indiceRespostaCorreta: 0 },
+            { enunciado: 'Para Aristóteles, qual o objetivo supremo (Telos) de toda ação humana?', alternativas: ['Atingir a Felicidade e plenitude (Eudaimonia)', 'Acumular riquezas materiais ilimitadas', 'Vencer batalhas militares de conquista', 'Alcançar a imortalidade física'], respostaCorreta: 'Atingir a Felicidade e plenitude (Eudaimonia)', indiceRespostaCorreta: 0 },
+            { enunciado: 'O que define o conceito moderno de Cidadania em uma democracia?', alternativas: ['O exercício pleno de direitos civis e cumprimento de deveres', 'Apenas residir em uma grande cidade', 'A posse obrigatória de títulos de nobreza', 'A isenção permanente de tributos'], respostaCorreta: 'O exercício pleno de direitos civis e cumprimento de deveres', indiceRespostaCorreta: 0 },
+          ],
+          [
+            { enunciado: 'Em qual país e século teve início a Primeira Revolução Industrial?', alternativas: ['Inglaterra, no século XVIII', 'França, no século XVI', 'Alemanha, no século XIX', 'Estados Unidos, no século XVII'], respostaCorreta: 'Inglaterra, no século XVIII', indiceRespostaCorreta: 0 },
+            { enunciado: 'O que caracterizou o Feudalismo na Europa durante a Idade Média?', alternativas: ['Economia agrária descentralizada e laços de suserania/vassalagem', 'Comércio digital internacional massivo', 'Poder centralizado por voto popular', 'Industrialização fabril automatizada'], respostaCorreta: 'Economia agrária descentralizada e laços de suserania/vassalagem', indiceRespostaCorreta: 0 },
+            { enunciado: 'Em qual ano a ONU proclamou a Declaração Universal dos Direitos Humanos?', alternativas: ['1948', '1918', '1789', '2000'], respostaCorreta: '1948', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual lei sancionada em 1888 aboliu oficialmente a escravidão no Brasil?', alternativas: ['Lei Áurea', 'Lei do Ventre Livre', 'Lei dos Sexagenários', 'Lei Eusébio de Queirós'], respostaCorreta: 'Lei Áurea', indiceRespostaCorreta: 0 },
+          ],
+        ],
+        vazio_cosmico: [
+          [
+            { enunciado: 'No pensamento computacional, o que significa Decomposição?', alternativas: ['Dividir um problema complexo em partes menores e tratáveis', 'Descartar permanentemente informações difíceis', 'Transformar código em texto simples', 'Repetir instruções até travar a máquina'], respostaCorreta: 'Dividir um problema complexo em partes menores e tratáveis', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual a diferença crucial entre Correlação estatística e Causalidade?', alternativas: ['Correlação mostra variáveis oscilando juntas; causalidade prova causa e efeito', 'São expressões rigorosamente idênticas', 'Causalidade aplica-se apenas a finanças', 'Correlação nunca possui embasamento numérico'], respostaCorreta: 'Correlação mostra variáveis oscilando juntas; causalidade prova causa e efeito', indiceRespostaCorreta: 0 },
+            { enunciado: 'Por que a interdisciplinaridade é essencial na resolução de problemas modernos?', alternativas: ['Porque os desafios reais do mundo integram tecnologia, humanidades e ciências', 'Para forçar memorização isolada de datas', 'Porque elimina o uso do raciocínio lógico', 'Apenas para economizar professores'], respostaCorreta: 'Porque os desafios reais do mundo integram tecnologia, humanidades e ciências', indiceRespostaCorreta: 0 },
+          ],
+          [
+            { enunciado: 'Na teoria da informação e na física, o que expressa o conceito de Entropia?', alternativas: ['A medida do grau de incerteza, desordem ou informação de um sistema', 'A velocidade terminal de um corpo em queda', 'A tensão elétrica de uma hidrelétrica', 'A densidade de pixels de um display'], respostaCorreta: 'A medida do grau de incerteza, desordem ou informação de um sistema', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual o papel primordial da Ética no desenvolvimento de Inteligência Artificial?', alternativas: ['Prevenir vieses discriminatórios e proteger os direitos humanos', 'Impedir que computadores façam cálculos', 'Tornar computadores dependentes de engrenagens', 'Eliminar o acesso à internet aberta'], respostaCorreta: 'Prevenir vieses discriminatórios e proteger os direitos humanos', indiceRespostaCorreta: 0 },
+            { enunciado: 'O que distingue a computação quântica da computação clássica?', alternativas: ['O uso de qubits com capacidade de superposição quântica', 'O funcionamento sem qualquer eletricidade', 'A previsão do futuro das pessoas com 100% de acerto', 'O uso de lâmpadas incandescentes'], respostaCorreta: 'O uso de qubits com capacidade de superposição quântica', indiceRespostaCorreta: 0 },
+          ],
+          [
+            { enunciado: 'Em astrofísica, o que caracteriza uma Singularidade gravitacional?', alternativas: ['Uma região de densidade extrema onde as leis da física clássica colapsam', 'Uma estrela comum de oxigênio puro', 'Um planeta rochoso habitável no centro da galáxia', 'Um espelho cósmico que reflete estrelas'], respostaCorreta: 'Uma região de densidade extrema onde as leis da física clássica colapsam', indiceRespostaCorreta: 0 },
+            { enunciado: 'Ao concluir sua jornada de aprendizado através de todas as trilhas, qual a missão de um mestre do conhecimento?', alternativas: ['Aplicar a sabedoria para melhorar a sociedade, ensinar os outros e seguir sempre aprendendo', 'Guardar todo o conhecimento trancado para si', 'Esquecer tudo ao chegar ao fim da jornada', 'Parar de questionar a realidade'], respostaCorreta: 'Aplicar a sabedoria para melhorar a sociedade, ensinar os outros e seguir sempre aprendendo', indiceRespostaCorreta: 0 },
+            { enunciado: 'Qual a principal lição que o método científico nos ensina sobre os erros?', alternativas: ['Erros são hipóteses testadas que indicam caminhos de ajuste e evolução', 'Errar significa que se deve desistir de estudar', 'Os grandes cientistas nunca cometeram erros', 'Erros anulam a experiência anterior'], respostaCorreta: 'Erros são hipóteses testadas que indicam caminhos de ajuste e evolução', indiceRespostaCorreta: 0 },
+          ],
+        ],
+      };
+
+      const group = BANK[themeKey] || BANK.castelo;
+      const safeIdx = Math.max(0, Math.min(phaseIndex, group.length - 1));
+      return group[safeIdx];
     }
 
     applyTheme(themeKey, phaseIndex = 0) {
@@ -1297,6 +1481,14 @@
       if (typeof window.notificar_vitoria_js === 'function') {
         window.notificar_vitoria_js();
       }
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'FIM_FASE', vitoria: true, faseId: this.currentFaseId, trilhaId: this.currentTrilhaId, earnedXP: earnedXP }, '*');
+        }
+        if (window.ReactNativeWebView && typeof window.ReactNativeWebView.postMessage === 'function') {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'FIM_FASE', vitoria: true, faseId: this.currentFaseId, trilhaId: this.currentTrilhaId, earnedXP: earnedXP }));
+        }
+      } catch (e) {}
 
       setTimeout(() => {
         if (this.phaseVictoryModal) {
@@ -1310,6 +1502,8 @@
       const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
       if (this.currentThemePhase + 1 < theme.phases.length) {
         this.setPhase(this.currentThemePhase + 1);
+        this.questions = this.getFallbackThematicQuestions(this.activeTheme, this.currentThemePhase);
+        this.currentQuestionIndex = 0;
         this.renderQuestion();
       } else {
         this.exitBattle();
@@ -1332,7 +1526,16 @@
       if (this.phaseDefeatModal) this.phaseDefeatModal.style.display = 'none';
       if (typeof window.jogar_voltar_js === 'function') {
         window.jogar_voltar_js();
-      } else if (window.history && window.history.length > 1) {
+      }
+      try {
+        if (window.parent && window.parent !== window) {
+          window.parent.postMessage({ type: 'VOLTAR_TRILHA', trilhaId: this.currentTrilhaId }, '*');
+        }
+        if (window.ReactNativeWebView && typeof window.ReactNativeWebView.postMessage === 'function') {
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'VOLTAR_TRILHA', trilhaId: this.currentTrilhaId }));
+        }
+      } catch (e) {}
+      if (window.history && window.history.length > 1) {
         window.history.back();
       } else {
         window.location.href = '/trilha';

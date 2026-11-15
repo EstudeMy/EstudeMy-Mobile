@@ -301,21 +301,30 @@ export default function HomeScreen() {
   const handleCardPress = (item: Trilha) => {
     const isPrivate = isTrilhaPrivate(item);
 
-    // Se a trilha for aberta, acessa diretamente
+    // Se a trilha for aberta, acessa diretamente e abre o jogo
     if (!isPrivate) {
-      router.push(`/trilha/${item._id}`);
+      router.push({
+        pathname: '/trilha/[id]',
+        params: { id: item._id, autoPlay: '1' },
+      });
       return;
     }
 
     // Se o usuário for criador, professor ou staff, acesso direto liberado
     if (isTeacherOrCreator(item)) {
-      router.push(`/trilha/${item._id}`);
+      router.push({
+        pathname: '/trilha/[id]',
+        params: { id: item._id, autoPlay: '1' },
+      });
       return;
     }
 
     // Se o aluno já desbloqueou esta trilha anteriormente
     if (unlockedTrailIds.includes(item._id)) {
-      router.push(`/trilha/${item._id}`);
+      router.push({
+        pathname: '/trilha/[id]',
+        params: { id: item._id, autoPlay: '1' },
+      });
       return;
     }
 

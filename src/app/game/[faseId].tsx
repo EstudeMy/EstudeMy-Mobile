@@ -12,7 +12,9 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import { WebView } from 'react-native-webview';
-import { buscarFasePorId, concluirFase, Fase } from '../../services/faseService';
+import { buscarFasePorId, buscarFasesPorTrilha, concluirFase, Fase } from '../../services/faseService';
+import { buscarTrilhaPorId, listarTrilhas, Trilha } from '../../services/trilhaService';
+import { getTrilhaTheme, getThematicQuestions, ThemeKey } from '../../game';
 import { useAuth } from '../../contexts/AuthContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import api from '../../services/api';
@@ -169,20 +171,80 @@ export default function GameScreen() {
     }
   }, [faseId, refreshUser]);
 
-  // 5. Carregamento e Preparação dos Dados da Fase (Fisher-Yates)
+  // 5. Carregamento e Preparação dos Dados da Fase Conectada à Trilha
   useEffect(() => {
     async function loadFase() {
-      if (!faseId) {
-        setErro('ID da fase não fornecido.');
-        return;
-      }
-      try {
-        const res = await buscarFasePorId(faseId);
-        setFase(res);
+      const cleanFaseId = (faseId || '').trim();
+      const cleanTrilhaId = (trilhaId || '').trim();
 
-        // Transformar perguntas
+      try {
+        let currentFase: any = null;
+        let resolvedTrilhaId = cleanTrilhaId;
+
+        // Se faseId for um ID válido (MongoDB ObjectID ou UUID)
+        const isFaseDirectId = /^[0-9a-fA-F]{24}$/.test(cleanFaseId) || /^[0-9a-fA-F-]{36}$/.test(cleanFaseId);
+        if (isFaseDirectId && !cleanFaseId.startsWith('trilha_')) {
+          currentFase = await buscarFasePorId(cleanFaseId).catch(() => null);
+          if (currentFase && currentFase.trilhaId) {
+            resolvedTrilhaId = resolvedTrilhaId || currentFase.trilhaId;
+          }
+        } else if (cleanFaseId.startsWith('trilha_')) {
+          resolvedTrilhaId = resolvedTrilhaId || cleanFaseId.replace(/^trilha_/, '');
+        }
+
+        // Buscar dados da Trilha correspondente
+        let trilhaData: any = null;
+        let fasesDaTrilha: Fase[] = [];
+
+        if (resolvedTrilhaId) {
+          const isTrilhaDirectId = /^[0-9a-fA-F]{24}$/.test(resolvedTrilhaId) || /^[0-9a-fA-F-]{36}$/.test(resolvedTrilhaId);
+          if (isTrilhaDirectId) {
+            trilhaData = await buscarTrilhaPorId(resolvedTrilhaId).catch(() => null);
+            fasesDaTrilha = await buscarFasesPorTrilha(resolvedTrilhaId).catch(() => []);
+          }
+          if (!trilhaData) {
+            const allTrilhas = await listarTrilhas().catch(() => []);
+            trilhaData = allTrilhas.find(
+              (t) => t._id === resolvedTrilhaId || (t.titulo && t.titulo.toLowerCase().includes(resolvedTrilhaId.toLowerCase()))
+            ) || null;
+            if (trilhaData && (!fasesDaTrilha || fasesDaTrilha.length === 0)) {
+              fasesDaTrilha = await buscarFasesPorTrilha(trilhaData._id).catch(() => []);
+            }
+          }
+        }
+
+        // Se não encontrou a fase específica pelo ID, seleciona a primeira fase disponível da trilha
+        if (!currentFase && fasesDaTrilha.length > 0) {
+          currentFase = fasesDaTrilha[0];
+        }
+
+        // Detectar o tema canônico da trilha (castelo, montanha, deserto, vila, vazio_cosmico)
+        const themeKey: ThemeKey = getTrilhaTheme(trilhaData || currentFase || cleanTrilhaId || cleanFaseId);
+
+        // Determinar índice e ordem da fase no tema (0 a 3)
+        let phaseIndex = 0;
+        if (currentFase && fasesDaTrilha.length > 0) {
+          const foundIdx = fasesDaTrilha.findIndex((f) => f._id === currentFase._id);
+          if (foundIdx >= 0) phaseIndex = foundIdx % 4;
+        } else if (currentFase && typeof currentFase.ordem === 'number') {
+          phaseIndex = Math.max(0, (currentFase.ordem - 1) % 4);
+        }
+
+        const ordemFase = currentFase?.ordem || phaseIndex + 1;
+
+        // Perguntas da fase: se existirem no banco, utiliza; senão, utiliza o banco temático
+        let perguntasOriginais: any[] = [];
+        if (currentFase && Array.isArray(currentFase.perguntas) && currentFase.perguntas.length > 0) {
+          perguntasOriginais = currentFase.perguntas;
+        } else {
+          perguntasOriginais = getThematicQuestions(themeKey, phaseIndex);
+        }
+
+        // Embaralha e formata as perguntas
         const personagemUsuario = (user?.personagem || 'samurai').toLowerCase();
-        const perguntasTransformadas = (res.perguntas || []).map((p: any) => {
+        const skinUsuario = ((user as any)?.skin || (user as any)?.skinSelecionada || '').toLowerCase();
+
+        const perguntasTransformadas = perguntasOriginais.map((p: any) => {
           const alternativasOriginais = Array.isArray(p.alternativas) ? [...p.alternativas] : [];
 
           let textoCorreto = '';
@@ -226,29 +288,55 @@ export default function GameScreen() {
 
         const perguntasFinais = [...perguntasTransformadas].sort(() => Math.random() - 0.5);
 
+        const phaseIdFinal = currentFase?._id || `fase_${resolvedTrilhaId || themeKey}_${phaseIndex + 1}`;
+        const trilhaTituloFinal = trilhaData?.titulo || `Trilha ${themeKey.toUpperCase()}`;
+
         const prepared = {
-          faseId: res._id,
-          titulo: res.titulo,
+          faseId: phaseIdFinal,
+          trilhaId: resolvedTrilhaId || themeKey,
+          trilhaTitulo: trilhaTituloFinal,
+          trilhaTema: themeKey,
+          cenario: themeKey,
+          ordem: ordemFase,
+          phaseIndex: phaseIndex,
+          totalPhasesInTrail: Math.max(1, fasesDaTrilha.length || 4),
+          titulo: currentFase?.titulo || `${trilhaTituloFinal} — Fase ${phaseIndex + 1}`,
           personagem_selecionado: personagemUsuario,
-          cenario: res.cenario || 'bg_dojo',
+          skin_selecionada: skinUsuario,
           perguntas: perguntasFinais,
-          _q5: res._id,
-          _s5: res.titulo,
+          _q5: phaseIdFinal,
+          _s5: trilhaTituloFinal,
           _u5: personagemUsuario,
-          _D5: res.cenario || 'bg_dojo',
+          _D5: themeKey,
           _M5: perguntasFinais,
         };
 
+        setFase(currentFase || {
+          _id: phaseIdFinal,
+          titulo: prepared.titulo,
+          ordem: ordemFase,
+          trilhaId: prepared.trilhaId,
+          secaoId: '',
+          perguntas: perguntasFinais,
+        });
+
         setGameData(prepared);
         setFaseCarregada(true);
+
+        if (typeof window !== 'undefined') {
+          (window as any).gameData = prepared;
+          try {
+            sessionStorage.setItem('estudemy_game_data', JSON.stringify(prepared));
+          } catch {}
+        }
       } catch (err: any) {
-        console.error('Erro ao carregar dados da fase:', err);
+        console.error('Erro ao conectar com dados da trilha e fase:', err);
         setErro(err.message || 'Falha ao carregar a fase. Verifique sua conexão.');
       }
     }
 
     void loadFase();
-  }, [faseId, user?.personagem]);
+  }, [faseId, trilhaId, user?.personagem, (user as any)?.skin, (user as any)?.skinSelecionada]);
 
   // 6. Injeção de gameData na Window (Web) e Ponte de Mensagens
   useEffect(() => {

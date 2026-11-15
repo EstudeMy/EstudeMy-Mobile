@@ -12,6 +12,7 @@ export * from './data/skinsData';
 export * from './data/gameModesData';
 export * from './data/stagesData';
 export * from './data/bossesData';
+export * from './data/thematicQuestions';
 export * from './data/narrativeScript';
 export * from './systems/DialogueSystem';
 export * from './systems/CutsceneSystem';

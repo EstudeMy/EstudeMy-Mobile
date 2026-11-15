@@ -63,7 +63,7 @@ import * as SecureStore from 'expo-secure-store';
 import { AccessibilityIcon } from '../../components/AccessibilityIcon';
 
 export default function TrilhaDetailScreen() {
-  const { id, code: urlCode } = useLocalSearchParams<{ id: string; code?: string }>();
+  const { id, code: urlCode, autoPlay } = useLocalSearchParams<{ id: string; code?: string; autoPlay?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark, openAccessibilityModal } = useTheme();
@@ -289,13 +289,30 @@ export default function TrilhaDetailScreen() {
     try {
       await iniciarTrilha(id);
       setIniciada(true);
-      await fetchTrilhaDetails();
     } catch (e) {
       console.error('Erro ao iniciar trilha:', e);
     } finally {
       setLoadingAction(false);
+      // Abre o jogo imediatamente na primeira fase ou na fase ativa!
+      const firstFaseId = fases[0]?._id || `trilha_${id}`;
+      router.push({
+        pathname: '/game/[faseId]',
+        params: { faseId: firstFaseId, trilhaId: id },
+      });
     }
   };
+
+  // Se o usuário entrou com intenção de jogar direto (?autoPlay=1)
+  useEffect(() => {
+    if (!loading && trilha && isUnlocked && (autoPlay === '1' || autoPlay === 'true')) {
+      const activeFase = fases.find((f) => !fasesConcluidas.includes(f._id)) || fases[0];
+      const targetFase = activeFase?._id || `trilha_${id}`;
+      router.replace({
+        pathname: '/game/[faseId]',
+        params: { faseId: targetFase, trilhaId: id },
+      });
+    }
+  }, [loading, trilha, isUnlocked, autoPlay, fases, fasesConcluidas, id, router]);
 
   const currentUserId = user?._id || user?.id;
   const isTeacherOrCreator = Boolean(
@@ -488,7 +505,7 @@ export default function TrilhaDetailScreen() {
           </TouchableOpacity>
         )}
 
-        {/* Botão de Ação / Iniciar (apenas se desbloqueada) */}
+        {/* Botão de Ação / Iniciar ou Continuar Jogo (apenas se desbloqueada) */}
         {isUnlocked && (
           !iniciada ? (
             <TouchableOpacity
@@ -500,21 +517,48 @@ export default function TrilhaDetailScreen() {
               {loadingAction ? (
                 <ActivityIndicator color="#ffffff" />
               ) : (
-                <Text style={styles.actionBtnText}>Iniciar Trilha</Text>
+                <Text style={styles.actionBtnText}>⚔️ Iniciar Trilha & Jogar</Text>
               )}
             </TouchableOpacity>
           ) : (
-            <View style={styles.progressSummary}>
-              <Text style={[styles.progressSummaryText, { color: colors.text }]}>
-                Progresso: {fasesConcluidas.length} de {fases.length} fases completadas
-              </Text>
-              <View style={[styles.progressBg, { backgroundColor: colors.cardSecondary }]}>
-                <View
-                  style={[
-                    styles.progressFill,
-                    { width: `${(fasesConcluidas.length / (fases.length || 1)) * 100}%` },
-                  ]}
-                />
+            <View style={{ gap: 12, marginTop: 14 }}>
+              {/* Botão de Jogar / Continuar Batalha */}
+              <TouchableOpacity
+                style={styles.playNowBtn}
+                onPress={() => {
+                  const activeFase = fases.find((f) => !fasesConcluidas.includes(f._id)) || fases[0];
+                  const targetFase = activeFase?._id || `trilha_${id}`;
+                  router.push({
+                    pathname: '/game/[faseId]',
+                    params: { faseId: targetFase, trilhaId: id },
+                  });
+                }}
+                activeOpacity={0.88}
+              >
+                <View style={styles.playNowIconBox}>
+                  <Zap size={20} color="#ffffff" fill="#ffffff" />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.playNowTitle}>JOGAR TRILHA</Text>
+                  <Text style={styles.playNowSubtitle} numberOfLines={1}>
+                    {fases.find((f) => !fasesConcluidas.includes(f._id))?.titulo || 'Continuar Batalha'}
+                  </Text>
+                </View>
+                <ArrowRight size={22} color="#ffffff" />
+              </TouchableOpacity>
+
+              <View style={styles.progressSummary}>
+                <Text style={[styles.progressSummaryText, { color: colors.text }]}>
+                  Progresso: {fasesConcluidas.length} de {fases.length} fases completadas
+                </Text>
+                <View style={[styles.progressBg, { backgroundColor: colors.cardSecondary }]}>
+                  <View
+                    style={[
+                      styles.progressFill,
+                      { width: `${(fasesConcluidas.length / (fases.length || 1)) * 100}%` },
+                    ]}
+                  />
+                </View>
               </View>
             </View>
           )
@@ -844,7 +888,12 @@ export default function TrilhaDetailScreen() {
                                 },
                               ]}
                               disabled={!isPhaseUnlocked}
-                              onPress={() => router.push(`/game/${fase._id}`)}
+                              onPress={() =>
+                                router.push({
+                                  pathname: '/game/[faseId]',
+                                  params: { faseId: fase._id, trilhaId: id },
+                                })
+                              }
                               activeOpacity={0.8}
                             >
                               {isCompleted ? (
@@ -1220,6 +1269,42 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '900',
+  },
+  playNowBtn: {
+    backgroundColor: '#4F46E5', // indigo-600
+    borderWidth: 3,
+    borderColor: '#1b1b1b',
+    borderRadius: 14,
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    shadowColor: '#000000',
+    shadowOffset: { width: 4, height: 4 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 4,
+  },
+  playNowIconBox: {
+    width: 38,
+    height: 38,
+    borderRadius: 10,
+    backgroundColor: '#3730A3',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  playNowTitle: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  playNowSubtitle: {
+    color: '#E0E7FF',
+    fontSize: 12,
+    fontWeight: '700',
+    marginTop: 2,
   },
   progressSummary: {
     marginTop: 18,
