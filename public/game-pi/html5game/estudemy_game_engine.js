@@ -25,6 +25,23 @@
         { name: 'Guarda da Muralha', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 65, atk: 14, isFlying: false, type: 'fisico', ultName: 'Golpe de Ruína da Armadura' },
         { name: 'Spectre do Código', spriteFolder: 'assets/sprites/spectre', baseHp: 110, atk: 22, isFlying: false, type: 'magico', ultName: 'Chamas Negras da Corrupção' },
         { name: 'Acólito da Memória', spriteFolder: 'assets/sprites/mago', baseHp: 55, atk: 16, isFlying: false, type: 'magico', ultName: 'Vórtice dos Registradores' },
+        {
+          name: 'Rei Spectre da Corrupção',
+          spriteFolder: 'assets/sprites/spectre',
+          baseHp: 225,
+          atk: 34,
+          isFlying: false,
+          type: 'magico',
+          isBoss: true,
+          bossTier: 'supreme',
+          attacks: [
+            { name: 'Lança da Ruína de Dados', style: 'strike', sfx: 'sword_slash', color: '#8b5cf6' },
+            { name: 'Vórtice da Matriz Corrompida', style: 'cast', sfx: 'magic_impact', color: '#ec4899' },
+            { name: 'Sobrecarga de Registradores', style: 'leap', sfx: 'heavy_impact', color: '#f43f5e' },
+          ],
+          ultName: 'Chamas Negras da Corrupção Total',
+          secondUltName: 'Execução Fatal: Kernel Panic (Fase 2)',
+        },
       ],
       phases: [
         { id: 1, name: 'Muralha e Portão dos Algoritmos', bgImg: 'assets/backgrounds/castelo_fase1_portao.jpg', weather: 'castle_embers' },
@@ -43,9 +60,40 @@
         { name: 'Guerreiro da Geada', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 75, atk: 16, isFlying: false, type: 'fisico', ultName: 'Impacto Glacial Esmagador' },
         { name: 'Mago Cósmico do Pico', spriteFolder: 'assets/sprites/mago', baseHp: 120, atk: 25, isFlying: false, type: 'magico', ultName: 'Tempestade de Nevasca Cósmica' },
         { name: 'Espectro dos Ventos', spriteFolder: 'assets/sprites/spectre', baseHp: 60, atk: 18, isFlying: false, type: 'magico', ultName: 'Rajada Cortante do Ártico' },
-        { name: 'Lorde da Geada', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 145, atk: 26, isFlying: false, type: 'fisico', ultName: 'Nevasca do Ártico Cósmico' },
+        {
+          name: 'Lorde da Geada',
+          spriteFolder: 'assets/sprites/cavaleiro',
+          baseHp: 155,
+          atk: 28,
+          isFlying: false,
+          type: 'fisico',
+          isBoss: true,
+          attacks: [
+            { name: 'Corte Glacial Rúnico', style: 'strike', sfx: 'sword_slash', color: '#38bdf8' },
+            { name: 'Fissura de Gelo Cortante', style: 'leap', sfx: 'heavy_impact', color: '#0ea5e9' },
+          ],
+          ultName: 'Nevasca do Ártico Cósmico',
+          secondUltName: 'Zero Absoluto Primordial (Fase 2)',
+        },
         { name: 'Colosso de Magma', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 175, atk: 35, isFlying: false, type: 'fisico', ultName: 'Cataclismo Vulcânico' },
         { name: 'Valquíria das Tempestades', spriteFolder: 'assets/sprites/arqueira', baseHp: 110, atk: 28, isFlying: true, type: 'magico', ultName: 'Julgamento Celestial' },
+        {
+          name: 'Ignis, o Soberano do Magma',
+          spriteFolder: 'assets/sprites/cavaleiro',
+          baseHp: 245,
+          atk: 37,
+          isFlying: false,
+          type: 'fisico',
+          isBoss: true,
+          bossTier: 'supreme',
+          attacks: [
+            { name: 'Garras Devoradoras de Magma', style: 'strike', sfx: 'sword_slash', color: '#f97316' },
+            { name: 'Sopro Calcinante do Inferno', style: 'cast', sfx: 'magic_impact', color: '#ef4444' },
+            { name: 'Fissura Sísmica Vulcânica', style: 'leap', sfx: 'heavy_impact', color: '#ea580c' },
+          ],
+          ultName: 'Cataclismo da Caldeira Cósmica',
+          secondUltName: 'Despertar do Dragão do Fogo (Fase 2)',
+        },
       ],
       phases: [
         { id: 1, name: 'Encosta Nevada dos Vetores', bgImg: 'assets/backgrounds/montanha_fase1_encosta.jpg', weather: 'mountain_snow' },
@@ -64,8 +112,39 @@
         { name: 'Guerreiro das Areias', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 70, atk: 15, isFlying: false, type: 'fisico', ultName: 'Fúria da Cimitarra Solar' },
         { name: 'Djinn das Tempestades', spriteFolder: 'assets/sprites/spectre', baseHp: 115, atk: 24, isFlying: false, type: 'magico', ultName: 'Ciclone do Sol Escaldante' },
         { name: 'Mago das Dunas', spriteFolder: 'assets/sprites/mago', baseHp: 60, atk: 18, isFlying: false, type: 'magico', ultName: 'Sepultamento do Arenito' },
-        { name: 'Arquimago Solar', spriteFolder: 'assets/sprites/mago', baseHp: 120, atk: 28, isFlying: false, type: 'magico', ultName: 'Tempestade da Supernova' },
+        {
+          name: 'Arquimago Solar',
+          spriteFolder: 'assets/sprites/mago',
+          baseHp: 140,
+          atk: 30,
+          isFlying: false,
+          type: 'magico',
+          isBoss: true,
+          attacks: [
+            { name: 'Feixe de Plasma Solar', style: 'cast', sfx: 'magic_impact', color: '#eab308' },
+            { name: 'Rajada de Fogo das Pirâmides', style: 'strike', sfx: 'sword_slash', color: '#f59e0b' },
+          ],
+          ultName: 'Tempestade da Supernova',
+          secondUltName: 'Chamas Eternas de Heliópolis (Fase 2)',
+        },
         { name: 'Sentinela das Areias', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 130, atk: 24, isFlying: false, type: 'fisico', ultName: 'Maldição de Anúbis' },
+        {
+          name: 'Imperador Khepri-Ra',
+          spriteFolder: 'assets/sprites/mago',
+          baseHp: 235,
+          atk: 36,
+          isFlying: true,
+          type: 'magico',
+          isBoss: true,
+          bossTier: 'supreme',
+          attacks: [
+            { name: 'Feixe Concentrado do Olho de Ra', style: 'cast', sfx: 'magic_impact', color: '#eab308' },
+            { name: 'Tempestade de Areia Dourada', style: 'leap', sfx: 'heavy_impact', color: '#f59e0b' },
+            { name: 'Lança Solar de Âmbar', style: 'strike', sfx: 'sword_slash', color: '#fcd34d' },
+          ],
+          ultName: 'Julgamento das Pirâmides Cósmicas',
+          secondUltName: 'Grande Eclipse Solar da Morte (Fase 2)',
+        },
       ],
       phases: [
         { id: 1, name: 'Dunas Escaldantes da Erosão', bgImg: 'assets/backgrounds/deserto_fase1_dunas.jpg', weather: 'desert_sand' },
@@ -85,6 +164,23 @@
         { name: 'Lorde Decaído', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 125, atk: 26, isFlying: false, type: 'fisico', ultName: 'Golpe Quebra-Crânios' },
         { name: 'Ilusionista das Ruínas', spriteFolder: 'assets/sprites/mago', baseHp: 65, atk: 17, isFlying: false, type: 'magico', ultName: 'Espelhos do Caos Eterno' },
         { name: 'Ladino das Sombras', spriteFolder: 'assets/sprites/arqueira', baseHp: 85, atk: 32, isFlying: false, type: 'fisico', ultName: 'Tempestade das Sombras' },
+        {
+          name: 'General Shogun Ronin Decaído',
+          spriteFolder: 'assets/sprites/samurai',
+          baseHp: 220,
+          atk: 36,
+          isFlying: false,
+          type: 'fisico',
+          isBoss: true,
+          bossTier: 'supreme',
+          attacks: [
+            { name: 'Corte Relâmpago das Sombras', style: 'strike', sfx: 'sword_slash', color: '#e11d48' },
+            { name: 'Dança das Lâminas Fantasmas', style: 'cast', sfx: 'thunder_ultimate', color: '#f43f5e' },
+            { name: 'Shuriken Venenoso da Noite', style: 'strike', sfx: 'arrow_whoosh', color: '#10b981' },
+          ],
+          ultName: 'Julgamento da Lua Sangrenta',
+          secondUltName: 'Corte Proibido: Mil Sombras (Fase 2)',
+        },
       ],
       phases: [
         { id: 1, name: 'Praça do Mercado das Crônicas', bgImg: 'assets/backgrounds/vila_fase1_mercado.jpg', weather: 'village_leaves' },
@@ -103,8 +199,39 @@
         { name: 'Arauto do Esquecimento', spriteFolder: 'assets/sprites/spectre', baseHp: 85, atk: 20, isFlying: false, type: 'magico', ultName: 'Aniquilação da Matéria' },
         { name: 'O Arquivista do Vazio', spriteFolder: 'assets/sprites/mago', baseHp: 150, atk: 30, isFlying: false, type: 'magico', ultName: 'Singularidade da Entropia' },
         { name: 'Cavaleiro da Entropia', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 90, atk: 22, isFlying: false, type: 'fisico', ultName: 'Corte da Dimensão Oculta' },
-        { name: 'Ceifador do Eclipse', spriteFolder: 'assets/sprites/spectre', baseHp: 160, atk: 32, isFlying: false, type: 'fisico', ultName: 'Vórtice do Eclipse Sombrio' },
+        {
+          name: 'Ceifador do Eclipse',
+          spriteFolder: 'assets/sprites/spectre',
+          baseHp: 165,
+          atk: 33,
+          isFlying: false,
+          type: 'fisico',
+          isBoss: true,
+          attacks: [
+            { name: 'Corte de Foice da Meia-Noite', style: 'strike', sfx: 'sword_slash', color: '#a855f7' },
+            { name: 'Vórtice do Vácuo', style: 'cast', sfx: 'magic_impact', color: '#7c3aed' },
+          ],
+          ultName: 'Vórtice do Eclipse Sombrio',
+          secondUltName: 'Singularidade da Foice Negra (Fase 2)',
+        },
         { name: 'Arquivista Cósmico', spriteFolder: 'assets/sprites/mago', baseHp: 135, atk: 30, isFlying: true, type: 'magico', ultName: 'Colapso Gravitacional' },
+        {
+          name: 'Behemoth da Singularidade',
+          spriteFolder: 'assets/sprites/spectre',
+          baseHp: 260,
+          atk: 39,
+          isFlying: false,
+          type: 'magico',
+          isBoss: true,
+          bossTier: 'supreme',
+          attacks: [
+            { name: 'Corte Dimensional de Vácuo', style: 'strike', sfx: 'sword_slash', color: '#a855f7' },
+            { name: 'Tentáculos de Matéria Escura', style: 'cast', sfx: 'magic_impact', color: '#7c3aed' },
+            { name: 'Pulsação Gravitacional Anômala', style: 'leap', sfx: 'heavy_impact', color: '#6366f1' },
+          ],
+          ultName: 'Colapso do Horizonte de Eventos',
+          secondUltName: 'Dilaceração da Supernova Negra (Fase 2)',
+        },
       ],
       phases: [
         { id: 1, name: 'Fragmentos dos Tomos Perdidos', bgImg: 'assets/backgrounds/vazio_fase1_fragmentos.jpg', weather: 'void_cosmic' },
@@ -1327,17 +1454,26 @@
       });
 
       if (count === 1) {
-        // Apenas 1 Inimigo (Chefe Central Solitário)
-        const eData = pool[1] || pool[0];
+        // Apenas 1 Inimigo (Chefe Central Solitário ou Boss Rush)
+        let eData = pool.find((e) => e.isBoss) || pool[1] || pool[0];
+        if (this.modoJogo === 'boss_rush') {
+          const bosses = pool.filter((e) => e.isBoss);
+          const safeIdx = Math.max(0, this.currentThemePhase - 1);
+          if (bosses.length > 0) {
+            eData = bosses[safeIdx % bosses.length];
+          }
+        }
         const slot = this.enemySlots[1];
         slot.data = eData;
-        slot.maxHp = Math.round(eData.baseHp * 1.35); // Chefe solo tem mais vida
+        slot.maxHp = eData.isBoss ? Math.round(eData.baseHp * 1.6) : Math.round(eData.baseHp * 1.35);
         slot.currentHp = slot.maxHp;
+        slot.phase2Activated = false;
+        slot.wrapper.classList.remove('boss-phase2-enrage');
         slot.isAlive = true;
         slot.wrapper.style.display = 'flex';
         slot.wrapper.style.right = '18%';
         slot.sprite.src = `${eData.spriteFolder}/idle.gif`;
-        slot.nameText.textContent = `👑 ${eData.name}`;
+        slot.nameText.textContent = eData.isBoss ? `☠️ CHEFÃO: ${eData.name}` : `👑 ${eData.name}`;
         slot.barFill.style.width = '100%';
 
         if (eData.isFlying) slot.wrapper.classList.add('is-flying');
@@ -1351,11 +1487,13 @@
           slot.data = eData;
           slot.maxHp = eData.baseHp;
           slot.currentHp = slot.maxHp;
+          slot.phase2Activated = false;
+          slot.wrapper.classList.remove('boss-phase2-enrage');
           slot.isAlive = true;
           slot.wrapper.style.display = 'flex';
           slot.wrapper.style.right = slotIdx === 0 ? '25%' : '10%';
           slot.sprite.src = `${eData.spriteFolder}/idle.gif`;
-          slot.nameText.textContent = eData.name;
+          slot.nameText.textContent = eData.isBoss ? `☠️ ${eData.name}` : eData.name;
           slot.barFill.style.width = '100%';
 
           if (eData.isFlying) slot.wrapper.classList.add('is-flying');
@@ -1368,11 +1506,13 @@
           slot.data = eData;
           slot.maxHp = eData.baseHp;
           slot.currentHp = slot.maxHp;
+          slot.phase2Activated = false;
+          slot.wrapper.classList.remove('boss-phase2-enrage');
           slot.isAlive = true;
           slot.wrapper.style.display = 'flex';
           slot.wrapper.style.right = i === 0 ? '28%' : i === 1 ? '17%' : '6%';
           slot.sprite.src = `${eData.spriteFolder}/idle.gif`;
-          slot.nameText.textContent = eData.name;
+          slot.nameText.textContent = eData.isBoss ? `☠️ ${eData.name}` : eData.name;
           slot.barFill.style.width = '100%';
 
           if (eData.isFlying) slot.wrapper.classList.add('is-flying');
@@ -1524,9 +1664,25 @@
 
       this.updateTotalBossHUD();
 
+      // Se for Chefão e cair para <= 50% de HP, ativa FASE 2: FÚRIA DO CHEFÃO!
+      if (slot.data && slot.data.isBoss && slot.currentHp > 0 && slot.currentHp <= slot.maxHp * 0.5 && !slot.phase2Activated) {
+        slot.phase2Activated = true;
+        slot.wrapper.classList.add('boss-phase2-enrage');
+        this.soundtrack.playSFX('thunder_ultimate');
+        this.addFloatingText('🔥 FASE 2: FÚRIA DO CHEFÃO DESPERTADA!', '#ef4444', 683, 190, true);
+        this.showFeedback(`⚠️ O Chefão ${slot.data.name} entrou em FÚRIA (Fase 2)! Dano aumentado e novos golpes liberados!`, '#ef4444');
+        const container = document.getElementById('game-container');
+        if (container) {
+          container.classList.add('screen-shake');
+          setTimeout(() => container.classList.remove('screen-shake'), 450);
+        }
+      }
+
       // Inimigo Derrotado
       if (slot.currentHp <= 0) {
         slot.isAlive = false;
+        slot.phase2Activated = false;
+        slot.wrapper.classList.remove('boss-phase2-enrage');
         slot.wrapper.style.transition = 'opacity 0.6s ease, transform 0.6s ease';
         slot.wrapper.style.opacity = '0';
         slot.wrapper.style.transform = 'translateY(20px) scale(0.8)';
@@ -1548,7 +1704,7 @@
         clearTimeout(slot.attackTimer);
         slot.attackTimer = null;
       }
-      slot.wrapper.classList.remove('actor-enemy-strike', 'actor-charge-glow', 'actor-enemy-leap', 'actor-enemy-cast');
+      slot.wrapper.classList.remove('actor-enemy-strike', 'actor-charge-glow', 'actor-enemy-leap', 'actor-enemy-cast', 'actor-boss-supreme-strike');
       if (slot.isAlive && slot.data && slot.data.spriteFolder) {
         slot.sprite.src = `${slot.data.spriteFolder}/idle.gif`;
       }
@@ -1591,53 +1747,97 @@
       this.resetEnemyToIdle(attacker);
       attacker.isAttacking = true;
 
-      const isBoss = attacker === this.enemySlots[1];
-      const isUltimate = (isBoss && Math.random() < 0.35) || Math.random() < 0.2;
+      const isBoss = (attacker.data && attacker.data.isBoss) || attacker === this.enemySlots[1];
+      const isPhase2 = !!attacker.phase2Activated;
+      const hasCustomAttacks = attacker.data && Array.isArray(attacker.data.attacks) && attacker.data.attacks.length > 0;
 
-      // 4 Estilos Únicos de Ataque do Inimigo:
-      // 0: Corte Veloz (Slash rápido frontal)
-      // 1: Projétil Arcano (Lança esfera de magia com rastro)
-      // 2: Salto e Esmagamento Sísmico (Terremoto e Screen Shake)
-      // 3: Golpe Supremo Titânico (se isUltimate)
-      let attackStyle = Math.floor(Math.random() * 3);
-      if (isUltimate) attackStyle = 3;
+      // Chefões têm probabilidade muito maior de lançar Supremos, especialmente na Fase 2!
+      const isUltimate = (isBoss && (isPhase2 ? Math.random() < 0.55 : Math.random() < 0.35)) || Math.random() < 0.2;
 
-      if (attackStyle === 3) {
-        // Estilo 4: Golpe Supremo Titânico
+      if (isUltimate) {
+        // Golpe Supremo do Inimigo ou Chefão
         attacker.sprite.src = `${attacker.data.spriteFolder}/attack2.gif`;
-        attacker.wrapper.classList.add('actor-charge-glow', 'actor-enemy-strike');
-        this.addFloatingText(`⚠️ SUPREMO: ${attacker.data.ultName.toUpperCase()}!`, '#ef4444', 683, 260, true);
+        attacker.wrapper.classList.add('actor-charge-glow', isBoss ? 'actor-boss-supreme-strike' : 'actor-enemy-strike');
+
+        let ultTitle = attacker.data.ultName || 'GOLPE SUPREMO';
+        if (isPhase2 && attacker.data.secondUltName && Math.random() < 0.7) {
+          ultTitle = attacker.data.secondUltName;
+        }
+
+        this.addFloatingText(`⚠️ SUPREMO ${isBoss ? 'DO CHEFÃO' : ''}: ${ultTitle.toUpperCase()}!`, '#ef4444', 683, 250, true);
         this.soundtrack.playSFX('thunder_ultimate');
-      } else if (attackStyle === 2) {
-        // Estilo 3: Esmagamento Sísmico (Salto e Tremor de Tela)
-        attacker.sprite.src = `${attacker.data.spriteFolder}/attack1.gif`;
-        attacker.wrapper.classList.add('actor-enemy-leap');
-        this.addFloatingText('ESMAGAMENTO SÍSMICO!', '#f97316', 683, 260, false);
-        setTimeout(() => {
-          this.soundtrack.playSFX('heavy_impact');
-          const container = document.getElementById('game-container');
-          if (container) {
-            container.classList.add('screen-shake');
-            setTimeout(() => container.classList.remove('screen-shake'), 380);
-          }
-        }, 220);
-      } else if (attackStyle === 1) {
-        // Estilo 2: Projétil Mágico / Feitiço Arcano
-        attacker.sprite.src = `${attacker.data.spriteFolder}/attack2.gif`;
-        attacker.wrapper.classList.add('actor-enemy-cast');
-        this.addFloatingText('PROJÉTIL ARCANO!', '#a855f7', 683, 260, false);
-        setTimeout(() => {
-          this.soundtrack.playSFX('magic_impact');
-          this.spawnMagicProjectile(attacker);
-        }, 180);
+
+        const container = document.getElementById('game-container');
+        if (container) {
+          container.classList.add('screen-shake');
+          setTimeout(() => container.classList.remove('screen-shake'), 450);
+        }
+      } else if (isBoss && hasCustomAttacks) {
+        // Repertório de Múltiplos Ataques Exclusivos de Chefão
+        const chosenAtk = attacker.data.attacks[Math.floor(Math.random() * attacker.data.attacks.length)];
+        const style = chosenAtk.style || 'strike';
+        const color = chosenAtk.color || '#f97316';
+        const sfx = chosenAtk.sfx || 'sword_slash';
+
+        if (style === 'cast') {
+          attacker.sprite.src = `${attacker.data.spriteFolder}/attack2.gif`;
+          attacker.wrapper.classList.add('actor-enemy-cast');
+          this.addFloatingText(`💥 ${chosenAtk.name.toUpperCase()}!`, color, 683, 260, false);
+          setTimeout(() => {
+            this.soundtrack.playSFX(sfx);
+            this.spawnMagicProjectile(attacker);
+          }, 180);
+        } else if (style === 'leap') {
+          attacker.sprite.src = `${attacker.data.spriteFolder}/attack1.gif`;
+          attacker.wrapper.classList.add('actor-enemy-leap');
+          this.addFloatingText(`🌋 ${chosenAtk.name.toUpperCase()}!`, color, 683, 260, false);
+          setTimeout(() => {
+            this.soundtrack.playSFX(sfx);
+            const container = document.getElementById('game-container');
+            if (container) {
+              container.classList.add('screen-shake');
+              setTimeout(() => container.classList.remove('screen-shake'), 380);
+            }
+          }, 220);
+        } else {
+          attacker.sprite.src = `${attacker.data.spriteFolder}/attack1.gif`;
+          attacker.wrapper.classList.add('actor-enemy-strike');
+          this.addFloatingText(`⚔️ ${chosenAtk.name.toUpperCase()}!`, color, 683, 260, false);
+          setTimeout(() => {
+            this.soundtrack.playSFX(sfx);
+          }, 140);
+        }
       } else {
-        // Estilo 1: Corte Veloz / Lâmina Rápida
-        attacker.sprite.src = `${attacker.data.spriteFolder}/attack1.gif`;
-        attacker.wrapper.classList.add('actor-enemy-strike');
-        this.addFloatingText('CORTE VELOZ!', '#38bdf8', 683, 260, false);
-        setTimeout(() => {
-          this.soundtrack.playSFX('sword_slash');
-        }, 140);
+        // Estilos Padrão para Inimigos Normais
+        const attackStyle = Math.floor(Math.random() * 3);
+        if (attackStyle === 2) {
+          attacker.sprite.src = `${attacker.data.spriteFolder}/attack1.gif`;
+          attacker.wrapper.classList.add('actor-enemy-leap');
+          this.addFloatingText('ESMAGAMENTO SÍSMICO!', '#f97316', 683, 260, false);
+          setTimeout(() => {
+            this.soundtrack.playSFX('heavy_impact');
+            const container = document.getElementById('game-container');
+            if (container) {
+              container.classList.add('screen-shake');
+              setTimeout(() => container.classList.remove('screen-shake'), 380);
+            }
+          }, 220);
+        } else if (attackStyle === 1) {
+          attacker.sprite.src = `${attacker.data.spriteFolder}/attack2.gif`;
+          attacker.wrapper.classList.add('actor-enemy-cast');
+          this.addFloatingText('PROJÉTIL ARCANO!', '#a855f7', 683, 260, false);
+          setTimeout(() => {
+            this.soundtrack.playSFX('magic_impact');
+            this.spawnMagicProjectile(attacker);
+          }, 180);
+        } else {
+          attacker.sprite.src = `${attacker.data.spriteFolder}/attack1.gif`;
+          attacker.wrapper.classList.add('actor-enemy-strike');
+          this.addFloatingText('CORTE VELOZ!', '#38bdf8', 683, 260, false);
+          setTimeout(() => {
+            this.soundtrack.playSFX('sword_slash');
+          }, 140);
+        }
       }
 
       // Restaura o inimigo para IDLE com segurança total de timeout sem congelar
@@ -1663,7 +1863,10 @@
       }
 
       // Se acertou, verifica QTE defensivo ocasional
-      const baseDmg = isUltimate ? Math.round(attacker.data.atk * 1.5) : attacker.data.atk;
+      let baseDmg = isUltimate ? Math.round(attacker.data.atk * 1.6) : attacker.data.atk;
+      if (isPhase2) {
+        baseDmg = Math.round(baseDmg * 1.25); // Fúria da Fase 2 aumenta dano em +25%
+      }
 
       if (!this.qteCooldown && Math.random() < 0.3) {
         this.triggerQTE(['W', 'SPACE'], 'DEFESA RELÂMPAGO! [W] -> [ESPAÇO]!', (success) => {
