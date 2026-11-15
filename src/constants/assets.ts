@@ -92,11 +92,10 @@ export function getTrackImage(
   // Fallback inteligente caso imagem venha vazia
   if (trilha.materia) {
     const mat = trilha.materia.toLowerCase();
-    if (mat.includes('mat')) return FASE_BACKGROUNDS.montanha;
-    if (mat.includes('port')) return FASE_BACKGROUNDS.montanha;
-    if (mat.includes('prog') || mat.includes('comp') || mat.includes('dados')) return FASE_BACKGROUNDS.castelo;
     if (mat.includes('geo') || mat.includes('hist')) return FASE_BACKGROUNDS.deserto;
-    if (mat.includes('cien')) return FASE_BACKGROUNDS.vila;
+    if (mat.includes('cien') || mat.includes('port') || mat.includes('bio') || mat.includes('lit') || mat.includes('filo') || mat.includes('arte')) return FASE_BACKGROUNDS.vila;
+    if (mat.includes('prog') || mat.includes('comp') || mat.includes('dados') || mat.includes('node') || mat.includes('banco')) return FASE_BACKGROUNDS.castelo;
+    if (mat.includes('mat') || (mat.includes('fis') && !mat.includes('geo')) || mat.includes('calc')) return FASE_BACKGROUNDS.montanha;
   }
 
   return FASE_BACKGROUNDS.montanha;

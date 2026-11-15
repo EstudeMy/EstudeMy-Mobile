@@ -323,18 +323,7 @@ export default function TrilhaDetailScreen() {
     }
   };
 
-  // Se o usuário entrou com intenção de jogar direto (?autoPlay=1)
-  useEffect(() => {
-    if (!loading && trilha && isUnlocked && (autoPlay === '1' || autoPlay === 'true')) {
-      const activeFase = fases.find((f) => !fasesConcluidas.includes(f._id)) || fases[0];
-      const targetFase = activeFase?._id || `trilha_${id}`;
-      router.replace({
-        pathname: '/game/[faseId]',
-        params: { faseId: targetFase, trilhaId: id },
-      });
-    }
-  }, [loading, trilha, isUnlocked, autoPlay, fases, fasesConcluidas, id, router]);
-
+  // O usuário sempre visualiza a página da trilha com suas seções e fases, e clica para jogar
   const currentUserId = user?._id || user?.id;
   const isTeacherOrCreator = Boolean(
     (currentUserId && (

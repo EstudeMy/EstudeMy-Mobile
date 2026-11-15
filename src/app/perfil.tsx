@@ -8,7 +8,9 @@ import {
   ActivityIndicator,
   Image,
   TextInput,
+  Platform,
 } from 'react-native';
+import * as SecureStore from 'expo-secure-store';
 import { useAuth } from '../contexts/AuthContext';
 import { useLanguage } from '../contexts/LanguageContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -28,6 +30,7 @@ import {
   CheckCircle2,
   Flame,
   Award,
+  Sparkles,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -36,16 +39,126 @@ import { sanitizeInput } from '../utils/security';
 import { alterarMinhaSenha } from '../services/adminService';
 import { obterContinue } from '../services/trilhaService';
 
-const CHARACTERS = ['Samurai', 'Mago', 'Guerreiro', 'Arqueira', 'Spectre'];
+export interface HeroSkin {
+  id: string;
+  name: string;
+  title: string;
+  rarity: 'Comum' | 'Rara' | 'Épica' | 'Lendária';
+  rarityColor: string;
+  description: string;
+  badge: string;
+}
+
+export const HERO_SKINS: HeroSkin[] = [
+  {
+    id: 'samurai_ronin',
+    name: 'Kaito Ronin',
+    title: 'Espadachim da Honra',
+    rarity: 'Comum',
+    rarityColor: '#0ea5e9',
+    description: 'Estilo clássico da escola Kenjutsu. Combina serenidade com precisão cirúrgica.',
+    badge: '⚔️ Clássica',
+  },
+  {
+    id: 'samurai_cyber_void',
+    name: 'Kaito Cyber-Void',
+    title: 'Andarilho Dimensional',
+    rarity: 'Lendária',
+    rarityColor: '#a855f7',
+    description: 'Armadura de nanotubos e lâmina de plasma fotônico que distorcem o vácuo.',
+    badge: '⚡ Lendária',
+  },
+  {
+    id: 'samurai_shogun_solar',
+    name: 'Kaito Shogun Solar',
+    title: 'Lorde do Dragão Solar',
+    rarity: 'Épica',
+    rarityColor: '#f59e0b',
+    description: 'Armadura dourada forjada nas dunas com corte avassalador de fogo solar.',
+    badge: '🔥 Épica',
+  },
+  {
+    id: 'samurai_shinobi_sombra',
+    name: 'Kaito Shinobi Sombrio',
+    title: 'Mestre do Eclipse',
+    rarity: 'Rara',
+    rarityColor: '#6366f1',
+    description: 'Manto da meia-noite e lâminas espirituais para ataques velozes nas sombras.',
+    badge: '🌙 Rara',
+  },
+];
 
 export default function PerfilScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, updateUserState } = useAuth();
   const { t, language } = useLanguage();
   const { colors } = useTheme();
 
-  const [loadingChar, setLoadingChar] = useState<string | null>(null);
+  const SKIN_STORAGE_KEY = 'estudemy_hero_skin';
+
+  const initialSkin = (user as any)?.skin || (user as any)?.skinSelecionada || 'samurai_ronin';
+  const [selectedSkin, setSelectedSkin] = useState<string>(initialSkin);
+  const [loadingSkin, setLoadingSkin] = useState<string | null>(null);
+
+  // Carrega a skin salva
+  useEffect(() => {
+    const loadSkin = async () => {
+      try {
+        let saved: string | null = null;
+        if (Platform.OS === 'web') {
+          if (typeof window !== 'undefined' && window.localStorage) {
+            saved = window.localStorage.getItem(SKIN_STORAGE_KEY);
+          }
+        } else {
+          saved = await SecureStore.getItemAsync(SKIN_STORAGE_KEY);
+        }
+        const userSkin = (user as any)?.skin || (user as any)?.skinSelecionada || saved;
+        if (userSkin) {
+          setSelectedSkin(userSkin);
+        }
+      } catch {}
+    };
+    loadSkin();
+  }, [user]);
+
+  const handleSelectSkin = async (skinId: string) => {
+    if (selectedSkin === skinId) return;
+    setLoadingSkin(skinId);
+    try {
+      setSelectedSkin(skinId);
+      // Salva no storage local com proteção multiplataforma
+      if (Platform.OS === 'web') {
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem(SKIN_STORAGE_KEY, skinId);
+        }
+      } else {
+        await SecureStore.setItemAsync(SKIN_STORAGE_KEY, skinId);
+      }
+
+      // Atualiza o estado em memória do usuário
+      if (updateUserState) {
+        updateUserState({
+          personagem: 'Samurai',
+          skin: skinId,
+        } as any);
+      }
+
+      // Sincroniza com o backend
+      await api.put('/api/users/atualizar-personagem', {
+        personagem: 'Samurai',
+        skin: skinId,
+      }).catch(() => {});
+
+      if (refreshUser) {
+        await refreshUser().catch(() => {});
+      }
+    } catch (e) {
+      logger.error('Erro ao atualizar skin:', e);
+    } finally {
+      setLoadingSkin(null);
+    }
+  };
 
   // Estatísticas de progresso
   const [trilhasAndamentoCount, setTrilhasAndamentoCount] = useState(0);
@@ -60,22 +173,6 @@ export default function PerfilScreen() {
   const [showConfirmarSenha, setShowConfirmarSenha] = useState(false);
   const [loadingSenha, setLoadingSenha] = useState(false);
   const [senhaFeedback, setSenhaFeedback] = useState<{ type: 'success' | 'error'; message: string } | null>(null);
-
-  const handleUpdateCharacter = async (charName: string) => {
-    const cleanCharName = sanitizeInput(charName);
-    if (user?.personagem === cleanCharName || !cleanCharName) return;
-    setLoadingChar(cleanCharName);
-    try {
-      await api.put('/api/users/atualizar-personagem', {
-        personagem: cleanCharName,
-      });
-      await refreshUser();
-    } catch (e) {
-      logger.error('Erro ao atualizar personagem:', e);
-    } finally {
-      setLoadingChar(null);
-    }
-  };
 
   const handleAlterarSenha = async () => {
     if (!senhaAtual.trim()) {
@@ -221,7 +318,7 @@ export default function PerfilScreen() {
       <View style={[styles.profileCard, { backgroundColor: colors.card }]}>
         <View style={styles.avatarContainer}>
           <Image
-            source={getCharacterImage(user?.personagem)}
+            source={getCharacterImage('Samurai')}
             style={styles.avatarImage}
             resizeMode="contain"
           />
@@ -236,6 +333,18 @@ export default function PerfilScreen() {
             <Text style={styles.roleBadgeText}>{user.tipoUsuario}</Text>
           </View>
         )}
+
+        {/* Herói e Skin Ativa */}
+        <View style={{ flexDirection: 'row', gap: 6, marginTop: 8, flexWrap: 'wrap', justifyContent: 'center' }}>
+          <View style={[styles.heroPill, { backgroundColor: '#1E293B' }]}>
+            <Text style={styles.heroPillText}>⚔️ Herói: Kaito (Samurai)</Text>
+          </View>
+          <View style={[styles.heroPill, { backgroundColor: (HERO_SKINS.find((s) => s.id === selectedSkin) || HERO_SKINS[0]).rarityColor }]}>
+            <Text style={[styles.heroPillText, { color: '#ffffff', fontWeight: '800' }]}>
+              {(HERO_SKINS.find((s) => s.id === selectedSkin) || HERO_SKINS[0]).badge} {(HERO_SKINS.find((s) => s.id === selectedSkin) || HERO_SKINS[0]).name}
+            </Text>
+          </View>
+        </View>
 
         {/* Frase: Membro desde Mês e Ano */}
         <View style={styles.memberSinceRow}>
@@ -323,39 +432,77 @@ export default function PerfilScreen() {
         </View>
       </View>
 
-      {/* Seção: Escolha de Personagem */}
+      {/* Seção: Customização de Skins do Herói Kaito */}
       <View style={styles.section}>
-        <Text style={[styles.sectionTitle, { color: colors.text }]}>
-          {t('characterPage.chooseClass') || 'Classe / Personagem'}
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 0 }]}>
+            Skins do Herói: Kaito (Samurai)
+          </Text>
+          <View style={[styles.skinRarityPill, { backgroundColor: (HERO_SKINS.find((s) => s.id === selectedSkin) || HERO_SKINS[0]).rarityColor }]}>
+            <Text style={styles.skinRarityPillText}>
+              {(HERO_SKINS.find((s) => s.id === selectedSkin) || HERO_SKINS[0]).badge}
+            </Text>
+          </View>
+        </View>
+
+        <Text style={[styles.skinSectionSubtitle, { color: colors.textMuted }]}>
+          Mago, Guerreiro e Spectre são os inimigos das fases! O herói jogável é Kaito. Escolha sua skin exclusiva para as batalhas:
         </Text>
-        <View style={styles.characterContainer}>
-          {CHARACTERS.map((char) => {
-            const isSelected = user?.personagem === char;
-            const isLoading = loadingChar === char;
+
+        <View style={styles.skinsGrid}>
+          {HERO_SKINS.map((skin) => {
+            const isSelected = selectedSkin === skin.id;
+            const isLoading = loadingSkin === skin.id;
 
             return (
               <TouchableOpacity
-                key={char}
+                key={skin.id}
                 style={[
-                  styles.charBtn,
-                  { backgroundColor: isSelected ? '#16A34A' : colors.card },
-                  isSelected && styles.charBtnActive,
+                  styles.skinCard,
+                  {
+                    backgroundColor: colors.card,
+                    borderColor: isSelected ? '#10B981' : colors.border,
+                  },
+                  isSelected && styles.skinCardSelected,
                 ]}
-                onPress={() => handleUpdateCharacter(char)}
+                onPress={() => handleSelectSkin(skin.id)}
                 disabled={isLoading || isSelected}
-                activeOpacity={0.8}
+                activeOpacity={0.85}
               >
-                <Image
-                  source={getCharacterImage(char)}
-                  style={styles.charSelectImg}
-                  resizeMode="contain"
-                />
-                {isLoading ? (
-                  <ActivityIndicator size="small" color="#ffffff" style={{ marginTop: 6 }} />
-                ) : (
-                  <Text style={[styles.charBtnText, { color: isSelected ? '#ffffff' : colors.text }, isSelected && styles.charBtnTextActive]}>
-                    {t(`characterPage.classes.${char.toLowerCase()}`) || char}
-                  </Text>
+                <View style={styles.skinCardHeader}>
+                  <View style={[styles.skinBadgeBox, { backgroundColor: skin.rarityColor }]}>
+                    <Text style={styles.skinBadgeText}>{skin.badge}</Text>
+                  </View>
+                  {isSelected && (
+                    <View style={styles.equippedBadge}>
+                      <CheckCircle2 size={13} color="#ffffff" style={{ marginRight: 4 }} />
+                      <Text style={styles.equippedText}>EQUIPADA</Text>
+                    </View>
+                  )}
+                </View>
+
+                <View style={styles.skinCardBody}>
+                  <Image
+                    source={getCharacterImage('Samurai')}
+                    style={[
+                      styles.skinAvatarImg,
+                      skin.id === 'samurai_cyber_void' && { tintColor: '#C084FC' },
+                      skin.id === 'samurai_shogun_solar' && { tintColor: '#F59E0B' },
+                      skin.id === 'samurai_shinobi_sombra' && { tintColor: '#818CF8' },
+                    ]}
+                    resizeMode="contain"
+                  />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.skinNameText, { color: colors.text }]}>{skin.name}</Text>
+                    <Text style={[styles.skinTitleText, { color: skin.rarityColor }]}>{skin.title}</Text>
+                    <Text style={[styles.skinDescText, { color: colors.textMuted }]} numberOfLines={2}>
+                      {skin.description}
+                    </Text>
+                  </View>
+                </View>
+
+                {isLoading && (
+                  <ActivityIndicator size="small" color="#10B981" style={{ marginTop: 8 }} />
                 )}
               </TouchableOpacity>
             );
@@ -679,6 +826,104 @@ const styles = StyleSheet.create({
   characterContainer: {
     flexDirection: 'row',
     gap: 10,
+  },
+  heroPill: {
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 1.5,
+    borderColor: '#1b1b1b',
+  },
+  heroPillText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  skinRarityPill: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  skinRarityPillText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  skinSectionSubtitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 14,
+    lineHeight: 17,
+  },
+  skinsGrid: {
+    gap: 10,
+  },
+  skinCard: {
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 2,
+    shadowColor: '#000000',
+    shadowOffset: { width: 2, height: 2 },
+    shadowOpacity: 0.8,
+    shadowRadius: 0,
+    elevation: 2,
+  },
+  skinCardSelected: {
+    borderWidth: 2.5,
+    borderColor: '#10B981',
+  },
+  skinCardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  skinBadgeBox: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  skinBadgeText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '900',
+  },
+  equippedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#10B981',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  equippedText: {
+    color: '#ffffff',
+    fontSize: 10,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  skinCardBody: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
+  skinAvatarImg: {
+    width: 52,
+    height: 52,
+  },
+  skinNameText: {
+    fontSize: 15,
+    fontWeight: '900',
+  },
+  skinTitleText: {
+    fontSize: 12,
+    fontWeight: '800',
+    marginTop: 1,
+    marginBottom: 3,
+  },
+  skinDescText: {
+    fontSize: 11.5,
+    lineHeight: 15,
   },
   charBtn: {
     flex: 1,

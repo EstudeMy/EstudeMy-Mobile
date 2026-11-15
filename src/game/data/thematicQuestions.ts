@@ -789,76 +789,147 @@ export function getThematicQuestions(theme: ThemeKey, phaseIndex: number): Thema
 }
 
 /**
- * Detecta automaticamente o tema da trilha com base na matéria, título, descrição ou cenário.
+ * Detecta com precisão hierárquica o tema da trilha com base na matéria, imagem, título e cenário.
  */
 export function getTrilhaTheme(
-  trilha?: { materia?: string; titulo?: string; descricao?: string; imagem?: string; image?: string; cenario?: string } | string | null
+  trilha?: { materia?: string; titulo?: string; descricao?: string; imagem?: string; image?: string; cenario?: string; trilhaTema?: string } | string | null
 ): ThemeKey {
   if (!trilha) return 'castelo';
 
-  const str = (
-    typeof trilha === 'string'
-      ? trilha
-      : `${trilha.cenario || ''} ${trilha.imagem || ''} ${trilha.image || ''} ${trilha.materia || ''} ${trilha.titulo || ''} ${trilha.descricao || ''}`
-  ).toLowerCase();
-
-  if (
-    str.includes('montanha') ||
-    str.includes('pico') ||
-    str.includes('matematica') ||
-    str.includes('matemática') ||
-    str.includes('fisica') ||
-    str.includes('física') ||
-    str.includes('calculo') ||
-    str.includes('cálculo') ||
-    str.includes('logica') ||
-    str.includes('lógica') ||
-    str.includes('geometria') ||
-    str.includes('vetor')
-  ) {
-    return 'montanha';
+  if (typeof trilha === 'string') {
+    const s = trilha.toLowerCase().trim();
+    if (s.includes('deserto') || s.includes('dunas') || s.includes('oasis') || s.includes('geo')) return 'deserto';
+    if (s.includes('vila') || s.includes('mercado') || s.includes('aldeia') || s.includes('portug') || s.includes('literat') || s.includes('cienc')) return 'vila';
+    if (s.includes('montanha') || s.includes('pico') || s.includes('matem') || (s.includes('fisic') && !s.includes('geo')) || s.includes('calculo')) return 'montanha';
+    if (s.includes('vazio') || s.includes('cosmic')) return 'vazio_cosmico';
+    return 'castelo';
   }
+
+  // 1. Cenário ou tema explícito tem prioridade máxima
+  const cenarioExplicit = (trilha.cenario || trilha.trilhaTema || '').toLowerCase().trim();
+  if (cenarioExplicit.includes('deserto')) return 'deserto';
+  if (cenarioExplicit.includes('vila')) return 'vila';
+  if (cenarioExplicit.includes('montanha')) return 'montanha';
+  if (cenarioExplicit.includes('vazio')) return 'vazio_cosmico';
+  if (cenarioExplicit.includes('castelo')) return 'castelo';
+
+  // 2. Imagem da Trilha (o que o usuário vê na capa do card é o que ele deve jogar!)
+  const imgPath = (trilha.imagem || trilha.image || '').toLowerCase();
+  if (imgPath.includes('deserto')) return 'deserto';
+  if (imgPath.includes('vila')) return 'vila';
+  if (imgPath.includes('montanha')) return 'montanha';
+  if (imgPath.includes('castelo')) return 'castelo';
+  if (imgPath.includes('vazio')) return 'vazio_cosmico';
+
+  // 3. Matéria da Trilha (Hierarquia canônica das disciplinas)
+  const materia = (trilha.materia || '').toLowerCase().trim();
+  if (materia) {
+    if (materia.includes('geo') || materia.includes('hist')) {
+      return 'deserto'; // Geografia e História -> Deserto com pirâmides, ruínas e oásis
+    }
+    if (
+      materia.includes('port') ||
+      materia.includes('cien') ||
+      materia.includes('bio') ||
+      materia.includes('filo') ||
+      materia.includes('sociol') ||
+      materia.includes('literat') ||
+      materia.includes('arte') ||
+      materia.includes('ingles') ||
+      materia.includes('espanhol')
+    ) {
+      return 'vila'; // Português, Literatura, Ciências e Humanas -> Vila Ancestral
+    }
+    if (
+      materia.includes('mat') ||
+      materia.includes('calc') ||
+      (materia.includes('fis') && !materia.includes('geo'))
+    ) {
+      return 'montanha'; // Matemática, Cálculo e Física -> Pico da Lógica / Montanha
+    }
+    if (
+      materia.includes('prog') ||
+      materia.includes('comp') ||
+      materia.includes('dado') ||
+      materia.includes('soft') ||
+      materia.includes('banco') ||
+      materia.includes('tecnol') ||
+      materia.includes('node')
+    ) {
+      return 'castelo'; // Computação, TI e Banco de Dados -> Castelo dos Dados
+    }
+  }
+
+  // 4. Título da Trilha
+  const titulo = (trilha.titulo || '').toLowerCase();
   if (
-    str.includes('deserto') ||
-    str.includes('dunas') ||
-    str.includes('oasis') ||
-    str.includes('oásis') ||
-    str.includes('ciencia') ||
-    str.includes('ciência') ||
-    str.includes('geografia') ||
-    str.includes('biologia') ||
-    str.includes('quimica') ||
-    str.includes('química') ||
-    str.includes('natureza')
+    titulo.includes('deserto') ||
+    titulo.includes('dunas') ||
+    titulo.includes('oasis') ||
+    titulo.includes('oásis') ||
+    titulo.includes('cartografia') ||
+    titulo.includes('arenito') ||
+    titulo.includes('egito') ||
+    titulo.includes('piramide') ||
+    titulo.includes('pirâmide')
   ) {
     return 'deserto';
   }
   if (
-    str.includes('vila') ||
-    str.includes('mercado') ||
-    str.includes('portugues') ||
-    str.includes('português') ||
-    str.includes('historia') ||
-    str.includes('história') ||
-    str.includes('filosofia') ||
-    str.includes('literatura') ||
-    str.includes('humanas') ||
-    str.includes('redacao') ||
-    str.includes('redação') ||
-    str.includes('bardo')
+    titulo.includes('vila') ||
+    titulo.includes('mercado') ||
+    titulo.includes('aldeia') ||
+    titulo.includes('crônica') ||
+    titulo.includes('crônicas') ||
+    titulo.includes('redação') ||
+    titulo.includes('redacao') ||
+    titulo.includes('gramática') ||
+    titulo.includes('gramatica') ||
+    titulo.includes('biblioteca') ||
+    titulo.includes('filósofos')
   ) {
     return 'vila';
   }
   if (
-    str.includes('vazio') ||
-    str.includes('cosmico') ||
-    str.includes('cósmico') ||
-    str.includes('singularidade') ||
-    str.includes('simulado') ||
-    str.includes('final') ||
-    str.includes('boss')
+    titulo.includes('montanha') ||
+    titulo.includes('pico') ||
+    titulo.includes('cume') ||
+    titulo.includes('geometria') ||
+    titulo.includes('álgebra') ||
+    titulo.includes('algebra') ||
+    titulo.includes('vetor') ||
+    titulo.includes('trigonometria') ||
+    titulo.includes('funções')
   ) {
+    return 'montanha';
+  }
+  if (
+    titulo.includes('castelo') ||
+    titulo.includes('dados') ||
+    titulo.includes('algoritmo') ||
+    titulo.includes('código') ||
+    titulo.includes('codigo') ||
+    titulo.includes('servidor') ||
+    titulo.includes('api') ||
+    titulo.includes('sql')
+  ) {
+    return 'castelo';
+  }
+
+  // 5. Descrição (com proteção para termos ambíguos)
+  const desc = (trilha.descricao || '').toLowerCase();
+  if (desc.includes('deserto') || desc.includes('dunas') || desc.includes('oasis') || desc.includes('geografia')) {
+    return 'deserto';
+  }
+  if (desc.includes('vila') || desc.includes('mercado') || desc.includes('crônicas') || desc.includes('literatura')) {
+    return 'vila';
+  }
+  if (desc.includes('montanha') || desc.includes('pico') || desc.includes('matemática') || desc.includes('cálculo')) {
+    return 'montanha';
+  }
+  if (desc.includes('vazio') || desc.includes('cosmico') || desc.includes('singularidade')) {
     return 'vazio_cosmico';
   }
+
   return 'castelo';
 }

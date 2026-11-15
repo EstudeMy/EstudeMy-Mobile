@@ -115,6 +115,8 @@
       skins: [
         { id: 'samurai_ronin', name: 'Kaito Ronin', cssClass: '', ultName: 'Dança das Mil Lâminas Sagradas', ultType: 'samurai_ronin' },
         { id: 'samurai_cyber_void', name: 'Kaito Cyber-Void', cssClass: 'skin-cyber-void', ultName: 'Julgamento Cyberpunk Omnislash', ultType: 'samurai_cyber' },
+        { id: 'samurai_shogun_solar', name: 'Kaito Shogun Solar', cssClass: 'skin-shogun-solar', ultName: 'Corte do Dragão Solar', ultType: 'samurai_shogun' },
+        { id: 'samurai_shinobi_sombra', name: 'Kaito Shinobi Sombrio', cssClass: 'skin-shinobi-sombra', ultName: 'Golpe Espectral do Eclipse', ultType: 'samurai_shinobi' },
       ],
     },
     guerreiro: {
@@ -890,58 +892,30 @@
       this.selectedSkinIndex = foundIdx >= 0 ? foundIdx : 0;
 
       // Trilha / Cenário Temático (conectado à matéria e à trilha do app)
-      const cenario = (raw?.trilhaTema || raw?.cenario || raw?.trilha || raw?.materia || 'castelo').toLowerCase();
-      if (
-        cenario.includes('montanha') ||
-        cenario.includes('pico') ||
-        cenario.includes('matematica') ||
-        cenario.includes('matemática') ||
-        cenario.includes('fisica') ||
-        cenario.includes('física') ||
-        cenario.includes('calculo') ||
-        cenario.includes('cálculo') ||
-        cenario.includes('logica') ||
-        cenario.includes('lógica') ||
-        cenario.includes('geometria')
-      ) {
-        this.activeTheme = 'montanha';
-      } else if (
-        cenario.includes('deserto') ||
-        cenario.includes('dunas') ||
-        cenario.includes('oasis') ||
-        cenario.includes('oásis') ||
-        cenario.includes('ciencia') ||
-        cenario.includes('ciência') ||
-        cenario.includes('geografia') ||
-        cenario.includes('biologia') ||
-        cenario.includes('quimica') ||
-        cenario.includes('química')
-      ) {
+      const temaDirect = (raw?.trilhaTema || raw?.cenario || '').toLowerCase().trim();
+      if (temaDirect === 'deserto' || temaDirect.includes('deserto')) {
         this.activeTheme = 'deserto';
-      } else if (
-        cenario.includes('vila') ||
-        cenario.includes('mercado') ||
-        cenario.includes('portugues') ||
-        cenario.includes('português') ||
-        cenario.includes('historia') ||
-        cenario.includes('história') ||
-        cenario.includes('filosofia') ||
-        cenario.includes('literatura') ||
-        cenario.includes('humanas') ||
-        cenario.includes('bardo')
-      ) {
+      } else if (temaDirect === 'vila' || temaDirect.includes('vila')) {
         this.activeTheme = 'vila';
-      } else if (
-        cenario.includes('vazio') ||
-        cenario.includes('cosmico') ||
-        cenario.includes('cósmico') ||
-        cenario.includes('final') ||
-        cenario.includes('singularidade') ||
-        cenario.includes('simulado')
-      ) {
+      } else if (temaDirect === 'montanha' || temaDirect.includes('montanha')) {
+        this.activeTheme = 'montanha';
+      } else if (temaDirect === 'vazio_cosmico' || temaDirect.includes('vazio') || temaDirect.includes('cosmico')) {
         this.activeTheme = 'vazio_cosmico';
-      } else {
+      } else if (temaDirect === 'castelo' || temaDirect.includes('castelo')) {
         this.activeTheme = 'castelo';
+      } else {
+        const cenario = (raw?.trilha || raw?.materia || 'castelo').toLowerCase();
+        if (cenario.includes('deserto') || cenario.includes('geo') || cenario.includes('hist')) {
+          this.activeTheme = 'deserto';
+        } else if (cenario.includes('vila') || cenario.includes('port') || cenario.includes('cien') || cenario.includes('lit') || cenario.includes('filo') || cenario.includes('bardo')) {
+          this.activeTheme = 'vila';
+        } else if (cenario.includes('montanha') || cenario.includes('mat') || (cenario.includes('fis') && !cenario.includes('geo')) || cenario.includes('calc')) {
+          this.activeTheme = 'montanha';
+        } else if (cenario.includes('vazio') || cenario.includes('cosmico')) {
+          this.activeTheme = 'vazio_cosmico';
+        } else {
+          this.activeTheme = 'castelo';
+        }
       }
 
       if (raw?.trilhaTitulo) {

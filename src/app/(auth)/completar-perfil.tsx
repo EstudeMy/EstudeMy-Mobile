@@ -22,9 +22,9 @@ import logger from '../../utils/logger';
 import { Sparkles } from 'lucide-react-native';
 
 const CHARACTERS_LIST = [
-  { id: 'Samurai', name: 'Samurai', description: 'Guerreiro de honra com ataques rápidos de espada.' },
-  { id: 'Mago', name: 'Mago', description: 'Conjurador de feitiços com alto poder de mana.' },
-  { id: 'Guerreiro', name: 'Guerreiro', description: 'Combatente forte e resistente com alto HP.' },
+  { id: 'Samurai', name: 'Kaito Ronin', description: 'Estilo clássico da escola Kenjutsu com lâmina sagrada e honra.', skinId: 'samurai_ronin' },
+  { id: 'Samurai_Cyber', name: 'Kaito Cyber-Void', description: 'Espadachim dimensional com armadura de nanotubos e plasma.', skinId: 'samurai_cyber_void' },
+  { id: 'Samurai_Shogun', name: 'Kaito Shogun Solar', description: 'Armadura forjada nas dunas com corte do dragão solar.', skinId: 'samurai_shogun_solar' },
 ];
 
 export default function CompletarPerfilScreen() {
@@ -60,11 +60,13 @@ export default function CompletarPerfilScreen() {
     });
 
     try {
-      const fotoPerfil = `/img/${selectedChar.toLowerCase()}.png`;
+      const skinId = CHARACTERS_LIST.find((c) => c.id === selectedChar)?.skinId || 'samurai_ronin';
+      const fotoPerfil = '/img/samurai.png';
 
       try {
         const perfilRes = await api.post('/api/auth/criarPerfil', {
-          personagem: selectedChar,
+          personagem: 'Samurai',
+          skin: skinId,
           username: cleanUsername,
           fotoPerfil: fotoPerfil,
         });
@@ -74,22 +76,30 @@ export default function CompletarPerfilScreen() {
       } catch {
         // Fallback para atualizar-personagem caso criarPerfil retorne status de já existente
         try {
-          await api.put('/api/users/atualizar-personagem', { personagem: selectedChar });
+          await api.put('/api/users/atualizar-personagem', { personagem: 'Samurai', skin: skinId });
         } catch {}
       }
 
-      // Atualiza e persiste o username e personagem localmente
+      // Atualiza e persiste o username, personagem e skin localmente
       const { saveLocalUser, setProfileCompleted } = await import('../../services/authHelpers');
       const updatedUser = {
         ...(user || {}),
         username: cleanUsername,
-        personagem: selectedChar,
+        personagem: 'Samurai',
+        skin: skinId,
       };
       await saveLocalUser(updatedUser);
       updateUserState({
         username: cleanUsername,
-        personagem: selectedChar,
-      });
+        personagem: 'Samurai',
+        skin: skinId,
+      } as any);
+
+      if (typeof window !== 'undefined' && window.localStorage) {
+        try {
+          window.localStorage.setItem('estudemy_hero_skin', skinId);
+        } catch {}
+      }
       const userKey = user?.email || user?.id || user?._id;
       await setProfileCompleted(true, userKey);
     } catch (error: any) {
@@ -179,7 +189,7 @@ export default function CompletarPerfilScreen() {
 
               {/* Seleção de Personagem */}
               <View style={styles.inputContainer}>
-                <Text style={styles.label}>Escolha seu Personagem Inicial</Text>
+                <Text style={styles.label}>Herói: Kaito (Samurai) — Escolha sua Skin Inicial</Text>
                 {CHARACTERS_LIST.map((char) => (
                   <TouchableOpacity
                     key={char.id}
@@ -191,8 +201,12 @@ export default function CompletarPerfilScreen() {
                     activeOpacity={0.8}
                   >
                     <Image
-                      source={getCharacterImage(char.id)}
-                      style={styles.charAvatarImg}
+                      source={getCharacterImage('Samurai')}
+                      style={[
+                        styles.charAvatarImg,
+                        char.skinId === 'samurai_cyber_void' && { tintColor: '#C084FC' },
+                        char.skinId === 'samurai_shogun_solar' && { tintColor: '#F59E0B' },
+                      ]}
                       resizeMode="contain"
                     />
                     <View style={{ flex: 1 }}>

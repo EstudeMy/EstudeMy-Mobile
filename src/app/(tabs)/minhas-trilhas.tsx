@@ -554,16 +554,11 @@ export default function MinhasTrilhasScreen() {
                   <View style={styles.cardFooterActions}>
                     <TouchableOpacity
                       style={styles.openTrailBtn}
-                      onPress={() =>
-                        router.push({
-                          pathname: '/trilha/[id]',
-                          params: { id: item._id, autoPlay: '1' },
-                        })
-                      }
+                      onPress={() => router.push(`/trilha/${item._id}`)}
                       activeOpacity={0.85}
                     >
                       <Text style={styles.openTrailBtnText}>
-                        {t('myTrails.accessTrail') || '⚔️ Jogar Trilha'}
+                        {t('myTrails.accessTrail') || 'Ver Trilha'}
                       </Text>
                       <ArrowRight size={16} color="#ffffff" style={{ marginLeft: 6 }} />
                     </TouchableOpacity>

@@ -234,9 +234,20 @@ export default function GameScreen() {
           perguntasOriginais = getThematicQuestions(themeKey, phaseIndex);
         }
 
-        // Embaralha e formata as perguntas
-        const personagemUsuario = (user?.personagem || 'samurai').toLowerCase();
-        const skinUsuario = ((user as any)?.skin || (user as any)?.skinSelecionada || '').toLowerCase();
+        // Herói fixo como Samurai Kaito, com sua skin selecionada no Perfil
+        let storedHeroSkin = '';
+        if (typeof window !== 'undefined' && window.localStorage) {
+          try {
+            storedHeroSkin = window.localStorage.getItem('estudemy_hero_skin') || '';
+          } catch {}
+        }
+        const personagemUsuario = 'samurai';
+        const skinUsuario = (
+          (user as any)?.skin ||
+          (user as any)?.skinSelecionada ||
+          storedHeroSkin ||
+          'samurai_ronin'
+        ).toLowerCase();
 
         const perguntasTransformadas = perguntasOriginais.map((p: any) => {
           const alternativasOriginais = Array.isArray(p.alternativas) ? [...p.alternativas] : [];
