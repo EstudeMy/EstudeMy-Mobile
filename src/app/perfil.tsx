@@ -147,7 +147,6 @@ export default function PerfilScreen() {
       // Sincroniza com o backend
       await api.put('/api/users/atualizar-personagem', {
         personagem: 'Samurai',
-        skin: skinId,
       }).catch(() => {});
 
       if (refreshUser) {

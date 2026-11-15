@@ -78,7 +78,14 @@ export default function RankingScreen() {
     const displayName = item.nome || item.name || item.username || 'Estudante';
     const displayUsername = item.username || item.name || 'estudante';
     const percentual = item.mediaAcertos !== undefined ? item.mediaAcertos : (item.acertosPercentual !== undefined ? item.acertosPercentual : 0);
-    const isCurrentUser = user && (user._id === item._id || user.id === item._id);
+    const myId = user?._id || user?.id;
+    const itemUserId = item._id || (item as any).id;
+    const myUsername = (user?.username || '').toLowerCase().trim();
+    const itemUsername = (item.username || '').toLowerCase().trim();
+    const isCurrentUser = Boolean(
+      (myId && itemUserId && String(myId) === String(itemUserId)) ||
+      (myUsername && itemUsername && myUsername === itemUsername)
+    );
 
     return (
       <View

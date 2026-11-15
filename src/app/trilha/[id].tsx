@@ -59,15 +59,20 @@ import {
   Zap,
   Trophy,
   Book,
+  Swords,
+  Shield,
 } from 'lucide-react-native';
 import * as SecureStore from 'expo-secure-store';
 import { AccessibilityIcon } from '../../components/AccessibilityIcon';
+import { GAME_MODES_CONFIG } from '../../game/data/gameModesData';
+import { GameModeId } from '../../game/types';
 
 export default function TrilhaDetailScreen() {
   const { id, code: urlCode, autoPlay } = useLocalSearchParams<{ id: string; code?: string; autoPlay?: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { colors, isDark, openAccessibilityModal } = useTheme();
+  const [selectedMode, setSelectedMode] = useState<GameModeId>('campanha');
   const { user } = useAuth();
   const { t } = useLanguage();
 
@@ -318,7 +323,7 @@ export default function TrilhaDetailScreen() {
       const firstFaseId = fases[0]?._id || `trilha_${id}`;
       router.push({
         pathname: '/game/[faseId]',
-        params: { faseId: firstFaseId, trilhaId: id },
+        params: { faseId: firstFaseId, trilhaId: id, modo: selectedMode },
       });
     }
   };
@@ -517,34 +522,91 @@ export default function TrilhaDetailScreen() {
 
         {/* Botão de Ação / Iniciar ou Continuar Jogo (apenas se desbloqueada) */}
         {isUnlocked && (
-          !iniciada ? (
-            <TouchableOpacity
-              style={styles.actionBtn}
-              onPress={handleIniciarTrilha}
-              disabled={loadingAction}
-              activeOpacity={0.9}
-            >
-              {loadingAction ? (
-                <ActivityIndicator color="#ffffff" />
-              ) : (
-                <Text style={styles.actionBtnText}>⚔️ Iniciar Trilha & Jogar</Text>
-              )}
-            </TouchableOpacity>
-          ) : (
-            <View style={{ gap: 12, marginTop: 14 }}>
-              {/* Botão de Jogar / Continuar Batalha */}
-              <TouchableOpacity
-                style={styles.playNowBtn}
-                onPress={() => {
-                  const activeFase = fases.find((f) => !fasesConcluidas.includes(f._id)) || fases[0];
-                  const targetFase = activeFase?._id || `trilha_${id}`;
-                  router.push({
-                    pathname: '/game/[faseId]',
-                    params: { faseId: targetFase, trilhaId: id },
-                  });
-                }}
-                activeOpacity={0.88}
+          <View style={{ marginTop: 12 }}>
+            {/* Seletor de Modo de Jogo */}
+            <View style={styles.gameModeSection}>
+              <View style={styles.gameModeHeaderRow}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Swords size={16} color="#FACC15" />
+                  <Text style={[styles.gameModeSectionTitle, { color: colors.text }]}>Modo de Batalha:</Text>
+                </View>
+                <View style={styles.modeXpBadge}>
+                  <Text style={styles.modeXpBadgeText}>
+                    {GAME_MODES_CONFIG[selectedMode]?.xpMultiplier || 1.0}x XP
+                  </Text>
+                </View>
+              </View>
+
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.gameModesRow}
               >
+                {(Object.keys(GAME_MODES_CONFIG) as GameModeId[]).map((modeKey) => {
+                  const mode = GAME_MODES_CONFIG[modeKey];
+                  const isSelected = selectedMode === modeKey;
+                  return (
+                    <TouchableOpacity
+                      key={mode.id}
+                      style={[
+                        styles.modeCard,
+                        { backgroundColor: colors.card, borderColor: isSelected ? '#FACC15' : colors.border },
+                        isSelected && styles.modeCardSelected,
+                      ]}
+                      onPress={() => setSelectedMode(mode.id)}
+                      activeOpacity={0.85}
+                    >
+                      <View style={styles.modeCardTop}>
+                        <View style={[styles.modeIconBox, isSelected && styles.modeIconBoxSelected]}>
+                          {mode.id === 'campanha' && <Swords size={18} color={isSelected ? '#FACC15' : '#818CF8'} />}
+                          {mode.id === 'speedrun' && <Zap size={18} color={isSelected ? '#FACC15' : '#F59E0B'} />}
+                          {mode.id === 'sobrevivencia' && <Shield size={18} color={isSelected ? '#FACC15' : '#34D399'} />}
+                          {mode.id === 'boss_rush' && <Trophy size={18} color={isSelected ? '#FACC15' : '#F43F5E'} />}
+                        </View>
+                        <View style={[styles.modeMultiplierPill, isSelected && styles.modeMultiplierPillSelected]}>
+                          <Text style={styles.modeMultiplierText}>{mode.xpMultiplier}x XP</Text>
+                        </View>
+                      </View>
+                      <Text style={[styles.modeName, { color: isSelected ? '#FACC15' : colors.text }]}>
+                        {mode.name}
+                      </Text>
+                      <Text style={[styles.modeTagline, { color: colors.textMuted }]} numberOfLines={1}>
+                        {mode.tagline}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+
+            {!iniciada ? (
+              <TouchableOpacity
+                style={styles.actionBtn}
+                onPress={handleIniciarTrilha}
+                disabled={loadingAction}
+                activeOpacity={0.9}
+              >
+                {loadingAction ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <Text style={styles.actionBtnText}>⚔️ Iniciar Trilha & Jogar</Text>
+                )}
+              </TouchableOpacity>
+            ) : (
+              <View style={{ gap: 12, marginTop: 14 }}>
+                {/* Botão de Jogar / Continuar Batalha */}
+                <TouchableOpacity
+                  style={styles.playNowBtn}
+                  onPress={() => {
+                    const activeFase = fases.find((f) => !fasesConcluidas.includes(f._id)) || fases[0];
+                    const targetFase = activeFase?._id || `trilha_${id}`;
+                    router.push({
+                      pathname: '/game/[faseId]',
+                      params: { faseId: targetFase, trilhaId: id, modo: selectedMode },
+                    });
+                  }}
+                  activeOpacity={0.88}
+                >
                 <View style={styles.playNowIconBox}>
                   <Zap size={20} color="#ffffff" fill="#ffffff" />
                 </View>
@@ -571,7 +633,8 @@ export default function TrilhaDetailScreen() {
                 </View>
               </View>
             </View>
-          )
+            )}
+          </View>
         )}
       </View>
 
@@ -900,7 +963,7 @@ export default function TrilhaDetailScreen() {
                               onPress={() =>
                                 router.push({
                                   pathname: '/game/[faseId]',
-                                  params: { faseId: fase._id, trilhaId: id },
+                                  params: { faseId: fase._id, trilhaId: id, modo: selectedMode },
                                 })
                               }
                               activeOpacity={0.8}
@@ -1278,6 +1341,87 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '900',
+  },
+  gameModeSection: {
+    marginBottom: 14,
+  },
+  gameModeHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 10,
+    paddingHorizontal: 2,
+  },
+  gameModeSectionTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    letterSpacing: 0.3,
+  },
+  modeXpBadge: {
+    backgroundColor: '#854D0E',
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FACC15',
+  },
+  modeXpBadgeText: {
+    color: '#FEF08A',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  gameModesRow: {
+    gap: 10,
+    paddingBottom: 4,
+  },
+  modeCard: {
+    width: 140,
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+  },
+  modeCardSelected: {
+    borderColor: '#FACC15',
+    backgroundColor: 'rgba(234, 179, 8, 0.08)',
+  },
+  modeCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 8,
+  },
+  modeIconBox: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    backgroundColor: 'rgba(99, 102, 241, 0.15)',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  modeIconBoxSelected: {
+    backgroundColor: 'rgba(234, 179, 8, 0.2)',
+  },
+  modeMultiplierPill: {
+    backgroundColor: '#1E1B4B',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  modeMultiplierPillSelected: {
+    backgroundColor: '#713F12',
+  },
+  modeMultiplierText: {
+    color: '#FACC15',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  modeName: {
+    fontSize: 12,
+    fontWeight: '700',
+    marginBottom: 2,
+  },
+  modeTagline: {
+    fontSize: 10,
   },
   playNowBtn: {
     backgroundColor: '#4F46E5', // indigo-600

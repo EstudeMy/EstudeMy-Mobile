@@ -33,7 +33,11 @@ import {
 } from 'lucide-react-native';
 
 export default function GameScreen() {
-  const { faseId, trilhaId } = useLocalSearchParams<{ faseId: string; trilhaId?: string }>();
+  const { faseId, trilhaId, modo } = useLocalSearchParams<{
+    faseId: string;
+    trilhaId?: string;
+    modo?: string;
+  }>();
   const router = useRouter();
   const { user, refreshUser } = useAuth();
   const { colors } = useTheme();
@@ -306,7 +310,8 @@ export default function GameScreen() {
           phaseIndex: phaseIndex,
           totalPhasesInTrail: Math.max(1, fasesDaTrilha.length || 4),
           fasesDaTrilha: fasesDaTrilha.map((f) => ({ _id: f._id, titulo: f.titulo, ordem: f.ordem })),
-          titulo: currentFase?.titulo || `${trilhaTituloFinal} — Fase ${phaseIndex + 1}`,
+          titulo: currentFase?.titulo || trilhaTituloFinal,
+          modoJogo: modo || 'campanha',
           personagem_selecionado: personagemUsuario,
           skin_selecionada: skinUsuario,
           perguntas: perguntasFinais,
@@ -429,7 +434,10 @@ export default function GameScreen() {
 
   const rawBaseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://18.222.3.101';
   const cleanBase = rawBaseUrl.replace(/:5000.*$/, '').replace(/\/api.*$/, '').replace(/\/$/, '');
-  const gameUri = `${cleanBase}/game-pi/index.html?t=${iframeKey}`;
+  const activeTema = gameData?.trilhaTema || '';
+  const activePhase = gameData?.phaseIndex || 0;
+  const activeModo = gameData?.modoJogo || 'campanha';
+  const gameUri = `${cleanBase}/game-pi/index.html?t=${iframeKey}&tema=${activeTema}&phase=${activePhase}&modo=${activeModo}`;
 
   if (erro) {
     return (
@@ -489,7 +497,7 @@ export default function GameScreen() {
           {podeExibirJogo && isWeb && (
             <iframe
               key={iframeKey}
-              src={`/game-pi/index.html?t=${iframeKey}`}
+              src={`/game-pi/index.html?t=${iframeKey}&tema=${activeTema}&phase=${activePhase}&modo=${activeModo}`}
               style={{
                 width: '100%',
                 height: '100%',

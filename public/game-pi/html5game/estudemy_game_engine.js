@@ -870,6 +870,7 @@
       this.currentFaseId = raw?.faseId || '';
       this.fasesDaTrilha = Array.isArray(raw?.fasesDaTrilha) ? raw.fasesDaTrilha : [];
       this.currentFaseIndex = typeof raw?.phaseIndex === 'number' ? raw.phaseIndex : 0;
+      this.modoJogo = (raw?.modoJogo || raw?.modo || 'campanha').toLowerCase().trim();
 
       // Herói Selecionado (Perfil do Usuário)
       const char = (raw?.personagem_selecionado || 'samurai').toLowerCase();
@@ -1104,10 +1105,18 @@
 
       // Atualiza o Mission Badge
       if (this.missionTrackText) {
-        this.missionTrackText.textContent = theme.trackLabel;
+        let label = theme.trackLabel;
+        if (this.modoJogo === 'speedrun') {
+          label += ' • ⚡ CONTRA O TEMPO';
+        } else if (this.modoJogo === 'sobrevivencia') {
+          label += ' • 🛡️ SOBREVIVÊNCIA';
+        } else if (this.modoJogo === 'boss_rush') {
+          label += ' • 🏆 ARENA DOS MESTRES';
+        }
+        this.missionTrackText.textContent = label;
       }
       if (this.missionPhaseText) {
-        this.missionPhaseText.textContent = `${phase.name} — Fase ${safeIdx + 1}/${maxPhases}`;
+        this.missionPhaseText.textContent = phase.name;
       }
 
       // Sorteia aleatoriamente a quantidade de inimigos (1, 2 ou 3) para esta fase!
@@ -1116,7 +1125,7 @@
       // Posicionamento no terreno
       this.applyGrounding();
 
-      this.addFloatingText(`FASE ${safeIdx + 1}: ${phase.name}!`, '#38bdf8', 683, 220);
+      this.addFloatingText(`${phase.name}!`, '#38bdf8', 683, 220);
     }
 
     spawnRandomEnemiesForPhase(pool) {

@@ -1039,7 +1039,66 @@
 
     <div id="game-container">
         <!-- 1. Background Cenário com Movimento Suave -->
-        <img id="bg-layer" src="assets/backgrounds/castelo_fase1_portao.jpg" alt="Cenário de Batalha" />
+        <img id="bg-layer" src="" alt="Cenário de Batalha" style="opacity: 0; transition: opacity 0.2s ease-in-out;" />
+        <script>
+            (function() {
+                try {
+                    var raw = null;
+                    try {
+                        var s = sessionStorage.getItem('estudemy_game_data') || localStorage.getItem('estudemy_game_data');
+                        if (s) raw = JSON.parse(s);
+                    } catch(e) {}
+                    var params = new URLSearchParams(window.location.search);
+                    var tema = (params.get('tema') || (raw && (raw.trilhaTema || raw._D5 || raw.cenario)) || '').toLowerCase();
+                    var pIdx = parseInt(params.get('phase') || (raw && raw.phaseIndex) || 0, 10);
+                    if (isNaN(pIdx)) pIdx = 0;
+
+                    var themeMap = {
+                        castelo: [
+                            'assets/backgrounds/castelo_fase1_portao.jpg',
+                            'assets/backgrounds/castelo_fase2_salao.jpg',
+                            'assets/backgrounds/castelo_fase3_masmorra.jpg',
+                            'assets/backgrounds/castelo_fase4_trono.jpg'
+                        ],
+                        montanha: [
+                            'assets/backgrounds/montanha_fase1_encosta.jpg',
+                            'assets/backgrounds/montanha_fase2_desfiladeiro.jpg',
+                            'assets/backgrounds/montanha_fase3_caverna.jpg',
+                            'assets/backgrounds/montanha_fase4_pico.jpg'
+                        ],
+                        deserto: [
+                            'assets/backgrounds/deserto_fase1_dunas.jpg',
+                            'assets/backgrounds/deserto_fase2_oasis.jpg',
+                            'assets/backgrounds/deserto_fase3_ruinas.jpg',
+                            'assets/backgrounds/deserto_fase4_templo.jpg'
+                        ],
+                        vila: [
+                            'assets/backgrounds/vila_fase1_mercado.jpg',
+                            'assets/backgrounds/vila_fase2_biblioteca.jpg',
+                            'assets/backgrounds/vila_fase3_cripta.jpg',
+                            'assets/backgrounds/vila_fase4_campanario.jpg'
+                        ]
+                    };
+
+                    var resolvedKey = 'castelo';
+                    if (tema.indexOf('deserto') !== -1 || tema.indexOf('geo') !== -1 || tema.indexOf('hist') !== -1) {
+                        resolvedKey = 'deserto';
+                    } else if (tema.indexOf('vila') !== -1 || tema.indexOf('port') !== -1 || tema.indexOf('cien') !== -1 || tema.indexOf('bio') !== -1) {
+                        resolvedKey = 'vila';
+                    } else if (tema.indexOf('montanha') !== -1 || tema.indexOf('mat') !== -1 || tema.indexOf('fis') !== -1 || tema.indexOf('calc') !== -1) {
+                        resolvedKey = 'montanha';
+                    }
+
+                    var list = themeMap[resolvedKey] || themeMap.castelo;
+                    var bgSrc = list[pIdx % list.length];
+                    var bgImg = document.getElementById('bg-layer');
+                    if (bgImg && bgSrc) {
+                        bgImg.src = bgSrc;
+                        bgImg.style.opacity = '1';
+                    }
+                } catch(e) {}
+            })();
+        </script>
         <div id="bg-vignette"></div>
         <div id="fog-layer"></div>
         <div id="ambient-light-sweep"></div>
@@ -1101,7 +1160,7 @@
                 <span class="badge-icon">📍</span>
                 <div class="mission-text-container">
                     <span id="mission-track-text">TRILHA: CASTELO DOS DADOS</span>
-                    <span id="mission-phase-text">Muralha e Portão dos Algoritmos — Fase 1/4</span>
+                    <span id="mission-phase-text">Cenário de Batalha</span>
                 </div>
             </div>
 
@@ -1255,8 +1314,8 @@
     </div>
 
     <!-- Scripts de Ponte e Motor de Jogo -->
-    <script type="text/javascript" src="html5game/tph_pontedados.js?v=20261114_overhaul_v8"></script>
-    <script type="text/javascript" src="html5game/estudemy_game_engine.js?v=20261114_overhaul_v8"></script>
+    <script type="text/javascript" src="html5game/tph_pontedados.js?v=20261114_overhaul_v9"></script>
+    <script type="text/javascript" src="html5game/estudemy_game_engine.js?v=20261114_overhaul_v9"></script>
 
 </body>
 </html>

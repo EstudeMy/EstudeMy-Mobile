@@ -73,7 +73,7 @@ api.interceptors.response.use(
       // RC08: DDoS & Rate Limiting
       logger.warn('Limite de requisições excedido (429 Too Many Requests). Aguarde alguns instantes.');
     } else if (status && status >= 500) {
-      logger.error(`Erro interno do servidor (${status}). Detalhes protegidos.`);
+      logger.warn(`Erro no servidor (${status}) na requisição: ${error.config?.url}`);
     }
 
     return Promise.reject(error);

@@ -752,7 +752,7 @@ export default function HomeScreen() {
         </View>
       </View>
 
-      {/* Barra de Pesquisa + Botão de Filtros */}
+      {/* Barra de Pesquisa */}
       <View style={styles.searchRow}>
         <View style={[styles.searchContainer, { flex: 1 }]}>
           <Search size={20} color={colors.textMuted} style={styles.searchIcon} />
@@ -776,20 +776,6 @@ export default function HomeScreen() {
             </TouchableOpacity>
           )}
         </View>
-
-        {/* Botão de Abrir Filtros Avançados */}
-        <TouchableOpacity
-          style={[styles.filterToggleBtn, activeFiltersCount > 0 && styles.filterToggleBtnActive]}
-          onPress={() => setFilterModalVisible(true)}
-          activeOpacity={0.85}
-        >
-          <SlidersHorizontal size={18} color="#ffffff" />
-          {activeFiltersCount > 0 && (
-            <View style={styles.filterBadgeCount}>
-              <Text style={styles.filterBadgeCountText}>{activeFiltersCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
       </View>
 
       {/* Pílulas de Filtro Rápido */}

@@ -240,17 +240,44 @@ export const AccessibilityModal: React.FC<AccessibilityModalProps> = ({ visible,
           {/* Footer com botões */}
           <View style={[styles.footer, { borderTopColor: colors.border }]}>
             <TouchableOpacity
-              style={[styles.resetButton, { borderColor: colors.border }]}
+              style={[
+                styles.resetButton,
+                {
+                  borderColor: highContrast ? (isDark ? '#FFFFFF' : '#000000') : colors.border,
+                  backgroundColor: highContrast ? (isDark ? '#1F2937' : '#F1F5F9') : 'transparent',
+                },
+              ]}
               onPress={handleReset}
             >
-              <Text style={[styles.resetButtonText, { color: colors.textSecondary }]}>Restaurar</Text>
+              <Text
+                style={[
+                  styles.resetButtonText,
+                  { color: highContrast ? (isDark ? '#FFFFFF' : '#000000') : colors.textSecondary },
+                ]}
+              >
+                Restaurar
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
-              style={[styles.confirmButton, { backgroundColor: colors.primary }]}
+              style={[
+                styles.confirmButton,
+                {
+                  backgroundColor: highContrast ? (isDark ? '#FDE047' : '#1E1B4B') : colors.primary,
+                  borderWidth: highContrast ? 2 : 0,
+                  borderColor: highContrast ? (isDark ? '#FACC15' : '#000000') : 'transparent',
+                },
+              ]}
               onPress={onClose}
             >
-              <Text style={styles.confirmButtonText}>Concluído</Text>
+              <Text
+                style={[
+                  styles.confirmButtonText,
+                  { color: highContrast ? (isDark ? '#000000' : '#FFFFFF') : '#FFFFFF' },
+                ]}
+              >
+                Concluído
+              </Text>
             </TouchableOpacity>
           </View>
         </View>

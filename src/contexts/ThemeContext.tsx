@@ -72,7 +72,7 @@ const highContrastDarkColors: ThemeColors = {
   textMuted: '#FFFFFF', // Máximo contraste
   border: '#FFFFFF',
   inputBg: '#000000',
-  primary: '#A5B4FC',
+  primary: '#6366F1',
   accent: '#FDE047',
   success: '#34D399',
   danger: '#F87171',
