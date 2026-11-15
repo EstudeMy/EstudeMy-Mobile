@@ -62,6 +62,13 @@ import {
   Swords,
   Shield,
   Compass,
+  Clock,
+  Flame,
+  Skull,
+  Crown,
+  Play,
+  Users,
+  MessageSquare,
 } from 'lucide-react-native';
 import * as SecureStore from 'expo-secure-store';
 import { AccessibilityIcon } from '../../components/AccessibilityIcon';
@@ -99,6 +106,30 @@ export default function TrilhaDetailScreen() {
   const [isPurchased, setIsPurchased] = useState(false);
   const [checkoutModalVisible, setCheckoutModalVisible] = useState(false);
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<'PIX' | 'CARTAO'>('PIX');
+
+  // Estados dos Modos Especiais (Torre Mortal Kombat e Speedrun)
+  const [towerFloor, setTowerFloor] = useState<number>(1);
+  const [towerRecord, setTowerRecord] = useState<number>(1);
+
+  useEffect(() => {
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      try {
+        const floor = parseInt(window.sessionStorage?.getItem('estudemy_tower_floor') || '1', 10);
+        const record = parseInt(window.localStorage?.getItem('estudemy_tower_record') || '1', 10);
+        if (!isNaN(floor) && floor > 0) setTowerFloor(floor);
+        if (!isNaN(record) && record > 0) setTowerRecord(record);
+      } catch (e) {}
+    }
+  }, [selectedMode]);
+
+  const handleIniciarModo = (modo: GameModeId, customFaseId?: string) => {
+    const activeFase = fases.find((f) => !fasesConcluidas.includes(f._id)) || fases[0];
+    const targetFase = customFaseId || activeFase?._id || `trilha_${id}`;
+    router.push({
+      pathname: '/game/[faseId]',
+      params: { faseId: targetFase, trilhaId: id, modo: modo },
+    });
+  };
 
   // Modais de QR Code
   const [qrModalVisible, setQrModalVisible] = useState(false);
@@ -417,6 +448,449 @@ export default function TrilhaDetailScreen() {
       </View>
     );
   }
+
+  // =========================================================================
+  // RENDERIZAÇÃO DAS TRILHAS ESPECÍFICAS POR MODO DE JOGO
+  // =========================================================================
+
+  const renderCampanhaTrack = () => (
+    <>
+      <Text style={[styles.sectionHeading, { color: colors.text }]}>Jornada de Aprendizado</Text>
+      {secoes.length === 0 ? (
+        <Text style={[styles.emptyText, { color: colors.textMuted }]}>Esta trilha ainda não tem seções estruturadas.</Text>
+      ) : (
+        secoes.map((secao, secaoIdx) => {
+          const fasesDaSecao = fases.filter((f) => f.secaoId === secao._id);
+          const bannerColor = BANNER_COLORS[secaoIdx % BANNER_COLORS.length];
+
+          return (
+            <View key={secao._id} style={styles.secaoBlock}>
+              <View style={[styles.secaoHeader, { backgroundColor: bannerColor }]}>
+                <Text style={styles.secaoTitle}>{secao.titulo}</Text>
+                {secao.descricao && <Text style={styles.secaoDesc}>{secao.descricao}</Text>}
+              </View>
+
+              <View style={styles.fasesContainer}>
+                {fasesDaSecao.length === 0 ? (
+                  <Text style={[styles.emptyFases, { color: colors.textMuted }]}>Nenhuma fase nesta seção.</Text>
+                ) : (
+                  fasesDaSecao.map((fase) => {
+                    const isCompleted = fasesConcluidas.includes(fase._id);
+                    const isActive = isPhaseActive(fase);
+                    
+                    let isPhaseUnlocked = false;
+                    if (fases.indexOf(fase) === 0) {
+                      isPhaseUnlocked = true;
+                    } else {
+                      const absoluteIndex = fases.indexOf(fase);
+                      const prevFase = fases[absoluteIndex - 1];
+                      isPhaseUnlocked = Boolean(prevFase && fasesConcluidas.includes(prevFase._id));
+                    }
+
+                    if (isCompleted) {
+                      isPhaseUnlocked = true;
+                    }
+
+                    const globalIdx = fases.indexOf(fase);
+
+                    return (
+                      <View key={fase._id} style={[styles.faseNodeContainer, getZigZagStyle(globalIdx)]}>
+                        {isActive && (
+                          <View style={styles.avatarContainer}>
+                            <Image
+                              source={getCharacterImage(user?.personagem)}
+                              style={styles.avatarImg}
+                              resizeMode="contain"
+                            />
+                            <View style={styles.avatarPointer} />
+                          </View>
+                        )}
+
+                        <TouchableOpacity
+                          style={[
+                            styles.faseCircle,
+                            {
+                              backgroundColor: isCompleted
+                                ? '#10B981'
+                                : isPhaseUnlocked
+                                ? '#4F46E5'
+                                : '#374151',
+                              borderColor: isCompleted
+                                ? '#059669'
+                                : isPhaseUnlocked
+                                ? '#3730A3'
+                                : '#1F2937',
+                            },
+                          ]}
+                          disabled={!isPhaseUnlocked}
+                          onPress={() =>
+                            router.push({
+                              pathname: '/game/[faseId]',
+                              params: { faseId: fase._id, trilhaId: id, modo: 'campanha' },
+                            })
+                          }
+                          activeOpacity={0.8}
+                        >
+                          {isCompleted ? (
+                            <Check size={30} color="#ffffff" strokeWidth={3} />
+                          ) : isPhaseUnlocked ? (
+                            <Star size={30} color="#ffffff" fill="#ffffff" />
+                          ) : (
+                            <Lock size={26} color="#9CA3AF" />
+                          )}
+                        </TouchableOpacity>
+
+                        <Text
+                          style={[
+                            styles.faseLabel,
+                            { color: colors.text },
+                            !isPhaseUnlocked && { color: colors.textMuted },
+                          ]}
+                          numberOfLines={2}
+                        >
+                          {fase.titulo}
+                        </Text>
+                      </View>
+                    );
+                  })
+                )}
+              </View>
+            </View>
+          );
+        })
+      )}
+    </>
+  );
+
+  const renderSpeedrunTrack = () => {
+    const speedPhases = [
+      { id: 1, title: fases[0]?.titulo || 'Aquecimento Veloz', time: 50, desc: 'Ritmo inicial para testar seus reflexos', bg: '#F59E0B' },
+      { id: 2, title: fases[1]?.titulo || 'Pressão Crescente', time: 40, desc: 'O relógio acelera! Menos tempo por decisão', bg: '#D97706' },
+      { id: 3, title: fases[2]?.titulo || 'Zona Crítica', time: 30, desc: 'Alta adrenalina: apenas 30 segundos no contador', bg: '#B45309' },
+      { id: 4, title: fases[3]?.titulo || 'Sprint Final do Conhecimento', time: 20, desc: '20 segundos extremos! Apenas respostas imediatas', bg: '#78350F' },
+    ];
+
+    return (
+      <View style={styles.specialModeContainer}>
+        <View style={[styles.specialModeBanner, { borderColor: '#F59E0B', backgroundColor: 'rgba(245, 158, 11, 0.08)' }]}>
+          <View style={styles.specialModeBannerHeader}>
+            <View style={[styles.specialModeIconCircle, { backgroundColor: '#F59E0B' }]}>
+              <Zap size={24} color="#ffffff" fill="#ffffff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.specialModeTitle, { color: colors.text }]}>TRILHA CONTRA O TEMPO</Text>
+              <Text style={[styles.specialModeSubtitle, { color: '#F59E0B' }]}>Cronômetro Regressivo Decrescente</Text>
+            </View>
+          </View>
+          <Text style={[styles.specialModeRuleDesc, { color: colors.textMuted }]}>
+            ⏱️ Cada fase diminui seu tempo total no relógio! Respostas corretas concedem <Text style={{ color: '#FACC15', fontWeight: '800' }}>+3s de bônus</Text>, enquanto erros descontam <Text style={{ color: '#EF4444', fontWeight: '800' }}>5 segundos</Text>. Responda rápido antes que o tempo zere!
+          </Text>
+        </View>
+
+        <View style={styles.speedrunCardsList}>
+          {speedPhases.map((sp, idx) => {
+            const relatedFase = fases[idx] || fases[0];
+            const isCompleted = relatedFase ? fasesConcluidas.includes(relatedFase._id) : false;
+            return (
+              <TouchableOpacity
+                key={sp.id}
+                style={[
+                  styles.speedrunPhaseCard,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                  isCompleted && { borderColor: '#10B981' },
+                ]}
+                onPress={() => handleIniciarModo('speedrun', relatedFase?._id)}
+                activeOpacity={0.88}
+              >
+                <View style={[styles.speedrunTimeBadge, { backgroundColor: sp.bg }]}>
+                  <Clock size={16} color="#ffffff" style={{ marginRight: 4 }} />
+                  <Text style={styles.speedrunTimeText}>{sp.time}s</Text>
+                </View>
+
+                <View style={{ flex: 1, marginHorizontal: 12 }}>
+                  <Text style={[styles.speedrunPhaseTitle, { color: colors.text }]} numberOfLines={1}>
+                    Fase {sp.id}: {sp.title}
+                  </Text>
+                  <Text style={[styles.speedrunPhaseDesc, { color: colors.textMuted }]} numberOfLines={1}>
+                    {sp.desc}
+                  </Text>
+                </View>
+
+                <View style={[styles.speedrunActionCircle, { backgroundColor: isCompleted ? '#10B981' : '#F59E0B' }]}>
+                  {isCompleted ? <Check size={18} color="#ffffff" strokeWidth={3} /> : <Play size={16} color="#ffffff" fill="#ffffff" />}
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+
+        <TouchableOpacity
+          style={[styles.bigModeCtaBtn, { backgroundColor: '#F59E0B' }]}
+          onPress={() => handleIniciarModo('speedrun')}
+          activeOpacity={0.88}
+        >
+          <Zap size={22} color="#ffffff" fill="#ffffff" style={{ marginRight: 8 }} />
+          <Text style={styles.bigModeCtaText}>INICIAR DESAFIO CONTRA O TEMPO</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const renderTowerTrack = () => {
+    const towerFloors = [
+      { floor: 10, name: 'Mestre do Vazio Supremo', title: 'Chefe Final da Torre', icon: '👑', color: '#E11D48' },
+      { floor: 9, name: 'Guardião da Meia-Noite', title: 'Cavaleiro Espectral', icon: '⚔️', color: '#9333EA' },
+      { floor: 8, name: 'Arcano do Conhecimento', title: 'Mago Ancestral', icon: '🔮', color: '#7C3AED' },
+      { floor: 7, name: 'Titã de Ferro Forjado', title: 'Defensor Pesado', icon: '🛡️', color: '#6366F1' },
+      { floor: 6, name: 'Caçador das Sombras', title: 'Arqueira Mística', icon: '🏹', color: '#2563EB' },
+      { floor: 5, name: 'Sentinela Veterana', title: 'Guerreiro de Elite', icon: '⚔️', color: '#0284C7' },
+      { floor: 4, name: 'Gárgula do Labirinto', title: 'Fera Alada', icon: '💀', color: '#0D9488' },
+      { floor: 3, name: 'Fera do Abismo', title: 'Monstro Rastejante', icon: '🐺', color: '#16A34A' },
+      { floor: 2, name: 'Soldado das Trevas', title: 'Guarda da Entrada', icon: '🗡️', color: '#CA8A04' },
+      { floor: 1, name: 'Primeiro Desafio', title: 'A Base da Torre', icon: '🌱', color: '#475569' },
+    ];
+
+    return (
+      <View style={styles.specialModeContainer}>
+        <View style={[styles.specialModeBanner, { borderColor: '#A855F7', backgroundColor: 'rgba(168, 85, 247, 0.08)' }]}>
+          <View style={styles.specialModeBannerHeader}>
+            <View style={[styles.specialModeIconCircle, { backgroundColor: '#9333EA' }]}>
+              <Shield size={24} color="#ffffff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.specialModeTitle, { color: colors.text }]}>TORRE DO SABER</Text>
+              <Text style={[styles.specialModeSubtitle, { color: '#C084FC' }]}>Desafio Vertical Estilo Mortal Kombat</Text>
+            </View>
+          </View>
+          <Text style={[styles.specialModeRuleDesc, { color: colors.textMuted }]}>
+            💀 <Text style={{ color: '#F43F5E', fontWeight: '900' }}>REGRA DA MORTE:</Text> A cada inimigo derrotado você sobe um degrau na torre. Se você morrer em qualquer andar, <Text style={{ color: '#F43F5E', fontWeight: '800' }}>volta tudo para o Andar 1</Text>!
+          </Text>
+
+          <View style={styles.towerStatsRow}>
+            <View style={styles.towerStatCard}>
+              <Text style={styles.towerStatLabel}>ANDAR ATUAL</Text>
+              <Text style={[styles.towerStatVal, { color: '#FACC15' }]}>{towerFloor}º ANDAR</Text>
+            </View>
+            <View style={styles.towerStatCard}>
+              <Text style={styles.towerStatLabel}>MELHOR RECORDE</Text>
+              <Text style={[styles.towerStatVal, { color: '#34D399' }]}>{Math.max(towerFloor, towerRecord)}º ANDAR</Text>
+            </View>
+          </View>
+        </View>
+
+        <View style={styles.mkTowerContainer}>
+          {towerFloors.map((tf) => {
+            const isConquered = tf.floor < towerFloor;
+            const isCurrent = tf.floor === towerFloor;
+            const isLocked = tf.floor > towerFloor;
+
+            return (
+              <View
+                key={tf.floor}
+                style={[
+                  styles.mkFloorRung,
+                  { backgroundColor: isCurrent ? 'rgba(234, 179, 8, 0.15)' : colors.card },
+                  isCurrent && { borderColor: '#FACC15', borderWidth: 2.5 },
+                  isConquered && { borderColor: '#10B981', opacity: 0.8 },
+                  isLocked && { borderColor: colors.border, opacity: 0.55 },
+                ]}
+              >
+                <View style={[styles.mkFloorBadge, { backgroundColor: isCurrent ? '#FACC15' : tf.color }]}>
+                  <Text style={[styles.mkFloorNumber, isCurrent && { color: '#000000' }]}>{tf.floor}</Text>
+                </View>
+
+                <View style={{ flex: 1, marginHorizontal: 12 }}>
+                  <Text style={[styles.mkFloorName, { color: isCurrent ? '#FACC15' : colors.text }]}>
+                    {tf.icon} {tf.name}
+                  </Text>
+                  <Text style={[styles.mkFloorTitle, { color: colors.textMuted }]}>
+                    {tf.title}
+                  </Text>
+                </View>
+
+                {isCurrent && (
+                  <View style={styles.mkCurrentIndicator}>
+                    <Image
+                      source={getCharacterImage(user?.personagem)}
+                      style={styles.mkAvatarSmall}
+                      resizeMode="contain"
+                    />
+                    <Text style={styles.mkCurrentText}>VOCÊ ESTÁ AQUI</Text>
+                  </View>
+                )}
+
+                {isConquered && (
+                  <View style={styles.mkConqueredBadge}>
+                    <Check size={16} color="#10B981" strokeWidth={3} />
+                    <Text style={styles.mkConqueredText}>VENCIDO</Text>
+                  </View>
+                )}
+
+                {isLocked && (
+                  <Lock size={18} color={colors.textMuted} />
+                )}
+              </View>
+            );
+          })}
+        </View>
+
+        <TouchableOpacity
+          style={[styles.bigModeCtaBtn, { backgroundColor: '#9333EA' }]}
+          onPress={() => handleIniciarModo('sobrevivencia')}
+          activeOpacity={0.88}
+        >
+          <Shield size={22} color="#ffffff" style={{ marginRight: 8 }} />
+          <Text style={styles.bigModeCtaText}>DESAFIAR ANDAR {towerFloor} DA TORRE</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const renderBossRushTrack = () => {
+    const bossList = [
+      { id: 1, name: 'Guardião de Pedra', hp: 150, trait: 'Golpes Sísmicos & Defesa Alta', icon: '🛡️', color: '#D97706' },
+      { id: 2, name: 'Spectre da Meia-Noite', hp: 175, trait: 'Respostas Rápidas & Dano Veloz', icon: '❄️', color: '#3B82F6' },
+      { id: 3, name: 'Arquimago das Sombras', hp: 200, trait: 'QTEs Arcanos & Magia Pesada', icon: '🔮', color: '#8B5CF6' },
+      { id: 4, name: 'Soberano do Conhecimento', hp: 250, trait: 'O Titã Final da Trilha', icon: '👑', color: '#EF4444' },
+    ];
+
+    return (
+      <View style={styles.specialModeContainer}>
+        <View style={[styles.specialModeBanner, { borderColor: '#F43F5E', backgroundColor: 'rgba(244, 63, 94, 0.08)' }]}>
+          <View style={styles.specialModeBannerHeader}>
+            <View style={[styles.specialModeIconCircle, { backgroundColor: '#E11D48' }]}>
+              <Trophy size={24} color="#ffffff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.specialModeTitle, { color: colors.text }]}>ARENA DOS MESTRES</Text>
+              <Text style={[styles.specialModeSubtitle, { color: '#FDA4AF' }]}>Boss Rush: Duelo Consecutivo de Titãs</Text>
+            </View>
+          </View>
+          <Text style={[styles.specialModeRuleDesc, { color: colors.textMuted }]}>
+            🩸 <Text style={{ color: '#F43F5E', fontWeight: '900' }}>VIDA CONSECUTIVA:</Text> Apenas Chefes Poderosos! Sua vida <Text style={{ color: '#F43F5E', fontWeight: '800' }}>NÃO regenera entre as fases</Text>: você inicia o combate com a mesma vida que sobrou do chefe anterior. Sobreviva à sequência inteira!
+          </Text>
+        </View>
+
+        <View style={styles.bossRushList}>
+          {bossList.map((boss, idx) => {
+            const relatedFase = fases[idx] || fases[0];
+            const isCompleted = relatedFase ? fasesConcluidas.includes(relatedFase._id) : false;
+
+            return (
+              <View
+                key={boss.id}
+                style={[
+                  styles.bossCard,
+                  { backgroundColor: colors.card, borderColor: colors.border },
+                  isCompleted && { borderColor: '#10B981' },
+                ]}
+              >
+                <View style={[styles.bossAvatarCircle, { backgroundColor: boss.color }]}>
+                  <Text style={styles.bossAvatarIcon}>{boss.icon}</Text>
+                </View>
+
+                <View style={{ flex: 1, marginHorizontal: 12 }}>
+                  <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                    <Text style={[styles.bossCardName, { color: colors.text }]}>{boss.name}</Text>
+                    <View style={styles.bossHpPill}>
+                      <Text style={styles.bossHpText}>{boss.hp} HP</Text>
+                    </View>
+                  </View>
+                  <Text style={[styles.bossTraitText, { color: colors.textMuted }]}>{boss.trait}</Text>
+                </View>
+
+                <TouchableOpacity
+                  style={[styles.bossFightBtn, { backgroundColor: boss.color }]}
+                  onPress={() => handleIniciarModo('boss_rush', relatedFase?._id)}
+                  activeOpacity={0.85}
+                >
+                  <Swords size={16} color="#ffffff" style={{ marginRight: 4 }} />
+                  <Text style={styles.bossFightBtnText}>Duelo</Text>
+                </TouchableOpacity>
+              </View>
+            );
+          })}
+        </View>
+
+        <TouchableOpacity
+          style={[styles.bigModeCtaBtn, { backgroundColor: '#E11D48' }]}
+          onPress={() => handleIniciarModo('boss_rush')}
+          activeOpacity={0.88}
+        >
+          <Trophy size={22} color="#ffffff" style={{ marginRight: 8 }} />
+          <Text style={styles.bigModeCtaText}>ENTRAR NA ARENA DOS MESTRES</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
+
+  const renderMundoAbertoTrack = () => {
+    const npcs = [
+      { id: 1, name: 'Mestre Valerius', role: 'Arquivista Ancestral', tip: 'Ensina segredos da história das trilhas e memorização ativa.', icon: '🧙‍♂️' },
+      { id: 2, name: 'Sophia', role: 'A Exploradora', tip: 'Compartilha rotas do vale, orientação geográfica e curiosidades.', icon: '🏹' },
+      { id: 3, name: 'Boran', role: 'O Guardião', tip: 'Treina foco inabalável, postura e disciplina de guerreiro.', icon: '🛡️' },
+      { id: 4, name: 'Roland', role: 'O Andarilho', tip: 'Dicas práticas de raciocínio lógico e resolução de problemas.', icon: '⚔️' },
+    ];
+
+    return (
+      <View style={styles.specialModeContainer}>
+        <View style={[styles.specialModeBanner, { borderColor: '#0284C7', backgroundColor: 'rgba(2, 132, 199, 0.08)' }]}>
+          <View style={styles.specialModeBannerHeader}>
+            <View style={[styles.specialModeIconCircle, { backgroundColor: '#0284C7' }]}>
+              <Compass size={24} color="#ffffff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={[styles.specialModeTitle, { color: colors.text }]}>MUNDO ABERTO</Text>
+              <Text style={[styles.specialModeSubtitle, { color: '#38BDF8' }]}>Exploração Livre 2D • Converse com NPCs</Text>
+            </View>
+          </View>
+          <Text style={[styles.specialModeRuleDesc, { color: colors.textMuted }]}>
+            🌍 Ande livremente com seu herói pelo vale panorâmico, explore diferentes áreas e converse com mentores para aprender lições valiosas. <Text style={{ color: '#38BDF8', fontWeight: '800' }}>Sem relógio, sem perda de vida e sem pressão de XP</Text>!
+          </Text>
+        </View>
+
+        <View style={[styles.controlsCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+          <Text style={[styles.controlsTitle, { color: colors.text }]}>🎮 Como Jogar no Mundo Aberto:</Text>
+          <Text style={[styles.controlsLine, { color: colors.textMuted }]}>
+            • <Text style={{ color: '#FACC15', fontWeight: '700' }}>PC / Teclado:</Text> Use [W][A][S][D] ou as Setas para andar, [E] para conversar com NPCs e [Espaço] para pular.
+          </Text>
+          <Text style={[styles.controlsLine, { color: colors.textMuted }]}>
+            • <Text style={{ color: '#38BDF8', fontWeight: '700' }}>Celular / Toque:</Text> Use o D-Pad virtual no canto inferior esquerdo e o botão [💬 Conversar] ao se aproximar de um mentor.
+          </Text>
+        </View>
+
+        <Text style={[styles.npcSectionTitle, { color: colors.text }]}>Sábios & Mentores no Mapa:</Text>
+        <View style={styles.npcGrid}>
+          {npcs.map((npc) => (
+            <View key={npc.id} style={[styles.npcCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+              <View style={styles.npcHeaderRow}>
+                <Text style={styles.npcEmoji}>{npc.icon}</Text>
+                <View style={{ flex: 1, marginLeft: 8 }}>
+                  <Text style={[styles.npcName, { color: colors.text }]}>{npc.name}</Text>
+                  <Text style={styles.npcRole}>{npc.role}</Text>
+                </View>
+              </View>
+              <Text style={[styles.npcTipText, { color: colors.textMuted }]}>{npc.tip}</Text>
+            </View>
+          ))}
+        </View>
+
+        <TouchableOpacity
+          style={[styles.bigModeCtaBtn, { backgroundColor: '#0284C7' }]}
+          onPress={() => {
+            router.push({
+              pathname: '/game/[faseId]',
+              params: { faseId: `mundo_aberto_${id}`, trilhaId: id, modo: 'mundo_aberto' },
+            });
+          }}
+          activeOpacity={0.88}
+        >
+          <Compass size={22} color="#ffffff" style={{ marginRight: 8 }} />
+          <Text style={styles.bigModeCtaText}>ENTRAR NO MUNDO ABERTO</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  };
 
   const handleVoltarDaTrilha = () => {
     // Retorna com segurança garantida para a Home sem cair em loop de histórico
@@ -893,119 +1367,11 @@ export default function TrilhaDetailScreen() {
         )
       ) : (
         <>
-          {/* Lista de Seções & Fases */}
-          <Text style={[styles.sectionHeading, { color: colors.text }]}>Jornada de Aprendizado</Text>
-          {secoes.length === 0 ? (
-            <Text style={[styles.emptyText, { color: colors.textMuted }]}>Esta trilha ainda não tem seções estruturadas.</Text>
-          ) : (
-            secoes.map((secao, secaoIdx) => {
-              // Filtrar fases pertencentes a esta seção
-              const fasesDaSecao = fases.filter((f) => f.secaoId === secao._id);
-              const bannerColor = BANNER_COLORS[secaoIdx % BANNER_COLORS.length];
-
-              return (
-                <View key={secao._id} style={styles.secaoBlock}>
-                  {/* Header da Seção estilo Duolingo */}
-                  <View style={[styles.secaoHeader, { backgroundColor: bannerColor }]}>
-                    <Text style={styles.secaoTitle}>{secao.titulo}</Text>
-                    {secao.descricao && <Text style={styles.secaoDesc}>{secao.descricao}</Text>}
-                  </View>
-
-                  {/* Fases em zigue-zague */}
-                  <View style={styles.fasesContainer}>
-                    {fasesDaSecao.length === 0 ? (
-                      <Text style={[styles.emptyFases, { color: colors.textMuted }]}>Nenhuma fase nesta seção.</Text>
-                    ) : (
-                      fasesDaSecao.map((fase) => {
-                        const isCompleted = fasesConcluidas.includes(fase._id);
-                        const isActive = isPhaseActive(fase);
-                        
-                        // Lógica para desbloquear a fase individual
-                        let isPhaseUnlocked = false;
-                        if (fases.indexOf(fase) === 0) {
-                          // A primeira fase da trilha é sempre desbloqueada para jogar!
-                          isPhaseUnlocked = true;
-                        } else {
-                          const absoluteIndex = fases.indexOf(fase);
-                          const prevFase = fases[absoluteIndex - 1];
-                          isPhaseUnlocked = Boolean(prevFase && fasesConcluidas.includes(prevFase._id));
-                        }
-
-                        if (isCompleted) {
-                          isPhaseUnlocked = true;
-                        }
-
-                        const globalIdx = fases.indexOf(fase);
-
-                        return (
-                          <View key={fase._id} style={[styles.faseNodeContainer, getZigZagStyle(globalIdx)]}>
-                            {/* Avatar do Personagem Flutuante */}
-                            {isActive && (
-                              <View style={styles.avatarContainer}>
-                                <Image
-                                  source={getCharacterImage(user?.personagem)}
-                                  style={styles.avatarImg}
-                                  resizeMode="contain"
-                                />
-                                <View style={styles.avatarPointer} />
-                              </View>
-                            )}
-
-                            {/* Círculo da Fase */}
-                            <TouchableOpacity
-                              style={[
-                                styles.faseCircle,
-                                {
-                                  backgroundColor: isCompleted
-                                    ? '#10B981' // Verde concluído
-                                    : isPhaseUnlocked
-                                    ? '#4F46E5' // Azul ativo/desbloqueado
-                                    : '#374151', // Cinza bloqueado
-                                  borderColor: isCompleted
-                                    ? '#059669'
-                                    : isPhaseUnlocked
-                                    ? '#3730A3'
-                                    : '#1F2937',
-                                },
-                              ]}
-                              disabled={!isPhaseUnlocked}
-                              onPress={() =>
-                                router.push({
-                                  pathname: '/game/[faseId]',
-                                  params: { faseId: fase._id, trilhaId: id, modo: selectedMode },
-                                })
-                              }
-                              activeOpacity={0.8}
-                            >
-                              {isCompleted ? (
-                                <Check size={30} color="#ffffff" strokeWidth={3} />
-                              ) : isPhaseUnlocked ? (
-                                <Star size={30} color="#ffffff" fill="#ffffff" />
-                              ) : (
-                                <Lock size={26} color="#9CA3AF" />
-                              )}
-                            </TouchableOpacity>
-
-                            {/* Rótulo da Fase */}
-                            <Text
-                              style={[
-                                styles.faseLabel,
-                                { color: colors.text },
-                                !isPhaseUnlocked && { color: colors.textMuted },
-                              ]}
-                              numberOfLines={2}
-                            >
-                              {fase.titulo}
-                            </Text>
-                          </View>
-                        );
-                      })
-                    )}
-                  </View>
-                </View>
-              );
-            })
-          )}
+          {selectedMode === 'campanha' && renderCampanhaTrack()}
+          {selectedMode === 'speedrun' && renderSpeedrunTrack()}
+          {selectedMode === 'sobrevivencia' && renderTowerTrack()}
+          {selectedMode === 'boss_rush' && renderBossRushTrack()}
+          {selectedMode === 'mundo_aberto' && renderMundoAbertoTrack()}
         </>
       )}
 
@@ -2089,5 +2455,296 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '900',
+  },
+  // =========================================================================
+  // ESTILOS DOS MODOS ESPECIAIS DE JOGO
+  // =========================================================================
+  specialModeContainer: {
+    marginTop: 12,
+    paddingBottom: 24,
+  },
+  specialModeBanner: {
+    padding: 16,
+    borderRadius: 16,
+    borderWidth: 1.5,
+    marginBottom: 16,
+  },
+  specialModeBannerHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+    marginBottom: 8,
+  },
+  specialModeIconCircle: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  specialModeTitle: {
+    fontSize: 16,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  specialModeSubtitle: {
+    fontSize: 12,
+    fontWeight: '800',
+  },
+  specialModeRuleDesc: {
+    fontSize: 12,
+    lineHeight: 18,
+    marginTop: 4,
+  },
+  speedrunCardsList: {
+    gap: 10,
+    marginBottom: 16,
+  },
+  speedrunPhaseCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+  },
+  speedrunTimeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+  },
+  speedrunTimeText: {
+    color: '#ffffff',
+    fontSize: 13,
+    fontWeight: '900',
+  },
+  speedrunPhaseTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 2,
+  },
+  speedrunPhaseDesc: {
+    fontSize: 11,
+  },
+  speedrunActionCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bigModeCtaBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: 16,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: '#ffffff',
+    shadowColor: '#000000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+  bigModeCtaText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  towerStatsRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 12,
+  },
+  towerStatCard: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.35)',
+    padding: 10,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  towerStatLabel: {
+    color: '#94A3B8',
+    fontSize: 9,
+    fontWeight: '800',
+    letterSpacing: 0.5,
+  },
+  towerStatVal: {
+    fontSize: 15,
+    fontWeight: '900',
+    marginTop: 2,
+  },
+  mkTowerContainer: {
+    gap: 8,
+    marginBottom: 16,
+  },
+  mkFloorRung: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    position: 'relative',
+  },
+  mkFloorBadge: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  mkFloorNumber: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  mkFloorName: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  mkFloorTitle: {
+    fontSize: 11,
+  },
+  mkCurrentIndicator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: 'rgba(234, 179, 8, 0.25)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#FACC15',
+  },
+  mkAvatarSmall: {
+    width: 22,
+    height: 22,
+  },
+  mkCurrentText: {
+    color: '#FEF08A',
+    fontSize: 10,
+    fontWeight: '900',
+  },
+  mkConqueredBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  mkConqueredText: {
+    color: '#10B981',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  bossRushList: {
+    gap: 10,
+    marginBottom: 16,
+  },
+  bossCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 14,
+    borderRadius: 14,
+    borderWidth: 1.5,
+  },
+  bossAvatarCircle: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  bossAvatarIcon: {
+    fontSize: 20,
+  },
+  bossCardName: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  bossHpPill: {
+    backgroundColor: '#450A0A',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: '#EF4444',
+  },
+  bossHpText: {
+    color: '#FCA5A5',
+    fontSize: 10,
+    fontWeight: '800',
+  },
+  bossTraitText: {
+    fontSize: 11,
+    marginTop: 2,
+  },
+  bossFightBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderRadius: 8,
+  },
+  bossFightBtnText: {
+    color: '#ffffff',
+    fontSize: 12,
+    fontWeight: '900',
+  },
+  controlsCard: {
+    padding: 14,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    marginBottom: 16,
+  },
+  controlsTitle: {
+    fontSize: 13,
+    fontWeight: '800',
+    marginBottom: 6,
+  },
+  controlsLine: {
+    fontSize: 11,
+    lineHeight: 17,
+    marginBottom: 4,
+  },
+  npcSectionTitle: {
+    fontSize: 14,
+    fontWeight: '800',
+    marginBottom: 10,
+  },
+  npcGrid: {
+    gap: 10,
+    marginBottom: 16,
+  },
+  npcCard: {
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 1.5,
+  },
+  npcHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 4,
+  },
+  npcEmoji: {
+    fontSize: 24,
+  },
+  npcName: {
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  npcRole: {
+    color: '#38BDF8',
+    fontSize: 10,
+    fontWeight: '700',
+  },
+  npcTipText: {
+    fontSize: 11,
+    lineHeight: 16,
   },
 });

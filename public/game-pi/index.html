@@ -511,6 +511,52 @@
             color: #ffffff;
         }
 
+        /* Badges de Modos de Jogo (Speedrun Timer, Torre Mortal Kombat, Boss Rush) */
+        .mode-badge-box {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(15, 23, 42, 0.92);
+            border: 2px solid #38bdf8;
+            border-radius: 10px;
+            padding: 6px 14px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+            white-space: nowrap;
+        }
+
+        .mode-badge-icon {
+            font-size: 20px;
+        }
+
+        .mode-badge-col {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .mode-badge-label {
+            font-size: 9px;
+            font-weight: 800;
+            color: #94a3b8;
+            letter-spacing: 0.5px;
+        }
+
+        .mode-badge-val {
+            font-size: 15px;
+            font-weight: 900;
+            color: #38bdf8;
+        }
+
+        .timer-warning {
+            color: #ef4444 !important;
+            animation: timerPulse 0.5s infinite alternate;
+        }
+
+        @keyframes timerPulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 2px #ef4444); }
+            100% { transform: scale(1.1); filter: drop-shadow(0 0 10px #ef4444); }
+        }
+
         /* Camada 5: Botão de Golpe Supremo (Acima do HUD do Jogador) */
         #btn-ultimate {
             position: absolute;
@@ -1176,6 +1222,34 @@
                 </div>
             </div>
 
+            <!-- Badges Específicos por Modo de Jogo -->
+            <!-- 1. Cronômetro Speedrun (Tempo decrescente por fase) -->
+            <div id="speedrun-timer-badge" class="mode-badge-box" style="display: none; border-color: #f59e0b;">
+                <span class="mode-badge-icon">⏱️</span>
+                <div class="mode-badge-col">
+                    <span class="mode-badge-label" style="color: #fbbf24;">TEMPO RESTANTE</span>
+                    <span id="speedrun-timer-num" class="mode-badge-val" style="color: #facc15;">50s</span>
+                </div>
+            </div>
+
+            <!-- 2. Andar da Torre Infinita (Mortal Kombat Style) -->
+            <div id="tower-floor-badge" class="mode-badge-box" style="display: none; border-color: #a855f7;">
+                <span class="mode-badge-icon">🏰</span>
+                <div class="mode-badge-col">
+                    <span class="mode-badge-label" style="color: #c084fc;">TORRE DO SABER</span>
+                    <span id="tower-floor-num" class="mode-badge-val" style="color: #d8b4fe;">ANDAR 1</span>
+                </div>
+            </div>
+
+            <!-- 3. Vida Consecutiva da Arena dos Mestres (Boss Rush) -->
+            <div id="boss-rush-badge" class="mode-badge-box" style="display: none; border-color: #f43f5e;">
+                <span class="mode-badge-icon">👑</span>
+                <div class="mode-badge-col">
+                    <span class="mode-badge-label" style="color: #fda4af;">ARENA DOS MESTRES</span>
+                    <span id="boss-rush-num" class="mode-badge-val" style="color: #f43f5e;">CHEFE 1/4</span>
+                </div>
+            </div>
+
             <!-- Direita: Controles In-Game (Áudio e Sair) -->
             <div id="top-actions-group">
                 <button class="top-action-btn" id="btn-audio-toggle" onclick="window.estudemyGame.toggleAudio()" title="Ligar/Desligar Orquestra e Sons">
@@ -1296,8 +1370,8 @@
         <div id="phase-defeat-modal" class="game-end-modal">
             <div class="game-end-card defeat-card">
                 <div class="end-badge defeat-badge">💀 DERROTA</div>
-                <h2 class="end-title defeat-title">O Herói Caiu em Batalha!</h2>
-                <p class="defeat-desc">Sua vida chegou a zero, mas um verdadeiro herói aprende com seus erros e levanta mais forte!</p>
+                <h2 id="defeat-phase-title" class="end-title defeat-title">O Herói Caiu em Batalha!</h2>
+                <p id="defeat-phase-desc" class="defeat-desc">Sua vida chegou a zero, mas um verdadeiro herói aprende com seus erros e levanta mais forte!</p>
                 
                 <div class="end-actions-row">
                     <button id="btn-retry-phase" class="end-btn btn-retry-main" onclick="window.estudemyGame.repeatCurrentPhase()">

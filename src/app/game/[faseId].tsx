@@ -464,10 +464,20 @@ export default function GameScreen() {
 
   const rawBaseUrl = process.env.EXPO_PUBLIC_API_URL || 'http://18.222.3.101';
   const cleanBase = rawBaseUrl.replace(/:5000.*$/, '').replace(/\/api.*$/, '').replace(/\/$/, '');
-  const activeTema = gameData?.trilhaTema || '';
+  const initialTemaFallback = getTrilhaTheme(trilhaId || faseId);
+  const activeTema = gameData?.trilhaTema || initialTemaFallback;
   const activePhase = gameData?.phaseIndex || 0;
-  const activeModo = gameData?.modoJogo || 'campanha';
-  const gameUri = `${cleanBase}/game-pi/index.html?t=${iframeKey}&tema=${activeTema}&phase=${activePhase}&modo=${activeModo}`;
+  const activeModo = (modo || gameData?.modoJogo || 'campanha').toLowerCase().trim();
+  const isMundoAberto = activeModo === 'mundo_aberto';
+  const charKey = user?.personagem || gameData?.personagem_selecionado || 'samurai';
+
+  const webGameSrc = isMundoAberto
+    ? `/game-pi/mundo_aberto.html?t=${iframeKey}&tema=${activeTema}&personagem=${encodeURIComponent(charKey)}`
+    : `/game-pi/index.html?t=${iframeKey}&tema=${activeTema}&phase=${activePhase}&modo=${activeModo}`;
+
+  const mobileGameSrc = isMundoAberto
+    ? `${cleanBase}/game-pi/mundo_aberto.html?t=${iframeKey}&tema=${activeTema}&personagem=${encodeURIComponent(charKey)}`
+    : `${cleanBase}/game-pi/index.html?t=${iframeKey}&tema=${activeTema}&phase=${activePhase}&modo=${activeModo}`;
 
   if (erro) {
     return (
@@ -527,7 +537,7 @@ export default function GameScreen() {
           {podeExibirJogo && isWeb && (
             <iframe
               key={iframeKey}
-              src={`/game-pi/index.html?t=${iframeKey}&tema=${activeTema}&phase=${activePhase}&modo=${activeModo}`}
+              src={webGameSrc}
               style={{
                 width: '100%',
                 height: '100%',
@@ -544,7 +554,7 @@ export default function GameScreen() {
             <WebView
               ref={webViewRef}
               key={iframeKey}
-              source={{ uri: gameUri }}
+              source={{ uri: mobileGameSrc }}
               style={styles.webView}
               javaScriptEnabled
               domStorageEnabled

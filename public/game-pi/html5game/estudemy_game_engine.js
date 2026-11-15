@@ -772,6 +772,19 @@
       this.victoryStatStreak = document.getElementById('victory-stat-streak');
       this.btnNextPhase = document.getElementById('btn-next-phase');
       this.phaseDefeatModal = document.getElementById('phase-defeat-modal');
+      this.defeatPhaseTitle = document.getElementById('defeat-phase-title');
+      this.defeatPhaseDesc = document.getElementById('defeat-phase-desc');
+
+      // Badges dos Modos de Jogo (Speedrun, Torre Mortal Kombat, Boss Rush)
+      this.speedrunTimerBadge = document.getElementById('speedrun-timer-badge');
+      this.speedrunTimerNum = document.getElementById('speedrun-timer-num');
+      this.towerFloorBadge = document.getElementById('tower-floor-badge');
+      this.towerFloorNum = document.getElementById('tower-floor-num');
+      this.bossRushBadge = document.getElementById('boss-rush-badge');
+      this.bossRushNum = document.getElementById('boss-rush-num');
+      this.speedrunTimerInterval = null;
+      this.speedrunTimeRemaining = 50;
+      this.towerFloor = 1;
 
       // Estados de Jogo
       this.activeTheme = 'castelo';
@@ -871,6 +884,23 @@
       this.fasesDaTrilha = Array.isArray(raw?.fasesDaTrilha) ? raw.fasesDaTrilha : [];
       this.currentFaseIndex = typeof raw?.phaseIndex === 'number' ? raw.phaseIndex : 0;
       this.modoJogo = (raw?.modoJogo || raw?.modo || 'campanha').toLowerCase().trim();
+
+      // Prioridade absoluta para parâmetros da URL se presentes
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const urlModo = urlParams.get('modo');
+        if (urlModo) {
+          this.modoJogo = urlModo.toLowerCase().trim();
+        }
+        const urlTema = (urlParams.get('tema') || '').toLowerCase().trim();
+        if (urlTema) {
+          if (urlTema.includes('deserto')) this.activeTheme = 'deserto';
+          else if (urlTema.includes('vila')) this.activeTheme = 'vila';
+          else if (urlTema.includes('montanha')) this.activeTheme = 'montanha';
+          else if (urlTema.includes('vazio') || urlTema.includes('cosmico')) this.activeTheme = 'vazio_cosmico';
+          else if (urlTema.includes('castelo')) this.activeTheme = 'castelo';
+        }
+      } catch (e) {}
 
       // Herói Selecionado (Perfil do Usuário)
       const char = (raw?.personagem_selecionado || 'samurai').toLowerCase();
@@ -1109,9 +1139,9 @@
         if (this.modoJogo === 'speedrun') {
           label += ' • ⚡ CONTRA O TEMPO';
         } else if (this.modoJogo === 'sobrevivencia') {
-          label += ' • 🛡️ SOBREVIVÊNCIA';
+          label += ' • 🏰 TORRE DO SABER';
         } else if (this.modoJogo === 'boss_rush') {
-          label += ' • 🏆 ARENA DOS MESTRES';
+          label += ' • 👑 ARENA DOS MESTRES';
         } else if (this.modoJogo === 'mundo_aberto' || this.modoJogo === 'livre') {
           label += ' • 🧭 MUNDO ABERTO (SEM XP)';
         }
@@ -1121,6 +1151,98 @@
         this.missionPhaseText.textContent = phase.name;
       }
 
+      // =========================================================================
+      // GESTÃO DOS MODOS ESPECIAIS DE JOGO
+      // =========================================================================
+
+      // 1. MODO ATAQUE CONTRA O TEMPO (SPEEDRUN)
+      // Timer na tela em contagem regressiva que vai diminuindo a cada fase
+      if (this.speedrunTimerInterval) {
+        clearInterval(this.speedrunTimerInterval);
+        this.speedrunTimerInterval = null;
+      }
+
+      if (this.modoJogo === 'speedrun') {
+        if (this.speedrunTimerBadge) this.speedrunTimerBadge.style.display = 'flex';
+        // Reduz o tempo a cada fase: Fase 0 = 50s, Fase 1 = 40s, Fase 2 = 30s, Fase 3 = 20s (mínimo 15s)
+        const initialSeconds = Math.max(15, 50 - safeIdx * 10);
+        this.speedrunTimeRemaining = initialSeconds;
+        if (this.speedrunTimerNum) {
+          this.speedrunTimerNum.textContent = `${this.speedrunTimeRemaining}s`;
+          this.speedrunTimerNum.classList.remove('timer-warning');
+        }
+
+        this.speedrunTimerInterval = setInterval(() => {
+          if (this.playerHp <= 0 || (this.phaseVictoryModal && this.phaseVictoryModal.style.display === 'flex')) {
+            clearInterval(this.speedrunTimerInterval);
+            this.speedrunTimerInterval = null;
+            return;
+          }
+          this.speedrunTimeRemaining--;
+          if (this.speedrunTimerNum) {
+            this.speedrunTimerNum.textContent = `${Math.max(0, this.speedrunTimeRemaining)}s`;
+            if (this.speedrunTimeRemaining <= 10) {
+              this.speedrunTimerNum.classList.add('timer-warning');
+            } else {
+              this.speedrunTimerNum.classList.remove('timer-warning');
+            }
+          }
+          if (this.speedrunTimeRemaining <= 0) {
+            clearInterval(this.speedrunTimerInterval);
+            this.speedrunTimerInterval = null;
+            this.handleSpeedrunTimeout();
+          }
+        }, 1000);
+      } else {
+        if (this.speedrunTimerBadge) this.speedrunTimerBadge.style.display = 'none';
+      }
+
+      // 2. MODO TORRE INFINITA (MORTAL KOMBAT STYLE)
+      // Cada inimigo derrotado sobe um degrau; se morrer volta tudo
+      if (this.modoJogo === 'sobrevivencia') {
+        if (this.towerFloorBadge) this.towerFloorBadge.style.display = 'flex';
+        let floor = 1;
+        try {
+          const rawFloor = sessionStorage.getItem('estudemy_tower_floor');
+          if (rawFloor) floor = parseInt(rawFloor, 10);
+        } catch (e) {}
+        this.towerFloor = Math.max(1, isNaN(floor) ? 1 : floor);
+        if (this.towerFloorNum) {
+          this.towerFloorNum.textContent = `ANDAR ${this.towerFloor}`;
+        }
+      } else {
+        if (this.towerFloorBadge) this.towerFloorBadge.style.display = 'none';
+      }
+
+      // 3. MODO ARENA DOS MESTRES (BOSS RUSH)
+      // Apenas chefes. A cada fase começa com a mesma vida que terminou a anterior!
+      if (this.modoJogo === 'boss_rush') {
+        if (this.bossRushBadge) this.bossRushBadge.style.display = 'flex';
+        if (this.bossRushNum) {
+          this.bossRushNum.textContent = `CHEFE ${safeIdx + 1}/${maxPhases}`;
+        }
+        if (safeIdx === 0) {
+          this.playerHp = this.playerMaxHp;
+          try {
+            sessionStorage.removeItem('estudemy_bossrush_hp');
+          } catch (e) {}
+        } else {
+          try {
+            const savedHp = sessionStorage.getItem('estudemy_bossrush_hp');
+            if (savedHp !== null) {
+              const parsedHp = parseInt(savedHp, 10);
+              if (!isNaN(parsedHp) && parsedHp > 0) {
+                this.playerHp = Math.min(this.playerMaxHp, parsedHp);
+              }
+            }
+          } catch (e) {}
+          this.addFloatingText(`VIDA PRESERVADA: ${this.playerHp} HP!`, '#f43f5e', 683, 260, true);
+        }
+        this.updateHUD();
+      } else {
+        if (this.bossRushBadge) this.bossRushBadge.style.display = 'none';
+      }
+
       // Sorteia ou mantém fixos os inimigos para esta fase (não se altera no tentar novamente)
       this.spawnRandomEnemiesForPhase(theme.enemyPool);
 
@@ -1128,6 +1250,27 @@
       this.applyGrounding();
 
       this.addFloatingText(`${phase.name}!`, '#38bdf8', 683, 220);
+    }
+
+    handleSpeedrunTimeout() {
+      this.playerHp = 0;
+      this.updateHUD();
+      this.addFloatingText('TEMPO ESGOTADO!', '#ef4444', 683, 280, true);
+      this.soundtrack.playSFX('hero_damage');
+      if (typeof window.notificar_derrota_js === 'function') {
+        window.notificar_derrota_js();
+      }
+      setTimeout(() => {
+        if (this.phaseDefeatModal) {
+          if (this.defeatPhaseTitle) {
+            this.defeatPhaseTitle.textContent = 'TEMPO ESGOTADO!';
+          }
+          if (this.defeatPhaseDesc) {
+            this.defeatPhaseDesc.textContent = 'O cronômetro zerou antes que você conseguisse derrotar todos os inimigos!';
+          }
+          this.phaseDefeatModal.style.display = 'flex';
+        }
+      }, 700);
     }
 
     spawnRandomEnemiesForPhase(pool) {
@@ -1286,6 +1429,15 @@
         this.streak++;
         this.chargeUltimate(25);
 
+        // Bônus de tempo no modo Speedrun (+3s por acerto)
+        if (this.modoJogo === 'speedrun') {
+          this.speedrunTimeRemaining += 3;
+          if (this.speedrunTimerNum) {
+            this.speedrunTimerNum.textContent = `${this.speedrunTimeRemaining}s`;
+          }
+          this.addFloatingText('+3s BÔNUS!', '#facc15', 683, 200, true);
+        }
+
         // Animação de Ataque do Herói
         const attackGif = this.streak % 2 === 0 ? 'attack2.gif' : 'attack1.gif';
         this.playerSprite.src = `${char.spriteFolder}/${attackGif}`;
@@ -1317,6 +1469,15 @@
       } else {
         this.soundtrack.playSFX('wrong');
         this.streak = 0;
+
+        // Penalidade de tempo no modo Speedrun (-5s por erro)
+        if (this.modoJogo === 'speedrun') {
+          this.speedrunTimeRemaining = Math.max(1, this.speedrunTimeRemaining - 5);
+          if (this.speedrunTimerNum) {
+            this.speedrunTimerNum.textContent = `${this.speedrunTimeRemaining}s`;
+          }
+          this.addFloatingText('-5s TEMPO!', '#ef4444', 683, 200, true);
+        }
 
         // Inimigo contra-ataca (com chance de errar ou desferir supremo!)
         this.executeEnemyTurn();
@@ -1451,6 +1612,38 @@
       if (this.playerHp <= 0) {
         this.soundtrack.playSFX('wrong');
         this.addFloatingText('DERROTA...', '#ef4444', 250, 330, true);
+        if (this.speedrunTimerInterval) {
+          clearInterval(this.speedrunTimerInterval);
+          this.speedrunTimerInterval = null;
+        }
+
+        // No modo Torre Infinita (Mortal Kombat): se morrer volta tudo ao Andar 1!
+        if (this.modoJogo === 'sobrevivencia') {
+          try {
+            sessionStorage.setItem('estudemy_tower_floor', '1');
+          } catch (e) {}
+          this.towerFloor = 1;
+          if (this.towerFloorNum) {
+            this.towerFloorNum.textContent = 'ANDAR 1';
+          }
+          if (this.defeatPhaseTitle) {
+            this.defeatPhaseTitle.textContent = 'VOCÊ CAIU DA TORRE!';
+          }
+          if (this.defeatPhaseDesc) {
+            this.defeatPhaseDesc.textContent = 'No Desafio Mortal Kombat, a derrota zera seu progresso e você volta ao primeiro andar!';
+          }
+        } else if (this.modoJogo === 'boss_rush') {
+          try {
+            sessionStorage.removeItem('estudemy_bossrush_hp');
+          } catch (e) {}
+          if (this.defeatPhaseTitle) {
+            this.defeatPhaseTitle.textContent = 'O TITÃ TRIUNFOU!';
+          }
+          if (this.defeatPhaseDesc) {
+            this.defeatPhaseDesc.textContent = 'Na Arena dos Mestres, a vida não se regenera! Tente novamente desde o início.';
+          }
+        }
+
         if (typeof window.notificar_derrota_js === 'function') {
           window.notificar_derrota_js();
         }
@@ -1482,8 +1675,40 @@
         earnedXP = 0;
       }
 
+      // Pausa timer do modo Speedrun ao vencer
+      if (this.speedrunTimerInterval) {
+        clearInterval(this.speedrunTimerInterval);
+        this.speedrunTimerInterval = null;
+      }
+
+      // Regra Torre Infinita (Mortal Kombat): avança de andar e salva recorde
+      if (this.modoJogo === 'sobrevivencia') {
+        const nextFloor = (this.towerFloor || 1) + 1;
+        this.towerFloor = nextFloor;
+        try {
+          sessionStorage.setItem('estudemy_tower_floor', nextFloor.toString());
+          let rec = 1;
+          const rawRec = localStorage.getItem('estudemy_tower_record');
+          if (rawRec) rec = parseInt(rawRec, 10) || 1;
+          if (nextFloor > rec) {
+            localStorage.setItem('estudemy_tower_record', nextFloor.toString());
+          }
+        } catch (e) {}
+      } else if (this.modoJogo === 'boss_rush') {
+        // Regra Boss Rush: Preserva a vida restante para o próximo chefe!
+        try {
+          sessionStorage.setItem('estudemy_bossrush_hp', this.playerHp.toString());
+        } catch (e) {}
+      }
+
       if (this.victoryPhaseTitle) {
-        this.victoryPhaseTitle.textContent = `${phaseName} — Concluída!`;
+        if (this.modoJogo === 'sobrevivencia') {
+          this.victoryPhaseTitle.textContent = `Andar ${this.towerFloor - 1} Vencido! Subindo para o Andar ${this.towerFloor}!`;
+        } else if (this.modoJogo === 'boss_rush') {
+          this.victoryPhaseTitle.textContent = `Chefe Derrotado! HP Restante: ${this.playerHp}/${this.playerMaxHp}`;
+        } else {
+          this.victoryPhaseTitle.textContent = `${phaseName} — Concluída!`;
+        }
       }
       if (this.victoryXpAmount) {
         this.victoryXpAmount.textContent = earnedXP > 0 ? `+${earnedXP} XP` : '0 XP (Modo Livre)';
@@ -1550,8 +1775,11 @@
         : (theme.phases ? theme.phases.length : 1);
 
       if (nextThemePhase < maxPhases) {
-        // Restaura totalmente a vida do herói para a próxima batalha
-        this.playerHp = this.playerMaxHp;
+        // Regra Boss Rush: A cada fase começa com a mesma vida que terminou a anterior!
+        // Nos outros modos, restaura normalmente para 100%
+        if (this.modoJogo !== 'boss_rush') {
+          this.playerHp = this.playerMaxHp;
+        }
         this.updateHUD();
 
         const themePhaseIdx = nextThemePhase % (theme.phases ? theme.phases.length : 1);
@@ -1585,7 +1813,23 @@
     repeatCurrentPhase() {
       if (this.phaseVictoryModal) this.phaseVictoryModal.style.display = 'none';
       if (this.phaseDefeatModal) this.phaseDefeatModal.style.display = 'none';
-      this.playerHp = this.playerMaxHp;
+
+      // Reseta vida e variáveis do modo
+      if (this.modoJogo === 'boss_rush') {
+        this.playerHp = this.playerMaxHp;
+        try {
+          sessionStorage.removeItem('estudemy_bossrush_hp');
+        } catch (e) {}
+      } else if (this.modoJogo === 'sobrevivencia') {
+        this.playerHp = this.playerMaxHp;
+        this.towerFloor = 1;
+        try {
+          sessionStorage.setItem('estudemy_tower_floor', '1');
+        } catch (e) {}
+      } else {
+        this.playerHp = this.playerMaxHp;
+      }
+
       this.ultCharge = 0;
       this.isUltReady = false;
       this.updateHUD();

@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <title>EstudeMy — Mundo Aberto (Exploração Livre)</title>
+    <link rel="icon" type="image/x-icon" href="favicon.ico" />
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        body, html {
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background-color: #050608;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            color: #ffffff;
+        }
+
+        #world-container {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            overflow: hidden;
+            background: #090a0f;
+        }
+
+        /* 1. Cenário Panorâmico Estendido (Mundo Aberto com 2400px de largura) */
+        #world-stage {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 2400px;
+            height: 100%;
+            will-change: transform;
+            transition: transform 0.05s linear;
+        }
+
+        .world-panorama {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+        }
+
+        .world-zone {
+            width: 800px;
+            height: 100%;
+            background-size: cover;
+            background-position: center bottom;
+            position: relative;
+        }
+
+        .zone-vila {
+            background-image: url('assets/backgrounds/vila_fase1_mercado.jpg');
+        }
+
+        .zone-biblioteca {
+            background-image: url('assets/backgrounds/vila_fase2_biblioteca.jpg');
+        }
+
+        .zone-castelo {
+            background-image: url('assets/backgrounds/castelo_fase1_portao.jpg');
+        }
+
+        /* Iluminação e Atmosfera do Mundo Aberto */
+        #ambient-vignette {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            background: radial-gradient(circle at 50% 50%, transparent 45%, rgba(5, 7, 13, 0.75) 100%);
+            z-index: 10;
+        }
+
+        #weather-canvas {
+            position: absolute;
+            inset: 0;
+            pointer-events: none;
+            z-index: 12;
+        }
+
+        /* 2. Top Bar do Mundo Aberto */
+        #world-top-bar {
+            position: absolute;
+            top: 14px;
+            left: 18px;
+            right: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 50;
+            pointer-events: none;
+        }
+
+        .top-badge-group {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            pointer-events: auto;
+        }
+
+        .world-location-badge {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(8px);
+            border: 2px solid #38bdf8;
+            border-radius: 20px;
+            padding: 8px 16px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+        }
+
+        .world-location-title {
+            font-size: 14px;
+            font-weight: 800;
+            color: #38bdf8;
+            letter-spacing: 0.5px;
+        }
+
+        .world-mode-tag {
+            font-size: 11px;
+            background: #0284c7;
+            color: #ffffff;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-left: 4px;
+        }
+
+        .controls-hint-badge {
+            background: rgba(15, 23, 42, 0.75);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            border-radius: 16px;
+            padding: 6px 14px;
+            font-size: 12px;
+            color: #94a3b8;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .top-action-btn {
+            pointer-events: auto;
+            background: rgba(15, 23, 42, 0.85);
+            border: 2px solid #475569;
+            color: #ffffff;
+            border-radius: 12px;
+            padding: 8px 16px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            transition: all 0.2s ease;
+        }
+
+        .top-action-btn:hover {
+            border-color: #ef4444;
+            background: rgba(239, 68, 68, 0.2);
+            transform: translateY(-2px);
+        }
+
+        /* 3. Atores do Mundo (Herói e NPCs) */
+        .world-actor {
+            position: absolute;
+            width: 90px;
+            height: 120px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-end;
+            z-index: 20;
+            transform-origin: bottom center;
+        }
+
+        .actor-shadow {
+            position: absolute;
+            bottom: 2px;
+            width: 65px;
+            height: 16px;
+            background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0) 75%);
+            border-radius: 50%;
+            z-index: -1;
+        }
+
+        .actor-sprite-img {
+            max-height: 110px;
+            image-rendering: pixelated;
+            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.7));
+            transition: transform 0.15s ease;
+        }
+
+        /* NPC Nametag e Balão de Interação */
+        .npc-tag-container {
+            position: absolute;
+            top: -42px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            white-space: nowrap;
+            pointer-events: none;
+        }
+
+        .npc-name {
+            font-size: 12px;
+            font-weight: 800;
+            color: #facc15;
+            background: rgba(15, 23, 42, 0.85);
+            padding: 2px 8px;
+            border-radius: 8px;
+            border: 1px solid #eab308;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+        }
+
+        .npc-role {
+            font-size: 10px;
+            font-weight: 600;
+            color: #94a3b8;
+            margin-top: 1px;
+        }
+
+        .interact-prompt {
+            position: absolute;
+            top: -72px;
+            background: #facc15;
+            color: #0f172a;
+            font-size: 12px;
+            font-weight: 900;
+            padding: 4px 12px;
+            border-radius: 12px;
+            display: none;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 0 16px rgba(250, 204, 21, 0.75);
+            animation: bouncePrompt 0.8s infinite alternate ease-in-out;
+            cursor: pointer;
+            pointer-events: auto;
+        }
+
+        .interact-prompt.visible {
+            display: flex;
+        }
+
+        @keyframes bouncePrompt {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-6px); }
+        }
+
+        /* 4. Caixa de Diálogo RPG */
+        #dialogue-modal {
+            position: absolute;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: min(90%, 820px);
+            background: rgba(15, 23, 42, 0.94);
+            backdrop-filter: blur(12px);
+            border: 3px solid #38bdf8;
+            border-radius: 18px;
+            padding: 20px 24px;
+            display: none;
+            align-items: center;
+            gap: 20px;
+            z-index: 100;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.85), 0 0 20px rgba(56, 189, 248, 0.25);
+        }
+
+        #dialogue-modal.active {
+            display: flex;
+        }
+
+        .dialogue-portrait-box {
+            width: 90px;
+            height: 90px;
+            border-radius: 14px;
+            border: 2px solid #eab308;
+            background: #1e293b;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+        }
+
+        .dialogue-portrait-img {
+            max-height: 80px;
+            image-rendering: pixelated;
+        }
+
+        .dialogue-content {
+            flex: 1;
+        }
+
+        .dialogue-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+
+        .dialogue-speaker-name {
+            font-size: 16px;
+            font-weight: 900;
+            color: #facc15;
+            letter-spacing: 0.3px;
+        }
+
+        .dialogue-speaker-role {
+            font-size: 11px;
+            color: #38bdf8;
+            font-weight: 700;
+            background: rgba(56, 189, 248, 0.15);
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+
+        .dialogue-text {
+            font-size: 15px;
+            line-height: 1.5;
+            color: #e2e8f0;
+            min-height: 48px;
+        }
+
+        .dialogue-actions-row {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+        }
+
+        .dialogue-btn {
+            background: #2563eb;
+            color: #ffffff;
+            border: none;
+            padding: 6px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .dialogue-btn:hover {
+            background: #1d4ed8;
+            transform: translateY(-2px);
+        }
+
+        .dialogue-btn-close {
+            background: #475569;
+        }
+
+        .dialogue-btn-close:hover {
+            background: #334155;
+        }
+
+        /* 5. Controles Virtuais Touch (Mobile / Tablet) */
+        #touch-controls {
+            position: absolute;
+            bottom: 24px;
+            left: 20px;
+            right: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            pointer-events: none;
+            z-index: 60;
+        }
+
+        .dpad-container {
+            width: 140px;
+            height: 140px;
+            position: relative;
+            pointer-events: auto;
+        }
+
+        .dpad-btn {
+            position: absolute;
+            width: 44px;
+            height: 44px;
+            background: rgba(15, 23, 42, 0.75);
+            border: 2px solid #64748b;
+            border-radius: 10px;
+            color: #ffffff;
+            font-size: 18px;
+            font-weight: 900;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .dpad-btn:active {
+            background: #38bdf8;
+            color: #0f172a;
+            border-color: #38bdf8;
+        }
+
+        .dpad-up { top: 0; left: 48px; }
+        .dpad-down { bottom: 0; left: 48px; }
+        .dpad-left { top: 48px; left: 0; }
+        .dpad-right { top: 48px; right: 0; }
+
+        .touch-action-box {
+            pointer-events: auto;
+        }
+
+        .touch-interact-btn {
+            width: 68px;
+            height: 68px;
+            border-radius: 34px;
+            background: #facc15;
+            color: #0f172a;
+            border: 3px solid #ffffff;
+            font-size: 14px;
+            font-weight: 900;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+        }
+
+        .touch-interact-btn:active {
+            transform: scale(0.92);
+            background: #eab308;
+        }
+
+        @media (min-width: 1024px) {
+            #touch-controls {
+                opacity: 0.65;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="world-container">
+        <!-- 1. Cenário Panorâmico Estendido -->
+        <div id="world-stage">
+            <div class="world-panorama">
+                <div class="world-zone zone-vila"></div>
+                <div class="world-zone zone-biblioteca"></div>
+                <div class="world-zone zone-castelo"></div>
+            </div>
+
+            <!-- NPCs Posicionados no Mundo -->
+            <!-- NPC 1: Mestre Valerius -->
+            <div class="world-actor" id="npc-valerius" style="left: 450px; bottom: 120px;">
+                <div class="npc-tag-container">
+                    <span class="npc-name">🧙‍♂️ Mestre Valerius</span>
+                    <span class="npc-role">Arquiteto de Algoritmos</span>
+                </div>
+                <div class="interact-prompt" id="prompt-valerius" onclick="openDialogue('valerius')">
+                    <span>💬 [E] Conversar</span>
+                </div>
+                <img class="actor-sprite-img" src="assets/sprites/mago/idle.gif" alt="Mestre Valerius" />
+                <div class="actor-shadow"></div>
+            </div>
+
+            <!-- NPC 2: Sophia a Bibliotecária -->
+            <div class="world-actor" id="npc-sophia" style="left: 980px; bottom: 140px;">
+                <div class="npc-tag-container">
+                    <span class="npc-name">📖 Sophia</span>
+                    <span class="npc-role">Guardiã dos Tomos</span>
+                </div>
+                <div class="interact-prompt" id="prompt-sophia" onclick="openDialogue('sophia')">
+                    <span>💬 [E] Conversar</span>
+                </div>
+                <img class="actor-sprite-img" src="assets/sprites/arqueira/idle.gif" alt="Sophia" />
+                <div class="actor-shadow"></div>
+            </div>
+
+            <!-- NPC 3: Comandante Boran -->
+            <div class="world-actor" id="npc-boran" style="left: 1420px; bottom: 110px;">
+                <div class="npc-tag-container">
+                    <span class="npc-name">⚔️ Comandante Boran</span>
+                    <span class="npc-role">Mestre de Armas & Combate</span>
+                </div>
+                <div class="interact-prompt" id="prompt-boran" onclick="openDialogue('boran')">
+                    <span>💬 [E] Conversar</span>
+                </div>
+                <img class="actor-sprite-img" src="assets/sprites/cavaleiro/idle.gif" alt="Comandante Boran" />
+                <div class="actor-shadow"></div>
+            </div>
+
+            <!-- NPC 4: Sentinela Roland -->
+            <div class="world-actor" id="npc-roland" style="left: 1950px; bottom: 135px;">
+                <div class="npc-tag-container">
+                    <span class="npc-name">🛡️ Sentinela Roland</span>
+                    <span class="npc-role">Vigia dos Portões do Saber</span>
+                </div>
+                <div class="interact-prompt" id="prompt-roland" onclick="openDialogue('roland')">
+                    <span>💬 [E] Conversar</span>
+                </div>
+                <img class="actor-sprite-img" src="assets/sprites/spectre/idle.gif" alt="Sentinela Roland" />
+                <div class="actor-shadow"></div>
+            </div>
+
+            <!-- Herói do Jogador (Controlável) -->
+            <div class="world-actor" id="player-hero" style="left: 200px; bottom: 120px;">
+                <img id="player-sprite" class="actor-sprite-img" src="assets/sprites/samurai/idle.gif" alt="Herói" />
+                <div class="actor-shadow"></div>
+            </div>
+        </div>
+
+        <div id="ambient-vignette"></div>
+        <canvas id="weather-canvas"></canvas>
+
+        <!-- 2. Barra Superior -->
+        <header id="world-top-bar">
+            <div class="top-badge-group">
+                <div class="world-location-badge">
+                    <span>🧭</span>
+                    <span class="world-location-title" id="location-name-text">Praça da Vila do Saber</span>
+                    <span class="world-mode-tag">Mundo Aberto</span>
+                </div>
+                <div class="controls-hint-badge">
+                    <span>⌨️ [W,A,S,D] ou Setas para Andar • [E] para Conversar</span>
+                </div>
+            </div>
+
+            <div class="top-badge-group">
+                <button class="top-action-btn" id="btn-audio-toggle" onclick="toggleAudio()">
+                    <span id="audio-icon">🔊</span>
+                    <span id="audio-label">Som: ON</span>
+                </button>
+                <button class="top-action-btn" onclick="exitWorld()">
+                    <span>🚪</span>
+                    <span>Voltar à Trilha</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- 3. Modal de Diálogo RPG -->
+        <div id="dialogue-modal">
+            <div class="dialogue-portrait-box">
+                <img id="dialogue-portrait" class="dialogue-portrait-img" src="assets/sprites/mago/idle.gif" alt="NPC" />
+            </div>
+            <div class="dialogue-content">
+                <div class="dialogue-header">
+                    <span id="dialogue-speaker" class="dialogue-speaker-name">Mestre Valerius</span>
+                    <span id="dialogue-role" class="dialogue-speaker-role">Arquiteto de Algoritmos</span>
+                </div>
+                <p id="dialogue-text" class="dialogue-text">Carregando diálogo...</p>
+                <div class="dialogue-actions-row">
+                    <button class="dialogue-btn dialogue-btn-close" onclick="closeDialogue()">Fechar (ESC)</button>
+                    <button class="dialogue-btn" id="dialogue-btn-next" onclick="nextDialogue()">Próximo ➔</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. Controles Virtuais Touch (Mobile / Tablet) -->
+        <div id="touch-controls">
+            <div class="dpad-container">
+                <button class="dpad-btn dpad-up" onmousedown="startMove(0, 1)" onmouseup="stopMove()" ontouchstart="startMove(0, 1)" ontouchend="stopMove()">▲</button>
+                <button class="dpad-btn dpad-down" onmousedown="startMove(0, -1)" onmouseup="stopMove()" ontouchstart="startMove(0, -1)" ontouchend="stopMove()">▼</button>
+                <button class="dpad-btn dpad-left" onmousedown="startMove(-1, 0)" onmouseup="stopMove()" ontouchstart="startMove(-1, 0)" ontouchend="stopMove()">◀</button>
+                <button class="dpad-btn dpad-right" onmousedown="startMove(1, 0)" onmouseup="stopMove()" ontouchstart="startMove(1, 0)" ontouchend="stopMove()">▶</button>
+            </div>
+
+            <div class="touch-action-box">
+                <button class="touch-interact-btn" onclick="triggerClosestInteraction()">
+                    <span>💬</span>
+                    <span>Falar</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ======================================================================
+        // MOTOR DE MUNDO ABERTO & EXPLORAÇÃO LIVRE COM NPCS
+        // ======================================================================
+        (function() {
+            // 1. Estado do Jogador
+            const player = {
+                x: 250,
+                y: 120, // bottom em px
+                speed: 4.8,
+                facing: 1, // 1: direita, -1: esquerda
+                isMoving: false,
+                el: document.getElementById('player-hero'),
+                spriteEl: document.getElementById('player-sprite')
+            };
+
+            const stageEl = document.getElementById('world-stage');
+            const locationText = document.getElementById('location-name-text');
+
+            // 2. Base de Dados de Diálogos dos NPCs
+            const NPC_DATA = {
+                valerius: {
+                    name: 'Mestre Valerius',
+                    role: 'Arquiteto de Algoritmos',
+                    sprite: 'assets/sprites/mago/idle.gif',
+                    x: 450,
+                    lines: [
+                        'Saudações, nobre viajante! O conhecimento é como a magia: quanto mais você pratica a lógica e a resolução de problemas, mais poderoso se torna seu raciocínio.',
+                        'Dica Arcana: Ao resolver questões complexas, divida o problema em pequenas partes lógicas. Esse é o princípio fundamental da "Divisão e Conquista" que rege grandes sistemas!',
+                        'Aqui no Mundo Aberto você pode respirar, treinar suas ideias e explorar sem pressa. Estudar com constância é o segredo dos verdadeiros mestres!'
+                    ]
+                },
+                sophia: {
+                    name: 'Sophia',
+                    role: 'Guardiã dos Tomos',
+                    sprite: 'assets/sprites/arqueira/idle.gif',
+                    x: 980,
+                    lines: [
+                        'Bem-vindo à Biblioteca Arcana! Ler com atenção mesmo que 15 minutos por dia expande exponencialmente seu vocabulário e sua interpretação de texto.',
+                        'Sabia que a pontuação correta pode salvar vidas? Uma vírgula no lugar errado alterou decretos reais na história humana!',
+                        'Nas trilhas de Linguagens e Ciências Humanas, busque sempre entender o contexto histórico de cada autor antes de responder.'
+                    ]
+                },
+                boran: {
+                    name: 'Comandante Boran',
+                    role: 'Mestre de Armas & Combate',
+                    sprite: 'assets/sprites/cavaleiro/idle.gif',
+                    x: 1420,
+                    lines: [
+                        'Atenção, recruta! Uma mente disciplinada corta mais profundo que qualquer espada de aço forjado.',
+                        'Dica Tática: No modo "Ataque Contra o Tempo", a velocidade só conta se você acertar! Cada acerto adiciona segundos de bônus precioso ao cronômetro.',
+                        'E se você entrar na "Torre Infinita"... prepare o coração! Cada vitória sobe um degrau, mas se você cair, voltará ao primeiro andar. Mantenha a calma sob pressão!'
+                    ]
+                },
+                roland: {
+                    name: 'Sentinela Roland',
+                    role: 'Vigia dos Portões do Saber',
+                    sprite: 'assets/sprites/spectre/idle.gif',
+                    x: 1950,
+                    lines: [
+                        'Alto lá! Você está diante das muralhas da "Arena dos Mestres". Lá dentro habitam os titãs e guardiões mais temidos de todo o reino!',
+                        'Aviso crucial de sobrevivência: na Arena dos Mestres sua vida NÃO regenera entre as fases! A vida com que você vencer um chefe será a sua vida inicial no próximo.',
+                        'Volte quando estiver verdadeiramente pronto para o maior desafio de resistência intelectual da sua jornada!'
+                    ]
+                }
+            };
+
+            // 3. Sistema de Controle de Entrada (Teclado e Toque)
+            const keys = {
+                ArrowLeft: false,
+                ArrowRight: false,
+                ArrowUp: false,
+                ArrowDown: false,
+                KeyA: false,
+                KeyD: false,
+                KeyW: false,
+                KeyS: false
+            };
+
+            window.addEventListener('keydown', (e) => {
+                if (keys.hasOwnProperty(e.code)) {
+                    keys[e.code] = true;
+                }
+                if (e.code === 'KeyE' || e.code === 'Space') {
+                    if (!isDialogueOpen) {
+                        triggerClosestInteraction();
+                    } else {
+                        nextDialogue();
+                    }
+                }
+                if (e.code === 'Escape' && isDialogueOpen) {
+                    closeDialogue();
+                }
+            });
+
+            window.addEventListener('keyup', (e) => {
+                if (keys.hasOwnProperty(e.code)) {
+                    keys[e.code] = false;
+                }
+            });
+
+            // Suporte a toque contínuo nos botões virtuais
+            let touchMoveDx = 0;
+            let touchMoveDy = 0;
+            let touchInterval = null;
+
+            window.startMove = function(dx, dy) {
+                touchMoveDx = dx;
+                touchMoveDy = dy;
+                if (!touchInterval) {
+                    touchInterval = setInterval(() => {
+                        applyMovement(touchMoveDx, touchMoveDy);
+                    }, 20);
+                }
+            };
+
+            window.stopMove = function() {
+                touchMoveDx = 0;
+                touchMoveDy = 0;
+                if (touchInterval) {
+                    clearInterval(touchInterval);
+                    touchInterval = null;
+                }
+            };
+
+            function applyMovement(dx, dy) {
+                if (isDialogueOpen) return;
+
+                if (dx !== 0) {
+                    player.x += dx * player.speed;
+                    player.facing = dx > 0 ? 1 : -1;
+                }
+                if (dy !== 0) {
+                    player.y += dy * (player.speed * 0.7);
+                }
+
+                // Limites do Mundo (largura 2400px e altura da calçada entre 80px e 200px)
+                player.x = Math.max(60, Math.min(2320, player.x));
+                player.y = Math.max(75, Math.min(220, player.y));
+            }
+
+            // 4. Loop Principal de Animação e Renderização
+            function gameLoop() {
+                if (!isDialogueOpen) {
+                    let moveX = 0;
+                    let moveY = 0;
+
+                    if (keys.ArrowLeft || keys.KeyA) moveX -= 1;
+                    if (keys.ArrowRight || keys.KeyD) moveX += 1;
+                    if (keys.ArrowUp || keys.KeyW) moveY += 1;
+                    if (keys.ArrowDown || keys.KeyS) moveY -= 1;
+
+                    if (moveX !== 0 || moveY !== 0) {
+                        applyMovement(moveX, moveY);
+                        player.isMoving = true;
+                    } else {
+                        player.isMoving = false;
+                    }
+                }
+
+                // Atualiza posição do herói no DOM
+                player.el.style.left = `${player.x}px`;
+                player.el.style.bottom = `${player.y}px`;
+                player.spriteEl.style.transform = `scaleX(${player.facing})`;
+
+                // Câmera segue o herói suavemente pelo cenário de 2400px
+                const screenWidth = window.innerWidth;
+                let targetScroll = player.x - (screenWidth / 2);
+                targetScroll = Math.max(0, Math.min(2400 - screenWidth, targetScroll));
+                stageEl.style.transform = `translateX(-${targetScroll}px)`;
+
+                // Atualiza o nome da região no topo
+                if (player.x < 780) {
+                    locationText.textContent = 'Praça da Vila do Saber';
+                } else if (player.x < 1550) {
+                    locationText.textContent = 'Grande Arquivo e Biblioteca Arcana';
+                } else {
+                    locationText.textContent = 'Pátio dos Portões da Fortaleza';
+                }
+
+                // Verifica proximidade dos NPCs para exibir o balão [E] Conversar
+                checkNPCProximity();
+
+                requestAnimationFrame(gameLoop);
+            }
+
+            // 5. Verificação de Proximidade com NPCs
+            let activeNearNPC = null;
+            function checkNPCProximity() {
+                let foundNear = null;
+
+                for (const [key, npc] of Object.entries(NPC_DATA)) {
+                    const dist = Math.abs(player.x - npc.x);
+                    const promptEl = document.getElementById(`prompt-${key}`);
+
+                    if (dist < 110) {
+                        foundNear = key;
+                        if (promptEl) promptEl.classList.add('visible');
+                    } else {
+                        if (promptEl) promptEl.classList.remove('visible');
+                    }
+                }
+
+                activeNearNPC = foundNear;
+            }
+
+            window.triggerClosestInteraction = function() {
+                if (activeNearNPC) {
+                    openDialogue(activeNearNPC);
+                }
+            };
+
+            // 6. Sistema de Diálogo RPG
+            let isDialogueOpen = false;
+            let currentNPCKey = null;
+            let currentLineIdx = 0;
+
+            const modalEl = document.getElementById('dialogue-modal');
+            const portraitEl = document.getElementById('dialogue-portrait');
+            const speakerEl = document.getElementById('dialogue-speaker');
+            const roleEl = document.getElementById('dialogue-role');
+            const textEl = document.getElementById('dialogue-text');
+            const btnNextEl = document.getElementById('dialogue-btn-next');
+
+            window.openDialogue = function(npcKey) {
+                const npc = NPC_DATA[npcKey];
+                if (!npc) return;
+
+                currentNPCKey = npcKey;
+                currentLineIdx = 0;
+                isDialogueOpen = true;
+
+                portraitEl.src = npc.sprite;
+                speakerEl.textContent = npc.name;
+                roleEl.textContent = npc.role;
+
+                renderDialogueLine();
+                modalEl.classList.add('active');
+            };
+
+            function renderDialogueLine() {
+                const npc = NPC_DATA[currentNPCKey];
+                if (!npc) return;
+
+                const line = npc.lines[currentLineIdx];
+                textEl.textContent = line;
+
+                if (currentLineIdx + 1 < npc.lines.length) {
+                    btnNextEl.textContent = 'Próximo ➔';
+                } else {
+                    btnNextEl.textContent = 'Concluir';
+                }
+            }
+
+            window.nextDialogue = function() {
+                const npc = NPC_DATA[currentNPCKey];
+                if (!npc) return;
+
+                if (currentLineIdx + 1 < npc.lines.length) {
+                    currentLineIdx++;
+                    renderDialogueLine();
+                } else {
+                    closeDialogue();
+                }
+            };
+
+            window.closeDialogue = function() {
+                isDialogueOpen = false;
+                currentNPCKey = null;
+                modalEl.classList.remove('active');
+            };
+
+            // 7. Navegação e Áudio
+            window.exitWorld = function() {
+                try {
+                    if (window.parent && window.parent !== window) {
+                        window.parent.postMessage({ type: 'VOLTAR_TRILHA' }, '*');
+                    }
+                    if (window.ReactNativeWebView && typeof window.ReactNativeWebView.postMessage === 'function') {
+                        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'VOLTAR_TRILHA' }));
+                    }
+                } catch(e) {}
+                if (typeof window.jogar_voltar_js === 'function') {
+                    window.jogar_voltar_js();
+                }
+            };
+
+            let isAudioOn = true;
+            window.toggleAudio = function() {
+                isAudioOn = !isAudioOn;
+                const icon = document.getElementById('audio-icon');
+                const label = document.getElementById('audio-label');
+                if (icon && label) {
+                    icon.textContent = isAudioOn ? '🔊' : '🔇';
+                    label.textContent = isAudioOn ? 'Som: ON' : 'Som: OFF';
+                }
+            };
+
+            // Inicia o Loop do Jogo
+            requestAnimationFrame(gameLoop);
+        })();
+    </script>
+</body>
+</html>
