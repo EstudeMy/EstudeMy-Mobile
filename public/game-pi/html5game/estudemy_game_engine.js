@@ -137,6 +137,26 @@
         { id: 'mago_necromante_espectral', name: 'Valerius das Sombras', cssClass: 'skin-necromante', ultName: 'Vórtice do Apocalipse das Almas', ultType: 'mago_almas' },
       ],
     },
+    arqueira: {
+      name: 'Lyra',
+      spriteFolder: 'assets/sprites/arqueira',
+      attackSound: 'arrow_shot',
+      heavySound: 'arrow_volley',
+      skins: [
+        { id: 'arqueira_guardia', name: 'Lyra Sentinela', cssClass: '', ultName: 'Chuva das Estrelas Cadentes', ultType: 'arqueira_celeste' },
+        { id: 'arqueira_cacadora_celeste', name: 'Lyra Cósmica', cssClass: 'skin-cacadora-celeste', ultName: 'Dança da Supernova Sagrada', ultType: 'arqueira_supernova' },
+      ],
+    },
+    spectre: {
+      name: 'Draven',
+      spriteFolder: 'assets/sprites/spectre',
+      attackSound: 'void_slash',
+      heavySound: 'soul_burst',
+      skins: [
+        { id: 'spectre_paladino_sombrio', name: 'Draven da Meia-Noite', cssClass: '', ultName: 'Vórtice do Crepúsculo Eterno', ultType: 'spectre_crepusculo' },
+        { id: 'spectre_senhor_abissal', name: 'Draven do Abismo', cssClass: 'skin-senhor-abissal', ultName: 'Colapso do Horizonte de Eventos', ultType: 'spectre_abissal' },
+      ],
+    },
   };
 
   // ============================================================================
@@ -514,6 +534,55 @@
       osc.stop(time + duration);
     }
 
+    playAcousticBowShot(time, duration, vol) {
+      if (!this.ctx || this.isMuted) return;
+      const osc = this.ctx.createOscillator();
+      const filter = this.ctx.createBiquadFilter();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(950, time);
+      osc.frequency.exponentialRampToValueAtTime(280, time + duration);
+
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(800, time);
+      filter.Q.setValueAtTime(3.5, time);
+
+      gain.gain.setValueAtTime(vol, time);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.masterGain);
+      gain.connect(this.reverbSend);
+      osc.start(time);
+      osc.stop(time + duration);
+    }
+
+    playAcousticVoidSlash(time, duration, vol) {
+      if (!this.ctx || this.isMuted) return;
+      const osc = this.ctx.createOscillator();
+      const filter = this.ctx.createBiquadFilter();
+      const gain = this.ctx.createGain();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(450, time);
+      osc.frequency.exponentialRampToValueAtTime(110, time + duration);
+
+      filter.type = 'lowpass';
+      filter.frequency.setValueAtTime(700, time);
+
+      gain.gain.setValueAtTime(vol, time);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+      osc.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.masterGain);
+      gain.connect(this.reverbSend);
+      osc.start(time);
+      osc.stop(time + duration);
+    }
+
     playSFX(name) {
       this.init();
       if (!this.ctx || this.isMuted) return;
@@ -526,6 +595,31 @@
           break;
         case 'sword_clash':
           this.playTubularBell(1100, t, 0.25, 0.35);
+          break;
+        case 'arrow_shot':
+          this.playAcousticBowShot(t, 0.16, 0.5);
+          break;
+        case 'arrow_volley':
+          this.playAcousticBowShot(t, 0.12, 0.4);
+          this.playAcousticBowShot(t + 0.08, 0.16, 0.45);
+          this.playTubularBell(1200, t + 0.1, 0.2, 0.35);
+          break;
+        case 'void_slash':
+          this.playAcousticVoidSlash(t, 0.2, 0.48);
+          break;
+        case 'soul_burst':
+          this.playAcousticWarTaiko(t, 0.32, 0.7);
+          this.playWarmSubBass(45, t, 0.5, 0.6);
+          break;
+        case 'celestial_rain':
+          this.playTubularBell(880, t, 0.4, 0.5);
+          this.playTubularBell(1320, t + 0.12, 0.5, 0.6);
+          this.playAcousticFlute(980, t + 0.2, 0.4, 0.45);
+          break;
+        case 'abyssal_oblivion':
+          this.playAcousticWarTaiko(t, 0.7, 0.9);
+          this.playWarmSubBass(28, t, 1.0, 0.85);
+          this.playGjallarhornCall(75, t + 0.1, 0.6, 0.5);
           break;
         case 'magic_cast':
           this.playAcousticFlute(660, t, 0.25, 0.35);
@@ -765,6 +859,10 @@
         this.selectedCharKey = 'guerreiro';
       } else if (char.includes('mago') || char.includes('valerius')) {
         this.selectedCharKey = 'mago';
+      } else if (char.includes('arqueira') || char.includes('lyra') || char.includes('archer')) {
+        this.selectedCharKey = 'arqueira';
+      } else if (char.includes('spectre') || char.includes('draven') || char.includes('algoz')) {
+        this.selectedCharKey = 'spectre';
       } else {
         this.selectedCharKey = 'samurai';
       }
@@ -1288,7 +1386,13 @@
       this.playerSprite.src = `${char.spriteFolder}/full.gif`;
       this.playerWrapper.classList.add('actor-charge-glow');
 
-      this.soundtrack.playSFX('thunder_ultimate');
+      if (this.selectedCharKey === 'arqueira') {
+        this.soundtrack.playSFX('celestial_rain');
+      } else if (this.selectedCharKey === 'spectre') {
+        this.soundtrack.playSFX('abyssal_oblivion');
+      } else {
+        this.soundtrack.playSFX('thunder_ultimate');
+      }
 
       // Dispara efeito visual cinemático
       this.executeSkinUltimateVisuals(skin.ultType);
@@ -1310,17 +1414,50 @@
     }
 
     executeSkinUltimateVisuals(ultType) {
-      for (let i = 0; i < 9; i++) {
-        setTimeout(() => {
-          this.cinematicSlashes.push({
-            x1: 200 + Math.random() * 900,
-            y1: 150 + Math.random() * 450,
-            x2: 400 + Math.random() * 900,
-            y2: 250 + Math.random() * 450,
-            color: ultType.includes('cyber') ? '#a855f7' : ultType.includes('vulcanico') ? '#f97316' : '#facc15',
-            life: 0.35,
-          });
-        }, i * 55);
+      if (ultType.includes('arqueira') || ultType.includes('celeste') || ultType.includes('supernova')) {
+        // Chuva celestial de flechas de luz estelar
+        for (let i = 0; i < 16; i++) {
+          setTimeout(() => {
+            const startX = 150 + Math.random() * 850;
+            this.cinematicSlashes.push({
+              x1: startX,
+              y1: -10,
+              x2: startX + 160 + (Math.random() - 0.5) * 80,
+              y2: 460 + Math.random() * 220,
+              color: ultType.includes('supernova') ? '#38bdf8' : '#fef08a',
+              life: 0.42,
+            });
+          }, i * 40);
+        }
+      } else if (ultType.includes('spectre') || ultType.includes('abissal') || ultType.includes('crepusculo')) {
+        // Fendas dimensionais e cortes do horizonte de eventos
+        for (let i = 0; i < 14; i++) {
+          setTimeout(() => {
+            const cx = 350 + Math.random() * 600;
+            const cy = 180 + Math.random() * 380;
+            this.cinematicSlashes.push({
+              x1: cx - 160,
+              y1: cy + (Math.random() - 0.5) * 100,
+              x2: cx + 160,
+              y2: cy + (Math.random() - 0.5) * 100,
+              color: ultType.includes('abissal') ? '#a855f7' : '#f43f5e',
+              life: 0.45,
+            });
+          }, i * 45);
+        }
+      } else {
+        for (let i = 0; i < 9; i++) {
+          setTimeout(() => {
+            this.cinematicSlashes.push({
+              x1: 200 + Math.random() * 900,
+              y1: 150 + Math.random() * 450,
+              x2: 400 + Math.random() * 900,
+              y2: 250 + Math.random() * 450,
+              color: ultType.includes('cyber') ? '#a855f7' : ultType.includes('vulcanico') ? '#f97316' : '#facc15',
+              life: 0.35,
+            });
+          }, i * 55);
+        }
       }
     }
 

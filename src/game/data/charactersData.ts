@@ -64,4 +64,44 @@ export const CHARACTERS_DATA: Record<string, CharacterBaseDefinition> = {
     defaultSkinId: 'mago_arcanista',
     skins: ['mago_arcanista', 'mago_necromante_espectral'],
   },
+
+  arqueira: {
+    id: 'arqueira',
+    name: 'Lyra',
+    classTitle: 'Sentinela Celeste',
+    lore: 'Atiradora de elite dos templos astrais. Empunha um arco forjado na luz das estrelas, capaz de atingir alvos através das brumas com precisão cirúrgica.',
+    baseStats: {
+      hp: 90,
+      maxHp: 90,
+      atk: 32,
+      def: 10,
+      spd: 20,
+      critRate: 0.30, // 30% de chance de crítico base
+      critDamage: 2.1,
+      ultCharge: 10,
+      maxUltCharge: 100,
+    },
+    defaultSkinId: 'arqueira_guardia',
+    skins: ['arqueira_guardia', 'arqueira_cacadora_celeste'],
+  },
+
+  spectre: {
+    id: 'spectre',
+    name: 'Draven',
+    classTitle: 'Algoz do Eclipse',
+    lore: 'Mestre renegado das sombras que domina a energia do vácuo cósmico. Seus cortes drenam a essência dos oponentes e quebram as barreiras da realidade.',
+    baseStats: {
+      hp: 115,
+      maxHp: 115,
+      atk: 30,
+      def: 16,
+      spd: 16,
+      critRate: 0.20,
+      critDamage: 1.9,
+      ultCharge: 0,
+      maxUltCharge: 100,
+    },
+    defaultSkinId: 'spectre_paladino_sombrio',
+    skins: ['spectre_paladino_sombrio', 'spectre_senhor_abissal'],
+  },
 };

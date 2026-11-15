@@ -4,6 +4,8 @@ export const CHARACTER_IMAGES: Record<string, ImageSourcePropType> = {
   Samurai: require('../../assets/img/samurai.png'),
   Guerreiro: require('../../assets/img/guerreiro.png'),
   Mago: require('../../assets/img/mago.png'),
+  Arqueira: require('../../assets/img/arqueira.png'),
+  Spectre: require('../../assets/img/spectre.png'),
   default: require('../../assets/img/personagem.png'),
 };
 

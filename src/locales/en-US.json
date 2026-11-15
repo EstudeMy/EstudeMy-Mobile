@@ -313,12 +313,16 @@
     "classes": {
       "guerreiro": "Warrior",
       "mago": "Mage",
-      "samurai": "Samurai"
+      "samurai": "Samurai",
+      "arqueira": "Archer",
+      "spectre": "Spectre"
     },
     "descriptions": {
       "guerreiro": "A brave and strong warrior",
       "mago": "A wise and powerful mage",
-      "samurai": "An agile and honored samurai"
+      "samurai": "An agile and honored samurai",
+      "arqueira": "A lethal archer with cosmic precision",
+      "spectre": "A dark slayer commanding the dimensional void"
     },
     "skinsList": {
       "padrao": "Default",

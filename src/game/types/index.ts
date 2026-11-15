@@ -2,7 +2,7 @@
  * Tipos e Interfaces do Motor de Jogo EstudeMy
  */
 
-export type CharacterId = 'samurai' | 'guerreiro' | 'mago';
+export type CharacterId = 'samurai' | 'guerreiro' | 'mago' | 'arqueira' | 'spectre';
 
 export type SkinId =
   | 'samurai_ronin'
@@ -10,7 +10,11 @@ export type SkinId =
   | 'guerreiro_templario'
   | 'guerreiro_berserker_lava'
   | 'mago_arcanista'
-  | 'mago_necromante_espectral';
+  | 'mago_necromante_espectral'
+  | 'arqueira_guardia'
+  | 'arqueira_cacadora_celeste'
+  | 'spectre_paladino_sombrio'
+  | 'spectre_senhor_abissal';
 
 export interface CharacterStats {
   hp: number;

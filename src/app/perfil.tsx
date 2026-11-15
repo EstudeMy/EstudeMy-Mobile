@@ -36,7 +36,7 @@ import { sanitizeInput } from '../utils/security';
 import { alterarMinhaSenha } from '../services/adminService';
 import { obterContinue } from '../services/trilhaService';
 
-const CHARACTERS = ['Samurai', 'Mago', 'Guerreiro'];
+const CHARACTERS = ['Samurai', 'Mago', 'Guerreiro', 'Arqueira', 'Spectre'];
 
 export default function PerfilScreen() {
   const router = useRouter();

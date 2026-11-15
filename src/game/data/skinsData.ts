@@ -280,4 +280,190 @@ export const SKINS_DATA: Record<SkinId, SkinDefinition> = {
       particleStyle: 'void',
     },
   },
+
+  // ============================================================================
+  // ARQUEIRA
+  // ============================================================================
+  arqueira_guardia: {
+    id: 'arqueira_guardia',
+    characterId: 'arqueira',
+    name: 'Lyra Sentinela',
+    title: 'A Guardiã dos Bosques',
+    description: 'Estilo clássico de arquearia elfica com arco de madeira sagrada e flechas guiadas pelo vento.',
+    rarity: 'comum',
+    bonusStats: {
+      atk: 0,
+      critRate: 0,
+      spd: 0,
+    },
+    moveset: {
+      attack1: {
+        name: 'Tiro Certeiro das Folhas',
+        damageMultiplier: 1.05,
+        animationKey: 'arqueira_golpe_1',
+        sfx: 'arrow_shot',
+        effectDescription: 'Disparo rápido e certeiro de flecha de vento.',
+      },
+      attack2: {
+        name: 'Chuva de Flechas de Prata',
+        damageMultiplier: 1.5,
+        animationKey: 'arqueira_golpe_2',
+        sfx: 'arrow_volley',
+        effectDescription: 'Disparo duplo sibilante que perfura a armadura do alvo.',
+      },
+      ultimate: {
+        name: 'Chuva das Estrelas Cadentes',
+        damageMultiplier: 3.4,
+        animationKey: 'arqueira_ult',
+        sfx: 'celestial_rain',
+        effectDescription: 'Invoca uma cascata de flechas astrais luminosas descendo do céu.',
+        qtePattern: ['W', 'D', 'SPACE'],
+        requiresQTE: true,
+      },
+    },
+    spriteTheme: {
+      primaryColor: '#22c55e',
+      accentColor: '#86efac',
+      auraColor: 'rgba(34, 197, 94, 0.4)',
+      particleStyle: 'wind',
+    },
+  },
+
+  arqueira_cacadora_celeste: {
+    id: 'arqueira_cacadora_celeste',
+    characterId: 'arqueira',
+    name: 'Lyra Cósmica',
+    title: 'A Caçadora da Supernova',
+    description: 'Armadura tecida com poeira estelar e arco de plasma luminoso que distorce a luz.',
+    rarity: 'lendaria',
+    bonusStats: {
+      atk: 7,
+      critRate: 0.15,
+      spd: 5,
+    },
+    moveset: {
+      attack1: {
+        name: 'Flecha de Fóton Quântica',
+        damageMultiplier: 1.3,
+        animationKey: 'arqueira_celeste_golpe_1',
+        sfx: 'arrow_shot',
+        effectDescription: 'Flecha de laser puro com rastro azul-ciano cintilante.',
+      },
+      attack2: {
+        name: 'Disparo Gravitacional Hipersônico',
+        damageMultiplier: 1.8,
+        animationKey: 'arqueira_celeste_golpe_2',
+        sfx: 'arrow_volley',
+        effectDescription: 'Flecha de alta densidade que cria uma mini-onda de choque.',
+      },
+      ultimate: {
+        name: 'Dança da Supernova Sagrada',
+        damageMultiplier: 4.2,
+        animationKey: 'arqueira_celeste_ult',
+        sfx: 'celestial_rain',
+        effectDescription: 'Bombardeio cósmico estelar que ilumina toda a arena de batalha.',
+        qtePattern: ['W', 'S', 'D', 'SPACE'],
+        requiresQTE: true,
+      },
+    },
+    spriteTheme: {
+      primaryColor: '#38bdf8',
+      accentColor: '#facc15',
+      auraColor: 'rgba(56, 189, 248, 0.5)',
+      particleStyle: 'arcane',
+    },
+  },
+
+  // ============================================================================
+  // SPECTRE
+  // ============================================================================
+  spectre_paladino_sombrio: {
+    id: 'spectre_paladino_sombrio',
+    characterId: 'spectre',
+    name: 'Draven da Meia-Noite',
+    title: 'O Cavaleiro do Crepúsculo',
+    description: 'Armadura espectral forjada nas profundezas da meia-noite, empunhando lâmina fantasmagórica.',
+    rarity: 'comum',
+    bonusStats: {
+      atk: 0,
+      critRate: 0,
+      spd: 0,
+    },
+    moveset: {
+      attack1: {
+        name: 'Corte Espectral da Foice',
+        damageMultiplier: 1.1,
+        animationKey: 'spectre_golpe_1',
+        sfx: 'void_slash',
+        effectDescription: 'Corte dimensional sombrio que atravessa defesas sólidas.',
+      },
+      attack2: {
+        name: 'Estocada da Meia-Noite',
+        damageMultiplier: 1.55,
+        animationKey: 'spectre_golpe_2',
+        sfx: 'soul_burst',
+        effectDescription: 'Investida rápida envolta em chamas negras com eco profundo.',
+      },
+      ultimate: {
+        name: 'Vórtice do Crepúsculo Eterno',
+        damageMultiplier: 3.6,
+        animationKey: 'spectre_ult',
+        sfx: 'abyssal_oblivion',
+        effectDescription: 'Rasgo no tecido do espaço que condensa trevas e explode a arena.',
+        qtePattern: ['A', 'S', 'SPACE'],
+        requiresQTE: true,
+      },
+    },
+    spriteTheme: {
+      primaryColor: '#6366f1',
+      accentColor: '#a855f7',
+      auraColor: 'rgba(99, 102, 241, 0.45)',
+      particleStyle: 'void',
+    },
+  },
+
+  spectre_senhor_abissal: {
+    id: 'spectre_senhor_abissal',
+    characterId: 'spectre',
+    name: 'Draven do Abismo',
+    title: 'O Soberano da Entropia',
+    description: 'A manifestação viva do vácuo cósmico. Seus olhos emitem luz carmesim e seus passos quebram o chão.',
+    rarity: 'lendaria',
+    bonusStats: {
+      atk: 8,
+      critRate: 0.12,
+      spd: 3,
+    },
+    moveset: {
+      attack1: {
+        name: 'Lâmina da Singularidade',
+        damageMultiplier: 1.35,
+        animationKey: 'spectre_abissal_golpe_1',
+        sfx: 'void_slash',
+        effectDescription: 'Lâmina de antimatéria que rasga a matéria física.',
+      },
+      attack2: {
+        name: 'Impacto da Matéria Escura',
+        damageMultiplier: 1.85,
+        animationKey: 'spectre_abissal_golpe_2',
+        sfx: 'soul_burst',
+        effectDescription: 'Pulso gravitacional concentrado que esmaga o solo.',
+      },
+      ultimate: {
+        name: 'Colapso do Horizonte de Eventos',
+        damageMultiplier: 4.3,
+        animationKey: 'spectre_abissal_ult',
+        sfx: 'abyssal_oblivion',
+        effectDescription: 'Distorção gravitacional total com colapso de vácuo sobre todos os inimigos.',
+        qtePattern: ['A', 'W', 'S', 'SPACE'],
+        requiresQTE: true,
+      },
+    },
+    spriteTheme: {
+      primaryColor: '#a855f7',
+      accentColor: '#ef4444',
+      auraColor: 'rgba(168, 85, 247, 0.55)',
+      particleStyle: 'void',
+    },
+  },
 };

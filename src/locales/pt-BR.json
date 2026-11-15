@@ -313,12 +313,16 @@
     "classes": {
       "guerreiro": "Guerreiro",
       "mago": "Mago",
-      "samurai": "Samurai"
+      "samurai": "Samurai",
+      "arqueira": "Arqueira",
+      "spectre": "Spectre"
     },
     "descriptions": {
       "guerreiro": "Um guerreiro corajoso e forte",
       "mago": "Um mago sábio e poderoso",
-      "samurai": "Um samurai ágil e honrado"
+      "samurai": "Um samurai ágil e honrado",
+      "arqueira": "Uma arqueira letal com precisão cósmica",
+      "spectre": "Um algoz sombrio que comanda o vácuo dimensional"
     },
     "skinsList": {
       "padrao": "Padrão",
