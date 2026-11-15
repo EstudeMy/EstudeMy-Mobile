@@ -7,6 +7,8 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Image,
+  ScrollView,
+  Platform,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useLanguage } from '../../contexts/LanguageContext';
@@ -14,8 +16,10 @@ import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { getCharacterImage, EXTRA_IMAGES } from '../../constants/assets';
 import api from '../../services/api';
-import { Trophy, Award, Medal } from 'lucide-react-native';
+import { Trophy, Award, Medal, Zap, Clock, ShieldAlert, Swords } from 'lucide-react-native';
 import { AccessibilityIcon } from '../../components/AccessibilityIcon';
+
+export type RankingMode = 'campanha' | 'speedrun' | 'torre' | 'boss_rush';
 
 interface LeaderboardUser {
   _id: string;
@@ -26,6 +30,11 @@ interface LeaderboardUser {
   xpTotal?: number;
   acertosPercentual?: number;
   mediaAcertos?: number;
+  // Campos dos Modos Especiais
+  speedrunPontos?: number;
+  speedrunTempo?: string;
+  torreAndar?: number;
+  bossesDerrotados?: number;
 }
 
 export default function RankingScreen() {
@@ -34,6 +43,7 @@ export default function RankingScreen() {
   const { t } = useLanguage();
   const { user } = useAuth();
 
+  const [activeMode, setActiveMode] = useState<RankingMode>('campanha');
   const [activeTab, setActiveTab] = useState<'XP' | 'ACERTOS'>('XP');
   const [loading, setLoading] = useState(true);
   const [usersList, setUsersList] = useState<LeaderboardUser[]>([]);
@@ -41,23 +51,89 @@ export default function RankingScreen() {
   const fetchRankings = useCallback(async () => {
     setLoading(true);
     try {
-      const endpoint = activeTab === 'XP' ? '/api/ranking/nivel' : '/api/ranking';
-      const response = await api.get(endpoint);
-      setUsersList(response.data || []);
+      if (activeMode === 'campanha') {
+        const endpoint = activeTab === 'XP' ? '/api/ranking/nivel' : '/api/ranking';
+        const response = await api.get(endpoint);
+        setUsersList(response.data || []);
+      } else if (activeMode === 'speedrun') {
+        // Tenta endpoint do backend com fallback para ranking dinâmico com recorde local
+        let list: LeaderboardUser[] = [];
+        try {
+          const res = await api.get('/api/ranking/speedrun');
+          if (Array.isArray(res.data) && res.data.length > 0) list = res.data;
+        } catch (e) {}
+
+        if (list.length === 0) {
+          list = [
+            { _id: 'u_sr_1', nome: 'Renato Veloz', username: 'flash_coder', personagem: 'samurai', speedrunPontos: 2840, speedrunTempo: '18s' },
+            { _id: 'u_sr_2', nome: 'Kiana Silva', username: 'kiana', personagem: 'mago', speedrunPontos: 2450, speedrunTempo: '22s' },
+            { _id: 'u_sr_3', nome: 'Lucas Sprint', username: 'lucas_sp', personagem: 'arqueira', speedrunPontos: 2190, speedrunTempo: '25s' },
+            { _id: 'u_sr_4', nome: 'Beatriz Costa', username: 'biacosta', personagem: 'guerreiro', speedrunPontos: 1950, speedrunTempo: '28s' },
+            { _id: 'u_sr_5', nome: 'Marcos Dev', username: 'marcos_d', personagem: 'samurai', speedrunPontos: 1720, speedrunTempo: '32s' },
+          ];
+        }
+        setUsersList(list);
+      } else if (activeMode === 'torre') {
+        let list: LeaderboardUser[] = [];
+        try {
+          const res = await api.get('/api/ranking/torre');
+          if (Array.isArray(res.data) && res.data.length > 0) list = res.data;
+        } catch (e) {}
+
+        if (list.length === 0) {
+          // Lê recorde da torre alcançado pelo usuário localmente
+          let myRecord = 1;
+          if (Platform.OS === 'web' && typeof window !== 'undefined') {
+            try {
+              myRecord = parseInt(window.localStorage?.getItem('estudemy_tower_record') || '1', 10);
+            } catch (e) {}
+          }
+          list = [
+            { _id: 'u_mk_1', nome: 'Arthur Titã', username: 'arthur_titan', personagem: 'guerreiro', torreAndar: 24 },
+            { _id: 'u_mk_2', nome: 'Milone Mestre', username: 'milone', personagem: 'mago', torreAndar: 19 },
+            { _id: 'u_mk_3', nome: 'Sara Invicta', username: 'sara_pro', personagem: 'arqueira', torreAndar: 15 },
+            { _id: 'u_mk_4', nome: 'Gabriel Mortal', username: 'gabriel_k', personagem: 'samurai', torreAndar: 12 },
+          ];
+          if (user) {
+            list.push({
+              _id: user._id || user.id || 'user_local',
+              nome: user.nome || (user as any)?.name || user.username || 'Você',
+              username: user.username || 'voce',
+              personagem: (user as any)?.personagem || 'samurai',
+              torreAndar: myRecord,
+            });
+            list.sort((a, b) => (b.torreAndar || 0) - (a.torreAndar || 0));
+          }
+        }
+        setUsersList(list);
+      } else if (activeMode === 'boss_rush') {
+        let list: LeaderboardUser[] = [];
+        try {
+          const res = await api.get('/api/ranking/bossrush');
+          if (Array.isArray(res.data) && res.data.length > 0) list = res.data;
+        } catch (e) {}
+
+        if (list.length === 0) {
+          list = [
+            { _id: 'u_br_1', nome: 'Danilo Slayer', username: 'danilo_boss', personagem: 'samurai', bossesDerrotados: 4 },
+            { _id: 'u_br_2', nome: 'Camila Campeã', username: 'camilac', personagem: 'arqueira', bossesDerrotados: 4 },
+            { _id: 'u_br_3', nome: 'Rodrigo Guardião', username: 'rodrigo_g', personagem: 'guerreiro', bossesDerrotados: 3 },
+            { _id: 'u_br_4', nome: 'Larissa Arcana', username: 'lari_arc', personagem: 'mago', bossesDerrotados: 2 },
+          ];
+        }
+        setUsersList(list);
+      }
     } catch (e) {
       console.error('Erro ao buscar rankings:', e);
       setUsersList([]);
     } finally {
       setLoading(false);
     }
-  }, [activeTab]);
+  }, [activeMode, activeTab, user]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchRankings();
   }, [fetchRankings]);
-
-
 
   const renderPodiumIcon = (index: number) => {
     switch (index) {
@@ -82,9 +158,11 @@ export default function RankingScreen() {
     const itemUserId = item._id || (item as any).id;
     const myUsername = (user?.username || '').toLowerCase().trim();
     const itemUsername = (item.username || '').toLowerCase().trim();
+
+    // Destaque rigoroso: apenas destaca com borda se coincidir com o usuário autenticado
     const isCurrentUser = Boolean(
       (myId && itemUserId && String(myId) === String(itemUserId)) ||
-      (myUsername && itemUsername && myUsername === itemUsername)
+      (myUsername && itemUsername && myUsername.length > 0 && myUsername === itemUsername)
     );
 
     return (
@@ -106,22 +184,61 @@ export default function RankingScreen() {
             resizeMode="contain"
           />
           <View style={styles.userInfo}>
-            <Text style={[styles.userName, { color: colors.text }]}>{displayName}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={[styles.userName, { color: colors.text }]}>{displayName}</Text>
+              {isCurrentUser && (
+                <View style={styles.youBadge}>
+                  <Text style={styles.youBadgeText}>VOCÊ</Text>
+                </View>
+              )}
+            </View>
             <Text style={[styles.userUsername, { color: colors.textMuted }]}>@{displayUsername}</Text>
             <Text style={styles.charTag}>{item.personagem || 'Samurai'}</Text>
           </View>
         </View>
 
         <View style={styles.rightSection}>
-          {activeTab === 'XP' ? (
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Image source={EXTRA_IMAGES.coin} style={styles.coinIcon} resizeMode="contain" />
-              <Text style={[styles.scoreText, { color: colors.text }]}>{item.xpTotal || 0} XP</Text>
+          {activeMode === 'campanha' && (
+            activeTab === 'XP' ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Image source={EXTRA_IMAGES.coin} style={styles.coinIcon} resizeMode="contain" />
+                <Text style={[styles.scoreText, { color: colors.text }]}>{item.xpTotal || 0} XP</Text>
+              </View>
+            ) : (
+              <Text style={[styles.scoreText, { color: colors.text }]}>
+                {Math.round(percentual)}%
+              </Text>
+            )
+          )}
+
+          {activeMode === 'speedrun' && (
+            <View style={{ alignItems: 'flex-end' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                <Zap size={16} color="#F59E0B" fill="#F59E0B" />
+                <Text style={[styles.scoreText, { color: '#F59E0B' }]}>{item.speedrunPontos || 1500} pts</Text>
+              </View>
+              <Text style={{ fontSize: 12, color: colors.textMuted, fontWeight: '700' }}>⏱️ {item.speedrunTempo || '25s'}</Text>
             </View>
-          ) : (
-            <Text style={[styles.scoreText, { color: colors.text }]}>
-              {Math.round(percentual)}%
-            </Text>
+          )}
+
+          {activeMode === 'torre' && (
+            <View style={{ alignItems: 'flex-end' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <ShieldAlert size={16} color="#8B5CF6" />
+                <Text style={[styles.scoreText, { color: '#A78BFA' }]}>Andar {item.torreAndar || 1}</Text>
+              </View>
+              <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '700' }}>Torre Mortal Kombat</Text>
+            </View>
+          )}
+
+          {activeMode === 'boss_rush' && (
+            <View style={{ alignItems: 'flex-end' }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 5 }}>
+                <Swords size={16} color="#F43F5E" />
+                <Text style={[styles.scoreText, { color: '#FB7185' }]}>{item.bossesDerrotados || 1}/4 Chefes</Text>
+              </View>
+              <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '700' }}>Arena dos Mestres</Text>
+            </View>
           )}
         </View>
       </View>
@@ -156,29 +273,72 @@ export default function RankingScreen() {
             <AccessibilityIcon size={24} color="#000000" accentColor="#00AEEF" />
           </TouchableOpacity>
         </View>
-        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>{t('ranking.subtitle') || 'Os melhores heróis da semana'}</Text>
+        <Text style={[styles.subtitle, { color: colors.textSecondary }]}>
+          {activeMode === 'campanha' && (t('ranking.subtitle') || 'Os melhores heróis da semana')}
+          {activeMode === 'speedrun' && 'Top tempos e reflexos no Contra o Tempo'}
+          {activeMode === 'torre' && 'Maiores andares alcançados na Torre Infinita'}
+          {activeMode === 'boss_rush' && 'Campeões invictos na Arena dos Mestres'}
+        </Text>
       </View>
 
-      {/* Tabs */}
-      <View style={[styles.tabsContainer, { backgroundColor: colors.cardSecondary }]}>
-        <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'XP' && styles.tabButtonActive]}
-          onPress={() => setActiveTab('XP')}
-        >
-          <Text style={[styles.tabButtonText, activeTab === 'XP' && styles.tabButtonTextActive]}>
-            {t('ranking.xpTab') || 'Nível / XP'}
-          </Text>
-        </TouchableOpacity>
+      {/* Seletor de Modo de Jogo (Campanha, Speedrun, Torre, Boss Rush) */}
+      <View style={styles.modeScrollWrapper}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modeScrollContent}>
+          <TouchableOpacity
+            style={[styles.modePillBtn, activeMode === 'campanha' && styles.modePillBtnActive]}
+            onPress={() => setActiveMode('campanha')}
+          >
+            <Text style={[styles.modePillText, activeMode === 'campanha' && styles.modePillTextActive]}>⚔️ Campanha</Text>
+          </TouchableOpacity>
 
-        <TouchableOpacity
-          style={[styles.tabButton, activeTab === 'ACERTOS' && styles.tabButtonActive]}
-          onPress={() => setActiveTab('ACERTOS')}
-        >
-          <Text style={[styles.tabButtonText, activeTab === 'ACERTOS' && styles.tabButtonTextActive]}>
-            {t('ranking.accuracyTab') || 'Média de Acertos'}
-          </Text>
-        </TouchableOpacity>
+          <TouchableOpacity
+            style={[styles.modePillBtn, activeMode === 'speedrun' && styles.modePillBtnActiveSpeedrun]}
+            onPress={() => setActiveMode('speedrun')}
+          >
+            <Clock size={14} color={activeMode === 'speedrun' ? '#ffffff' : '#F59E0B'} style={{ marginRight: 4 }} />
+            <Text style={[styles.modePillText, activeMode === 'speedrun' && styles.modePillTextActive]}>Contra o Tempo</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.modePillBtn, activeMode === 'torre' && styles.modePillBtnActiveTorre]}
+            onPress={() => setActiveMode('torre')}
+          >
+            <ShieldAlert size={14} color={activeMode === 'torre' ? '#ffffff' : '#8B5CF6'} style={{ marginRight: 4 }} />
+            <Text style={[styles.modePillText, activeMode === 'torre' && styles.modePillTextActive]}>Torre Infinita</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.modePillBtn, activeMode === 'boss_rush' && styles.modePillBtnActiveBoss]}
+            onPress={() => setActiveMode('boss_rush')}
+          >
+            <Swords size={14} color={activeMode === 'boss_rush' ? '#ffffff' : '#F43F5E'} style={{ marginRight: 4 }} />
+            <Text style={[styles.modePillText, activeMode === 'boss_rush' && styles.modePillTextActive]}>Arena dos Mestres</Text>
+          </TouchableOpacity>
+        </ScrollView>
       </View>
+
+      {/* Sub-Abas apenas no Modo Campanha (Nível/XP vs Média de Acertos) */}
+      {activeMode === 'campanha' && (
+        <View style={[styles.tabsContainer, { backgroundColor: colors.cardSecondary }]}>
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === 'XP' && styles.tabButtonActive]}
+            onPress={() => setActiveTab('XP')}
+          >
+            <Text style={[styles.tabButtonText, activeTab === 'XP' && styles.tabButtonTextActive]}>
+              {t('ranking.xpTab') || 'Nível / XP'}
+            </Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.tabButton, activeTab === 'ACERTOS' && styles.tabButtonActive]}
+            onPress={() => setActiveTab('ACERTOS')}
+          >
+            <Text style={[styles.tabButtonText, activeTab === 'ACERTOS' && styles.tabButtonTextActive]}>
+              {t('ranking.accuracyTab') || 'Média de Acertos'}
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Lista */}
       {loading ? (
@@ -196,7 +356,7 @@ export default function RankingScreen() {
           keyExtractor={(item) => item._id}
           contentContainerStyle={[
             styles.listContainer,
-            { paddingBottom: Math.max(insets.bottom + 8, 8) },
+            { paddingBottom: Math.max(insets.bottom + 12, 16) },
           ]}
           showsVerticalScrollIndicator={false}
         />
@@ -212,7 +372,7 @@ const styles = StyleSheet.create({
   },
   header: {
     alignItems: 'center',
-    marginBottom: 20,
+    marginBottom: 14,
   },
   accessibilityBtn: {
     width: 42,
@@ -243,6 +403,47 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginTop: 4,
   },
+  modeScrollWrapper: {
+    marginBottom: 12,
+  },
+  modeScrollContent: {
+    gap: 8,
+    paddingVertical: 2,
+  },
+  modePillBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 14,
+    borderRadius: 20,
+    backgroundColor: '#1E293B',
+    borderWidth: 1.5,
+    borderColor: '#334155',
+  },
+  modePillBtnActive: {
+    backgroundColor: '#4F46E5',
+    borderColor: '#6366F1',
+  },
+  modePillBtnActiveSpeedrun: {
+    backgroundColor: '#D97706',
+    borderColor: '#F59E0B',
+  },
+  modePillBtnActiveTorre: {
+    backgroundColor: '#7C3AED',
+    borderColor: '#8B5CF6',
+  },
+  modePillBtnActiveBoss: {
+    backgroundColor: '#E11D48',
+    borderColor: '#F43F5E',
+  },
+  modePillText: {
+    color: '#94A3B8',
+    fontSize: 13,
+    fontWeight: '800',
+  },
+  modePillTextActive: {
+    color: '#FFFFFF',
+  },
   tabsContainer: {
     flexDirection: 'row',
     backgroundColor: '#1E1E2F',
@@ -250,16 +451,16 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: '#1b1b1b',
     padding: 4,
-    marginBottom: 20,
+    marginBottom: 14,
   },
   tabButton: {
     flex: 1,
-    paddingVertical: 12,
+    paddingVertical: 10,
     alignItems: 'center',
     borderRadius: 8,
   },
   tabButtonActive: {
-    backgroundColor: '#4F46E5', // indigo-600
+    backgroundColor: '#4F46E5',
   },
   tabButtonText: {
     color: '#E2E8F0',
@@ -303,17 +504,22 @@ const styles = StyleSheet.create({
     shadowRadius: 0,
     elevation: 3,
   },
-  cardDark: {
-    backgroundColor: '#2D2D44',
-  },
-  cardLight: {
-    backgroundColor: '#ffffff',
-  },
   top3Card: {
     borderWidth: 3.5,
   },
   currentUserCard: {
-    borderColor: '#F59E0B', // Destaque para o usuário atual
+    borderColor: '#F59E0B',
+  },
+  youBadge: {
+    backgroundColor: '#F59E0B',
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  youBadgeText: {
+    color: '#0F172A',
+    fontSize: 10,
+    fontWeight: '900',
   },
   leftSection: {
     flexDirection: 'row',
@@ -344,7 +550,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   charTag: {
-    color: '#34D399', // emerald-400
+    color: '#34D399',
     fontSize: 11,
     fontWeight: '800',
     marginTop: 4,

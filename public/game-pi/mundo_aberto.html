@@ -31,7 +31,7 @@
             background: #090a0f;
         }
 
-        /* 1. Cenário Panorâmico Estendido (Mundo Aberto com 2400px de largura) */
+        /* 1. Cenário Panorâmico Estendido (Mundo Aberto Temático de 2400px) */
         #world-stage {
             position: absolute;
             left: 0;
@@ -57,18 +57,6 @@
             background-size: cover;
             background-position: center bottom;
             position: relative;
-        }
-
-        .zone-vila {
-            background-image: url('assets/backgrounds/vila_fase1_mercado.jpg');
-        }
-
-        .zone-biblioteca {
-            background-image: url('assets/backgrounds/vila_fase2_biblioteca.jpg');
-        }
-
-        .zone-castelo {
-            background-image: url('assets/backgrounds/castelo_fase1_portao.jpg');
         }
 
         /* Iluminação e Atmosfera do Mundo Aberto */
@@ -136,6 +124,19 @@
             margin-left: 4px;
         }
 
+        .coins-badge-pill {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            background: rgba(30, 41, 59, 0.9);
+            border: 2px solid #facc15;
+            border-radius: 18px;
+            padding: 6px 14px;
+            color: #facc15;
+            font-weight: 800;
+            font-size: 13px;
+        }
+
         .controls-hint-badge {
             background: rgba(15, 23, 42, 0.75);
             border: 1px solid rgba(255, 255, 255, 0.2);
@@ -149,54 +150,53 @@
         }
 
         .top-action-btn {
-            pointer-events: auto;
-            background: rgba(15, 23, 42, 0.85);
-            border: 2px solid #475569;
+            background: rgba(15, 23, 42, 0.88);
+            border: 1.5px solid rgba(255, 255, 255, 0.25);
             color: #ffffff;
-            border-radius: 12px;
-            padding: 8px 16px;
-            font-size: 13px;
+            border-radius: 14px;
+            padding: 8px 14px;
+            font-size: 12px;
             font-weight: 700;
-            cursor: pointer;
             display: flex;
             align-items: center;
             gap: 6px;
+            cursor: pointer;
+            backdrop-filter: blur(6px);
             transition: all 0.2s ease;
         }
 
         .top-action-btn:hover {
-            border-color: #ef4444;
-            background: rgba(239, 68, 68, 0.2);
+            border-color: #38bdf8;
+            background: rgba(2, 132, 199, 0.4);
             transform: translateY(-2px);
         }
 
         /* 3. Atores do Mundo (Herói e NPCs) */
         .world-actor {
             position: absolute;
-            width: 90px;
-            height: 120px;
+            width: 140px;
+            height: 180px;
             display: flex;
             flex-direction: column;
             align-items: center;
             justify-content: flex-end;
             z-index: 20;
-            transform-origin: bottom center;
-        }
-
-        .actor-shadow {
-            position: absolute;
-            bottom: 2px;
-            width: 65px;
-            height: 16px;
-            background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.75) 0%, rgba(0, 0, 0, 0) 75%);
-            border-radius: 50%;
-            z-index: -1;
+            will-change: left, bottom;
         }
 
         .actor-sprite-img {
-            max-height: 110px;
+            max-height: 150px;
             image-rendering: pixelated;
-            filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.7));
+            filter: drop-shadow(0 10px 10px rgba(0, 0, 0, 0.7));
+            pointer-events: none;
+        }
+
+        .actor-shadow {
+            width: 75px;
+            height: 16px;
+            background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.75) 0%, transparent 70%);
+            margin-top: -8px;
+            z-index: -1;
             transition: transform 0.15s ease;
         }
 
@@ -225,8 +225,11 @@
         .npc-role {
             font-size: 10px;
             font-weight: 600;
-            color: #94a3b8;
+            color: #38bdf8;
             margin-top: 1px;
+            background: rgba(15, 23, 42, 0.65);
+            padding: 1px 6px;
+            border-radius: 6px;
         }
 
         .interact-prompt {
@@ -356,6 +359,16 @@
             transform: translateY(-2px);
         }
 
+        .dialogue-btn-action {
+            background: #f59e0b;
+            color: #0f172a;
+        }
+
+        .dialogue-btn-action:hover {
+            background: #d97706;
+            color: #ffffff;
+        }
+
         .dialogue-btn-close {
             background: #475569;
         }
@@ -364,7 +377,217 @@
             background: #334155;
         }
 
-        /* 5. Controles Virtuais Touch (Mobile / Tablet) */
+        /* 5. Modais RPG Interativos (Loja, Quiz Treino, Bênção, Dossiê) */
+        .rpg-fullscreen-modal {
+            position: absolute;
+            inset: 0;
+            background: rgba(5, 7, 13, 0.88);
+            backdrop-filter: blur(10px);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 120;
+            padding: 16px;
+        }
+
+        .rpg-fullscreen-modal.active {
+            display: flex;
+        }
+
+        .rpg-modal-card {
+            background: #0f172a;
+            border: 3px solid #facc15;
+            border-radius: 20px;
+            width: min(92%, 760px);
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 24px;
+            box-shadow: 0 15px 45px rgba(0, 0, 0, 0.9), 0 0 25px rgba(250, 204, 21, 0.3);
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+        }
+
+        .rpg-modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid rgba(255, 255, 255, 0.1);
+            padding-bottom: 12px;
+        }
+
+        .rpg-header-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .rpg-modal-icon {
+            font-size: 28px;
+        }
+
+        .rpg-modal-title {
+            font-size: 19px;
+            font-weight: 900;
+            color: #ffffff;
+        }
+
+        .rpg-modal-subtitle {
+            font-size: 12px;
+            color: #94a3b8;
+        }
+
+        .rpg-coins-pill {
+            background: rgba(250, 204, 21, 0.15);
+            border: 1.5px solid #facc15;
+            padding: 6px 14px;
+            border-radius: 14px;
+            color: #facc15;
+            font-weight: 800;
+            font-size: 13px;
+        }
+
+        /* Grid da Loja RPG */
+        .shop-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+            gap: 14px;
+        }
+
+        .shop-item-card {
+            background: #1e293b;
+            border: 2px solid #334155;
+            border-radius: 14px;
+            padding: 14px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            transition: all 0.2s ease;
+        }
+
+        .shop-item-card:hover {
+            border-color: #facc15;
+            transform: translateY(-2px);
+        }
+
+        .item-icon {
+            font-size: 28px;
+        }
+
+        .item-name {
+            font-size: 14px;
+            font-weight: 800;
+            color: #ffffff;
+        }
+
+        .item-desc {
+            font-size: 11px;
+            color: #94a3b8;
+            line-height: 1.4;
+            flex: 1;
+        }
+
+        .item-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 6px;
+            border-top: 1px solid rgba(255, 255, 255, 0.08);
+            padding-top: 8px;
+        }
+
+        .item-price {
+            font-size: 12px;
+            font-weight: 900;
+            color: #facc15;
+        }
+
+        .item-buy-btn {
+            background: #10b981;
+            color: #ffffff;
+            border: none;
+            padding: 5px 12px;
+            border-radius: 8px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+            transition: all 0.15s ease;
+        }
+
+        .item-buy-btn:hover {
+            background: #059669;
+            transform: scale(1.05);
+        }
+
+        .rpg-modal-footer {
+            display: flex;
+            justify-content: flex-end;
+            padding-top: 10px;
+            border-top: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .rpg-close-btn {
+            background: #475569;
+            color: #ffffff;
+            border: none;
+            padding: 8px 18px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 800;
+            cursor: pointer;
+        }
+
+        .rpg-close-btn:hover {
+            background: #334155;
+        }
+
+        /* Quiz Treino Modal */
+        .quiz-option-btn {
+            background: #1e293b;
+            border: 2px solid #475569;
+            color: #ffffff;
+            padding: 10px 14px;
+            border-radius: 10px;
+            font-size: 13px;
+            font-weight: 700;
+            cursor: pointer;
+            text-align: left;
+            transition: all 0.2s ease;
+            margin-bottom: 8px;
+            display: block;
+            width: 100%;
+        }
+
+        .quiz-option-btn:hover {
+            border-color: #38bdf8;
+            background: #334155;
+        }
+
+        /* Notificação Toast */
+        #world-toast {
+            position: absolute;
+            top: 75px;
+            left: 50%;
+            transform: translateX(-50%) translateY(-20px);
+            background: #10b981;
+            color: #ffffff;
+            padding: 8px 20px;
+            border-radius: 14px;
+            font-size: 13px;
+            font-weight: 800;
+            box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 150;
+        }
+
+        #world-toast.active {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* 6. Controles Virtuais Touch (Mobile / Tablet) */
         #touch-controls {
             position: absolute;
             bottom: 24px;
@@ -448,64 +671,64 @@
 <body>
 
     <div id="world-container">
-        <!-- 1. Cenário Panorâmico Estendido -->
+        <!-- 1. Cenário Panorâmico Estendido (Configurado estritamente pelo tema da trilha) -->
         <div id="world-stage">
             <div class="world-panorama">
-                <div class="world-zone zone-vila"></div>
-                <div class="world-zone zone-biblioteca"></div>
-                <div class="world-zone zone-castelo"></div>
+                <div class="world-zone" id="world-zone-1"></div>
+                <div class="world-zone" id="world-zone-2"></div>
+                <div class="world-zone" id="world-zone-3"></div>
             </div>
 
             <!-- NPCs Posicionados no Mundo -->
-            <!-- NPC 1: Mestre Valerius -->
-            <div class="world-actor" id="npc-valerius" style="left: 450px; bottom: 120px;">
+            <!-- NPC 1: Mercador da Trilha (Loja RPG) -->
+            <div class="world-actor" id="npc-merchant" style="left: 450px; bottom: 120px;">
                 <div class="npc-tag-container">
-                    <span class="npc-name">🧙‍♂️ Mestre Valerius</span>
-                    <span class="npc-role">Arquiteto de Algoritmos</span>
+                    <span class="npc-name" id="npc-merchant-name">🛒 Mercador do Vale</span>
+                    <span class="npc-role" id="npc-merchant-role">Loja de Elixires & Amuletos</span>
                 </div>
-                <div class="interact-prompt" id="prompt-valerius" onclick="openDialogue('valerius')">
+                <div class="interact-prompt" id="prompt-merchant" onclick="openDialogue('merchant')">
                     <span>💬 [E] Conversar</span>
                 </div>
-                <img class="actor-sprite-img" src="assets/sprites/mago/idle.gif" alt="Mestre Valerius" />
+                <img class="actor-sprite-img" id="npc-merchant-img" src="assets/sprites/mago/idle.gif" alt="Mercador" />
                 <div class="actor-shadow"></div>
             </div>
 
-            <!-- NPC 2: Sophia a Bibliotecária -->
-            <div class="world-actor" id="npc-sophia" style="left: 980px; bottom: 140px;">
+            <!-- NPC 2: Sábio do Conhecimento (Quiz de Treino) -->
+            <div class="world-actor" id="npc-mentor" style="left: 980px; bottom: 140px;">
                 <div class="npc-tag-container">
-                    <span class="npc-name">📖 Sophia</span>
-                    <span class="npc-role">Guardiã dos Tomos</span>
+                    <span class="npc-name" id="npc-mentor-name">🧠 Sábio Ancestral</span>
+                    <span class="npc-role" id="npc-mentor-role">Treino Pedagógico</span>
                 </div>
-                <div class="interact-prompt" id="prompt-sophia" onclick="openDialogue('sophia')">
+                <div class="interact-prompt" id="prompt-mentor" onclick="openDialogue('mentor')">
                     <span>💬 [E] Conversar</span>
                 </div>
-                <img class="actor-sprite-img" src="assets/sprites/arqueira/idle.gif" alt="Sophia" />
+                <img class="actor-sprite-img" id="npc-mentor-img" src="assets/sprites/arqueira/idle.gif" alt="Sábio" />
                 <div class="actor-shadow"></div>
             </div>
 
-            <!-- NPC 3: Comandante Boran -->
-            <div class="world-actor" id="npc-boran" style="left: 1420px; bottom: 110px;">
+            <!-- NPC 3: Curandeira dos Elementos (Bênção) -->
+            <div class="world-actor" id="npc-healer" style="left: 1420px; bottom: 110px;">
                 <div class="npc-tag-container">
-                    <span class="npc-name">⚔️ Comandante Boran</span>
-                    <span class="npc-role">Mestre de Armas & Combate</span>
+                    <span class="npc-name" id="npc-healer-name">✨ Curandeira dos Ventos</span>
+                    <span class="npc-role" id="npc-healer-role">Restauração & Vigor</span>
                 </div>
-                <div class="interact-prompt" id="prompt-boran" onclick="openDialogue('boran')">
+                <div class="interact-prompt" id="prompt-healer" onclick="openDialogue('healer')">
                     <span>💬 [E] Conversar</span>
                 </div>
-                <img class="actor-sprite-img" src="assets/sprites/cavaleiro/idle.gif" alt="Comandante Boran" />
+                <img class="actor-sprite-img" id="npc-healer-img" src="assets/sprites/cavaleiro/idle.gif" alt="Curandeira" />
                 <div class="actor-shadow"></div>
             </div>
 
-            <!-- NPC 4: Sentinela Roland -->
-            <div class="world-actor" id="npc-roland" style="left: 1950px; bottom: 135px;">
+            <!-- NPC 4: Sentinela dos Portões (Dossiê Tático) -->
+            <div class="world-actor" id="npc-scout" style="left: 1950px; bottom: 135px;">
                 <div class="npc-tag-container">
-                    <span class="npc-name">🛡️ Sentinela Roland</span>
-                    <span class="npc-role">Vigia dos Portões do Saber</span>
+                    <span class="npc-name" id="npc-scout-name">🛡️ Sentinela dos Portões</span>
+                    <span class="npc-role" id="npc-scout-role">Dossiê Tático dos Inimigos</span>
                 </div>
-                <div class="interact-prompt" id="prompt-roland" onclick="openDialogue('roland')">
+                <div class="interact-prompt" id="prompt-scout" onclick="openDialogue('scout')">
                     <span>💬 [E] Conversar</span>
                 </div>
-                <img class="actor-sprite-img" src="assets/sprites/spectre/idle.gif" alt="Sentinela Roland" />
+                <img class="actor-sprite-img" id="npc-scout-img" src="assets/sprites/spectre/idle.gif" alt="Sentinela" />
                 <div class="actor-shadow"></div>
             </div>
 
@@ -519,16 +742,23 @@
         <div id="ambient-vignette"></div>
         <canvas id="weather-canvas"></canvas>
 
+        <!-- Toast Feedback -->
+        <div id="world-toast">Item Adquirido com Sucesso!</div>
+
         <!-- 2. Barra Superior -->
         <header id="world-top-bar">
             <div class="top-badge-group">
                 <div class="world-location-badge">
                     <span>🧭</span>
-                    <span class="world-location-title" id="location-name-text">Praça da Vila do Saber</span>
+                    <span class="world-location-title" id="location-name-text">Carregando Região...</span>
                     <span class="world-mode-tag">Mundo Aberto</span>
                 </div>
+                <div class="coins-badge-pill">
+                    <span>🪙 Moedas:</span>
+                    <span id="topbar-coins">150</span>
+                </div>
                 <div class="controls-hint-badge">
-                    <span>⌨️ [W,A,S,D] ou Setas para Andar • [E] para Conversar</span>
+                    <span>⌨️ [W,A,S,D] para Andar • [E] para Interagir</span>
                 </div>
             </div>
 
@@ -551,18 +781,159 @@
             </div>
             <div class="dialogue-content">
                 <div class="dialogue-header">
-                    <span id="dialogue-speaker" class="dialogue-speaker-name">Mestre Valerius</span>
-                    <span id="dialogue-role" class="dialogue-speaker-role">Arquiteto de Algoritmos</span>
+                    <span id="dialogue-speaker" class="dialogue-speaker-name">Mercador</span>
+                    <span id="dialogue-role" class="dialogue-speaker-role">Comerciante</span>
                 </div>
                 <p id="dialogue-text" class="dialogue-text">Carregando diálogo...</p>
                 <div class="dialogue-actions-row">
                     <button class="dialogue-btn dialogue-btn-close" onclick="closeDialogue()">Fechar (ESC)</button>
+                    <button class="dialogue-btn dialogue-btn-action" id="dialogue-btn-action" style="display: none;" onclick="triggerNPCAction()">Ação Especial</button>
                     <button class="dialogue-btn" id="dialogue-btn-next" onclick="nextDialogue()">Próximo ➔</button>
                 </div>
             </div>
         </div>
 
-        <!-- 4. Controles Virtuais Touch (Mobile / Tablet) -->
+        <!-- 4. Modais Interativos de Função Única dos NPCs -->
+        <!-- 4A. LOJA DO MERCADOR -->
+        <div id="shop-modal" class="rpg-fullscreen-modal">
+            <div class="rpg-modal-card">
+                <div class="rpg-modal-header">
+                    <div class="rpg-header-left">
+                        <span class="rpg-modal-icon">🛒</span>
+                        <div>
+                            <h2 class="rpg-modal-title" id="shop-title-text">Loja do Conhecimento</h2>
+                            <span class="rpg-modal-subtitle">Adquira elixires e relíquias para usar nas batalhas</span>
+                        </div>
+                    </div>
+                    <div class="rpg-coins-pill">
+                        <span>🪙 Moedas:</span>
+                        <strong id="shop-coins-val">150</strong>
+                    </div>
+                </div>
+
+                <div class="shop-grid">
+                    <div class="shop-item-card">
+                        <span class="item-icon">🧪</span>
+                        <h4 class="item-name">Poção de Vitalidade</h4>
+                        <p class="item-desc">Restaura +50 HP instantaneamente nos combates de trilha.</p>
+                        <div class="item-footer">
+                            <span class="item-price">🪙 30 Moedas</span>
+                            <button class="item-buy-btn" onclick="buyShopItem('pocao_vida', 30, 'Poção de Vitalidade')">Comprar</button>
+                        </div>
+                    </div>
+
+                    <div class="shop-item-card">
+                        <span class="item-icon">⏳</span>
+                        <h4 class="item-name">Ampulheta de Chronos</h4>
+                        <p class="item-desc">+15 segundos no Modo Speedrun Ataque Contra o Tempo.</p>
+                        <div class="item-footer">
+                            <span class="item-price">🪙 45 Moedas</span>
+                            <button class="item-buy-btn" onclick="buyShopItem('ampulheta', 45, 'Ampulheta de Chronos')">Comprar</button>
+                        </div>
+                    </div>
+
+                    <div class="shop-item-card">
+                        <span class="item-icon">🛡️</span>
+                        <h4 class="item-name">Escudo de Titã</h4>
+                        <p class="item-desc">Reduz em 50% o dano do primeiro golpe recebido pelo herói.</p>
+                        <div class="item-footer">
+                            <span class="item-price">🪙 60 Moedas</span>
+                            <button class="item-buy-btn" onclick="buyShopItem('escudo_tita', 60, 'Escudo de Titã')">Comprar</button>
+                        </div>
+                    </div>
+
+                    <div class="shop-item-card">
+                        <span class="item-icon">📜</span>
+                        <h4 class="item-name">Pergaminho de Dica</h4>
+                        <p class="item-desc">Elimina 1 alternativa falsa durante o questionário.</p>
+                        <div class="item-footer">
+                            <span class="item-price">🪙 50 Moedas</span>
+                            <button class="item-buy-btn" onclick="buyShopItem('pergaminho', 50, 'Pergaminho de Dica')">Comprar</button>
+                        </div>
+                    </div>
+
+                    <div class="shop-item-card">
+                        <span class="item-icon">⭐</span>
+                        <h4 class="item-name">Amuleto do Sábio</h4>
+                        <p class="item-desc">Concede +25% de XP bônus ao concluir qualquer fase da trilha.</p>
+                        <div class="item-footer">
+                            <span class="item-price">🪙 75 Moedas</span>
+                            <button class="item-buy-btn" onclick="buyShopItem('amuleto_sabio', 75, 'Amuleto do Sábio')">Comprar</button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="rpg-modal-footer">
+                    <button class="rpg-close-btn" onclick="closeModal('shop-modal')">Fechar Loja</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4B. QUIZ TREINO DO SÁBIO -->
+        <div id="quiz-modal" class="rpg-fullscreen-modal">
+            <div class="rpg-modal-card" style="border-color: #38bdf8;">
+                <div class="rpg-modal-header">
+                    <div class="rpg-header-left">
+                        <span class="rpg-modal-icon">🧠</span>
+                        <div>
+                            <h2 class="rpg-modal-title">Treino Rápido do Sábio</h2>
+                            <span class="rpg-modal-subtitle">Pratique sem risco de dano ou derrota</span>
+                        </div>
+                    </div>
+                    <span id="quiz-counter" style="color: #38bdf8; font-weight: 800;">Questão 1/3</span>
+                </div>
+
+                <div id="quiz-question-box" style="margin: 10px 0;">
+                    <p id="quiz-question-text" style="font-size: 16px; font-weight: 700; color: #f1f5f9; margin-bottom: 16px; line-height: 1.5;"></p>
+                    <div id="quiz-options-container"></div>
+                    <p id="quiz-feedback-text" style="display: none; margin-top: 12px; font-size: 13px; font-weight: 700;"></p>
+                </div>
+
+                <div class="rpg-modal-footer">
+                    <button class="rpg-close-btn" onclick="closeModal('quiz-modal')">Concluir Treino</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4C. BÊNÇÃO DA CURANDEIRA -->
+        <div id="blessing-modal" class="rpg-fullscreen-modal">
+            <div class="rpg-modal-card" style="border-color: #10b981; text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 8px;">✨</div>
+                <h2 class="rpg-modal-title" style="color: #10b981;">Bênção de Vitalidade & Serenidade</h2>
+                <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6; margin: 12px 0;">
+                    As forças ancestrais curam sua mente e seu corpo! Sua energia foi restaurada e sua determinação para os combates da trilha aumentou.
+                </p>
+                <div style="background: rgba(16, 185, 129, 0.15); border: 1.5px solid #10b981; border-radius: 12px; padding: 12px; color: #34d399; font-weight: 800;">
+                    🛡️ Vigor Renovado: +20 HP Máximo ativado para as próximas incursões!
+                </div>
+                <div class="rpg-modal-footer" style="justify-content: center; margin-top: 14px;">
+                    <button class="rpg-close-btn" style="background: #10b981;" onclick="closeModal('blessing-modal')">Agradecer e Prosseguir</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4D. DOSSIÊ TÁTICO DO SENTINELA -->
+        <div id="dossier-modal" class="rpg-fullscreen-modal">
+            <div class="rpg-modal-card" style="border-color: #f43f5e;">
+                <div class="rpg-modal-header">
+                    <div class="rpg-header-left">
+                        <span class="rpg-modal-icon">📜</span>
+                        <div>
+                            <h2 class="rpg-modal-title">Dossiê Tático dos Monstros</h2>
+                            <span class="rpg-modal-subtitle">Fraquezas e avisos de combate desta trilha</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="dossier-content-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
+
+                <div class="rpg-modal-footer">
+                    <button class="rpg-close-btn" onclick="closeModal('dossier-modal')">Entendido</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 5. Controles Virtuais Touch (Mobile / Tablet) -->
         <div id="touch-controls">
             <div class="dpad-container">
                 <button class="dpad-btn dpad-up" onmousedown="startMove(0, 1)" onmouseup="stopMove()" ontouchstart="startMove(0, 1)" ontouchend="stopMove()">▲</button>
@@ -582,15 +953,201 @@
 
     <script>
         // ======================================================================
-        // MOTOR DE MUNDO ABERTO & EXPLORAÇÃO LIVRE COM NPCS
+        // MOTOR DE MUNDO ABERTO & EXPLORAÇÃO LIVRE COM NPCS E LOJA
         // ======================================================================
         (function() {
-            // 1. Estado do Jogador
+            'use strict';
+
+            // 1. Detecção do Tema Específico da Trilha
+            const params = new URLSearchParams(window.location.search);
+            let gameData = null;
+            try {
+                const s = sessionStorage.getItem('estudemy_game_data') || localStorage.getItem('estudemy_game_data');
+                if (s) gameData = JSON.parse(s);
+            } catch (e) {}
+
+            let rawTheme = (params.get('tema') || gameData?.trilhaTema || gameData?.cenario || '').toLowerCase().trim();
+            let activeTheme = 'castelo';
+            if (rawTheme.includes('deserto') || rawTheme.includes('geo') || rawTheme.includes('bio')) {
+                activeTheme = 'deserto';
+            } else if (rawTheme.includes('vila') || rawTheme.includes('port') || rawTheme.includes('cien') || rawTheme.includes('lit') || rawTheme.includes('filo')) {
+                activeTheme = 'vila';
+            } else if (rawTheme.includes('montanha') || rawTheme.includes('mat') || (rawTheme.includes('fis') && !rawTheme.includes('geo')) || rawTheme.includes('calc')) {
+                activeTheme = 'montanha';
+            } else if (rawTheme.includes('vazio') || rawTheme.includes('cosmico')) {
+                activeTheme = 'vazio_cosmico';
+            } else {
+                activeTheme = 'castelo';
+            }
+
+            // Mapas Panorâmicos: CADA TRILHA MOSTRA ESTRITAMENTE SEUS CENÁRIOS PRÓPRIOS
+            const THEME_ZONES = {
+                deserto: {
+                    title: 'Deserto Primordial',
+                    zones: [
+                        { name: 'Dunas Escaldantes da Erosão', bg: 'assets/backgrounds/deserto_fase1_dunas.jpg' },
+                        { name: 'Oásis dos Fósseis Antigos', bg: 'assets/backgrounds/deserto_fase2_oasis.jpg' },
+                        { name: 'Templo Solar do Arenito', bg: 'assets/backgrounds/deserto_fase3_ruinas.jpg' }
+                    ]
+                },
+                montanha: {
+                    title: 'Pico da Lógica',
+                    zones: [
+                        { name: 'Encosta Nevada dos Vetores', bg: 'assets/backgrounds/montanha_fase1_encosta.jpg' },
+                        { name: 'Desfiladeiro da Gravidade', bg: 'assets/backgrounds/montanha_fase2_desfiladeiro.jpg' },
+                        { name: 'Caverna dos Cristais Lógicos', bg: 'assets/backgrounds/montanha_fase3_caverna.jpg' }
+                    ]
+                },
+                castelo: {
+                    title: 'Castelo dos Dados',
+                    zones: [
+                        { name: 'Muralha e Portão dos Algoritmos', bg: 'assets/backgrounds/castelo_fase1_portao.jpg' },
+                        { name: 'Grande Salão dos Dados', bg: 'assets/backgrounds/castelo_fase2_salao.jpg' },
+                        { name: 'Catacumbas da Memória RAM', bg: 'assets/backgrounds/castelo_fase3_masmorra.jpg' }
+                    ]
+                },
+                vila: {
+                    title: 'Vila Ancestral',
+                    zones: [
+                        { name: 'Praça do Mercado das Crônicas', bg: 'assets/backgrounds/vila_fase1_mercado.jpg' },
+                        { name: 'Grande Arquivo e Biblioteca Arcana', bg: 'assets/backgrounds/vila_fase2_biblioteca.jpg' },
+                        { name: 'Cripta dos Filósofos', bg: 'assets/backgrounds/vila_fase3_cripta.jpg' }
+                    ]
+                },
+                vazio_cosmico: {
+                    title: 'Vazio Cósmico',
+                    zones: [
+                        { name: 'Nebulosa da Entropia', bg: 'assets/backgrounds/montanha_fase4_pico.jpg' },
+                        { name: 'Horizonte dos Dados Proibidos', bg: 'assets/backgrounds/castelo_fase4_trono.jpg' },
+                        { name: 'Singularidade Cósmica', bg: 'assets/backgrounds/deserto_fase4_cratera.jpg' }
+                    ]
+                }
+            };
+
+            const currentThemeConfig = THEME_ZONES[activeTheme] || THEME_ZONES.castelo;
+            const zone1El = document.getElementById('world-zone-1');
+            const zone2El = document.getElementById('world-zone-2');
+            const zone3El = document.getElementById('world-zone-3');
+
+            if (zone1El) zone1El.style.backgroundImage = `url('${currentThemeConfig.zones[0].bg}')`;
+            if (zone2El) zone2El.style.backgroundImage = `url('${currentThemeConfig.zones[1].bg}')`;
+            if (zone3El) zone3El.style.backgroundImage = `url('${currentThemeConfig.zones[2].bg}')`;
+
+            // 2. Moedas e Economia do Jogador
+            let playerCoins = 150;
+            try {
+                const savedCoins = localStorage.getItem('estudemy_player_coins');
+                if (savedCoins) playerCoins = parseInt(savedCoins, 10) || 150;
+            } catch (e) {}
+
+            function updateCoinsUI() {
+                const topbarCoins = document.getElementById('topbar-coins');
+                const shopCoins = document.getElementById('shop-coins-val');
+                if (topbarCoins) topbarCoins.textContent = playerCoins;
+                if (shopCoins) shopCoins.textContent = playerCoins;
+            }
+            updateCoinsUI();
+
+            function showToast(msg) {
+                const t = document.getElementById('world-toast');
+                if (t) {
+                    t.textContent = msg;
+                    t.classList.add('active');
+                    setTimeout(() => t.classList.remove('active'), 2500);
+                }
+            }
+
+            window.buyShopItem = function(itemId, price, itemName) {
+                if (playerCoins < price) {
+                    alert(`Moedas insuficientes! Você precisa de ${price} moedas.`);
+                    return;
+                }
+                playerCoins -= price;
+                try {
+                    localStorage.setItem('estudemy_player_coins', playerCoins.toString());
+                    let inv = [];
+                    const rawInv = localStorage.getItem('estudemy_inventory');
+                    if (rawInv) inv = JSON.parse(rawInv);
+                    inv.push({ id: itemId, name: itemName, boughtAt: Date.now() });
+                    localStorage.setItem('estudemy_inventory', JSON.stringify(inv));
+                } catch (e) {}
+
+                updateCoinsUI();
+                showToast(`✅ ${itemName} adquirido com sucesso!`);
+            };
+
+            // 3. Configuração dos NPCs Únicos com Diálogos e Funções por Tema
+            const NPC_ROSTER = {
+                merchant: {
+                    name: 'Tariq o Mercador',
+                    role: 'Comerciante de Relíquias',
+                    sprite: 'assets/sprites/mago/idle.gif',
+                    x: 450,
+                    action: 'shop',
+                    actionLabel: '🛒 Abrir Loja',
+                    lines: [
+                        'Bem-vindo à Loja do Conhecimento, viajante!',
+                        'Aqui tenho elixires de vitalidade, pergaminhos de dicas e relíquias raras forjadas pelos maiores sábios.',
+                        'Troque suas moedas de ouro por itens que o ajudarão a superar os chefes mais difíceis das trilhas!'
+                    ]
+                },
+                mentor: {
+                    name: 'Mestre da Sabedoria',
+                    role: 'Instrutor de Questões',
+                    sprite: 'assets/sprites/arqueira/idle.gif',
+                    x: 980,
+                    action: 'quiz',
+                    actionLabel: '🧠 Treino Rápido',
+                    lines: [
+                        'Saudações! O verdadeiro poder de um guerreiro reside em sua clareza de raciocínio.',
+                        'Deseja exercitar sua mente com 3 questões de treino pedagógico sem qualquer risco de dano ou derrota?',
+                        'Pratique sempre que quiser para afiar seus reflexos antes de entrar na trilha!'
+                    ]
+                },
+                healer: {
+                    name: 'Curandeira dos Elementos',
+                    role: 'Alquimista & Vitalidade',
+                    sprite: 'assets/sprites/cavaleiro/idle.gif',
+                    x: 1420,
+                    action: 'blessing',
+                    actionLabel: '✨ Receber Bênção',
+                    lines: [
+                        'Que a harmonia da natureza acolha seus passos cansados.',
+                        'Posso conceder-lhe uma Bênção de Vigor para revigorar seu espírito antes dos combates.',
+                        'Aproxime-se e receba o sopro curativo dos ancestrais!'
+                    ]
+                },
+                scout: {
+                    name: 'Sentinela Roland',
+                    role: 'Estrategista de Batalha',
+                    sprite: 'assets/sprites/spectre/idle.gif',
+                    x: 1950,
+                    action: 'dossier',
+                    actionLabel: '📜 Ver Dossiê Tático',
+                    lines: [
+                        'Atenção! Adiante jazem monstros implacáveis deste território.',
+                        'Tenho aqui os relatórios táticos de cada criatura: seus ataques especiais, chance de erro e fraquezas.',
+                        'Um estrategista sábio sempre estuda o inimigo antes de desferir o primeiro golpe!'
+                    ]
+                }
+            };
+
+            // Atualiza tags e sprites dos NPCs no DOM
+            for (const [key, npc] of Object.entries(NPC_ROSTER)) {
+                const nameEl = document.getElementById(`npc-${key}-name`);
+                const roleEl = document.getElementById(`npc-${key}-role`);
+                const imgEl = document.getElementById(`npc-${key}-img`);
+                if (nameEl) nameEl.textContent = npc.name;
+                if (roleEl) roleEl.textContent = npc.role;
+                if (imgEl) imgEl.src = npc.sprite;
+            }
+
+            // 4. Estado do Herói
             const player = {
                 x: 250,
-                y: 120, // bottom em px
+                y: 120,
                 speed: 4.8,
-                facing: 1, // 1: direita, -1: esquerda
+                facing: 1,
                 isMoving: false,
                 el: document.getElementById('player-hero'),
                 spriteEl: document.getElementById('player-sprite')
@@ -599,89 +1156,25 @@
             const stageEl = document.getElementById('world-stage');
             const locationText = document.getElementById('location-name-text');
 
-            // 2. Base de Dados de Diálogos dos NPCs
-            const NPC_DATA = {
-                valerius: {
-                    name: 'Mestre Valerius',
-                    role: 'Arquiteto de Algoritmos',
-                    sprite: 'assets/sprites/mago/idle.gif',
-                    x: 450,
-                    lines: [
-                        'Saudações, nobre viajante! O conhecimento é como a magia: quanto mais você pratica a lógica e a resolução de problemas, mais poderoso se torna seu raciocínio.',
-                        'Dica Arcana: Ao resolver questões complexas, divida o problema em pequenas partes lógicas. Esse é o princípio fundamental da "Divisão e Conquista" que rege grandes sistemas!',
-                        'Aqui no Mundo Aberto você pode respirar, treinar suas ideias e explorar sem pressa. Estudar com constância é o segredo dos verdadeiros mestres!'
-                    ]
-                },
-                sophia: {
-                    name: 'Sophia',
-                    role: 'Guardiã dos Tomos',
-                    sprite: 'assets/sprites/arqueira/idle.gif',
-                    x: 980,
-                    lines: [
-                        'Bem-vindo à Biblioteca Arcana! Ler com atenção mesmo que 15 minutos por dia expande exponencialmente seu vocabulário e sua interpretação de texto.',
-                        'Sabia que a pontuação correta pode salvar vidas? Uma vírgula no lugar errado alterou decretos reais na história humana!',
-                        'Nas trilhas de Linguagens e Ciências Humanas, busque sempre entender o contexto histórico de cada autor antes de responder.'
-                    ]
-                },
-                boran: {
-                    name: 'Comandante Boran',
-                    role: 'Mestre de Armas & Combate',
-                    sprite: 'assets/sprites/cavaleiro/idle.gif',
-                    x: 1420,
-                    lines: [
-                        'Atenção, recruta! Uma mente disciplinada corta mais profundo que qualquer espada de aço forjado.',
-                        'Dica Tática: No modo "Ataque Contra o Tempo", a velocidade só conta se você acertar! Cada acerto adiciona segundos de bônus precioso ao cronômetro.',
-                        'E se você entrar na "Torre Infinita"... prepare o coração! Cada vitória sobe um degrau, mas se você cair, voltará ao primeiro andar. Mantenha a calma sob pressão!'
-                    ]
-                },
-                roland: {
-                    name: 'Sentinela Roland',
-                    role: 'Vigia dos Portões do Saber',
-                    sprite: 'assets/sprites/spectre/idle.gif',
-                    x: 1950,
-                    lines: [
-                        'Alto lá! Você está diante das muralhas da "Arena dos Mestres". Lá dentro habitam os titãs e guardiões mais temidos de todo o reino!',
-                        'Aviso crucial de sobrevivência: na Arena dos Mestres sua vida NÃO regenera entre as fases! A vida com que você vencer um chefe será a sua vida inicial no próximo.',
-                        'Volte quando estiver verdadeiramente pronto para o maior desafio de resistência intelectual da sua jornada!'
-                    ]
-                }
-            };
-
-            // 3. Sistema de Controle de Entrada (Teclado e Toque)
+            // 5. Controles de Entrada (Teclado e Touch)
             const keys = {
-                ArrowLeft: false,
-                ArrowRight: false,
-                ArrowUp: false,
-                ArrowDown: false,
-                KeyA: false,
-                KeyD: false,
-                KeyW: false,
-                KeyS: false
+                ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false,
+                KeyA: false, KeyD: false, KeyW: false, KeyS: false
             };
 
             window.addEventListener('keydown', (e) => {
-                if (keys.hasOwnProperty(e.code)) {
-                    keys[e.code] = true;
-                }
-                if (e.code === 'KeyE' || e.code === 'Space') {
-                    if (!isDialogueOpen) {
-                        triggerClosestInteraction();
-                    } else {
-                        nextDialogue();
-                    }
-                }
-                if (e.code === 'Escape' && isDialogueOpen) {
+                if (keys.hasOwnProperty(e.code)) keys[e.code] = true;
+                if (e.code === 'KeyE') triggerClosestInteraction();
+                if (e.code === 'Escape') {
                     closeDialogue();
+                    closeAllModals();
                 }
             });
 
             window.addEventListener('keyup', (e) => {
-                if (keys.hasOwnProperty(e.code)) {
-                    keys[e.code] = false;
-                }
+                if (keys.hasOwnProperty(e.code)) keys[e.code] = false;
             });
 
-            // Suporte a toque contínuo nos botões virtuais
             let touchMoveDx = 0;
             let touchMoveDy = 0;
             let touchInterval = null;
@@ -706,7 +1199,7 @@
             };
 
             function applyMovement(dx, dy) {
-                if (isDialogueOpen) return;
+                if (isDialogueOpen || isAnyModalOpen) return;
 
                 if (dx !== 0) {
                     player.x += dx * player.speed;
@@ -716,14 +1209,13 @@
                     player.y += dy * (player.speed * 0.7);
                 }
 
-                // Limites do Mundo (largura 2400px e altura da calçada entre 80px e 200px)
                 player.x = Math.max(60, Math.min(2320, player.x));
                 player.y = Math.max(75, Math.min(220, player.y));
             }
 
-            // 4. Loop Principal de Animação e Renderização
+            // 6. Loop de Renderização e Câmera
             function gameLoop() {
-                if (!isDialogueOpen) {
+                if (!isDialogueOpen && !isAnyModalOpen) {
                     let moveX = 0;
                     let moveY = 0;
 
@@ -740,38 +1232,34 @@
                     }
                 }
 
-                // Atualiza posição do herói no DOM
                 player.el.style.left = `${player.x}px`;
                 player.el.style.bottom = `${player.y}px`;
                 player.spriteEl.style.transform = `scaleX(${player.facing})`;
 
-                // Câmera segue o herói suavemente pelo cenário de 2400px
                 const screenWidth = window.innerWidth;
                 let targetScroll = player.x - (screenWidth / 2);
                 targetScroll = Math.max(0, Math.min(2400 - screenWidth, targetScroll));
                 stageEl.style.transform = `translateX(-${targetScroll}px)`;
 
-                // Atualiza o nome da região no topo
+                // Atualiza o nome da região temático
                 if (player.x < 780) {
-                    locationText.textContent = 'Praça da Vila do Saber';
+                    locationText.textContent = `${currentThemeConfig.title} — ${currentThemeConfig.zones[0].name}`;
                 } else if (player.x < 1550) {
-                    locationText.textContent = 'Grande Arquivo e Biblioteca Arcana';
+                    locationText.textContent = `${currentThemeConfig.title} — ${currentThemeConfig.zones[1].name}`;
                 } else {
-                    locationText.textContent = 'Pátio dos Portões da Fortaleza';
+                    locationText.textContent = `${currentThemeConfig.title} — ${currentThemeConfig.zones[2].name}`;
                 }
 
-                // Verifica proximidade dos NPCs para exibir o balão [E] Conversar
                 checkNPCProximity();
-
                 requestAnimationFrame(gameLoop);
             }
 
-            // 5. Verificação de Proximidade com NPCs
+            // 7. Proximidade de NPCs
             let activeNearNPC = null;
             function checkNPCProximity() {
                 let foundNear = null;
 
-                for (const [key, npc] of Object.entries(NPC_DATA)) {
+                for (const [key, npc] of Object.entries(NPC_ROSTER)) {
                     const dist = Math.abs(player.x - npc.x);
                     const promptEl = document.getElementById(`prompt-${key}`);
 
@@ -792,8 +1280,9 @@
                 }
             };
 
-            // 6. Sistema de Diálogo RPG
+            // 8. Diálogo RPG com Ação Única
             let isDialogueOpen = false;
+            let isAnyModalOpen = false;
             let currentNPCKey = null;
             let currentLineIdx = 0;
 
@@ -803,9 +1292,10 @@
             const roleEl = document.getElementById('dialogue-role');
             const textEl = document.getElementById('dialogue-text');
             const btnNextEl = document.getElementById('dialogue-btn-next');
+            const btnActionEl = document.getElementById('dialogue-btn-action');
 
             window.openDialogue = function(npcKey) {
-                const npc = NPC_DATA[npcKey];
+                const npc = NPC_ROSTER[npcKey];
                 if (!npc) return;
 
                 currentNPCKey = npcKey;
@@ -816,17 +1306,22 @@
                 speakerEl.textContent = npc.name;
                 roleEl.textContent = npc.role;
 
+                if (npc.action && npc.actionLabel) {
+                    btnActionEl.textContent = npc.actionLabel;
+                    btnActionEl.style.display = 'inline-block';
+                } else {
+                    btnActionEl.style.display = 'none';
+                }
+
                 renderDialogueLine();
                 modalEl.classList.add('active');
             };
 
             function renderDialogueLine() {
-                const npc = NPC_DATA[currentNPCKey];
+                const npc = NPC_ROSTER[currentNPCKey];
                 if (!npc) return;
 
-                const line = npc.lines[currentLineIdx];
-                textEl.textContent = line;
-
+                textEl.textContent = npc.lines[currentLineIdx];
                 if (currentLineIdx + 1 < npc.lines.length) {
                     btnNextEl.textContent = 'Próximo ➔';
                 } else {
@@ -835,7 +1330,7 @@
             }
 
             window.nextDialogue = function() {
-                const npc = NPC_DATA[currentNPCKey];
+                const npc = NPC_ROSTER[currentNPCKey];
                 if (!npc) return;
 
                 if (currentLineIdx + 1 < npc.lines.length) {
@@ -852,7 +1347,194 @@
                 modalEl.classList.remove('active');
             };
 
-            // 7. Navegação e Áudio
+            window.triggerNPCAction = function() {
+                const npc = NPC_ROSTER[currentNPCKey];
+                if (!npc || !npc.action) return;
+
+                closeDialogue();
+                if (npc.action === 'shop') {
+                    openShopModal();
+                } else if (npc.action === 'quiz') {
+                    openQuizModal();
+                } else if (npc.action === 'blessing') {
+                    openBlessingModal();
+                } else if (npc.action === 'dossier') {
+                    openDossierModal();
+                }
+            };
+
+            // 9. Modais de Função Única dos NPCs
+            window.openShopModal = function() {
+                isAnyModalOpen = true;
+                updateCoinsUI();
+                const m = document.getElementById('shop-modal');
+                if (m) m.classList.add('active');
+            };
+
+            window.closeModal = function(id) {
+                const m = document.getElementById(id);
+                if (m) m.classList.remove('active');
+                isAnyModalOpen = false;
+            };
+
+            window.closeAllModals = function() {
+                document.querySelectorAll('.rpg-fullscreen-modal').forEach((el) => el.classList.remove('active'));
+                isAnyModalOpen = false;
+            };
+
+            // Quiz Treino Interativo
+            const QUIZ_QUESTIONS = [
+                {
+                    q: 'Qual é o objetivo principal de decompor um problema em subproblemas?',
+                    alts: ['Facilitar a resolução passo a passo', 'Aumentar o tempo de compilação', 'Substituir a memória RAM', 'Eliminar a conexão de rede'],
+                    correct: 0,
+                    exp: 'Dividir e conquistar simplifica a complexidade e permite validar cada parte.'
+                },
+                {
+                    q: 'Ao estudar conteúdos extensos, qual estratégia retém melhor o conhecimento a longo prazo?',
+                    alts: ['Revisão espaçada com prática ativa', 'Ler uma única vez na véspera', 'Decorar sem entender o contexto', 'Pular os conceitos fundamentais'],
+                    correct: 0,
+                    exp: 'A repetição espaçada e a recuperação ativa fortalecem as conexões neurais.'
+                },
+                {
+                    q: 'Como manter o foco e evitar a fadiga mental durante sessões intensas de estudo?',
+                    alts: ['Fazer pequenas pausas regulares (Método Pomodoro)', 'Estudar 8 horas sem interrupção', 'Consumir excesso de telas antes de dormir', 'Ignorar as dúvidas'],
+                    correct: 0,
+                    exp: 'Pausas programadas restauram a atenção sustentada e o poder cognitivo.'
+                }
+            ];
+
+            let currentQuizIdx = 0;
+            window.openQuizModal = function() {
+                isAnyModalOpen = true;
+                currentQuizIdx = 0;
+                renderQuizQuestion();
+                const m = document.getElementById('quiz-modal');
+                if (m) m.classList.add('active');
+            };
+
+            function renderQuizQuestion() {
+                const counter = document.getElementById('quiz-counter');
+                const qText = document.getElementById('quiz-question-text');
+                const container = document.getElementById('quiz-options-container');
+                const feedback = document.getElementById('quiz-feedback-text');
+
+                if (feedback) feedback.style.display = 'none';
+                if (counter) counter.textContent = `Questão ${currentQuizIdx + 1}/${QUIZ_QUESTIONS.length}`;
+
+                const item = QUIZ_QUESTIONS[currentQuizIdx];
+                if (!item) return;
+
+                if (qText) qText.textContent = item.q;
+                if (container) {
+                    container.innerHTML = '';
+                    item.alts.forEach((alt, idx) => {
+                        const btn = document.createElement('button');
+                        btn.className = 'quiz-option-btn';
+                        btn.textContent = `${String.fromCharCode(65 + idx)}) ${alt}`;
+                        btn.onclick = () => answerQuizQuestion(idx);
+                        container.appendChild(btn);
+                    });
+                }
+            }
+
+            function answerQuizQuestion(selectedIdx) {
+                const item = QUIZ_QUESTIONS[currentQuizIdx];
+                const feedback = document.getElementById('quiz-feedback-text');
+                const container = document.getElementById('quiz-options-container');
+
+                if (selectedIdx === item.correct) {
+                    feedback.style.color = '#34d399';
+                    feedback.textContent = `✅ Correto! ${item.exp}`;
+                    feedback.style.display = 'block';
+                    showToast('🎉 Resposta Correta!');
+                } else {
+                    feedback.style.color = '#f87171';
+                    feedback.textContent = `❌ Incorreto. ${item.exp}`;
+                    feedback.style.display = 'block';
+                }
+
+                // Desabilita botões temporariamente
+                const btns = container.querySelectorAll('.quiz-option-btn');
+                btns.forEach((b) => b.disabled = true);
+
+                setTimeout(() => {
+                    if (currentQuizIdx + 1 < QUIZ_QUESTIONS.length) {
+                        currentQuizIdx++;
+                        renderQuizQuestion();
+                    } else {
+                        feedback.textContent = '🏆 Parabéns! Você concluiu o Treino Pedagógico!';
+                        feedback.style.color = '#facc15';
+                    }
+                }, 1600);
+            }
+
+            // Bênção de Vitalidade
+            window.openBlessingModal = function() {
+                isAnyModalOpen = true;
+                const m = document.getElementById('blessing-modal');
+                if (m) m.classList.add('active');
+                showToast('✨ Bênção da Curandeira Ativada!');
+            };
+
+            // Dossiê Tático dos Inimigos
+            const MONSTER_DOSSIERS = {
+                deserto: [
+                    { name: 'Guerreiro das Areias', type: 'Físico', trait: 'Golpes rápidos com cimitarra', counter: 'Esquiva e contra-ataque ágil' },
+                    { name: 'Djinn das Tempestades', type: 'Mágico', trait: 'Ciclone solar e QTEs frequentes', counter: 'Respostas imediatas em menos de 5s' },
+                    { name: 'Mago das Dunas', type: 'Mágico', trait: 'Sepultamento de arenito de alto impacto', counter: 'Ataques críticos encadeados' }
+                ],
+                montanha: [
+                    { name: 'Guerreiro da Geada', type: 'Físico', trait: 'Armadura reforçada e impacto glacial', counter: 'Defesa oportuna com [W] e [ESPAÇO]' },
+                    { name: 'Mago Cósmico do Pico', type: 'Mágico', trait: 'Tempestade de nevasca cósmica devastadora', counter: 'Priorizar eliminação antes do turno 3' },
+                    { name: 'Espectro dos Ventos', type: 'Mágico', trait: 'Rajadas cortantes velozes', counter: 'Manter sequência de respostas certas' }
+                ],
+                castelo: [
+                    { name: 'Guarda da Muralha', type: 'Físico', trait: 'Resistência mecânica e escudos densos', counter: 'Uso de relíquias e golpes certeiros' },
+                    { name: 'Spectre do Código', type: 'Mágico', trait: 'Chamas negras de corrupção lógica', counter: 'Atenção máxima à pontuação e sintaxe' },
+                    { name: 'Acólito da Memória', type: 'Mágico', trait: 'Vórtice arcano veloz', counter: 'Respostas pontuais eliminam rapidamente' }
+                ],
+                vila: [
+                    { name: 'Cavaleiro Renegado', type: 'Físico', trait: 'Golpes pesados com espada larga', counter: 'Bloqueio tático via QTE' },
+                    { name: 'Lorde Decaído', type: 'Físico', trait: 'Alta vitalidade e dano massivo', counter: 'Combinações de acertos em streak' },
+                    { name: 'Ilusionista das Ruínas', type: 'Mágico', trait: 'Espelhos e duplicatas', counter: 'Discernimento rápido de alternativas' }
+                ],
+                vazio_cosmico: [
+                    { name: 'Arauto do Esquecimento', type: 'Mágico', trait: 'Aniquilação da matéria', counter: 'Precisão absoluta no quiz' },
+                    { name: 'O Arquivista do Vazio', type: 'Mágico', trait: 'Singularidade e buraco negro', counter: 'Usar poções de vida e buffs' }
+                ]
+            };
+
+            window.openDossierModal = function() {
+                isAnyModalOpen = true;
+                const list = document.getElementById('dossier-content-list');
+                const monsters = MONSTER_DOSSIERS[activeTheme] || MONSTER_DOSSIERS.castelo;
+
+                if (list) {
+                    list.innerHTML = '';
+                    monsters.forEach((m) => {
+                        const card = document.createElement('div');
+                        card.style.background = '#1e293b';
+                        card.style.border = '2px solid #334155';
+                        card.style.borderRadius = '12px';
+                        card.style.padding = '12px';
+                        card.innerHTML = `
+                            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+                                <strong style="color:#facc15; font-size:14px;">👾 ${m.name}</strong>
+                                <span style="font-size:11px; background:#475569; padding:2px 8px; border-radius:6px;">${m.type}</span>
+                            </div>
+                            <p style="font-size:12px; color:#cbd5e1; margin-bottom:4px;"><strong>Padrão:</strong> ${m.trait}</p>
+                            <p style="font-size:12px; color:#38bdf8;"><strong>Como Vencer:</strong> ${m.counter}</p>
+                        `;
+                        list.appendChild(card);
+                    });
+                }
+
+                const modal = document.getElementById('dossier-modal');
+                if (modal) modal.classList.add('active');
+            };
+
+            // 10. Navegação e Áudio
             window.exitWorld = function() {
                 try {
                     if (window.parent && window.parent !== window) {
@@ -864,6 +1546,8 @@
                 } catch(e) {}
                 if (typeof window.jogar_voltar_js === 'function') {
                     window.jogar_voltar_js();
+                } else {
+                    history.back();
                 }
             };
 
@@ -878,7 +1562,6 @@
                 }
             };
 
-            // Inicia o Loop do Jogo
             requestAnimationFrame(gameLoop);
         })();
     </script>

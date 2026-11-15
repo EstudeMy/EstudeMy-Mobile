@@ -111,6 +111,10 @@ export default function TrilhaDetailScreen() {
   const [towerFloor, setTowerFloor] = useState<number>(1);
   const [towerRecord, setTowerRecord] = useState<number>(1);
 
+  // Progresso isolado para modos especiais (Speedrun e Boss Rush)
+  const [speedrunConcluidas, setSpeedrunConcluidas] = useState<string[]>([]);
+  const [bossRushConcluidas, setBossRushConcluidas] = useState<string[]>([]);
+
   useEffect(() => {
     if (Platform.OS === 'web' && typeof window !== 'undefined') {
       try {
@@ -118,9 +122,26 @@ export default function TrilhaDetailScreen() {
         const record = parseInt(window.localStorage?.getItem('estudemy_tower_record') || '1', 10);
         if (!isNaN(floor) && floor > 0) setTowerFloor(floor);
         if (!isNaN(record) && record > 0) setTowerRecord(record);
+
+        if (id && window.localStorage) {
+          const srRaw = window.localStorage.getItem(`estudemy_progresso_speedrun_${id}`);
+          if (srRaw) {
+            try {
+              const parsed = JSON.parse(srRaw);
+              if (Array.isArray(parsed)) setSpeedrunConcluidas(parsed);
+            } catch (e) {}
+          }
+          const brRaw = window.localStorage.getItem(`estudemy_progresso_boss_rush_${id}`);
+          if (brRaw) {
+            try {
+              const parsed = JSON.parse(brRaw);
+              if (Array.isArray(parsed)) setBossRushConcluidas(parsed);
+            } catch (e) {}
+          }
+        }
       } catch (e) {}
     }
-  }, [selectedMode]);
+  }, [id, selectedMode]);
 
   const handleIniciarModo = (modo: GameModeId, customFaseId?: string) => {
     const activeFase = fases.find((f) => !fasesConcluidas.includes(f._id)) || fases[0];
@@ -171,12 +192,22 @@ export default function TrilhaDetailScreen() {
   };
 
   useEffect(() => {
+    let isMounted = true;
     const checkSavedStatus = async () => {
-      if (!id) return;
-      const list = await getSavedTrailsListSafe();
-      setIsSaved(list.includes(id));
+      try {
+        if (!id) return;
+        const list = await getSavedTrailsListSafe();
+        if (isMounted && Array.isArray(list)) {
+          setIsSaved(list.includes(String(id)));
+        }
+      } catch (e) {
+        // Silencioso para evitar toasts ou alertas no cliente
+      }
     };
-    checkSavedStatus();
+    checkSavedStatus().catch(() => {});
+    return () => {
+      isMounted = false;
+    };
   }, [id]);
 
   const handleToggleSave = async () => {
@@ -590,7 +621,8 @@ export default function TrilhaDetailScreen() {
         <View style={styles.speedrunCardsList}>
           {speedPhases.map((sp, idx) => {
             const relatedFase = fases[idx] || fases[0];
-            const isCompleted = relatedFase ? fasesConcluidas.includes(relatedFase._id) : false;
+            const isCompleted = relatedFase ? speedrunConcluidas.includes(relatedFase._id) : false;
+            const isUnlocked = idx === 0 || (fases[idx - 1] && speedrunConcluidas.includes(fases[idx - 1]._id));
             return (
               <TouchableOpacity
                 key={sp.id}
@@ -598,7 +630,9 @@ export default function TrilhaDetailScreen() {
                   styles.speedrunPhaseCard,
                   { backgroundColor: colors.card, borderColor: colors.border },
                   isCompleted && { borderColor: '#10B981' },
+                  !isUnlocked && { opacity: 0.6 },
                 ]}
+                disabled={!isUnlocked}
                 onPress={() => handleIniciarModo('speedrun', relatedFase?._id)}
                 activeOpacity={0.88}
               >
@@ -616,8 +650,14 @@ export default function TrilhaDetailScreen() {
                   </Text>
                 </View>
 
-                <View style={[styles.speedrunActionCircle, { backgroundColor: isCompleted ? '#10B981' : '#F59E0B' }]}>
-                  {isCompleted ? <Check size={18} color="#ffffff" strokeWidth={3} /> : <Play size={16} color="#ffffff" fill="#ffffff" />}
+                <View style={[styles.speedrunActionCircle, { backgroundColor: isCompleted ? '#10B981' : isUnlocked ? '#F59E0B' : '#4B5563' }]}>
+                  {isCompleted ? (
+                    <Check size={18} color="#ffffff" strokeWidth={3} />
+                  ) : isUnlocked ? (
+                    <Play size={16} color="#ffffff" fill="#ffffff" />
+                  ) : (
+                    <Lock size={16} color="#ffffff" />
+                  )}
                 </View>
               </TouchableOpacity>
             );
@@ -774,7 +814,8 @@ export default function TrilhaDetailScreen() {
         <View style={styles.bossRushList}>
           {bossList.map((boss, idx) => {
             const relatedFase = fases[idx] || fases[0];
-            const isCompleted = relatedFase ? fasesConcluidas.includes(relatedFase._id) : false;
+            const isCompleted = relatedFase ? bossRushConcluidas.includes(relatedFase._id) : false;
+            const isUnlocked = idx === 0 || (fases[idx - 1] && bossRushConcluidas.includes(fases[idx - 1]._id));
 
             return (
               <View
@@ -783,6 +824,7 @@ export default function TrilhaDetailScreen() {
                   styles.bossCard,
                   { backgroundColor: colors.card, borderColor: colors.border },
                   isCompleted && { borderColor: '#10B981' },
+                  !isUnlocked && { opacity: 0.6 },
                 ]}
               >
                 <View style={[styles.bossAvatarCircle, { backgroundColor: boss.color }]}>
@@ -800,12 +842,30 @@ export default function TrilhaDetailScreen() {
                 </View>
 
                 <TouchableOpacity
-                  style={[styles.bossFightBtn, { backgroundColor: boss.color }]}
+                  style={[
+                    styles.bossFightBtn,
+                    { backgroundColor: isCompleted ? '#10B981' : isUnlocked ? boss.color : '#4B5563' },
+                  ]}
+                  disabled={!isUnlocked}
                   onPress={() => handleIniciarModo('boss_rush', relatedFase?._id)}
                   activeOpacity={0.85}
                 >
-                  <Swords size={16} color="#ffffff" style={{ marginRight: 4 }} />
-                  <Text style={styles.bossFightBtnText}>Duelo</Text>
+                  {isCompleted ? (
+                    <>
+                      <Check size={16} color="#ffffff" strokeWidth={3} style={{ marginRight: 4 }} />
+                      <Text style={styles.bossFightBtnText}>Venceu</Text>
+                    </>
+                  ) : isUnlocked ? (
+                    <>
+                      <Swords size={16} color="#ffffff" style={{ marginRight: 4 }} />
+                      <Text style={styles.bossFightBtnText}>Duelo</Text>
+                    </>
+                  ) : (
+                    <>
+                      <Lock size={15} color="#ffffff" style={{ marginRight: 4 }} />
+                      <Text style={styles.bossFightBtnText}>Bloq.</Text>
+                    </>
+                  )}
                 </TouchableOpacity>
               </View>
             );

@@ -148,25 +148,42 @@ export default function GameScreen() {
     }
   }, [router, trilhaId, gameData]);
 
-  // 4. Salvar Progresso de Vitória no Backend e Storage Local
-  const salvarProgressoVitoria = useCallback(async (customFaseId?: string, customTrilhaId?: string) => {
+  // 4. Salvar Progresso de Vitória no Backend e Storage Local por Modo
+  const salvarProgressoVitoria = useCallback(async (customFaseId?: string, customTrilhaId?: string, customModo?: string) => {
     const realFaseId = customFaseId || gameData?.faseId || fase?._id || faseId;
     const realTrilhaId = customTrilhaId || trilhaId || gameData?.trilhaId;
+    const realModo = customModo || modo || gameData?.modoJogo || 'campanha';
     if (!realFaseId) return;
 
     // Modo mundo aberto / livre não pontua XP
-    const isMundoAberto = modo === 'mundo_aberto' || gameData?.modoJogo === 'mundo_aberto';
+    const isMundoAberto = realModo === 'mundo_aberto';
     const xpGanho = isMundoAberto ? 0 : 100;
 
     setSalvandoProgresso(true);
     try {
-      await registrarFaseConcluida(realTrilhaId, realFaseId, xpGanho);
-      console.log('[Progresso] Registrado com sucesso:', realFaseId, 'na trilha:', realTrilhaId);
+      if (realModo === 'campanha') {
+        await registrarFaseConcluida(realTrilhaId, realFaseId, xpGanho);
+        console.log('[Progresso] Registrado campanha com sucesso:', realFaseId, 'na trilha:', realTrilhaId);
+      } else if (realModo === 'speedrun' || realModo === 'boss_rush') {
+        const key = `estudemy_progresso_${realModo}_${realTrilhaId}`;
+        let list: string[] = [];
+        if (typeof window !== 'undefined' && window.localStorage) {
+          const raw = window.localStorage.getItem(key);
+          if (raw) {
+            try { list = JSON.parse(raw); } catch (e) {}
+          }
+          if (!list.includes(realFaseId)) {
+            list.push(realFaseId);
+            window.localStorage.setItem(key, JSON.stringify(list));
+          }
+        }
+        console.log(`[Progresso] Registrado modo ${realModo} localmente:`, realFaseId);
+      }
     } catch (err) {
       console.error('[Progresso] Erro ao registrar progresso da fase:', err);
     } finally {
       setSalvandoProgresso(false);
-      if (refreshUser && !isMundoAberto) {
+      if (refreshUser && !isMundoAberto && realModo === 'campanha') {
         refreshUser().catch(() => {});
       }
     }
@@ -256,10 +273,12 @@ export default function GameScreen() {
 
         const ordemFase = currentFase?.ordem || phaseIndex + 1;
 
-        // Perguntas da fase: se existirem no banco, utiliza; senão, utiliza o banco temático
+        // Perguntas da fase: prioridade máxima para perguntas cadastradas pelo professor
         let perguntasOriginais: any[] = [];
         if (currentFase && Array.isArray(currentFase.perguntas) && currentFase.perguntas.length > 0) {
           perguntasOriginais = currentFase.perguntas;
+        } else if (fasesDaTrilha.length > 0 && Array.isArray(fasesDaTrilha[phaseIndex]?.perguntas) && (fasesDaTrilha[phaseIndex].perguntas?.length || 0) > 0) {
+          perguntasOriginais = fasesDaTrilha[phaseIndex].perguntas!;
         } else {
           perguntasOriginais = getThematicQuestions(themeKey, phaseIndex);
         }
@@ -280,6 +299,7 @@ export default function GameScreen() {
         ).toLowerCase();
 
         const perguntasTransformadas = perguntasOriginais.map((p: any) => {
+          const enunciadoTexto = p.enunciado || p.pergunta || p.titulo || 'Responda à questão:';
           const alternativasOriginais = Array.isArray(p.alternativas) ? [...p.alternativas] : [];
 
           let textoCorreto = '';
@@ -310,12 +330,13 @@ export default function GameScreen() {
 
           return {
             ...p,
+            enunciado: enunciadoTexto,
             alternativas: alternativasEmbaralhadas,
             respostaCorreta: textoCorreto,
             indiceRespostaCorreta: novoIndexCorreto,
             indiceRespostaCorrecta: novoIndexCorreto,
             respostaCorretaIndex: novoIndexCorreto,
-            _T5: p.enunciado,
+            _T5: enunciadoTexto,
             _U5: alternativasEmbaralhadas,
             _V5: novoIndexCorreto,
           };
@@ -335,7 +356,12 @@ export default function GameScreen() {
           ordem: ordemFase,
           phaseIndex: phaseIndex,
           totalPhasesInTrail: Math.max(1, fasesDaTrilha.length || 4),
-          fasesDaTrilha: fasesDaTrilha.map((f) => ({ _id: f._id, titulo: f.titulo, ordem: f.ordem })),
+          fasesDaTrilha: fasesDaTrilha.map((f) => ({
+            _id: f._id,
+            titulo: f.titulo,
+            ordem: f.ordem,
+            perguntas: f.perguntas || [],
+          })),
           titulo: currentFase?.titulo || trilhaTituloFinal,
           modoJogo: modo || 'campanha',
           personagem_selecionado: personagemUsuario,
@@ -398,7 +424,7 @@ export default function GameScreen() {
         } else if (data?.type === 'FIM_FASE') {
           if (data?.vitoria) {
             setFimDeJogo('vitoria');
-            await salvarProgressoVitoria(data?.faseId, data?.trilhaId);
+            await salvarProgressoVitoria(data?.faseId, data?.trilhaId, data?.modo);
           } else {
             setFimDeJogo('derrota');
           }
@@ -430,7 +456,7 @@ export default function GameScreen() {
     } else if (payload?.type === 'FIM_FASE') {
       if (payload?.vitoria) {
         setFimDeJogo('vitoria');
-        await salvarProgressoVitoria(payload?.faseId, payload?.trilhaId);
+        await salvarProgressoVitoria(payload?.faseId, payload?.trilhaId, payload?.modo);
       } else {
         setFimDeJogo('derrota');
       }

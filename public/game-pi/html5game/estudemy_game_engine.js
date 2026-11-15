@@ -1534,34 +1534,108 @@
       }
     }
 
+    resetEnemyToIdle(slot) {
+      if (!slot || !slot.wrapper || !slot.sprite) return;
+      if (slot.attackTimer) {
+        clearTimeout(slot.attackTimer);
+        slot.attackTimer = null;
+      }
+      slot.wrapper.classList.remove('actor-enemy-strike', 'actor-charge-glow', 'actor-enemy-leap', 'actor-enemy-cast');
+      if (slot.isAlive && slot.data && slot.data.spriteFolder) {
+        slot.sprite.src = `${slot.data.spriteFolder}/idle.gif`;
+      }
+      slot.isAttacking = false;
+    }
+
+    spawnMagicProjectile(attacker) {
+      const proj = document.createElement('div');
+      proj.style.position = 'absolute';
+      proj.style.width = '24px';
+      proj.style.height = '24px';
+      proj.style.borderRadius = '50%';
+      proj.style.background = 'radial-gradient(circle, #c084fc 20%, #7e22ce 80%)';
+      proj.style.boxShadow = '0 0 20px #a855f7, 0 0 35px #9333ea';
+      proj.style.zIndex = '8';
+      proj.style.pointerEvents = 'none';
+      proj.style.top = '52%';
+      proj.style.left = '65%';
+      proj.style.transition = 'all 0.38s cubic-bezier(0.2, 0.8, 0.2, 1)';
+      document.getElementById('stage-arena')?.appendChild(proj);
+
+      setTimeout(() => {
+        proj.style.left = '20%';
+        proj.style.transform = 'scale(1.4)';
+      }, 20);
+
+      setTimeout(() => {
+        if (proj.parentNode) proj.parentNode.removeChild(proj);
+      }, 400);
+    }
+
     executeEnemyTurn() {
       const aliveEnemies = this.enemySlots.filter((s) => s.isAlive);
       if (aliveEnemies.length === 0) return;
 
       const attacker = aliveEnemies[Math.floor(Math.random() * aliveEnemies.length)];
+      if (!attacker || !attacker.data) return;
+
+      // Limpa qualquer animação/timer anterior do atacante para não travar no meio do golpe
+      this.resetEnemyToIdle(attacker);
+      attacker.isAttacking = true;
+
       const isBoss = attacker === this.enemySlots[1];
       const isUltimate = (isBoss && Math.random() < 0.35) || Math.random() < 0.2;
 
-      // Animação de ataque do inimigo
-      attacker.sprite.src = `${attacker.data.spriteFolder}/${isUltimate ? 'attack2.gif' : 'attack1.gif'}`;
-      attacker.wrapper.classList.add('actor-enemy-strike');
-      if (isUltimate) attacker.wrapper.classList.add('actor-charge-glow');
+      // 4 Estilos Únicos de Ataque do Inimigo:
+      // 0: Corte Veloz (Slash rápido frontal)
+      // 1: Projétil Arcano (Lança esfera de magia com rastro)
+      // 2: Salto e Esmagamento Sísmico (Terremoto e Screen Shake)
+      // 3: Golpe Supremo Titânico (se isUltimate)
+      let attackStyle = Math.floor(Math.random() * 3);
+      if (isUltimate) attackStyle = 3;
 
-      // Se for golpe supremo do inimigo, anuncia na tela
-      if (isUltimate) {
-        this.addFloatingText(`⚠️ SUPREMO: ${attacker.data.ultName.toUpperCase()}!`, '#ef4444', 683, 270, true);
+      if (attackStyle === 3) {
+        // Estilo 4: Golpe Supremo Titânico
+        attacker.sprite.src = `${attacker.data.spriteFolder}/attack2.gif`;
+        attacker.wrapper.classList.add('actor-charge-glow', 'actor-enemy-strike');
+        this.addFloatingText(`⚠️ SUPREMO: ${attacker.data.ultName.toUpperCase()}!`, '#ef4444', 683, 260, true);
         this.soundtrack.playSFX('thunder_ultimate');
-      } else {
+      } else if (attackStyle === 2) {
+        // Estilo 3: Esmagamento Sísmico (Salto e Tremor de Tela)
+        attacker.sprite.src = `${attacker.data.spriteFolder}/attack1.gif`;
+        attacker.wrapper.classList.add('actor-enemy-leap');
+        this.addFloatingText('ESMAGAMENTO SÍSMICO!', '#f97316', 683, 260, false);
         setTimeout(() => {
-          this.soundtrack.playSFX(attacker.data.type === 'magico' ? 'magic_impact' : 'heavy_impact');
-        }, 160);
+          this.soundtrack.playSFX('heavy_impact');
+          const container = document.getElementById('game-container');
+          if (container) {
+            container.classList.add('screen-shake');
+            setTimeout(() => container.classList.remove('screen-shake'), 380);
+          }
+        }, 220);
+      } else if (attackStyle === 1) {
+        // Estilo 2: Projétil Mágico / Feitiço Arcano
+        attacker.sprite.src = `${attacker.data.spriteFolder}/attack2.gif`;
+        attacker.wrapper.classList.add('actor-enemy-cast');
+        this.addFloatingText('PROJÉTIL ARCANO!', '#a855f7', 683, 260, false);
+        setTimeout(() => {
+          this.soundtrack.playSFX('magic_impact');
+          this.spawnMagicProjectile(attacker);
+        }, 180);
+      } else {
+        // Estilo 1: Corte Veloz / Lâmina Rápida
+        attacker.sprite.src = `${attacker.data.spriteFolder}/attack1.gif`;
+        attacker.wrapper.classList.add('actor-enemy-strike');
+        this.addFloatingText('CORTE VELOZ!', '#38bdf8', 683, 260, false);
+        setTimeout(() => {
+          this.soundtrack.playSFX('sword_slash');
+        }, 140);
       }
 
-      setTimeout(() => {
-        attacker.sprite.src = `${attacker.data.spriteFolder}/idle.gif`;
-        attacker.wrapper.classList.remove('actor-enemy-strike');
-        attacker.wrapper.classList.remove('actor-charge-glow');
-      }, 500);
+      // Restaura o inimigo para IDLE com segurança total de timeout sem congelar
+      attacker.attackTimer = setTimeout(() => {
+        this.resetEnemyToIdle(attacker);
+      }, 580);
 
       // REGRA: O inimigo tem 28% de chance de ERRAR o golpe no jogador!
       const enemyMissed = Math.random() < 0.28;
@@ -1732,9 +1806,17 @@
         window.notificar_vitoria_js();
       }
 
-      // Salva progresso no localStorage instantaneamente de forma resiliente e offline-first
+      // Salva progresso no localStorage instantaneamente de forma resiliente e offline-first por MODO DE JOGO
       try {
-        const prefix = 'estudemy_progresso_trilha_';
+        let prefix = 'estudemy_progresso_trilha_';
+        if (this.modoJogo === 'speedrun') {
+          prefix = 'estudemy_progresso_speedrun_';
+        } else if (this.modoJogo === 'boss_rush') {
+          prefix = 'estudemy_progresso_boss_rush_';
+        } else if (this.modoJogo === 'sobrevivencia') {
+          prefix = 'estudemy_progresso_sobrevivencia_';
+        }
+
         if (this.currentTrilhaId && this.currentFaseId && typeof window.localStorage !== 'undefined') {
           const key = prefix + this.currentTrilhaId;
           const rawLocal = window.localStorage.getItem(key);
@@ -1745,17 +1827,17 @@
           if (Array.isArray(list) && !list.includes(this.currentFaseId)) {
             list.push(this.currentFaseId);
             window.localStorage.setItem(key, JSON.stringify(list));
-            console.log('[GameEngine] Salvo progresso local de vitória para fase:', this.currentFaseId);
+            console.log(`[GameEngine] Salvo progresso local (${this.modoJogo}) para fase:`, this.currentFaseId);
           }
         }
       } catch (e) {}
 
       try {
         if (window.parent && window.parent !== window) {
-          window.parent.postMessage({ type: 'FIM_FASE', vitoria: true, faseId: this.currentFaseId, trilhaId: this.currentTrilhaId, earnedXP: earnedXP }, '*');
+          window.parent.postMessage({ type: 'FIM_FASE', vitoria: true, faseId: this.currentFaseId, trilhaId: this.currentTrilhaId, modo: this.modoJogo, earnedXP: earnedXP }, '*');
         }
         if (window.ReactNativeWebView && typeof window.ReactNativeWebView.postMessage === 'function') {
-          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'FIM_FASE', vitoria: true, faseId: this.currentFaseId, trilhaId: this.currentTrilhaId, earnedXP: earnedXP }));
+          window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'FIM_FASE', vitoria: true, faseId: this.currentFaseId, trilhaId: this.currentTrilhaId, modo: this.modoJogo, earnedXP: earnedXP }));
         }
       } catch (e) {}
 
@@ -1792,7 +1874,12 @@
           nextFaseId = this.currentFaseId;
         }
 
-        this.questions = this.getFallbackThematicQuestions(this.activeTheme, themePhaseIdx);
+        // Prioriza perguntas cadastradas pelo professor para a próxima fase da trilha
+        if (this.fasesDaTrilha && this.fasesDaTrilha[nextThemePhase] && Array.isArray(this.fasesDaTrilha[nextThemePhase].perguntas) && this.fasesDaTrilha[nextThemePhase].perguntas.length > 0) {
+          this.questions = this.fasesDaTrilha[nextThemePhase].perguntas;
+        } else {
+          this.questions = this.getFallbackThematicQuestions(this.activeTheme, themePhaseIdx);
+        }
         this.currentQuestionIdx = 0;
         this.renderQuestion();
 
