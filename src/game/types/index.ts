@@ -73,7 +73,7 @@ export interface CharacterBaseDefinition {
   skins: SkinId[];
 }
 
-export type GameModeId = 'campanha' | 'speedrun' | 'sobrevivencia' | 'boss_rush';
+export type GameModeId = 'campanha' | 'speedrun' | 'sobrevivencia' | 'boss_rush' | 'mundo_aberto';
 
 export interface GameModeConfig {
   id: GameModeId;

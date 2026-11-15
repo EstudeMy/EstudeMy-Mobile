@@ -140,14 +140,13 @@ export default function GameScreen() {
 
   // 3. Voltar para a Trilha
   const handleVoltar = useCallback(() => {
-    if (trilhaId) {
-      router.replace(`/trilha/${trilhaId}`);
-    } else if (router.canGoBack()) {
-      router.back();
+    const targetTrilha = trilhaId || gameData?.trilhaId;
+    if (targetTrilha) {
+      router.replace(`/trilha/${targetTrilha}`);
     } else {
       router.replace('/(tabs)/home');
     }
-  }, [router, trilhaId]);
+  }, [router, trilhaId, gameData]);
 
   // 4. Salvar Progresso de Vitória no Backend e Storage Local
   const salvarProgressoVitoria = useCallback(async (customFaseId?: string, customTrilhaId?: string) => {
@@ -155,19 +154,46 @@ export default function GameScreen() {
     const realTrilhaId = customTrilhaId || trilhaId || gameData?.trilhaId;
     if (!realFaseId) return;
 
+    // Modo mundo aberto / livre não pontua XP
+    const isMundoAberto = modo === 'mundo_aberto' || gameData?.modoJogo === 'mundo_aberto';
+    const xpGanho = isMundoAberto ? 0 : 100;
+
     setSalvandoProgresso(true);
     try {
-      await registrarFaseConcluida(realTrilhaId, realFaseId, 100);
+      await registrarFaseConcluida(realTrilhaId, realFaseId, xpGanho);
       console.log('[Progresso] Registrado com sucesso:', realFaseId, 'na trilha:', realTrilhaId);
     } catch (err) {
       console.error('[Progresso] Erro ao registrar progresso da fase:', err);
     } finally {
       setSalvandoProgresso(false);
-      if (refreshUser) {
+      if (refreshUser && !isMundoAberto) {
         refreshUser().catch(() => {});
       }
     }
-  }, [faseId, trilhaId, gameData, fase, refreshUser]);
+  }, [faseId, trilhaId, gameData, fase, modo, refreshUser]);
+
+  // Cálculo da Próxima Fase da Trilha
+  const proximaFaseIndex = (gameData?.phaseIndex !== undefined ? gameData.phaseIndex : 0) + 1;
+  const listaFasesTrilha = Array.isArray(gameData?.fasesDaTrilha) ? gameData.fasesDaTrilha : [];
+  const temProximaFase = proximaFaseIndex < listaFasesTrilha.length;
+
+  const avancarParaProximaFase = useCallback(() => {
+    setFimDeJogo(null);
+    const targetTrilha = trilhaId || gameData?.trilhaId;
+    const nextFase = listaFasesTrilha[proximaFaseIndex];
+    if (nextFase && nextFase._id) {
+      router.replace({
+        pathname: '/game/[faseId]',
+        params: {
+          faseId: nextFase._id,
+          trilhaId: targetTrilha,
+          modo: modo || gameData?.modoJogo || 'campanha',
+        },
+      });
+    } else {
+      handleVoltar();
+    }
+  }, [proximaFaseIndex, listaFasesTrilha, trilhaId, gameData, modo, handleVoltar, router]);
 
   // 5. Carregamento e Preparação dos Dados da Fase Conectada à Trilha
   useEffect(() => {
@@ -367,6 +393,8 @@ export default function GameScreen() {
 
         if (data?.type === 'VOLTAR_PAGINA' || data?.type === 'VOLTAR_TRILHA') {
           handleVoltar();
+        } else if (data?.type === 'AVANCAR_FASE') {
+          avancarParaProximaFase();
         } else if (data?.type === 'FIM_FASE') {
           if (data?.vitoria) {
             setFimDeJogo('vitoria');
@@ -382,7 +410,7 @@ export default function GameScreen() {
         window.removeEventListener('message', handleMessage);
       };
     }
-  }, [isWeb, gameData, handleVoltar, salvarProgressoVitoria]);
+  }, [isWeb, gameData, handleVoltar, salvarProgressoVitoria, avancarParaProximaFase]);
 
   // Mensagem nativa recebida do WebView no Mobile
   const handleNativeMessage = async (msgEvent: any) => {
@@ -397,6 +425,8 @@ export default function GameScreen() {
 
     if (payload?.type === 'VOLTAR_PAGINA' || payload?.type === 'VOLTAR_TRILHA') {
       handleVoltar();
+    } else if (payload?.type === 'AVANCAR_FASE') {
+      avancarParaProximaFase();
     } else if (payload?.type === 'FIM_FASE') {
       if (payload?.vitoria) {
         setFimDeJogo('vitoria');
@@ -589,17 +619,23 @@ export default function GameScreen() {
                 <Sparkles size={18} color="#F59E0B" />
                 <Text style={styles.rewardLabel}>Recompensa</Text>
               </View>
-              <Text style={styles.rewardAmount}>+100 XP</Text>
+              <Text style={styles.rewardAmount}>
+                {modo === 'mundo_aberto' || gameData?.modoJogo === 'mundo_aberto' ? '0 XP (Modo Livre)' : '+100 XP'}
+              </Text>
             </View>
 
             <TouchableOpacity
               style={styles.advanceBtn}
-              onPress={handleVoltar}
+              onPress={avancarParaProximaFase}
               disabled={salvandoProgresso}
               activeOpacity={0.85}
             >
               <Text style={styles.advanceBtnText}>
-                {salvandoProgresso ? 'Salvando...' : 'Avançar para a Trilha'}
+                {salvandoProgresso
+                  ? 'Salvando...'
+                  : temProximaFase
+                  ? 'Avançar para Próxima Fase'
+                  : 'Finalizar Trilha'}
               </Text>
               <ArrowRight size={18} color="#ffffff" style={{ marginLeft: 6 }} />
             </TouchableOpacity>

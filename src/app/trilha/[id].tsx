@@ -61,6 +61,7 @@ import {
   Book,
   Swords,
   Shield,
+  Compass,
 } from 'lucide-react-native';
 import * as SecureStore from 'expo-secure-store';
 import { AccessibilityIcon } from '../../components/AccessibilityIcon';
@@ -417,6 +418,11 @@ export default function TrilhaDetailScreen() {
     );
   }
 
+  const handleVoltarDaTrilha = () => {
+    // Retorna com segurança garantida para a Home sem cair em loop de histórico
+    router.replace('/(tabs)/home');
+  };
+
   return (
     <ScrollView
       style={[
@@ -433,7 +439,7 @@ export default function TrilhaDetailScreen() {
     >
       {/* Top Header Buttons */}
       <View style={styles.headerButtonsRow}>
-        <TouchableOpacity style={styles.headerCircleBtn} onPress={() => router.back()} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.headerCircleBtn} onPress={handleVoltarDaTrilha} activeOpacity={0.8}>
           <ArrowLeft size={24} color="#ffffff" />
         </TouchableOpacity>
         
@@ -532,7 +538,7 @@ export default function TrilhaDetailScreen() {
                 </View>
                 <View style={styles.modeXpBadge}>
                   <Text style={styles.modeXpBadgeText}>
-                    {GAME_MODES_CONFIG[selectedMode]?.xpMultiplier || 1.0}x XP
+                    {GAME_MODES_CONFIG[selectedMode]?.xpMultiplier > 0 ? `${GAME_MODES_CONFIG[selectedMode].xpMultiplier}x XP` : 'Sem XP'}
                   </Text>
                 </View>
               </View>
@@ -562,9 +568,12 @@ export default function TrilhaDetailScreen() {
                           {mode.id === 'speedrun' && <Zap size={18} color={isSelected ? '#FACC15' : '#F59E0B'} />}
                           {mode.id === 'sobrevivencia' && <Shield size={18} color={isSelected ? '#FACC15' : '#34D399'} />}
                           {mode.id === 'boss_rush' && <Trophy size={18} color={isSelected ? '#FACC15' : '#F43F5E'} />}
+                          {mode.id === 'mundo_aberto' && <Compass size={18} color={isSelected ? '#FACC15' : '#38BDF8'} />}
                         </View>
                         <View style={[styles.modeMultiplierPill, isSelected && styles.modeMultiplierPillSelected]}>
-                          <Text style={styles.modeMultiplierText}>{mode.xpMultiplier}x XP</Text>
+                          <Text style={styles.modeMultiplierText}>
+                            {mode.xpMultiplier > 0 ? `${mode.xpMultiplier}x XP` : 'Sem XP'}
+                          </Text>
                         </View>
                       </View>
                       <Text style={[styles.modeName, { color: isSelected ? '#FACC15' : colors.text }]}>

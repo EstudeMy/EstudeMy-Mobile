@@ -1112,6 +1112,8 @@
           label += ' • 🛡️ SOBREVIVÊNCIA';
         } else if (this.modoJogo === 'boss_rush') {
           label += ' • 🏆 ARENA DOS MESTRES';
+        } else if (this.modoJogo === 'mundo_aberto' || this.modoJogo === 'livre') {
+          label += ' • 🧭 MUNDO ABERTO (SEM XP)';
         }
         this.missionTrackText.textContent = label;
       }
@@ -1119,7 +1121,7 @@
         this.missionPhaseText.textContent = phase.name;
       }
 
-      // Sorteia aleatoriamente a quantidade de inimigos (1, 2 ou 3) para esta fase!
+      // Sorteia ou mantém fixos os inimigos para esta fase (não se altera no tentar novamente)
       this.spawnRandomEnemiesForPhase(theme.enemyPool);
 
       // Posicionamento no terreno
@@ -1129,8 +1131,41 @@
     }
 
     spawnRandomEnemiesForPhase(pool) {
-      // Sorteia 1, 2 ou 3 inimigos aleatoriamente
-      const count = Math.floor(Math.random() * 3) + 1;
+      // Garante que a quantidade de inimigos se repita e nunca aumente ao tentar novamente
+      let count = 1;
+      const phaseKey = `${this.currentTrilhaId || this.activeTheme}_fase_${this.currentThemePhase}`;
+      this.phaseEnemyCounts = this.phaseEnemyCounts || {};
+
+      if (this.phaseEnemyCounts[phaseKey] !== undefined) {
+        count = this.phaseEnemyCounts[phaseKey];
+      } else {
+        try {
+          const raw = sessionStorage.getItem('estudemy_phase_enemy_counts');
+          if (raw) {
+            const parsed = JSON.parse(raw);
+            if (parsed && parsed[phaseKey] !== undefined) {
+              count = parsed[phaseKey];
+              this.phaseEnemyCounts[phaseKey] = count;
+            }
+          }
+        } catch (e) {}
+      }
+
+      if (this.phaseEnemyCounts[phaseKey] === undefined) {
+        if (this.modoJogo === 'boss_rush') {
+          count = 1;
+        } else {
+          count = Math.floor(Math.random() * 3) + 1;
+        }
+        this.phaseEnemyCounts[phaseKey] = count;
+        try {
+          let allCounts = {};
+          const raw = sessionStorage.getItem('estudemy_phase_enemy_counts');
+          if (raw) allCounts = JSON.parse(raw);
+          allCounts[phaseKey] = count;
+          sessionStorage.setItem('estudemy_phase_enemy_counts', JSON.stringify(allCounts));
+        } catch (e) {}
+      }
 
       // Reseta todos os slots
       this.enemySlots.forEach((slot) => {
@@ -1440,13 +1475,18 @@
       const baseXP = 100;
       const enemyCount = this.enemySlots.filter((s) => s.data && s.wrapper.style.display !== 'none').length || 1;
       const streakBonus = Math.min(50, this.streak * 10);
-      const earnedXP = baseXP + (enemyCount * 15) + streakBonus;
+      let earnedXP = baseXP + (enemyCount * 15) + streakBonus;
+
+      // No modo mundo aberto / livre, não ganha XP
+      if (this.modoJogo === 'mundo_aberto' || this.modoJogo === 'livre') {
+        earnedXP = 0;
+      }
 
       if (this.victoryPhaseTitle) {
         this.victoryPhaseTitle.textContent = `${phaseName} — Concluída!`;
       }
       if (this.victoryXpAmount) {
-        this.victoryXpAmount.textContent = `+${earnedXP} XP`;
+        this.victoryXpAmount.textContent = earnedXP > 0 ? `+${earnedXP} XP` : '0 XP (Modo Livre)';
       }
       if (this.victoryStatEnemies) {
         this.victoryStatEnemies.textContent = `${enemyCount} ${enemyCount > 1 ? 'Inimigos Derrotados' : 'Chefe Derrotado'}`;
@@ -1518,13 +1558,25 @@
         this.setPhase(themePhaseIdx);
 
         // Atualiza o ID da fase ativa para a próxima fase da trilha
+        let nextFaseId = '';
         if (this.fasesDaTrilha && this.fasesDaTrilha[nextThemePhase]) {
           this.currentFaseId = this.fasesDaTrilha[nextThemePhase]._id;
+          nextFaseId = this.currentFaseId;
         }
 
         this.questions = this.getFallbackThematicQuestions(this.activeTheme, themePhaseIdx);
         this.currentQuestionIdx = 0;
         this.renderQuestion();
+
+        // Notifica o app pai que avançou diretamente para a próxima fase
+        try {
+          if (window.parent && window.parent !== window) {
+            window.parent.postMessage({ type: 'AVANCAR_FASE', nextFaseId: nextFaseId, phaseIndex: nextThemePhase }, '*');
+          }
+          if (window.ReactNativeWebView && typeof window.ReactNativeWebView.postMessage === 'function') {
+            window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'AVANCAR_FASE', nextFaseId: nextFaseId, phaseIndex: nextThemePhase }));
+          }
+        } catch (e) {}
       } else {
         this.exitBattle();
       }
@@ -1555,11 +1607,6 @@
           window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'VOLTAR_TRILHA', trilhaId: this.currentTrilhaId }));
         }
       } catch (e) {}
-      if (window.history && window.history.length > 1) {
-        window.history.back();
-      } else {
-        window.location.href = '/trilha';
-      }
     }
 
     updateTotalBossHUD() {

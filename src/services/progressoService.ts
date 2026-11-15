@@ -89,16 +89,13 @@ export async function registrarFaseConcluida(
     if (isValidId(faseId)) {
       await api.post(API_ENDPOINTS.PROGRESSO.SALVAR, {
         faseId,
-        trilhaId: isValidId(trilhaId) ? trilhaId : undefined,
-        pontuacao: Math.max(0, pontuacao),
+        pontuacao: Math.max(0, Number(pontuacao) || 100),
         totalPerguntas: 4,
-        acertos: 4,
-        erros: 0,
-        concluido: true,
+        respostasUsuario: [],
       });
     }
-  } catch (apiErr) {
-    logger.warn('[Progresso] Falha na sincronização com backend, mantido localmente:', apiErr);
+  } catch (apiErr: any) {
+    logger.info(`[Progresso] Salvo localmente para a fase ${faseId} (modo offline-first)`);
   }
 
   return concluidas;

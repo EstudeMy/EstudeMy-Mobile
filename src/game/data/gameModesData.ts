@@ -72,4 +72,21 @@ export const GAME_MODES_CONFIG: Record<GameModeId, GameModeConfig> = {
     xpMultiplier: 2.5,
     coinMultiplier: 3.0,
   },
+
+  mundo_aberto: {
+    id: 'mundo_aberto',
+    name: 'Mundo Aberto',
+    tagline: 'Exploração Livre (Sem XP)',
+    description: 'Explore os cenários livremente, pratique perguntas e batalhe sem restrições ou pressão de tempo. Ideal para treino e fixação.',
+    icon: 'Compass',
+    hasTimer: false,
+    initialTimeSeconds: 0,
+    timeBonusPerCorrect: 0,
+    timePenaltyPerWrong: 0,
+    hasWaves: false,
+    bossOnly: false,
+    streakBonusEnabled: false,
+    xpMultiplier: 0,
+    coinMultiplier: 0,
+  },
 };
