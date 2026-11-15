@@ -45,6 +45,7 @@
         { name: 'Espectro dos Ventos', spriteFolder: 'assets/sprites/spectre', baseHp: 60, atk: 18, isFlying: false, type: 'magico', ultName: 'Rajada Cortante do Ártico' },
         { name: 'Lorde da Geada', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 145, atk: 26, isFlying: false, type: 'fisico', ultName: 'Nevasca do Ártico Cósmico' },
         { name: 'Colosso de Magma', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 175, atk: 35, isFlying: false, type: 'fisico', ultName: 'Cataclismo Vulcânico' },
+        { name: 'Valquíria das Tempestades', spriteFolder: 'assets/sprites/arqueira', baseHp: 110, atk: 28, isFlying: true, type: 'magico', ultName: 'Julgamento Celestial' },
       ],
       phases: [
         { id: 1, name: 'Encosta Nevada dos Vetores', bgImg: 'assets/backgrounds/montanha_fase1_encosta.jpg', weather: 'mountain_snow' },
@@ -103,6 +104,7 @@
         { name: 'O Arquivista do Vazio', spriteFolder: 'assets/sprites/mago', baseHp: 150, atk: 30, isFlying: false, type: 'magico', ultName: 'Singularidade da Entropia' },
         { name: 'Cavaleiro da Entropia', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 90, atk: 22, isFlying: false, type: 'fisico', ultName: 'Corte da Dimensão Oculta' },
         { name: 'Ceifador do Eclipse', spriteFolder: 'assets/sprites/spectre', baseHp: 160, atk: 32, isFlying: false, type: 'fisico', ultName: 'Vórtice do Eclipse Sombrio' },
+        { name: 'Arquivista Cósmico', spriteFolder: 'assets/sprites/mago', baseHp: 135, atk: 30, isFlying: true, type: 'magico', ultName: 'Colapso Gravitacional' },
       ],
       phases: [
         { id: 1, name: 'Fragmentos dos Tomos Perdidos', bgImg: 'assets/backgrounds/vazio_fase1_fragmentos.jpg', weather: 'void_cosmic' },
