@@ -76,11 +76,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         } else {
           await logout();
         }
-      } catch (error) {
-        logger.error('Erro ao carregar sessão inicial do usuário:', error);
-        const localUser = await getLocalUser();
-        if (localUser) {
-          setUser(localUser);
+      } catch (error: any) {
+        const status = error?.response?.status;
+        if (status === 401 || status === 403) {
+          // Sessão anterior expirada ou token revogado: limpa o estado de forma limpa sem lançar tela vermelha de erro
+          logger.warn(`Sessão anterior expirada (${status}). Redirecionando para login...`);
+          await removeToken();
+          setAuthState(null);
+          setUser(null);
+        } else {
+          logger.warn('Servidor indisponível ou erro de rede ao carregar sessão:', error?.message || error);
+          const localUser = await getLocalUser();
+          if (localUser) {
+            setUser(localUser);
+          }
         }
       } finally {
         setLoading(false);
@@ -110,8 +119,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
           await saveLocalUser(res.data);
         }
       }
-    } catch (error) {
-      logger.error('Erro no login:', error);
+    } catch (error: any) {
+      logger.warn('Falha na autenticação ao obter perfil:', error?.message || error);
+      await removeToken();
+      setAuthState(null);
       setUser(null);
     } finally {
       setLoading(false);
@@ -128,8 +139,14 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setUser(mergedUser);
         await saveLocalUser(mergedUser);
       }
-    } catch (error) {
-      logger.error('Erro ao dar refresh no usuário:', error);
+    } catch (error: any) {
+      const status = error?.response?.status;
+      if (status === 401 || status === 403) {
+        logger.warn('Sessão expirada durante refreshUser (401). Efetuando logout...');
+        await logout();
+      } else {
+        logger.warn('Falha transitória ao atualizar usuário:', error?.message || error);
+      }
     }
   };
 
