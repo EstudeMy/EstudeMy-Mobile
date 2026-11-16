@@ -494,7 +494,11 @@ export default function HomeScreen() {
 
   // Sistema de Leveling dinâmico baseado no XP Total acumulado
   const rawUserXp = Number(user?.xpTotal) || Number((user as any)?.xp) || 0;
-  const xp = Math.max(rawUserXp, dashboardProgressoXp);
+  let localSavedXp = 0;
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
+    localSavedXp = parseInt(window.localStorage.getItem('estudemy_user_xp_acumulado') || '0', 10) || 0;
+  }
+  const xp = Math.max(rawUserXp, dashboardProgressoXp, localSavedXp);
   const { level, xpInCurrentLevel, xpNeededForNextLevel, progressPercentage, title } = calculateLevel(xp);
 
   // Card para os carrosséis horizontais

@@ -162,8 +162,12 @@ export default function GameScreen() {
     setSalvandoProgresso(true);
     try {
       if (updateUserState && xpGanho > 0) {
-        const currentXp = (user as any)?.xpTotal || 0;
-        updateUserState({ xpTotal: currentXp + xpGanho });
+        const currentXp = Number((user as any)?.xpTotal) || Number((user as any)?.xp) || 0;
+        const newXp = currentXp + xpGanho;
+        updateUserState({ xpTotal: newXp, xp: newXp } as any);
+        if (typeof window !== 'undefined' && window.localStorage) {
+          window.localStorage.setItem('estudemy_user_xp_acumulado', String(newXp));
+        }
       }
 
       if (realModo === 'campanha') {
@@ -301,7 +305,7 @@ export default function GameScreen() {
             storedHeroSkin = window.localStorage.getItem('estudemy_hero_skin') || '';
           } catch {}
         }
-        const rawPersonagem = (user as any)?.personagem || storedHero || 'Samurai';
+        const rawPersonagem = storedHero || (user as any)?.personagem || 'Samurai';
         const personagemUsuario = rawPersonagem.toLowerCase().includes('mago') || rawPersonagem.toLowerCase().includes('valerius')
           ? 'mago'
           : rawPersonagem.toLowerCase().includes('guerreiro') || rawPersonagem.toLowerCase().includes('boran')
@@ -528,14 +532,14 @@ export default function GameScreen() {
       localSkin = window.localStorage?.getItem('estudemy_hero_skin') || '';
     } catch {}
   }
-  const rawHero = (user as any)?.personagem || gameData?.personagem_selecionado || localHero || 'Samurai';
+  const rawHero = localHero || (user as any)?.personagem || gameData?.personagem_selecionado || 'Samurai';
   const charKey = rawHero.toLowerCase().includes('mago') || rawHero.toLowerCase().includes('valerius')
     ? 'mago'
     : rawHero.toLowerCase().includes('guerreiro') || rawHero.toLowerCase().includes('boran')
     ? 'guerreiro'
     : 'samurai';
   const defaultSkin = charKey === 'mago' ? 'mago_arcanista' : charKey === 'guerreiro' ? 'guerreiro_templario' : 'samurai_ronin';
-  const skinKey = (user as any)?.skin || (user as any)?.skinSelecionada || localSkin || defaultSkin;
+  const skinKey = localSkin || (user as any)?.skin || (user as any)?.skinSelecionada || defaultSkin;
 
   const webGameSrc = isMundoAberto
     ? `/game-pi/mundo_aberto.html?t=${iframeKey}&tema=${activeTema}&personagem=${encodeURIComponent(charKey)}&skin=${encodeURIComponent(skinKey)}`

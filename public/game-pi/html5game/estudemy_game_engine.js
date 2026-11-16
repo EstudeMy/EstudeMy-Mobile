@@ -61,6 +61,14 @@
 
       const cleanFolder = (folder || '').replace(/\/$/, '');
       const isEnemy = !!(targetEl.id && (targetEl.id.startsWith('enemy-') || targetEl.id.includes('enemy')));
+      const folderKey = cleanFolder.split('/').pop().toLowerCase();
+      // Spritesheets cuja arte original foi desenhada virada para a ESQUERDA
+      const LEFT_FACING_SPRITES = ['mago', 'arquivista_cosmico', 'sentinela_areias', 'valquiria_tempestades', 'arquimago_solar'];
+      const baseFacing = LEFT_FACING_SPRITES.includes(folderKey) ? 'left' : 'right';
+      // No combate: Herói no lado esquerdo encara DIREITA; Inimigos no lado direito encaram ESQUERDA
+      const targetFacing = isEnemy ? 'left' : 'right';
+      const shouldFlip = (baseFacing !== targetFacing);
+
       const existing = this.activeMap.get(canvas);
       if (existing && existing.folder === cleanFolder && existing.action === action) {
         return canvas;
@@ -96,31 +104,56 @@
         if (!ctx) return;
         ctx.imageSmoothingEnabled = false;
 
+        const padX = 3;
+        const padY = 3;
         const fw = sheetImg.naturalWidth / 3;
         const fh = sheetImg.naturalHeight / 3;
         const col = state.frame % 3;
-        const sx = col * fw;
-        const sy = row * fh;
+        const sx = Math.floor(col * fw) + padX;
+        const sy = Math.floor(row * fh) + padY;
+        const sw = Math.floor(fw) - (2 * padX);
+        const sh = Math.floor(fh) - (2 * padY);
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Se for inimigo, espelha no eixo X para que ele fique virado para a ESQUERDA (em direção ao herói)
-        if (isEnemy) {
+        // Desenhamos com 4px de recuo interno das bordas do canvas para eliminar qualquer borda quadrada
+        const innerPad = 4;
+        const dw = canvas.width - (2 * innerPad);
+        const dh = canvas.height - (2 * innerPad);
+
+        if (shouldFlip) {
           ctx.save();
           ctx.translate(canvas.width, 0);
           ctx.scale(-1, 1);
-          ctx.drawImage(sheetImg, sx, sy, fw, fh, 0, 0, canvas.width, canvas.height);
+          ctx.drawImage(sheetImg, sx, sy, sw, sh, innerPad, innerPad, dw, dh);
           ctx.restore();
         } else {
-          // Herói no lado esquerdo ataca e encara para a DIREITA
-          ctx.drawImage(sheetImg, sx, sy, fw, fh, 0, 0, canvas.width, canvas.height);
+          ctx.drawImage(sheetImg, sx, sy, sw, sh, innerPad, innerPad, dw, dh);
         }
 
-        // Filtro de segurança caso uma imagem JPG com fundo opaco seja carregada
-        if (sheetImg.src.endsWith('.jpg')) {
-          try {
-            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imgData.data;
+        // Limpeza de segurança: garante que o perímetro de 2px do canvas tenha alpha estritamente zero
+        try {
+          const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+          const data = imgData.data;
+          const cw = canvas.width;
+          const ch = canvas.height;
+
+          // Zera bordas horizontais e verticais do canvas
+          for (let y = 0; y < ch; y++) {
+            for (let x = 0; x < 2; x++) {
+              data[((y * cw) + x) * 4 + 3] = 0;
+              data[((y * cw) + (cw - 1 - x)) * 4 + 3] = 0;
+            }
+          }
+          for (let x = 0; x < cw; x++) {
+            for (let y = 0; y < 2; y++) {
+              data[((y * cw) + x) * 4 + 3] = 0;
+              data[(((ch - 1 - y) * cw) + x) * 4 + 3] = 0;
+            }
+          }
+
+          // Filtro de segurança caso uma imagem JPG com fundo opaco seja carregada
+          if (sheetImg.src.endsWith('.jpg')) {
             const rCorner = data[0], gCorner = data[1], bCorner = data[2];
             if (data[3] > 0 && rCorner < 85 && gCorner < 85 && bCorner < 85) {
               const tolSq = 32 * 32;
@@ -132,10 +165,10 @@
                   data[i + 3] = 0;
                 }
               }
-              ctx.putImageData(imgData, 0, 0);
             }
-          } catch (e) {}
-        }
+          }
+          ctx.putImageData(imgData, 0, 0);
+        } catch (e) {}
       };
 
       if (sheetImg.complete) {
@@ -1243,6 +1276,11 @@
         }
       } catch (e) {}
 
+      // Normaliza modo Arena dos Mestres / Boss Rush
+      if (this.modoJogo.includes('boss') || this.modoJogo.includes('mestre') || this.modoJogo.includes('rush') || this.modoJogo.includes('arena')) {
+        this.modoJogo = 'boss_rush';
+      }
+
       // Herói Selecionado (Perfil do Usuário)
       let rawHeroChoice = '';
       try {
@@ -2034,7 +2072,8 @@
       proj.style.top = '52%';
       proj.style.left = '65%';
       proj.style.transition = 'all 0.38s cubic-bezier(0.2, 0.8, 0.2, 1)';
-      document.getElementById('stage-arena')?.appendChild(proj);
+      const stage = document.querySelector('.stage-actors') || document.getElementById('game-container');
+      if (stage) stage.appendChild(proj);
 
       setTimeout(() => {
         proj.style.left = '20%';

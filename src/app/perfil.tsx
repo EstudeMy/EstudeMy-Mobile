@@ -400,13 +400,21 @@ export default function PerfilScreen() {
 
   // Cálculo de nível com progressão equilibrada RPG combinando backend e offline
   const rawUserXp = Number(user?.xpTotal) || Number((user as any)?.xp) || 0;
-  const xp = Math.max(rawUserXp, acumuladoXp, fasesConcluidasCount * 100);
+  let localSavedXp = 0;
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
+    localSavedXp = parseInt(window.localStorage.getItem('estudemy_user_xp_acumulado') || '0', 10) || 0;
+  }
+  const xp = Math.max(rawUserXp, acumuladoXp, localSavedXp, fasesConcluidasCount * 100);
   const { level, xpInCurrentLevel, xpNeededForNextLevel, progressPercentage, title: levelTitle } = calculateLevel(xp);
 
   // Ofensiva do usuário (dias consecutivos)
   const rawStreak = (user as any)?.ofensiva || (user as any)?.streak || (user as any)?.diasConsecutivos;
   const streak = typeof rawStreak === 'number' && rawStreak > 0 ? rawStreak : 1;
-  const streakSuffix = streak === 1 ? (t('common.day') || 'dia') : (t('common.days') || 'dias');
+  const dayStr = t('common.day');
+  const daysStr = t('common.days');
+  const streakSuffix = streak === 1
+    ? (dayStr && dayStr !== 'common.day' ? dayStr : 'dia')
+    : (daysStr && daysStr !== 'common.days' ? daysStr : 'dias');
 
   // Sistema de 10 Conquistas Reais do Jogador
   const conquistasList = useMemo(() => [

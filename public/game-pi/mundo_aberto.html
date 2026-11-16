@@ -1169,12 +1169,21 @@
                 if (heroCanvas && heroImg.complete && heroImg.naturalWidth > 0) {
                     const ctx = heroCanvas.getContext('2d');
                     ctx.imageSmoothingEnabled = false;
+                    const padX = 3;
+                    const padY = 3;
                     const fw = heroImg.naturalWidth / 3;
                     const fh = heroImg.naturalHeight / 3;
                     const row = player.isMoving ? 1 : 0;
                     const col = heroFrame % 3;
+                    const sx = Math.floor(col * fw) + padX;
+                    const sy = Math.floor(row * fh) + padY;
+                    const sw = Math.floor(fw) - (2 * padX);
+                    const sh = Math.floor(fh) - (2 * padY);
                     ctx.clearRect(0, 0, heroCanvas.width, heroCanvas.height);
-                    ctx.drawImage(heroImg, col * fw, row * fh, fw, fh, 0, 0, heroCanvas.width, heroCanvas.height);
+                    const innerPad = 3;
+                    const dw = heroCanvas.width - (2 * innerPad);
+                    const dh = heroCanvas.height - (2 * innerPad);
+                    ctx.drawImage(heroImg, sx, sy, sw, sh, innerPad, innerPad, dw, dh);
                 }
             }
             setInterval(() => {
