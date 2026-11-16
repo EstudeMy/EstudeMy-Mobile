@@ -1219,42 +1219,42 @@
         <div class="stage-actors">
             <!-- Herói (Posicionado firmemente a 18% de altura com pés assentados no piso) -->
             <div id="player-wrapper" class="actor-wrapper">
-                <img id="player-sprite" class="actor-sprite" src="assets/sprites/samurai/idle.gif" alt="Herói" />
+                <canvas id="player-sprite" class="actor-sprite" width="280" height="280"></canvas>
                 <div class="actor-contact-shadow"></div>
             </div>
 
             <!-- Inimigos Dinâmicos (Até 3 por fase) -->
             <div id="enemies-container">
-                <div id="enemy-0" class="actor-wrapper">
+                <div id="enemy-0" class="actor-wrapper" style="display: none;">
                     <div class="enemy-mini-hud">
-                        <span class="enemy-mini-title" id="enemy-0-name">Guarda</span>
+                        <span class="enemy-mini-title" id="enemy-0-name">Inimigo</span>
                         <div class="enemy-mini-bar-track">
                             <div class="enemy-mini-bar-fill" id="enemy-0-hp-fill"></div>
                         </div>
                     </div>
-                    <img id="enemy-0-sprite" class="actor-sprite" src="assets/sprites/cavaleiro/idle.gif" alt="Inimigo" />
+                    <canvas id="enemy-0-sprite" class="actor-sprite" width="280" height="280"></canvas>
                     <div class="actor-contact-shadow"></div>
                 </div>
 
-                <div id="enemy-1" class="actor-wrapper">
+                <div id="enemy-1" class="actor-wrapper" style="display: none;">
                     <div class="enemy-mini-hud">
                         <span class="enemy-mini-title" id="enemy-1-name" style="color: #facc15;">Chefe</span>
                         <div class="enemy-mini-bar-track">
                             <div class="enemy-mini-bar-fill" id="enemy-1-hp-fill" style="background: #38bdf8;"></div>
                         </div>
                     </div>
-                    <img id="enemy-1-sprite" class="actor-sprite" src="assets/sprites/spectre/idle.gif" alt="Chefe" />
+                    <canvas id="enemy-1-sprite" class="actor-sprite" width="280" height="280"></canvas>
                     <div class="actor-contact-shadow"></div>
                 </div>
 
-                <div id="enemy-2" class="actor-wrapper">
+                <div id="enemy-2" class="actor-wrapper" style="display: none;">
                     <div class="enemy-mini-hud">
-                        <span class="enemy-mini-title" id="enemy-2-name">Mago</span>
+                        <span class="enemy-mini-title" id="enemy-2-name">Inimigo</span>
                         <div class="enemy-mini-bar-track">
                             <div class="enemy-mini-bar-fill" id="enemy-2-hp-fill" style="background: #a855f7;"></div>
                         </div>
                     </div>
-                    <img id="enemy-2-sprite" class="actor-sprite" src="assets/sprites/mago/idle.gif" alt="Conjurador" />
+                    <canvas id="enemy-2-sprite" class="actor-sprite" width="280" height="280"></canvas>
                     <div class="actor-contact-shadow"></div>
                 </div>
             </div>

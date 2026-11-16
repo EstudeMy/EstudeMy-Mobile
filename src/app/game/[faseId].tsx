@@ -413,6 +413,7 @@ export default function GameScreen() {
           (window as any).gameData = prepared;
           try {
             sessionStorage.setItem('estudemy_game_data', JSON.stringify(prepared));
+            localStorage.setItem('estudemy_game_data', JSON.stringify(prepared));
           } catch {}
         }
       } catch (err: any) {
@@ -518,15 +519,31 @@ export default function GameScreen() {
   const activePhase = gameData?.phaseIndex || 0;
   const activeModo = (modo || gameData?.modoJogo || 'campanha').toLowerCase().trim();
   const isMundoAberto = activeModo === 'mundo_aberto';
-  const charKey = user?.personagem || gameData?.personagem_selecionado || 'samurai';
+
+  let localHero = '';
+  let localSkin = '';
+  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+    try {
+      localHero = window.localStorage?.getItem('estudemy_selected_hero') || '';
+      localSkin = window.localStorage?.getItem('estudemy_hero_skin') || '';
+    } catch {}
+  }
+  const rawHero = (user as any)?.personagem || gameData?.personagem_selecionado || localHero || 'Samurai';
+  const charKey = rawHero.toLowerCase().includes('mago') || rawHero.toLowerCase().includes('valerius')
+    ? 'mago'
+    : rawHero.toLowerCase().includes('guerreiro') || rawHero.toLowerCase().includes('boran')
+    ? 'guerreiro'
+    : 'samurai';
+  const defaultSkin = charKey === 'mago' ? 'mago_arcanista' : charKey === 'guerreiro' ? 'guerreiro_templario' : 'samurai_ronin';
+  const skinKey = (user as any)?.skin || (user as any)?.skinSelecionada || localSkin || defaultSkin;
 
   const webGameSrc = isMundoAberto
-    ? `/game-pi/mundo_aberto.html?t=${iframeKey}&tema=${activeTema}&personagem=${encodeURIComponent(charKey)}`
-    : `/game-pi/index.html?t=${iframeKey}&tema=${activeTema}&phase=${activePhase}&modo=${activeModo}`;
+    ? `/game-pi/mundo_aberto.html?t=${iframeKey}&tema=${activeTema}&personagem=${encodeURIComponent(charKey)}&skin=${encodeURIComponent(skinKey)}`
+    : `/game-pi/index.html?t=${iframeKey}&tema=${activeTema}&phase=${activePhase}&modo=${activeModo}&personagem=${encodeURIComponent(charKey)}&skin=${encodeURIComponent(skinKey)}`;
 
   const mobileGameSrc = isMundoAberto
-    ? `${cleanBase}/game-pi/mundo_aberto.html?t=${iframeKey}&tema=${activeTema}&personagem=${encodeURIComponent(charKey)}`
-    : `${cleanBase}/game-pi/index.html?t=${iframeKey}&tema=${activeTema}&phase=${activePhase}&modo=${activeModo}`;
+    ? `${cleanBase}/game-pi/mundo_aberto.html?t=${iframeKey}&tema=${activeTema}&personagem=${encodeURIComponent(charKey)}&skin=${encodeURIComponent(skinKey)}`
+    : `${cleanBase}/game-pi/index.html?t=${iframeKey}&tema=${activeTema}&phase=${activePhase}&modo=${activeModo}&personagem=${encodeURIComponent(charKey)}&skin=${encodeURIComponent(skinKey)}`;
 
   if (erro) {
     return (

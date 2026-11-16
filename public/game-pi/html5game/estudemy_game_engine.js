@@ -12,6 +12,119 @@
   'use strict';
 
   // ============================================================================
+  // 0. SISTEMA UNIVERSAL DE ANIMAÇÃO POR SPRITESHEET (16-bit 3x3 Grid)
+  // ============================================================================
+  class SpriteSheetAnimator {
+    constructor() {
+      this.sheetCache = new Map();
+      this.activeMap = new Map();
+    }
+
+    loadSheet(folder) {
+      const cleanFolder = (folder || '').replace(/\/$/, '');
+      if (this.sheetCache.has(cleanFolder)) {
+        return this.sheetCache.get(cleanFolder);
+      }
+      const img = new Image();
+      img.src = `${cleanFolder}/spritesheet.jpg`;
+      this.sheetCache.set(cleanFolder, img);
+      return img;
+    }
+
+    getCanvas(el) {
+      if (!el) return null;
+      if (el.tagName === 'CANVAS') return el;
+      if (el.tagName === 'IMG') {
+        const canvas = document.createElement('canvas');
+        canvas.id = el.id;
+        canvas.className = el.className;
+        canvas.width = 280;
+        canvas.height = 280;
+        if (el.parentNode) {
+          el.parentNode.replaceChild(canvas, el);
+        }
+        return canvas;
+      }
+      return null;
+    }
+
+    play(targetEl, folder, action = 'idle', fps = 6) {
+      if (!targetEl || !folder) return null;
+      const canvas = this.getCanvas(targetEl);
+      if (!canvas) return null;
+
+      const cleanFolder = (folder || '').replace(/\/$/, '');
+      const existing = this.activeMap.get(canvas);
+      if (existing && existing.folder === cleanFolder && existing.action === action) {
+        return canvas;
+      }
+
+      if (existing && existing.timer) {
+        clearInterval(existing.timer);
+      }
+
+      const sheetImg = this.loadSheet(cleanFolder);
+      const state = {
+        canvas: canvas,
+        folder: cleanFolder,
+        action: action,
+        fps: fps,
+        frame: 0,
+        timer: null
+      };
+
+      let row = 0;
+      const act = (action || 'idle').toLowerCase();
+      if (act.includes('attack') || act.includes('strike') || act.includes('basic') || act.includes('cast') || act.includes('leap')) {
+        row = 1;
+      } else if (act.includes('ult') || act.includes('full') || act.includes('supreme')) {
+        row = 2;
+      } else {
+        row = 0; // idle
+      }
+
+      const draw = () => {
+        if (!sheetImg.complete || sheetImg.naturalWidth === 0) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.imageSmoothingEnabled = false;
+
+        const fw = sheetImg.naturalWidth / 3;
+        const fh = sheetImg.naturalHeight / 3;
+        const col = state.frame % 3;
+        const sx = col * fw;
+        const sy = row * fh;
+
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(sheetImg, sx, sy, fw, fh, 0, 0, canvas.width, canvas.height);
+      };
+
+      if (sheetImg.complete) {
+        draw();
+      } else {
+        sheetImg.onload = () => draw();
+      }
+
+      state.timer = setInterval(() => {
+        state.frame = (state.frame + 1) % 3;
+        draw();
+      }, 1000 / fps);
+
+      this.activeMap.set(canvas, state);
+      return canvas;
+    }
+
+    stop(targetEl) {
+      if (!targetEl) return;
+      const existing = this.activeMap.get(targetEl);
+      if (existing) {
+        if (existing.timer) clearInterval(existing.timer);
+        this.activeMap.delete(targetEl);
+      }
+    }
+  }
+
+  // ============================================================================
   // 1. CONFIGURAÇÕES VISUAIS: CENÁRIOS, INIMIGOS E HERÓIS
   // ============================================================================
   const THEMES_CONFIG = {
@@ -22,32 +135,34 @@
       bottomOffset: '18%',
       playerLeft: '13%',
       enemyPool: [
-        { name: 'Guarda da Muralha', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 65, atk: 14, isFlying: false, type: 'fisico', ultName: 'Golpe de Ruína da Armadura' },
-        { name: 'Spectre do Código', spriteFolder: 'assets/sprites/spectre', baseHp: 110, atk: 22, isFlying: false, type: 'magico', ultName: 'Chamas Negras da Corrupção' },
-        { name: 'Acólito da Memória', spriteFolder: 'assets/sprites/mago', baseHp: 55, atk: 16, isFlying: false, type: 'magico', ultName: 'Vórtice dos Registradores' },
+        { name: 'Ceifador do Eclipse', spriteFolder: 'assets/sprites/ceifador_eclipse', baseHp: 95, atk: 18, isFlying: false, type: 'fisico', ultName: 'Vórtice do Eclipse Sombrio' },
+        { name: 'Ladino das Sombras', spriteFolder: 'assets/sprites/ladino_sombras', baseHp: 80, atk: 22, isFlying: false, type: 'fisico', ultName: 'Tempestade das Sombras' },
+        { name: 'Arquivista Cósmico', spriteFolder: 'assets/sprites/arquivista_cosmico', baseHp: 110, atk: 24, isFlying: false, type: 'magico', ultName: 'Chama Estelar Primordial' },
         {
-          name: 'Rei Spectre da Corrupção',
-          spriteFolder: 'assets/sprites/spectre',
-          baseHp: 225,
-          atk: 34,
-          isFlying: false,
-          type: 'magico',
+          name: 'General Shogun Decaído (Lorde Abissal das Lâminas do Vazio)',
+          spriteFolder: 'assets/sprites/boss_shogun',
+          baseHp: 380,
+          atk: 42,
+          atkEnraged: 58,
+          def: 22,
+          isFlying: true,
+          type: 'fisico',
           isBoss: true,
           bossTier: 'supreme',
           attacks: [
-            { name: 'Lança da Ruína de Dados', style: 'strike', sfx: 'sword_slash', color: '#8b5cf6' },
-            { name: 'Vórtice da Matriz Corrompida', style: 'cast', sfx: 'magic_impact', color: '#ec4899' },
-            { name: 'Sobrecarga de Registradores', style: 'leap', sfx: 'heavy_impact', color: '#f43f5e' },
+            { name: 'Dança Dimensional dos Quatro Braços', style: 'strike', sfx: 'sword_slash', color: '#a855f7' },
+            { name: 'Singularidade do Eclipse Cósmico', style: 'cast', sfx: 'thunder_ultimate', color: '#9333ea' },
+            { name: 'Fenda Temporal de Vácuo', style: 'leap', sfx: 'heavy_impact', color: '#7e22ce' },
           ],
-          ultName: 'Chamas Negras da Corrupção Total',
-          secondUltName: 'Execução Fatal: Kernel Panic (Fase 2)',
+          ultName: 'Singularidade do Eclipse Cósmico',
+          secondUltName: 'Corte Dimensional dos Quatro Braços (Fase 2)',
         },
       ],
       phases: [
         { id: 1, name: 'Muralha e Portão dos Algoritmos', bgImg: 'assets/backgrounds/castelo_fase1_portao.jpg', weather: 'castle_embers' },
         { id: 2, name: 'Grande Salão dos Dados', bgImg: 'assets/backgrounds/castelo_fase2_salao.jpg', weather: 'castle_embers' },
         { id: 3, name: 'Catacumbas da Memória RAM', bgImg: 'assets/backgrounds/castelo_fase3_masmorra.jpg', weather: 'castle_embers' },
-        { id: 4, name: 'Torre do Trono do Spectre', bgImg: 'assets/backgrounds/castelo_fase4_trono.jpg', weather: 'castle_embers' },
+        { id: 4, name: 'Torre do Trono do Shogun Abissal', bgImg: 'assets/backgrounds/castelo_fase4_trono.jpg', weather: 'castle_embers' },
       ],
     },
     montanha: {
@@ -57,12 +172,9 @@
       bottomOffset: '18%',
       playerLeft: '13%',
       enemyPool: [
-        { name: 'Guerreiro da Geada', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 75, atk: 16, isFlying: false, type: 'fisico', ultName: 'Impacto Glacial Esmagador' },
-        { name: 'Mago Cósmico do Pico', spriteFolder: 'assets/sprites/mago', baseHp: 120, atk: 25, isFlying: false, type: 'magico', ultName: 'Tempestade de Nevasca Cósmica' },
-        { name: 'Espectro dos Ventos', spriteFolder: 'assets/sprites/spectre', baseHp: 60, atk: 18, isFlying: false, type: 'magico', ultName: 'Rajada Cortante do Ártico' },
-        { name: 'Lorde da Geada', spriteFolder: 'assets/sprites/lorde_geada', baseHp: 115, atk: 24, isFlying: false, type: 'fisico', ultName: 'Nevasca do Ártico Cósmico' },
-        { name: 'Colosso de Magma', spriteFolder: 'assets/sprites/colosso_magma', baseHp: 175, atk: 35, isFlying: false, type: 'fisico', ultName: 'Cataclismo Vulcânico' },
-        { name: 'Valquíria das Tempestades', spriteFolder: 'assets/sprites/valquiria_tempestades', baseHp: 110, atk: 28, isFlying: true, type: 'magico', ultName: 'Julgamento Celestial' },
+        { name: 'Lorde da Geada', spriteFolder: 'assets/sprites/lorde_geada', baseHp: 105, atk: 22, isFlying: false, type: 'fisico', ultName: 'Nevasca do Ártico Cósmico' },
+        { name: 'Colosso de Magma', spriteFolder: 'assets/sprites/colosso_magma', baseHp: 150, atk: 28, isFlying: false, type: 'fisico', ultName: 'Cataclismo Vulcânico' },
+        { name: 'Valquíria das Tempestades', spriteFolder: 'assets/sprites/valquiria_tempestades', baseHp: 100, atk: 24, isFlying: true, type: 'magico', ultName: 'Julgamento Celestial' },
         {
           name: 'Ignis, o Titã Vulcânico Primordial',
           spriteFolder: 'assets/sprites/boss_ignis',
@@ -97,11 +209,9 @@
       bottomOffset: '18%',
       playerLeft: '13%',
       enemyPool: [
-        { name: 'Guerreiro das Areias', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 70, atk: 15, isFlying: false, type: 'fisico', ultName: 'Fúria da Cimitarra Solar' },
-        { name: 'Djinn das Tempestades', spriteFolder: 'assets/sprites/spectre', baseHp: 115, atk: 24, isFlying: false, type: 'magico', ultName: 'Ciclone do Sol Escaldante' },
-        { name: 'Mago das Dunas', spriteFolder: 'assets/sprites/mago', baseHp: 60, atk: 18, isFlying: false, type: 'magico', ultName: 'Sepultamento do Arenito' },
-        { name: 'Arquimago Solar', spriteFolder: 'assets/sprites/arquimago_solar', baseHp: 110, atk: 25, isFlying: false, type: 'magico', ultName: 'Tempestade da Supernova' },
-        { name: 'Sentinela das Areias', spriteFolder: 'assets/sprites/sentinela_areias', baseHp: 130, atk: 24, isFlying: false, type: 'fisico', ultName: 'Maldição de Anúbis' },
+        { name: 'Sentinela das Areias', spriteFolder: 'assets/sprites/sentinela_areias', baseHp: 125, atk: 22, isFlying: false, type: 'fisico', ultName: 'Maldição de Anúbis' },
+        { name: 'Arquimago Solar', spriteFolder: 'assets/sprites/arquimago_solar', baseHp: 100, atk: 25, isFlying: false, type: 'magico', ultName: 'Tempestade da Supernova' },
+        { name: 'Ladino das Sombras das Dunas', spriteFolder: 'assets/sprites/ladino_sombras', baseHp: 85, atk: 24, isFlying: false, type: 'fisico', ultName: 'Corte da Tempestade de Areia' },
         {
           name: 'Imperador Khepri-Ra (Soberano Eterno das Areias)',
           spriteFolder: 'assets/sprites/boss_khepri',
@@ -136,10 +246,9 @@
       bottomOffset: '18%',
       playerLeft: '13%',
       enemyPool: [
-        { name: 'Cavaleiro Renegado', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 80, atk: 18, isFlying: false, type: 'fisico', ultName: 'Lâmina do Julgamento Cego' },
-        { name: 'Lorde Decaído', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 125, atk: 26, isFlying: false, type: 'fisico', ultName: 'Golpe Quebra-Crânios' },
-        { name: 'Ilusionista das Ruínas', spriteFolder: 'assets/sprites/mago', baseHp: 65, atk: 17, isFlying: false, type: 'magico', ultName: 'Espelhos do Caos Eterno' },
-        { name: 'Ladino das Sombras', spriteFolder: 'assets/sprites/ladino_sombras', baseHp: 85, atk: 32, isFlying: false, type: 'fisico', ultName: 'Tempestade das Sombras' },
+        { name: 'Ceifador das Brumas', spriteFolder: 'assets/sprites/ceifador_eclipse', baseHp: 95, atk: 20, isFlying: false, type: 'fisico', ultName: 'Foice das Brumas' },
+        { name: 'Valquíria dos Ventos', spriteFolder: 'assets/sprites/valquiria_tempestades', baseHp: 90, atk: 22, isFlying: true, type: 'magico', ultName: 'Rajada Celestial' },
+        { name: 'Arquivista da Biblioteca', spriteFolder: 'assets/sprites/arquivista_cosmico', baseHp: 105, atk: 22, isFlying: false, type: 'magico', ultName: 'Chama Estelar Primordial' },
         {
           name: 'Behemoth da Cripta Esquecida',
           spriteFolder: 'assets/sprites/boss_behemoth',
@@ -164,7 +273,7 @@
         { id: 1, name: 'Praça do Mercado das Crônicas', bgImg: 'assets/backgrounds/vila_fase1_mercado.jpg', weather: 'village_leaves' },
         { id: 2, name: 'Grande Arquivo e Biblioteca Arcana', bgImg: 'assets/backgrounds/vila_fase2_biblioteca.jpg', weather: 'village_leaves' },
         { id: 3, name: 'Cripta dos Filósofos', bgImg: 'assets/backgrounds/vila_fase3_cripta.jpg', weather: 'village_leaves' },
-        { id: 4, name: 'Campanário do Cavaleiro', bgImg: 'assets/backgrounds/vila_fase4_campanario.jpg', weather: 'village_leaves' },
+        { id: 4, name: 'Campanário do Behemoth', bgImg: 'assets/backgrounds/vila_fase4_campanario.jpg', weather: 'village_leaves' },
       ],
     },
     vazio_cosmico: {
@@ -174,11 +283,9 @@
       bottomOffset: '18%',
       playerLeft: '13%',
       enemyPool: [
-        { name: 'Arauto do Esquecimento', spriteFolder: 'assets/sprites/spectre', baseHp: 85, atk: 20, isFlying: false, type: 'magico', ultName: 'Aniquilação da Matéria' },
-        { name: 'O Arquivista do Vazio', spriteFolder: 'assets/sprites/mago', baseHp: 150, atk: 30, isFlying: false, type: 'magico', ultName: 'Singularidade da Entropia' },
-        { name: 'Cavaleiro da Entropia', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 90, atk: 22, isFlying: false, type: 'fisico', ultName: 'Corte da Dimensão Oculta' },
-        { name: 'Ceifador do Eclipse', spriteFolder: 'assets/sprites/ceifador_eclipse', baseHp: 125, atk: 26, isFlying: false, type: 'fisico', ultName: 'Vórtice do Eclipse Sombrio' },
-        { name: 'Arquivista Cósmico', spriteFolder: 'assets/sprites/arquivista_cosmico', baseHp: 135, atk: 30, isFlying: true, type: 'magico', ultName: 'Colapso Gravitacional' },
+        { name: 'Arquivista Cósmico', spriteFolder: 'assets/sprites/arquivista_cosmico', baseHp: 115, atk: 25, isFlying: false, type: 'magico', ultName: 'Chama Estelar Primordial' },
+        { name: 'Ceifador do Vazio', spriteFolder: 'assets/sprites/ceifador_eclipse', baseHp: 110, atk: 24, isFlying: false, type: 'fisico', ultName: 'Vórtice do Eclipse Sombrio' },
+        { name: 'Colosso do Vácuo', spriteFolder: 'assets/sprites/colosso_magma', baseHp: 145, atk: 28, isFlying: false, type: 'fisico', ultName: 'Cataclismo Cósmico' },
         {
           name: 'General Shogun Decaído (Lorde Abissal das Lâminas do Vazio)',
           spriteFolder: 'assets/sprites/boss_shogun',
@@ -360,7 +467,6 @@
   // ============================================================================
   class RealisticOrchestralAudio {
     constructor() {
-      this.animator = new SpriteSheetAnimator();
       this.ctx = null;
       this.isMuted = false;
       this.timer = null;
@@ -876,6 +982,7 @@
   // ============================================================================
   class EstudeMyOverhaulGame {
     constructor() {
+      this.animator = new SpriteSheetAnimator();
       this.soundtrack = new RealisticOrchestralAudio();
       this.fxCanvas = document.getElementById('fx-canvas');
       this.fxCtx = this.fxCanvas.getContext('2d');
@@ -1098,7 +1205,22 @@
       } catch (e) {}
 
       // Herói Selecionado (Perfil do Usuário)
-      const char = (raw?.personagem_selecionado || 'samurai').toLowerCase();
+      let rawHeroChoice = '';
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        rawHeroChoice = urlParams.get('personagem') || '';
+      } catch (e) {}
+
+      if (!rawHeroChoice) {
+        rawHeroChoice = raw?.personagem_selecionado || raw?.personagem || '';
+      }
+      if (!rawHeroChoice) {
+        try {
+          rawHeroChoice = localStorage.getItem('estudemy_selected_hero') || sessionStorage.getItem('estudemy_selected_hero') || '';
+        } catch (e) {}
+      }
+
+      const char = (rawHeroChoice || 'samurai').toLowerCase();
       if (char.includes('guerreiro') || char.includes('cavaleiro') || char.includes('boran')) {
         this.selectedCharKey = 'guerreiro';
       } else if (char.includes('mago') || char.includes('valerius')) {
@@ -1112,8 +1234,23 @@
       }
 
       // Skin Selecionada no Perfil
-      const skinKey = (raw?.skin_selecionada || raw?.personagem_skin || '').toLowerCase();
-      const heroConfig = CHARACTERS_CONFIG[this.selectedCharKey];
+      let rawSkinChoice = '';
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        rawSkinChoice = urlParams.get('skin') || '';
+      } catch (e) {}
+
+      if (!rawSkinChoice) {
+        rawSkinChoice = raw?.skin_selecionada || raw?.personagem_skin || raw?.skin || '';
+      }
+      if (!rawSkinChoice) {
+        try {
+          rawSkinChoice = localStorage.getItem('estudemy_hero_skin') || sessionStorage.getItem('estudemy_hero_skin') || '';
+        } catch (e) {}
+      }
+
+      const skinKey = (rawSkinChoice || '').toLowerCase();
+      const heroConfig = CHARACTERS_CONFIG[this.selectedCharKey] || CHARACTERS_CONFIG.samurai;
       const foundIdx = heroConfig.skins.findIndex((s) => s.id.toLowerCase() === skinKey || s.name.toLowerCase().includes(skinKey));
       this.selectedSkinIndex = foundIdx >= 0 ? foundIdx : 0;
 
@@ -1644,7 +1781,18 @@
       if (!this.animator) {
         this.animator = new SpriteSheetAnimator();
       }
-      this.animator.play(actorImg, folder, action, fps);
+      const canvas = this.animator.play(actorImg, folder, action, fps);
+      if (canvas && canvas !== actorImg) {
+        if (actorImg === this.playerSprite) {
+          this.playerSprite = canvas;
+        } else {
+          this.enemySlots.forEach((slot) => {
+            if (slot.sprite === actorImg) {
+              slot.sprite = canvas;
+            }
+          });
+        }
+      }
     }
 
     applyGrounding() {
@@ -1829,7 +1977,7 @@
       }
       slot.wrapper.classList.remove('actor-enemy-strike', 'actor-charge-glow', 'actor-enemy-leap', 'actor-enemy-cast', 'actor-boss-supreme-strike');
       if (slot.isAlive && slot.data && slot.data.spriteFolder) {
-        slot.sprite.src = `${slot.data.spriteFolder}/idle.gif`;
+        this.setActorAnimation(slot.sprite, slot.data.spriteFolder, 'idle', slot.data.isBoss ? 7 : 6);
       }
       slot.isAttacking = false;
     }
@@ -1903,7 +2051,7 @@
         const sfx = chosenAtk.sfx || 'sword_slash';
 
         if (style === 'cast') {
-          attacker.sprite.src = `${attacker.data.spriteFolder}/attack2.gif`;
+          this.setActorAnimation(attacker.sprite, attacker.data.spriteFolder, 'attack2', 8);
           attacker.wrapper.classList.add('actor-enemy-cast');
           this.addFloatingText(`💥 ${chosenAtk.name.toUpperCase()}!`, color, 683, 260, false);
           setTimeout(() => {
@@ -1923,7 +2071,7 @@
             }
           }, 220);
         } else {
-          attacker.sprite.src = `${attacker.data.spriteFolder}/attack1.gif`;
+          this.setActorAnimation(attacker.sprite, attacker.data.spriteFolder, 'attack1', 8);
           attacker.wrapper.classList.add('actor-enemy-strike');
           this.addFloatingText(`⚔️ ${chosenAtk.name.toUpperCase()}!`, color, 683, 260, false);
           setTimeout(() => {
@@ -1934,7 +2082,7 @@
         // Estilos Padrão para Inimigos Normais
         const attackStyle = Math.floor(Math.random() * 3);
         if (attackStyle === 2) {
-          attacker.sprite.src = `${attacker.data.spriteFolder}/attack1.gif`;
+          this.setActorAnimation(attacker.sprite, attacker.data.spriteFolder, 'attack1', 8);
           attacker.wrapper.classList.add('actor-enemy-leap');
           this.addFloatingText('ESMAGAMENTO SÍSMICO!', '#f97316', 683, 260, false);
           setTimeout(() => {
@@ -1946,7 +2094,7 @@
             }
           }, 220);
         } else if (attackStyle === 1) {
-          attacker.sprite.src = `${attacker.data.spriteFolder}/attack2.gif`;
+          this.setActorAnimation(attacker.sprite, attacker.data.spriteFolder, 'attack2', 8);
           attacker.wrapper.classList.add('actor-enemy-cast');
           this.addFloatingText('PROJÉTIL ARCANO!', '#a855f7', 683, 260, false);
           setTimeout(() => {
@@ -1954,7 +2102,7 @@
             this.spawnMagicProjectile(attacker);
           }, 180);
         } else {
-          attacker.sprite.src = `${attacker.data.spriteFolder}/attack1.gif`;
+          this.setActorAnimation(attacker.sprite, attacker.data.spriteFolder, 'attack1', 8);
           attacker.wrapper.classList.add('actor-enemy-strike');
           this.addFloatingText('CORTE VELOZ!', '#38bdf8', 683, 260, false);
           setTimeout(() => {
@@ -2381,7 +2529,7 @@
 
       setTimeout(() => {
         this.cinematicOverlay.style.display = 'none';
-        this.playerSprite.src = `${char.spriteFolder}/idle.gif`;
+        this.setActorAnimation(this.playerSprite, char.spriteFolder, 'idle', 6);
         this.playerWrapper.classList.remove('actor-charge-glow');
       }, 1200);
     }
