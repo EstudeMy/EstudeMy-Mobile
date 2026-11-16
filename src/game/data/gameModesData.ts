@@ -41,9 +41,9 @@ export const GAME_MODES_CONFIG: Record<GameModeId, GameModeConfig> = {
 
   sobrevivencia: {
     id: 'sobrevivencia',
-    name: 'Torre Infinita (Mortal Kombat)',
+    name: 'Torre Infinita (Torre do Saber)',
     tagline: 'Suba a Torre • Morte Reseta Tudo',
-    description: 'Estilo Torre do Mortal Kombat: a cada inimigo derrotado você sobe um degrau na torre. Se morrer, volta tudo ao Andar 1!',
+    description: 'Desafio vertical contínuo da Torre: a cada inimigo derrotado você sobe um andar. Se for derrotado, volta ao Andar 1!',
     icon: 'Shield',
     hasTimer: false,
     initialTimeSeconds: 0,

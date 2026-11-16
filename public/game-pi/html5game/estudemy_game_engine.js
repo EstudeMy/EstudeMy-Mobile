@@ -63,7 +63,7 @@
       const isEnemy = !!(targetEl.id && (targetEl.id.startsWith('enemy-') || targetEl.id.includes('enemy')));
       const folderKey = cleanFolder.split('/').pop().toLowerCase();
       // Spritesheets cuja arte original foi desenhada virada para a ESQUERDA
-      const LEFT_FACING_SPRITES = ['mago', 'arquivista_cosmico', 'sentinela_areias', 'valquiria_tempestades', 'arquimago_solar'];
+      const LEFT_FACING_SPRITES = ['mago', 'sentinela_areias', 'valquiria_tempestades', 'arquimago_solar'];
       const baseFacing = LEFT_FACING_SPRITES.includes(folderKey) ? 'left' : 'right';
       // No combate: Herói no lado esquerdo encara DIREITA; Inimigos no lado direito encaram ESQUERDA
       const targetFacing = isEnemy ? 'left' : 'right';
@@ -104,8 +104,8 @@
         if (!ctx) return;
         ctx.imageSmoothingEnabled = false;
 
-        const padX = 3;
-        const padY = 3;
+        const padX = 8;
+        const padY = 8;
         const fw = sheetImg.naturalWidth / 3;
         const fh = sheetImg.naturalHeight / 3;
         const col = state.frame % 3;
@@ -116,8 +116,8 @@
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // Desenhamos com 4px de recuo interno das bordas do canvas para eliminar qualquer borda quadrada
-        const innerPad = 4;
+        // Desenhamos com 6px de recuo interno das bordas do canvas para eliminar qualquer borda quadrada
+        const innerPad = 6;
         const dw = canvas.width - (2 * innerPad);
         const dh = canvas.height - (2 * innerPad);
 
@@ -131,24 +131,31 @@
           ctx.drawImage(sheetImg, sx, sy, sw, sh, innerPad, innerPad, dw, dh);
         }
 
-        // Limpeza de segurança: garante que o perímetro de 2px do canvas tenha alpha estritamente zero
+        // Limpeza de segurança: garante que o perímetro de 5px do canvas tenha alpha estritamente zero
         try {
           const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
           const data = imgData.data;
           const cw = canvas.width;
           const ch = canvas.height;
 
-          // Zera bordas horizontais e verticais do canvas
+          // Zera bordas perimétricas de 5px do canvas
           for (let y = 0; y < ch; y++) {
-            for (let x = 0; x < 2; x++) {
+            for (let x = 0; x < 5; x++) {
               data[((y * cw) + x) * 4 + 3] = 0;
               data[((y * cw) + (cw - 1 - x)) * 4 + 3] = 0;
             }
           }
           for (let x = 0; x < cw; x++) {
-            for (let y = 0; y < 2; y++) {
+            for (let y = 0; y < 5; y++) {
               data[((y * cw) + x) * 4 + 3] = 0;
               data[(((ch - 1 - y) * cw) + x) * 4 + 3] = 0;
+            }
+          }
+
+          // Elimina ruídos de baixa opacidade (alpha < 25) que causam caixas transparentes sutis
+          for (let i = 0; i < data.length; i += 4) {
+            if (data[i + 3] < 25) {
+              data[i + 3] = 0;
             }
           }
 
@@ -1213,14 +1220,17 @@
       window.addEventListener('keydown', (e) => {
         if (e.repeat) return;
 
-        if (this.qteActive) {
-          const key = e.code === 'Space' ? 'SPACE' : e.key.toUpperCase();
-          this.handleQTEKey(key);
+        if (e.code === 'Space' && this.isUltReady) {
+          if (this.qteActive) {
+            this.resolveQTE(true);
+          }
+          this.triggerUltimate();
           return;
         }
 
-        if (e.code === 'Space' && this.isUltReady) {
-          this.triggerUltimate();
+        if (this.qteActive) {
+          const key = e.code === 'Space' ? 'SPACE' : e.key.toUpperCase();
+          this.handleQTEKey(key);
           return;
         }
 
@@ -2095,6 +2105,7 @@
     }
 
     executeEnemyTurn() {
+      if (this.isExecutingUltimate) return;
       const aliveEnemies = this.enemySlots.filter((s) => s.isAlive);
       if (aliveEnemies.length === 0) return;
 
@@ -2273,7 +2284,7 @@
             this.defeatPhaseTitle.textContent = 'VOCÊ CAIU DA TORRE!';
           }
           if (this.defeatPhaseDesc) {
-            this.defeatPhaseDesc.textContent = 'No Desafio Mortal Kombat, a derrota zera seu progresso e você volta ao primeiro andar!';
+            this.defeatPhaseDesc.textContent = 'No Desafio da Torre Infinita, a derrota zera seu progresso e você volta ao primeiro andar!';
           }
         } else if (this.modoJogo === 'boss_rush') {
           try {
@@ -2579,7 +2590,24 @@
     // 4. GOLPE SUPREMO (ULTIMATE): 100% EXCLUSIVO E SEM SOBREPOSIÇÃO
     // ==========================================================================
     triggerUltimate() {
-      if (!this.isUltReady) return;
+      if (!this.isUltReady || this.isExecutingUltimate) return;
+      this.isExecutingUltimate = true;
+
+      // Fecha e cancela qualquer QTE que estivesse ativo na tela
+      if (this.qteActive) {
+        this.resolveQTE(true);
+      }
+      this.qteCooldown = true;
+
+      // Cancela qualquer ataque em andamento de qualquer inimigo para não sobrepor o especial
+      this.enemySlots.forEach((slot) => {
+        if (slot.attackTimer) {
+          clearTimeout(slot.attackTimer);
+          slot.attackTimer = null;
+        }
+        this.resetEnemyToIdle(slot);
+      });
+
       this.ultCharge = 0;
       this.isUltReady = false;
       this.btnUltimate.style.display = 'none';
@@ -2618,6 +2646,10 @@
         this.cinematicOverlay.style.display = 'none';
         this.setActorAnimation(this.playerSprite, char.spriteFolder, 'idle', 6);
         this.playerWrapper.classList.remove('actor-charge-glow');
+        this.isExecutingUltimate = false;
+        setTimeout(() => {
+          this.qteCooldown = false;
+        }, 2500);
       }, 1200);
     }
 
@@ -2673,7 +2705,7 @@
     // 5. QUICK TIME EVENT (QTE): FECHAMENTO IMEDIATO E ANTI-REPETIÇÃO
     // ==========================================================================
     triggerQTE(keys, label, callback) {
-      if (this.qteCooldown) return;
+      if (this.qteCooldown || this.isExecutingUltimate) return;
 
       this.soundtrack.playSFX('qte_alert');
       this.qteActive = true;

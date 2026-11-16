@@ -717,7 +717,7 @@ export default function TrilhaDetailScreen() {
             </View>
             <View style={{ flex: 1 }}>
               <Text style={[styles.specialModeTitle, { color: colors.text }]}>TORRE DO SABER</Text>
-              <Text style={[styles.specialModeSubtitle, { color: '#C084FC' }]}>Desafio Vertical Estilo Mortal Kombat</Text>
+              <Text style={[styles.specialModeSubtitle, { color: '#C084FC' }]}>Desafio Vertical da Torre Infinita</Text>
             </View>
           </View>
           <Text style={[styles.specialModeRuleDesc, { color: colors.textMuted }]}>

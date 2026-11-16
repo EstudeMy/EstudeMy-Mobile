@@ -372,7 +372,7 @@ export default function RankingScreen() {
                 <ShieldAlert size={16} color="#8B5CF6" />
                 <Text style={[styles.scoreText, { color: '#A78BFA' }]}>Andar {item.torreAndar || 1}</Text>
               </View>
-              <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '700' }}>Torre Mortal Kombat</Text>
+              <Text style={{ fontSize: 11, color: colors.textMuted, fontWeight: '700' }}>Torre Infinita</Text>
             </View>
           )}
 
