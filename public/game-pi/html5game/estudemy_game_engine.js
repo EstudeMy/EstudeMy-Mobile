@@ -62,8 +62,8 @@
       const cleanFolder = (folder || '').replace(/\/$/, '');
       const isEnemy = !!(targetEl.id && (targetEl.id.startsWith('enemy-') || targetEl.id.includes('enemy')));
       const folderKey = cleanFolder.split('/').pop().toLowerCase();
-      // Spritesheets cuja arte original foi desenhada virada para a ESQUERDA
-      const LEFT_FACING_SPRITES = ['mago', 'sentinela_areias', 'valquiria_tempestades', 'arquimago_solar'];
+      // Spritesheets cuja arte original foi desenhada virada para a ESQUERDA (ex: Khepri atacando para a esquerda)
+      const LEFT_FACING_SPRITES = ['boss_khepri'];
       const baseFacing = LEFT_FACING_SPRITES.includes(folderKey) ? 'left' : 'right';
       // No combate: Herói no lado esquerdo encara DIREITA; Inimigos no lado direito encaram ESQUERDA
       const targetFacing = isEnemy ? 'left' : 'right';
@@ -1756,8 +1756,63 @@
         this.updateTotalBossHUD();
         return;
       }
-      // Garante que a quantidade de inimigos se repita e nunca aumente ao tentar novamente
-      let count = 1;
+
+      const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
+      const totalPhases = theme.phases ? theme.phases.length : 4;
+      const isBossPhase = (this.currentThemePhase >= (totalPhases - 1));
+
+      // Reseta todos os slots
+      this.enemySlots.forEach((slot) => {
+        slot.isAlive = false;
+        slot.wrapper.style.display = 'none';
+        slot.wrapper.style.opacity = '1';
+        slot.wrapper.style.transform = '';
+      });
+
+      if (isBossPhase) {
+        // FASE EXCLUSIVA DO CHEFÃO:
+        // O Chefão aparece APENAS e EXCLUSIVAMENTE nesta fase final, como chefe único central!
+        // NUNCA aparece em fases normais!
+        let bossData = pool ? pool.find((e) => e.isBoss) : null;
+        if (!bossData) {
+          const bossMap = {
+            montanha: 'boss_ignis',
+            deserto: 'boss_khepri',
+            vila: 'boss_behemoth',
+            castelo: 'boss_shogun',
+            vazio_cosmico: 'boss_shogun'
+          };
+          const bId = bossMap[this.activeTheme] || 'boss_shogun';
+          bossData = SUPREME_BOSSES.find((b) => b.id === bId) || SUPREME_BOSSES[0];
+        }
+
+        const eData = { ...bossData };
+        const slot = this.enemySlots[1];
+        slot.data = eData;
+        slot.maxHp = Math.round(eData.baseHp * 1.5);
+        slot.currentHp = slot.maxHp;
+        slot.phase2Activated = false;
+        slot.wrapper.classList.remove('boss-phase2-enrage');
+        slot.isAlive = true;
+        slot.wrapper.style.display = 'flex';
+        slot.wrapper.style.right = '18%';
+        this.setActorAnimation(slot.sprite, eData.spriteFolder, 'idle', 7);
+        slot.nameText.textContent = `☠️ CHEFÃO: ${eData.name}`;
+        slot.barFill.style.width = '100%';
+
+        if (eData.isFlying) slot.wrapper.classList.add('is-flying');
+        else slot.wrapper.classList.remove('is-flying');
+
+        this.applyGrounding();
+        this.updateTotalBossHUD();
+        return;
+      }
+
+      // FASES NORMAIS (Fases 1, 2, 3):
+      // PROIBIDO spawnar qualquer chefão! Somente inimigos comuns!
+      const regularEnemies = (pool || []).filter((e) => !e.isBoss);
+
+      let count = 2;
       const phaseKey = `${this.currentTrilhaId || this.activeTheme}_fase_${this.currentThemePhase}`;
       this.phaseEnemyCounts = this.phaseEnemyCounts || {};
 
@@ -1777,11 +1832,7 @@
       }
 
       if (this.phaseEnemyCounts[phaseKey] === undefined) {
-        if (this.modoJogo === 'boss_rush') {
-          count = 1;
-        } else {
-          count = Math.floor(Math.random() * 3) + 1;
-        }
+        count = Math.floor(Math.random() * 3) + 1;
         this.phaseEnemyCounts[phaseKey] = count;
         try {
           let allCounts = {};
@@ -1792,42 +1843,29 @@
         } catch (e) {}
       }
 
-      // Reseta todos os slots
-      this.enemySlots.forEach((slot) => {
-        slot.isAlive = false;
-        slot.wrapper.style.display = 'none';
-        slot.wrapper.style.opacity = '1';
-        slot.wrapper.style.transform = '';
-      });
-
       if (count === 1) {
-        // Apenas 1 Inimigo (Chefe Central Solitário ou Boss Rush)
-        let eData = pool.find((e) => e.isBoss) || pool[1] || pool[0];
-        if (this.modoJogo === 'boss_rush') {
-          const bosses = pool.filter((e) => e.isBoss);
-          const safeIdx = Math.max(0, this.currentThemePhase - 1);
-          if (bosses.length > 0) {
-            eData = bosses[safeIdx % bosses.length];
-          }
-        }
+        // 1 Inimigo Comum (Centralizado)
+        const eData = regularEnemies[Math.floor(Math.random() * regularEnemies.length)] || regularEnemies[0];
         const slot = this.enemySlots[1];
         slot.data = eData;
-        slot.maxHp = eData.isBoss ? Math.round(eData.baseHp * 1.6) : Math.round(eData.baseHp * 1.35);
+        slot.maxHp = eData.baseHp;
         slot.currentHp = slot.maxHp;
         slot.phase2Activated = false;
         slot.wrapper.classList.remove('boss-phase2-enrage');
         slot.isAlive = true;
         slot.wrapper.style.display = 'flex';
         slot.wrapper.style.right = '18%';
-        this.setActorAnimation(slot.sprite, eData.spriteFolder, 'idle', eData.isBoss ? 7 : 6);
-        slot.nameText.textContent = eData.isBoss ? `☠️ CHEFÃO: ${eData.name}` : `👑 ${eData.name}`;
+        this.setActorAnimation(slot.sprite, eData.spriteFolder, 'idle', 6);
+        slot.nameText.textContent = `⚔️ ${eData.name}`;
         slot.barFill.style.width = '100%';
 
         if (eData.isFlying) slot.wrapper.classList.add('is-flying');
         else slot.wrapper.classList.remove('is-flying');
       } else if (count === 2) {
-        // 2 Inimigos (Vanguarda e Líder)
-        const enemiesToUse = [pool[0], pool[1]];
+        // 2 Inimigos Comuns
+        const e1 = regularEnemies[0] || regularEnemies[0];
+        const e2 = regularEnemies[1] || regularEnemies[0];
+        const enemiesToUse = [e1, e2];
         [0, 1].forEach((slotIdx, i) => {
           const eData = enemiesToUse[i];
           const slot = this.enemySlots[slotIdx];
@@ -1839,16 +1877,20 @@
           slot.isAlive = true;
           slot.wrapper.style.display = 'flex';
           slot.wrapper.style.right = slotIdx === 0 ? '25%' : '10%';
-          this.setActorAnimation(slot.sprite, eData.spriteFolder, 'idle', eData.isBoss ? 7 : 6);
-          slot.nameText.textContent = eData.isBoss ? `☠️ ${eData.name}` : eData.name;
+          this.setActorAnimation(slot.sprite, eData.spriteFolder, 'idle', 6);
+          slot.nameText.textContent = eData.name;
           slot.barFill.style.width = '100%';
 
           if (eData.isFlying) slot.wrapper.classList.add('is-flying');
           else slot.wrapper.classList.remove('is-flying');
         });
       } else {
-        // 3 Inimigos (Esquadrão Completo)
-        pool.slice(0, 3).forEach((eData, i) => {
+        // 3 Inimigos Comuns
+        const available = [...regularEnemies];
+        while (available.length < 3) {
+          available.push(regularEnemies[0]);
+        }
+        available.slice(0, 3).forEach((eData, i) => {
           const slot = this.enemySlots[i];
           slot.data = eData;
           slot.maxHp = eData.baseHp;
@@ -1858,8 +1900,8 @@
           slot.isAlive = true;
           slot.wrapper.style.display = 'flex';
           slot.wrapper.style.right = i === 0 ? '28%' : i === 1 ? '17%' : '6%';
-          this.setActorAnimation(slot.sprite, eData.spriteFolder, 'idle', eData.isBoss ? 7 : 6);
-          slot.nameText.textContent = eData.isBoss ? `☠️ ${eData.name}` : eData.name;
+          this.setActorAnimation(slot.sprite, eData.spriteFolder, 'idle', 6);
+          slot.nameText.textContent = eData.name;
           slot.barFill.style.width = '100%';
 
           if (eData.isFlying) slot.wrapper.classList.add('is-flying');
@@ -2562,10 +2604,12 @@
       let totalCurrent = 0;
       let totalMax = 0;
       let aliveCount = 0;
+      let bossData = null;
 
       this.enemySlots.forEach((s) => {
         if (s.data && s.wrapper.style.display !== 'none') {
           totalMax += s.maxHp;
+          if (s.data.isBoss) bossData = s.data;
           if (s.isAlive) {
             totalCurrent += s.currentHp;
             aliveCount++;
@@ -2577,6 +2621,15 @@
       this.bossBarFill.style.width = `${ratio * 100}%`;
       this.bossHpText.textContent = `${totalCurrent} / ${totalMax} HP`;
       this.bossPhaseText.textContent = `${aliveCount} INIMIGO${aliveCount > 1 ? 'S' : ''}`;
+
+      if (this.bossTitleText) {
+        if (bossData) {
+          this.bossTitleText.textContent = `👑 CHEFÃO: ${bossData.name.toUpperCase()}`;
+        } else {
+          const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
+          this.bossTitleText.textContent = `HORDA: ${theme.name.toUpperCase()}`;
+        }
+      }
     }
 
     chargeUltimate(val) {

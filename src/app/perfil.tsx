@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -34,7 +34,7 @@ import {
   Sparkles,
   X,
 } from 'lucide-react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useFocusEffect } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { logger } from '../utils/logger';
 import { sanitizeInput } from '../utils/security';
@@ -375,28 +375,28 @@ export default function PerfilScreen() {
     }
   };
 
-  useEffect(() => {
-    let isMounted = true;
-    const carregarEstatisticas = async () => {
-      try {
-        const resumo = await obterResumoProgressoUsuario();
-        if (isMounted) {
-          setTrilhasAndamentoCount(resumo.totalTrilhasAtivas);
-          setFasesConcluidasCount(resumo.totalFasesConcluidas);
-          setBossesDerrotadosCount(resumo.bossesDerrotados);
-          setSpeedrunsCount(resumo.speedrunsConcluidos);
-          setAcumuladoXp(resumo.xpAcumulado);
-        }
-      } catch (err) {
-        logger.warn('Erro ao carregar estatísticas do usuário:', err);
-      }
-    };
+  const carregarEstatisticas = useCallback(async () => {
+    try {
+      const resumo = await obterResumoProgressoUsuario();
+      setTrilhasAndamentoCount(resumo.totalTrilhasAtivas);
+      setFasesConcluidasCount(resumo.totalFasesConcluidas);
+      setBossesDerrotadosCount(resumo.bossesDerrotados);
+      setSpeedrunsCount(resumo.speedrunsConcluidos);
+      setAcumuladoXp(resumo.xpAcumulado);
+    } catch (err) {
+      logger.warn('Erro ao carregar estatísticas do usuário:', err);
+    }
+  }, []);
 
+  useEffect(() => {
     carregarEstatisticas();
-    return () => {
-      isMounted = false;
-    };
-  }, [user]);
+  }, [user, carregarEstatisticas]);
+
+  useFocusEffect(
+    useCallback(() => {
+      carregarEstatisticas();
+    }, [carregarEstatisticas])
+  );
 
   // Cálculo de nível com progressão equilibrada RPG combinando backend e offline
   const rawUserXp = Number(user?.xpTotal) || Number((user as any)?.xp) || 0;
@@ -410,11 +410,7 @@ export default function PerfilScreen() {
   // Ofensiva do usuário (dias consecutivos)
   const rawStreak = (user as any)?.ofensiva || (user as any)?.streak || (user as any)?.diasConsecutivos;
   const streak = typeof rawStreak === 'number' && rawStreak > 0 ? rawStreak : 1;
-  const dayStr = t('common.day');
-  const daysStr = t('common.days');
-  const streakSuffix = streak === 1
-    ? (dayStr && dayStr !== 'common.day' ? dayStr : 'dia')
-    : (daysStr && daysStr !== 'common.days' ? daysStr : 'dias');
+  const streakSuffix = streak === 1 ? 'dia' : 'dias';
 
   // Sistema de 10 Conquistas Reais do Jogador
   const conquistasList = useMemo(() => [
