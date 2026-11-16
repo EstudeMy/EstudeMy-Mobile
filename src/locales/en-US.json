@@ -20,6 +20,8 @@
     "class": "Class",
     "hello": "Hello",
     "student": "Student",
+    "days": "days",
+    "day": "day",
     "searchResults": "Search Results",
     "more": "More",
     "roles": {

@@ -38,6 +38,7 @@ import {
 } from '../../services/trilhaAcessoService';
 import { getCharacterImage, getTrackImage, EXTRA_IMAGES } from '../../constants/assets';
 import { calculateLevel } from '../../utils/leveling';
+import { obterResumoProgressoUsuario } from '../../services/progressoService';
 import {
   Search,
   Zap,
@@ -125,6 +126,7 @@ export default function HomeScreen() {
   const [filtroAssunto, setFiltroAssunto] = useState<string>('');
   const [filtroDificuldade, setFiltroDificuldade] = useState<'todas' | 'Facil' | 'Medio' | 'Dificil'>('todas');
   const [materiasDisponiveis, setMateriasDisponiveis] = useState<string[]>([]);
+  const [dashboardProgressoXp, setDashboardProgressoXp] = useState<number>(0);
 
   const refreshAccessState = useCallback(async () => {
     try {
@@ -155,12 +157,17 @@ export default function HomeScreen() {
     setLoading(true);
     try {
       const mappedIdioma = getMappedIdioma(language);
-      const [continueData, popularesData, novidadesData, materiasList] = await Promise.all([
+      const [continueData, popularesData, novidadesData, materiasList, progressoResumo] = await Promise.all([
         obterContinue(mappedIdioma),
         obterPopulares(mappedIdioma),
         obterNovidades(mappedIdioma),
         obterMaterias(),
+        obterResumoProgressoUsuario().catch(() => null),
       ]);
+
+      if (progressoResumo && typeof progressoResumo.xpAcumulado === 'number') {
+        setDashboardProgressoXp(progressoResumo.xpAcumulado);
+      }
 
       const filterByLanguage = (trilhas: Trilha[]) => {
         return trilhas.filter((t) => {
@@ -486,7 +493,8 @@ export default function HomeScreen() {
   };
 
   // Sistema de Leveling dinâmico baseado no XP Total acumulado
-  const xp = user?.xpTotal || 0;
+  const rawUserXp = Number(user?.xpTotal) || Number((user as any)?.xp) || 0;
+  const xp = Math.max(rawUserXp, dashboardProgressoXp);
   const { level, xpInCurrentLevel, xpNeededForNextLevel, progressPercentage, title } = calculateLevel(xp);
 
   // Card para os carrosséis horizontais
@@ -719,7 +727,7 @@ export default function HomeScreen() {
             <Image
               source={getCharacterImage(user?.personagem)}
               style={styles.headerAvatarImg}
-              resizeMode="contain"
+              resizeMode="cover"
             />
             <View>
               <Text style={[styles.greeting, { color: colors.text }]}>{t('common.hello') || 'Olá'}, {user?.nome || t('common.student') || 'Estudante'}!</Text>

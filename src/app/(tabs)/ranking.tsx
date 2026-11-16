@@ -326,7 +326,7 @@ export default function RankingScreen() {
           <Image
             source={getCharacterImage(item.personagem)}
             style={styles.userCharAvatar}
-            resizeMode="contain"
+            resizeMode="cover"
           />
           <View style={styles.userInfo}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>

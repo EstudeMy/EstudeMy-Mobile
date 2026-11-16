@@ -9,6 +9,7 @@ import {
   Image,
   TextInput,
   Platform,
+  Modal,
 } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { useAuth } from '../contexts/AuthContext';
@@ -31,6 +32,7 @@ import {
   Flame,
   Award,
   Sparkles,
+  X,
 } from 'lucide-react-native';
 import { useRouter } from 'expo-router';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -39,6 +41,7 @@ import { sanitizeInput } from '../utils/security';
 import { alterarMinhaSenha } from '../services/adminService';
 import { obterContinue } from '../services/trilhaService';
 import { calculateLevel } from '../utils/leveling';
+import { obterResumoProgressoUsuario, ProgressoResumo } from '../services/progressoService';
 
 export interface HeroSkin {
   id: string;
@@ -320,6 +323,10 @@ export default function PerfilScreen() {
   // Estatísticas de progresso
   const [trilhasAndamentoCount, setTrilhasAndamentoCount] = useState(0);
   const [fasesConcluidasCount, setFasesConcluidasCount] = useState(0);
+  const [bossesDerrotadosCount, setBossesDerrotadosCount] = useState(0);
+  const [speedrunsCount, setSpeedrunsCount] = useState(0);
+  const [acumuladoXp, setAcumuladoXp] = useState(0);
+  const [showAchievementsModal, setShowAchievementsModal] = useState(false);
 
   // Alterar Senha state
   const [senhaAtual, setSenhaAtual] = useState('');
@@ -368,33 +375,17 @@ export default function PerfilScreen() {
     }
   };
 
-  // Cálculo de nível com progressão equilibrada RPG
-  const xp = user?.xpTotal || 0;
-  const { level, xpInCurrentLevel, xpNeededForNextLevel, progressPercentage, title: levelTitle } = calculateLevel(xp);
-
   useEffect(() => {
     let isMounted = true;
     const carregarEstatisticas = async () => {
       try {
-        const [continueData, progressoRes] = await Promise.allSettled([
-          obterContinue(),
-          api.get('/api/progresso/usuario'),
-        ]);
-
+        const resumo = await obterResumoProgressoUsuario();
         if (isMounted) {
-          if (continueData.status === 'fulfilled' && Array.isArray(continueData.value)) {
-            setTrilhasAndamentoCount(continueData.value.length);
-          }
-          if (progressoRes.status === 'fulfilled' && progressoRes.value?.data) {
-            const data = progressoRes.value.data;
-            if (Array.isArray(data)) {
-              setFasesConcluidasCount(data.length);
-            } else if (typeof data.concluidas === 'number') {
-              setFasesConcluidasCount(data.concluidas);
-            } else if (Array.isArray(data.fasesConcluidas)) {
-              setFasesConcluidasCount(data.fasesConcluidas.length);
-            }
-          }
+          setTrilhasAndamentoCount(resumo.totalTrilhasAtivas);
+          setFasesConcluidasCount(resumo.totalFasesConcluidas);
+          setBossesDerrotadosCount(resumo.bossesDerrotados);
+          setSpeedrunsCount(resumo.speedrunsConcluidos);
+          setAcumuladoXp(resumo.xpAcumulado);
         }
       } catch (err) {
         logger.warn('Erro ao carregar estatísticas do usuário:', err);
@@ -405,7 +396,115 @@ export default function PerfilScreen() {
     return () => {
       isMounted = false;
     };
-  }, []);
+  }, [user]);
+
+  // Cálculo de nível com progressão equilibrada RPG combinando backend e offline
+  const rawUserXp = Number(user?.xpTotal) || Number((user as any)?.xp) || 0;
+  const xp = Math.max(rawUserXp, acumuladoXp, fasesConcluidasCount * 100);
+  const { level, xpInCurrentLevel, xpNeededForNextLevel, progressPercentage, title: levelTitle } = calculateLevel(xp);
+
+  // Ofensiva do usuário (dias consecutivos)
+  const rawStreak = (user as any)?.ofensiva || (user as any)?.streak || (user as any)?.diasConsecutivos;
+  const streak = typeof rawStreak === 'number' && rawStreak > 0 ? rawStreak : 1;
+  const streakSuffix = streak === 1 ? (t('common.day') || 'dia') : (t('common.days') || 'dias');
+
+  // Sistema de 10 Conquistas Reais do Jogador
+  const conquistasList = useMemo(() => [
+    {
+      id: 'first_step',
+      titulo: 'Primeiro Passo',
+      descricao: 'Conclua sua primeira fase em qualquer trilha',
+      icone: '🎯',
+      atual: Math.min(fasesConcluidasCount, 1),
+      max: 1,
+      desbloqueada: fasesConcluidasCount >= 1,
+    },
+    {
+      id: 'explorer',
+      titulo: 'Explorador da Sabedoria',
+      descricao: 'Inicie ou estude em pelo menos 1 trilha ativa',
+      icone: '🗺️',
+      atual: Math.min(trilhasAndamentoCount, 1),
+      max: 1,
+      desbloqueada: trilhasAndamentoCount >= 1,
+    },
+    {
+      id: 'warrior_lv2',
+      titulo: 'Guerreiro do Saber',
+      descricao: 'Alcance o Nível 2 de jogador na jornada RPG',
+      icone: '⚔️',
+      atual: Math.min(level, 2),
+      max: 2,
+      desbloqueada: level >= 2,
+    },
+    {
+      id: 'master_lv5',
+      titulo: 'Mestre dos Desafios',
+      descricao: 'Alcance o Nível 5 de jogador',
+      icone: '🔮',
+      atual: Math.min(level, 5),
+      max: 5,
+      desbloqueada: level >= 5,
+    },
+    {
+      id: 'veteran_phases',
+      titulo: 'Veterano de Fases',
+      descricao: 'Conclua com sucesso 4 ou mais fases',
+      icone: '🛡️',
+      atual: Math.min(fasesConcluidasCount, 4),
+      max: 4,
+      desbloqueada: fasesConcluidasCount >= 4,
+    },
+    {
+      id: 'boss_hunter',
+      titulo: 'Caçador de Chefões',
+      descricao: 'Derrote pelo menos 1 Chefão Supremo no Boss Rush',
+      icone: '👹',
+      atual: Math.min(bossesDerrotadosCount, 1),
+      max: 1,
+      desbloqueada: bossesDerrotadosCount >= 1,
+    },
+    {
+      id: 'supreme_champion',
+      titulo: 'Campeão da Arena',
+      descricao: 'Derrote todos os 4 Chefões Supremos da Arena',
+      icone: '👑',
+      atual: Math.min(bossesDerrotadosCount, 4),
+      max: 4,
+      desbloqueada: bossesDerrotadosCount >= 4,
+    },
+    {
+      id: 'speedrunner',
+      titulo: 'Velocista Implacável',
+      descricao: 'Conclua uma fase no modo Speedrun contra o relógio',
+      icone: '⚡',
+      atual: Math.min(speedrunsCount, 1),
+      max: 1,
+      desbloqueada: speedrunsCount >= 1,
+    },
+    {
+      id: 'habit_flame',
+      titulo: 'Chama do Hábito',
+      descricao: 'Mantenha uma ofensiva de estudos de pelo menos 3 dias',
+      icone: '🔥',
+      atual: Math.min(streak, 3),
+      max: 3,
+      desbloqueada: streak >= 3,
+    },
+    {
+      id: 'living_legend',
+      titulo: 'Lenda Viva EstudeMy',
+      descricao: 'Alcance o Nível 10 ou acumule 1.000+ XP',
+      icone: '🌟',
+      atual: Math.min(xp, 1000),
+      max: 1000,
+      desbloqueada: level >= 10 || xp >= 1000,
+    },
+  ], [fasesConcluidasCount, trilhasAndamentoCount, level, bossesDerrotadosCount, speedrunsCount, streak, xp]);
+
+  const conquistasDesbloqueadas = useMemo(() => {
+    return conquistasList.filter((c) => c.desbloqueada).length;
+  }, [conquistasList]);
 
   const fraseCadastro = useMemo(() => {
     const rawDate =
@@ -477,7 +576,7 @@ export default function PerfilScreen() {
           <Image
             source={getCharacterImage(selectedHero)}
             style={styles.avatarImage}
-            resizeMode="contain"
+            resizeMode="cover"
           />
         </View>
         <Text style={[styles.userName, { color: colors.text }]}>{user?.nome || 'Estudante'}</Text>
@@ -573,19 +672,24 @@ export default function PerfilScreen() {
           <View style={[styles.statItemCard, { backgroundColor: colors.cardSecondary }]}>
             <Flame size={18} color="#EF4444" />
             <Text style={[styles.statItemValue, { color: '#EF4444' }]}>
-              {(user as any)?.ofensiva || (user as any)?.streak || 3} {t('common.days') || 'dias'}
+              {streak} {streakSuffix}
             </Text>
             <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>{t('profile.streak') || 'Ofensiva'}</Text>
           </View>
 
-          {/* Card 6: Conquistas */}
-          <View style={[styles.statItemCard, { backgroundColor: colors.cardSecondary }]}>
+          {/* Card 6: Conquistas (Interativo com Modal de Detalhes) */}
+          <TouchableOpacity
+            style={[styles.statItemCard, { backgroundColor: colors.cardSecondary, borderColor: '#10B981', borderWidth: 2 }]}
+            onPress={() => setShowAchievementsModal(true)}
+            activeOpacity={0.8}
+          >
             <Award size={18} color="#10B981" />
-            <Text style={[styles.statItemValue, { color: colors.text }]}>
-              {Math.min(level, 10)}/10
+            <Text style={[styles.statItemValue, { color: '#10B981' }]}>
+              {conquistasDesbloqueadas}/10
             </Text>
             <Text style={[styles.statItemLabel, { color: colors.textMuted }]}>{t('profile.achievements') || 'Conquistas'}</Text>
-          </View>
+            <Text style={{ fontSize: 8, color: '#10B981', fontWeight: '900', marginTop: 2 }}>TOQUE P/ VER</Text>
+          </TouchableOpacity>
         </View>
       </View>
 
@@ -641,8 +745,8 @@ export default function PerfilScreen() {
                 <View style={styles.skinCardBody}>
                   <Image
                     source={getCharacterImage(hero.id)}
-                    style={styles.heroAvatarImg}
-                    resizeMode="contain"
+                    style={[styles.heroAvatarImg, { borderColor: hero.badgeColor }]}
+                    resizeMode="cover"
                   />
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.skinNameText, { color: colors.text }]}>{hero.name} ({hero.heroName})</Text>
@@ -722,7 +826,7 @@ export default function PerfilScreen() {
                       skin.id.includes('lava') && { tintColor: '#EF4444' },
                       skin.id.includes('espectral') && { tintColor: '#A855F7' },
                     ]}
-                    resizeMode="contain"
+                    resizeMode="cover"
                   />
                   <View style={{ flex: 1 }}>
                     <Text style={[styles.skinNameText, { color: colors.text }]}>{skin.name}</Text>
@@ -856,6 +960,68 @@ export default function PerfilScreen() {
       </View>
 
       <View style={{ height: 60 }} />
+
+      {/* Modal de Conquistas de Aprendizado */}
+      <Modal
+        visible={showAchievementsModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={() => setShowAchievementsModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <View style={styles.modalHeaderRow}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Award size={22} color="#10B981" />
+                <Text style={[styles.modalTitle, { color: colors.text }]}>
+                  Conquistas ({conquistasDesbloqueadas}/10)
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setShowAchievementsModal(false)}
+                style={styles.modalCloseBtn}
+              >
+                <X size={20} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
+              Complete objetivos na sua jornada para desbloquear conquistas e subir no Ranking EstudeMy:
+            </Text>
+
+            <ScrollView style={{ maxHeight: 420 }} showsVerticalScrollIndicator={false}>
+              {conquistasList.map((conquista) => (
+                <View
+                  key={conquista.id}
+                  style={[
+                    styles.achievementRowCard,
+                    { backgroundColor: colors.cardSecondary, borderColor: conquista.desbloqueada ? '#10B981' : colors.border },
+                    conquista.desbloqueada && styles.achievementUnlockedCard,
+                  ]}
+                >
+                  <Text style={styles.achievementEmoji}>{conquista.icone}</Text>
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <Text style={[styles.achievementTitle, { color: colors.text }]}>{conquista.titulo}</Text>
+                      {conquista.desbloqueada ? (
+                        <View style={styles.unlockedPill}>
+                          <CheckCircle2 size={11} color="#ffffff" style={{ marginRight: 3 }} />
+                          <Text style={styles.unlockedPillText}>DESBLOQUEADA</Text>
+                        </View>
+                      ) : (
+                        <Text style={[styles.achievementProgressText, { color: colors.textMuted }]}>
+                          {conquista.atual}/{conquista.max}
+                        </Text>
+                      )}
+                    </View>
+                    <Text style={[styles.achievementDesc, { color: colors.textMuted }]}>{conquista.descricao}</Text>
+                  </View>
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 }
@@ -896,11 +1062,11 @@ const styles = StyleSheet.create({
     marginBottom: 24,
   },
   avatarContainer: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
+    width: 88,
+    height: 88,
+    borderRadius: 44,
     backgroundColor: '#374151',
-    borderWidth: 3,
+    borderWidth: 3.5,
     borderColor: '#1b1b1b',
     justifyContent: 'center',
     alignItems: 'center',
@@ -908,8 +1074,8 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
   },
   avatarImage: {
-    width: 74,
-    height: 74,
+    width: 88,
+    height: 88,
   },
   charSelectImg: {
     width: 48,
@@ -1113,8 +1279,12 @@ const styles = StyleSheet.create({
     marginBottom: 10,
   },
   heroAvatarImg: {
-    width: 60,
-    height: 60,
+    width: 66,
+    height: 66,
+    borderRadius: 14,
+    borderWidth: 2.5,
+    borderColor: '#1b1b1b',
+    backgroundColor: '#1E293B',
   },
   skinsGrid: {
     gap: 10,
@@ -1169,8 +1339,12 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   skinAvatarImg: {
-    width: 52,
-    height: 52,
+    width: 56,
+    height: 56,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+    backgroundColor: '#1E293B',
   },
   skinNameText: {
     fontSize: 15,
@@ -1305,5 +1479,88 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '900',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  modalContent: {
+    width: '100%',
+    maxWidth: 520,
+    borderRadius: 18,
+    borderWidth: 3.5,
+    padding: 20,
+    shadowColor: '#000000',
+    shadowOffset: { width: 6, height: 6 },
+    shadowOpacity: 1,
+    shadowRadius: 0,
+    elevation: 8,
+  },
+  modalHeaderRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  modalTitle: {
+    fontSize: 18,
+    fontWeight: '900',
+  },
+  modalCloseBtn: {
+    padding: 6,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  modalSubtitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    marginBottom: 16,
+    lineHeight: 17,
+  },
+  achievementRowCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+    marginBottom: 10,
+    gap: 12,
+  },
+  achievementUnlockedCard: {
+    backgroundColor: 'rgba(16, 185, 129, 0.08)',
+  },
+  achievementEmoji: {
+    fontSize: 26,
+  },
+  achievementTitle: {
+    fontSize: 14,
+    fontWeight: '900',
+  },
+  achievementDesc: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+    lineHeight: 15,
+  },
+  unlockedPill: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#10B981',
+    paddingHorizontal: 7,
+    paddingVertical: 2,
+    borderRadius: 6,
+  },
+  unlockedPillText: {
+    color: '#ffffff',
+    fontSize: 9,
+    fontWeight: '900',
+    letterSpacing: 0.5,
+  },
+  achievementProgressText: {
+    fontSize: 11,
+    fontWeight: '800',
   },
 });
