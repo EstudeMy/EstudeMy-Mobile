@@ -1260,11 +1260,16 @@
       this.modoJogo = (raw?.modoJogo || raw?.modo || 'campanha').toLowerCase().trim();
 
       // Prioridade absoluta para parâmetros da URL se presentes
+      let urlPhase = null;
       try {
         const urlParams = new URLSearchParams(window.location.search);
         const urlModo = urlParams.get('modo');
         if (urlModo) {
           this.modoJogo = urlModo.toLowerCase().trim();
+        }
+        const p = urlParams.get('phase');
+        if (p !== null && p !== undefined && p !== '') {
+          urlPhase = parseInt(p, 10);
         }
         const urlTema = (urlParams.get('tema') || '').toLowerCase().trim();
         if (urlTema) {
@@ -1364,7 +1369,11 @@
 
       // Determina a Fase da Trilha Temática
       let initialPhase = 0;
-      if (typeof raw?.phaseIndex === 'number') {
+      if (urlPhase !== null && !isNaN(urlPhase) && urlPhase >= 0) {
+        initialPhase = urlPhase;
+      } else if (this.modoJogo === 'boss_rush') {
+        initialPhase = 0;
+      } else if (typeof raw?.phaseIndex === 'number') {
         initialPhase = Math.max(0, raw.phaseIndex % 4);
       } else if (typeof raw?.ordem === 'number' && raw.ordem >= 1) {
         const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;

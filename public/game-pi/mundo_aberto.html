@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-    <title>EstudeMy — Mundo Aberto (Exploração Livre)</title>
+    <title>EstudeMy — Mundo Aberto (Exploração Panorâmica)</title>
     <link rel="icon" type="image/x-icon" href="favicon.ico" />
     <style>
         * {
@@ -31,32 +31,60 @@
             background: #090a0f;
         }
 
-        /* 1. Cenário Panorâmico Estendido (Mundo Aberto Temático de 2400px) */
+        /* 1. Cenário Panorâmico Único Contínuo de 2600px */
         #world-stage {
             position: absolute;
             left: 0;
             top: 0;
-            width: 2400px;
+            width: 2600px;
             height: 100%;
             will-change: transform;
-            transition: transform 0.05s linear;
+            transition: transform 0.04s linear;
         }
 
-        .world-panorama {
+        /* Fundo Panorâmico Único do Tema da Trilha */
+        #world-skyline {
             position: absolute;
             top: 0;
             left: 0;
-            width: 100%;
-            height: 100%;
-            display: flex;
-        }
-
-        .world-zone {
-            width: 800px;
+            width: 2600px;
             height: 100%;
             background-size: cover;
             background-position: center bottom;
-            position: relative;
+            background-repeat: no-repeat;
+            z-index: 1;
+        }
+
+        /* Gradientes e Iluminação Atmosférica Contínua */
+        #world-skyline::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(to bottom, rgba(5, 7, 13, 0.25) 0%, rgba(5, 7, 13, 0.05) 55%, rgba(5, 7, 13, 0.75) 100%);
+            pointer-events: none;
+        }
+
+        /* Chão e Terreno Orgânico Contínuo */
+        #world-ground {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 2600px;
+            height: 145px;
+            z-index: 5;
+            background: linear-gradient(180deg, rgba(20, 24, 33, 0.95) 0%, rgba(9, 11, 16, 1) 100%);
+            border-top: 3px solid rgba(56, 189, 248, 0.35);
+            box-shadow: inset 0 10px 30px rgba(0, 0, 0, 0.85);
+        }
+
+        .ground-path-detail {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 18px;
+            background: repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.06) 0px, rgba(255, 255, 255, 0.06) 30px, transparent 30px, transparent 70px);
+            opacity: 0.7;
         }
 
         /* Iluminação e Atmosfera do Mundo Aberto */
@@ -64,7 +92,7 @@
             position: absolute;
             inset: 0;
             pointer-events: none;
-            background: radial-gradient(circle at 50% 50%, transparent 45%, rgba(5, 7, 13, 0.75) 100%);
+            background: radial-gradient(circle at 50% 50%, transparent 45%, rgba(5, 7, 13, 0.72) 100%);
             z-index: 10;
         }
 
@@ -75,7 +103,7 @@
             z-index: 12;
         }
 
-        /* 2. Top Bar do Mundo Aberto */
+        /* 2. Top Bar e Minimapa Holográfico */
         #world-top-bar {
             position: absolute;
             top: 14px;
@@ -99,7 +127,7 @@
             display: flex;
             align-items: center;
             gap: 8px;
-            background: rgba(15, 23, 42, 0.88);
+            background: rgba(15, 23, 42, 0.9);
             backdrop-filter: blur(8px);
             border: 2px solid #38bdf8;
             border-radius: 20px;
@@ -122,6 +150,61 @@
             padding: 2px 8px;
             border-radius: 10px;
             margin-left: 4px;
+        }
+
+        /* Minimapa Holográfico Horizontal */
+        .world-minimap-card {
+            background: rgba(15, 23, 42, 0.88);
+            backdrop-filter: blur(8px);
+            border: 2px solid rgba(250, 204, 21, 0.6);
+            border-radius: 16px;
+            padding: 6px 14px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
+            pointer-events: auto;
+        }
+
+        .minimap-track-label {
+            font-size: 10px;
+            font-weight: 800;
+            color: #facc15;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        .minimap-bar-wrap {
+            position: relative;
+            width: 220px;
+            height: 12px;
+            background: #1e293b;
+            border-radius: 6px;
+            border: 1px solid #475569;
+            overflow: visible;
+        }
+
+        .minimap-milestone-icon {
+            position: absolute;
+            top: -7px;
+            font-size: 12px;
+            transform: translateX(-50%);
+            z-index: 2;
+        }
+
+        .minimap-player-marker {
+            position: absolute;
+            top: -4px;
+            width: 10px;
+            height: 18px;
+            background: #38bdf8;
+            border: 2px solid #ffffff;
+            border-radius: 4px;
+            transform: translateX(-50%);
+            box-shadow: 0 0 10px #38bdf8;
+            z-index: 5;
+            transition: left 0.05s linear;
         }
 
         .coins-badge-pill {
@@ -171,7 +254,222 @@
             transform: translateY(-2px);
         }
 
-        /* 3. Atores do Mundo (Herói e NPCs) */
+        /* 3. Marcos Orgânicos no Cenário Único */
+        .world-landmark {
+            position: absolute;
+            z-index: 15;
+            pointer-events: none;
+        }
+
+        /* Marco 1: Acampamento Nômade (x = 380px) */
+        #landmark-camp {
+            left: 320px;
+            bottom: 120px;
+            width: 220px;
+            height: 160px;
+        }
+
+        .camp-tent {
+            position: absolute;
+            left: 0;
+            bottom: 15px;
+            width: 140px;
+            height: 110px;
+            background: linear-gradient(135deg, #b45309 0%, #78350f 100%);
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.7);
+            border-bottom: 4px solid #451a03;
+        }
+
+        .camp-tent-door {
+            position: absolute;
+            left: 50%;
+            bottom: 0;
+            width: 38px;
+            height: 55px;
+            transform: translateX(-50%);
+            background: #1c1917;
+            clip-path: polygon(50% 0%, 0% 100%, 100% 100%);
+        }
+
+        .campfire {
+            position: absolute;
+            right: 15px;
+            bottom: 8px;
+            width: 44px;
+            height: 38px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .fire-flame {
+            width: 24px;
+            height: 32px;
+            background: radial-gradient(circle, #facc15 15%, #f97316 65%, transparent 95%);
+            border-radius: 50% 50% 30% 30% / 60% 60% 40% 40%;
+            animation: flameFlicker 0.6s infinite alternate ease-in-out;
+            box-shadow: 0 0 20px #f97316, 0 0 40px #ef4444;
+        }
+
+        @keyframes flameFlicker {
+            0% { transform: scale(0.9) rotate(-3deg); opacity: 0.9; }
+            100% { transform: scale(1.15) rotate(4deg); opacity: 1; }
+        }
+
+        /* Marco 2: Santuário Ancestral do Saber (x = 1040px) */
+        #landmark-shrine {
+            left: 980px;
+            bottom: 125px;
+            width: 200px;
+            height: 180px;
+        }
+
+        .rune-monolith {
+            position: absolute;
+            left: 20px;
+            bottom: 10px;
+            width: 48px;
+            height: 150px;
+            background: linear-gradient(180deg, #334155 0%, #1e293b 100%);
+            border-radius: 8px 8px 2px 2px;
+            border: 2px solid #64748b;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.8), 0 0 20px rgba(56, 189, 248, 0.4);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-around;
+            padding: 10px 0;
+        }
+
+        .monolith-rune {
+            font-size: 14px;
+            color: #38bdf8;
+            text-shadow: 0 0 8px #38bdf8;
+            animation: pulseRune 1.6s infinite alternate ease-in-out;
+        }
+
+        @keyframes pulseRune {
+            0% { opacity: 0.4; filter: brightness(0.8); }
+            100% { opacity: 1; filter: brightness(1.5); }
+        }
+
+        .floating-orb {
+            position: absolute;
+            right: 40px;
+            bottom: 70px;
+            width: 32px;
+            height: 32px;
+            background: radial-gradient(circle at 35% 35%, #ffffff 0%, #38bdf8 45%, #0284c7 85%);
+            border-radius: 50%;
+            box-shadow: 0 0 25px #38bdf8, 0 0 50px rgba(56, 189, 248, 0.6);
+            animation: orbFloat 2.4s infinite ease-in-out alternate;
+        }
+
+        @keyframes orbFloat {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-16px); }
+        }
+
+        /* Marco 3: Oásis / Fonte Sagrada (x = 1680px) */
+        #landmark-oasis {
+            left: 1610px;
+            bottom: 120px;
+            width: 220px;
+            height: 150px;
+        }
+
+        .sacred-fountain {
+            position: absolute;
+            left: 20px;
+            bottom: 5px;
+            width: 120px;
+            height: 48px;
+            background: radial-gradient(ellipse at center, #06b6d4 0%, #0e7490 60%, #155e75 100%);
+            border-radius: 50%;
+            border: 3px solid #67e8f9;
+            box-shadow: 0 0 30px rgba(6, 182, 212, 0.65);
+        }
+
+        .fountain-particles {
+            position: absolute;
+            left: 50%;
+            bottom: 15px;
+            width: 16px;
+            height: 35px;
+            transform: translateX(-50%);
+            background: radial-gradient(circle, #a5f3fc 10%, transparent 80%);
+            animation: waterGlow 1.2s infinite alternate ease-in-out;
+        }
+
+        @keyframes waterGlow {
+            0% { transform: translateX(-50%) scaleY(0.8); opacity: 0.7; }
+            100% { transform: translateX(-50%) scaleY(1.3); opacity: 1; }
+        }
+
+        /* Marco 4: Grande Portal Dimensional da Trilha (x = 2280px) */
+        #landmark-portal {
+            left: 2200px;
+            bottom: 110px;
+            width: 220px;
+            height: 230px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .portal-stargate {
+            position: relative;
+            width: 150px;
+            height: 150px;
+            border-radius: 50%;
+            border: 6px dashed #facc15;
+            animation: spinPortal 16s linear infinite;
+            box-shadow: 0 0 35px #facc15, 0 0 70px rgba(234, 179, 8, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .portal-vortex {
+            position: absolute;
+            inset: 12px;
+            border-radius: 50%;
+            background: radial-gradient(circle at center, #ffffff 5%, #a855f7 35%, #6b21a8 70%, #090a0f 95%);
+            animation: pulseVortex 2s infinite alternate ease-in-out;
+        }
+
+        @keyframes spinPortal {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes pulseVortex {
+            0% { filter: brightness(0.9) contrast(1.1); transform: scale(0.96); }
+            100% { filter: brightness(1.3) contrast(1.3); transform: scale(1.04); }
+        }
+
+        .portal-enter-cta {
+            margin-top: 10px;
+            background: linear-gradient(135deg, #e11d48 0%, #be123c 100%);
+            color: #ffffff;
+            border: 2px solid #ffffff;
+            border-radius: 12px;
+            padding: 6px 14px;
+            font-size: 11px;
+            font-weight: 900;
+            cursor: pointer;
+            pointer-events: auto;
+            box-shadow: 0 4px 15px rgba(225, 29, 72, 0.6);
+            transition: all 0.2s ease;
+        }
+
+        .portal-enter-cta:hover {
+            transform: scale(1.08);
+            background: #f43f5e;
+        }
+
+        /* 4. Atores do Mundo (Herói e NPCs) */
         .world-actor {
             position: absolute;
             width: 140px;
@@ -215,7 +513,7 @@
             font-size: 12px;
             font-weight: 800;
             color: #facc15;
-            background: rgba(15, 23, 42, 0.85);
+            background: rgba(15, 23, 42, 0.9);
             padding: 2px 8px;
             border-radius: 8px;
             border: 1px solid #eab308;
@@ -227,7 +525,7 @@
             font-weight: 600;
             color: #38bdf8;
             margin-top: 1px;
-            background: rgba(15, 23, 42, 0.65);
+            background: rgba(15, 23, 42, 0.7);
             padding: 1px 6px;
             border-radius: 6px;
         }
@@ -259,14 +557,35 @@
             100% { transform: translateY(-6px); }
         }
 
-        /* 4. Caixa de Diálogo RPG */
+        /* Efeito Visual de Golpe do Herói no Mundo Aberto */
+        #player-slash-fx {
+            position: absolute;
+            right: -30px;
+            top: 40px;
+            width: 70px;
+            height: 70px;
+            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.9) 0%, rgba(56, 189, 248, 0.8) 45%, transparent 75%);
+            border-radius: 50%;
+            pointer-events: none;
+            opacity: 0;
+            transform: scale(0.4) rotate(25deg);
+            transition: opacity 0.1s ease, transform 0.15s ease;
+            z-index: 25;
+        }
+
+        #player-slash-fx.slashing {
+            opacity: 1;
+            transform: scale(1.2) rotate(15deg);
+        }
+
+        /* 5. Caixa de Diálogo RPG */
         #dialogue-modal {
             position: absolute;
             bottom: 24px;
             left: 50%;
             transform: translateX(-50%);
             width: min(90%, 820px);
-            background: rgba(15, 23, 42, 0.94);
+            background: rgba(15, 23, 42, 0.95);
             backdrop-filter: blur(12px);
             border: 3px solid #38bdf8;
             border-radius: 18px;
@@ -377,7 +696,7 @@
             background: #334155;
         }
 
-        /* 5. Modais RPG Interativos (Loja, Quiz Treino, Bênção, Dossiê) */
+        /* 6. Modais RPG Interativos (Loja, Quiz Treino, Bênção, Dossiê) */
         .rpg-fullscreen-modal {
             position: absolute;
             inset: 0;
@@ -587,7 +906,7 @@
             transform: translateX(-50%) translateY(0);
         }
 
-        /* 6. Controles Virtuais Touch (Mobile / Tablet) */
+        /* 7. Controles Virtuais Touch (Mobile / Tablet) */
         #touch-controls {
             position: absolute;
             bottom: 24px;
@@ -636,17 +955,19 @@
         .dpad-right { top: 48px; right: 0; }
 
         .touch-action-box {
+            display: flex;
+            align-items: center;
+            gap: 12px;
             pointer-events: auto;
         }
 
-        .touch-interact-btn {
-            width: 68px;
-            height: 68px;
-            border-radius: 34px;
-            background: #facc15;
-            color: #0f172a;
-            border: 3px solid #ffffff;
-            font-size: 14px;
+        .touch-action-btn {
+            width: 64px;
+            height: 64px;
+            border-radius: 32px;
+            color: #ffffff;
+            border: 2.5px solid #ffffff;
+            font-size: 12px;
             font-weight: 900;
             display: flex;
             flex-direction: column;
@@ -654,11 +975,23 @@
             justify-content: center;
             cursor: pointer;
             box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+            transition: transform 0.1s ease;
         }
 
-        .touch-interact-btn:active {
+        .touch-action-btn:active {
             transform: scale(0.92);
-            background: #eab308;
+        }
+
+        .btn-interact {
+            background: #facc15;
+            color: #0f172a;
+            border-color: #fef08a;
+        }
+
+        .btn-attack {
+            background: #ef4444;
+            color: #ffffff;
+            border-color: #fca5a5;
         }
 
         @media (min-width: 1024px) {
@@ -671,17 +1004,55 @@
 <body>
 
     <div id="world-container">
-        <!-- 1. Cenário Panorâmico Estendido (Configurado estritamente pelo tema da trilha) -->
+        <!-- 1. Cenário Panorâmico Único Contínuo (2600px) -->
         <div id="world-stage">
-            <div class="world-panorama">
-                <div class="world-zone" id="world-zone-1"></div>
-                <div class="world-zone" id="world-zone-2"></div>
-                <div class="world-zone" id="world-zone-3"></div>
+            <!-- Camada de Fundo Unificado por Tema -->
+            <div id="world-skyline"></div>
+
+            <!-- Camada de Chão / Terreno Contínuo -->
+            <div id="world-ground">
+                <div class="ground-path-detail"></div>
             </div>
 
-            <!-- NPCs Posicionados no Mundo -->
+            <!-- Marco 1: Acampamento Nômade (x = 380px) -->
+            <div class="world-landmark" id="landmark-camp">
+                <div class="camp-tent">
+                    <div class="camp-tent-door"></div>
+                </div>
+                <div class="campfire">
+                    <div class="fire-flame"></div>
+                </div>
+            </div>
+
+            <!-- Marco 2: Santuário Ancestral do Saber (x = 1040px) -->
+            <div class="world-landmark" id="landmark-shrine">
+                <div class="rune-monolith">
+                    <span class="monolith-rune">ᚱ</span>
+                    <span class="monolith-rune">ᚠ</span>
+                    <span class="monolith-rune">ᛟ</span>
+                </div>
+                <div class="floating-orb"></div>
+            </div>
+
+            <!-- Marco 3: Oásis / Fonte da Vitalidade (x = 1680px) -->
+            <div class="world-landmark" id="landmark-oasis">
+                <div class="sacred-fountain"></div>
+                <div class="fountain-particles"></div>
+            </div>
+
+            <!-- Marco 4: Grande Portal Dimensional da Trilha (x = 2280px) -->
+            <div class="world-landmark" id="landmark-portal">
+                <div class="portal-stargate">
+                    <div class="portal-vortex"></div>
+                </div>
+                <button class="portal-enter-cta" onclick="enterBattleFromWorld()">
+                    ⚔️ ENTRAR NA BATALHA
+                </button>
+            </div>
+
+            <!-- NPCs Posicionados no Cenário Único -->
             <!-- NPC 1: Mercador da Trilha (Loja RPG) -->
-            <div class="world-actor" id="npc-merchant" style="left: 450px; bottom: 120px;">
+            <div class="world-actor" id="npc-merchant" style="left: 480px; bottom: 120px;">
                 <div class="npc-tag-container">
                     <span class="npc-name" id="npc-merchant-name">🛒 Mercador do Vale</span>
                     <span class="npc-role" id="npc-merchant-role">Loja de Elixires & Amuletos</span>
@@ -694,7 +1065,7 @@
             </div>
 
             <!-- NPC 2: Sábio do Conhecimento (Quiz de Treino) -->
-            <div class="world-actor" id="npc-mentor" style="left: 980px; bottom: 140px;">
+            <div class="world-actor" id="npc-mentor" style="left: 1120px; bottom: 125px;">
                 <div class="npc-tag-container">
                     <span class="npc-name" id="npc-mentor-name">🧠 Sábio Ancestral</span>
                     <span class="npc-role" id="npc-mentor-role">Treino Pedagógico</span>
@@ -707,7 +1078,7 @@
             </div>
 
             <!-- NPC 3: Curandeira dos Elementos (Bênção) -->
-            <div class="world-actor" id="npc-healer" style="left: 1420px; bottom: 110px;">
+            <div class="world-actor" id="npc-healer" style="left: 1740px; bottom: 120px;">
                 <div class="npc-tag-container">
                     <span class="npc-name" id="npc-healer-name">✨ Curandeira dos Ventos</span>
                     <span class="npc-role" id="npc-healer-role">Restauração & Vigor</span>
@@ -719,10 +1090,10 @@
                 <div class="actor-shadow"></div>
             </div>
 
-            <!-- NPC 4: Sentinela dos Portões (Dossiê Tático) -->
-            <div class="world-actor" id="npc-scout" style="left: 1950px; bottom: 135px;">
+            <!-- NPC 4: Sentinela dos Portões (Dossiê Tático & Batalha) -->
+            <div class="world-actor" id="npc-scout" style="left: 2160px; bottom: 125px;">
                 <div class="npc-tag-container">
-                    <span class="npc-name" id="npc-scout-name">🛡️ Sentinela dos Portões</span>
+                    <span class="npc-name" id="npc-scout-name">🛡️ Sentinela Roland</span>
                     <span class="npc-role" id="npc-scout-role">Dossiê Tático dos Inimigos</span>
                 </div>
                 <div class="interact-prompt" id="prompt-scout" onclick="openDialogue('scout')">
@@ -733,9 +1104,10 @@
             </div>
 
             <!-- Herói do Jogador (Controlável) -->
-            <div class="world-actor" id="player-hero" style="left: 200px; bottom: 120px;">
+            <div class="world-actor" id="player-hero" style="left: 220px; bottom: 120px;">
                 <canvas id="player-sprite" class="actor-sprite-img" width="160" height="160"></canvas>
-                <div class="actor-shadow"></div>
+                <div id="player-slash-fx"></div>
+                <div class="actor-shadow" id="player-shadow"></div>
             </div>
         </div>
 
@@ -745,7 +1117,7 @@
         <!-- Toast Feedback -->
         <div id="world-toast">Item Adquirido com Sucesso!</div>
 
-        <!-- 2. Barra Superior -->
+        <!-- 2. Barra Superior com Minimapa Holográfico -->
         <header id="world-top-bar">
             <div class="top-badge-group">
                 <div class="world-location-badge">
@@ -753,140 +1125,149 @@
                     <span class="world-location-title" id="location-name-text">Carregando Região...</span>
                     <span class="world-mode-tag">Mundo Aberto</span>
                 </div>
+
+                <!-- Minimapa Holográfico Contínuo -->
+                <div class="world-minimap-card">
+                    <span class="minimap-track-label">Mapa do Território</span>
+                    <div class="minimap-bar-wrap">
+                        <span class="minimap-milestone-icon" style="left: 18%;">⛺</span>
+                        <span class="minimap-milestone-icon" style="left: 43%;">🧠</span>
+                        <span class="minimap-milestone-icon" style="left: 67%;">⛲</span>
+                        <span class="minimap-milestone-icon" style="left: 88%;">🌀</span>
+                        <div class="minimap-player-marker" id="minimap-marker" style="left: 8%;"></div>
+                    </div>
+                </div>
+
                 <div class="coins-badge-pill">
                     <span>🪙 Moedas:</span>
                     <span id="topbar-coins">150</span>
                 </div>
+
                 <div class="controls-hint-badge">
-                    <span>⌨️ [W,A,S,D] para Andar • [E] para Interagir</span>
+                    <span>⌨️ [A][D] / [←][→] Mover</span>
+                    <span style="margin-left: 6px; color:#38bdf8;">[ESPAÇO] Atacar</span>
+                    <span style="margin-left: 6px; color:#facc15;">[E] Interagir</span>
                 </div>
             </div>
 
             <div class="top-badge-group">
-                <button class="top-action-btn" id="btn-audio-toggle" onclick="toggleAudio()">
+                <button class="top-action-btn" onclick="toggleAudio()">
                     <span id="audio-icon">🔊</span>
                     <span id="audio-label">Som: ON</span>
                 </button>
-                <button class="top-action-btn" onclick="exitWorld()">
+                <button class="top-action-btn" onclick="exitWorld()" style="border-color:#ef4444; background: rgba(239, 68, 68, 0.2);">
                     <span>🚪</span>
-                    <span>Voltar à Trilha</span>
+                    <span>Sair</span>
                 </button>
             </div>
         </header>
 
-        <!-- 3. Modal de Diálogo RPG -->
+        <!-- 3. Diálogo RPG -->
         <div id="dialogue-modal">
             <div class="dialogue-portrait-box">
-                <img id="dialogue-portrait" class="dialogue-portrait-img" src="assets/sprites/mago/idle.gif" alt="NPC" />
+                <img id="dialogue-portrait" class="dialogue-portrait-img" src="assets/sprites/mago/idle.gif" alt="Retrato" />
             </div>
             <div class="dialogue-content">
                 <div class="dialogue-header">
-                    <span id="dialogue-speaker" class="dialogue-speaker-name">Mercador</span>
-                    <span id="dialogue-role" class="dialogue-speaker-role">Comerciante</span>
+                    <span class="dialogue-speaker-name" id="dialogue-speaker">Mercador do Vale</span>
+                    <span class="dialogue-speaker-role" id="dialogue-role">Comerciante</span>
                 </div>
-                <p id="dialogue-text" class="dialogue-text">Carregando diálogo...</p>
+                <p class="dialogue-text" id="dialogue-text">Carregando diálogo...</p>
                 <div class="dialogue-actions-row">
-                    <button class="dialogue-btn dialogue-btn-close" onclick="closeDialogue()">Fechar (ESC)</button>
-                    <button class="dialogue-btn dialogue-btn-action" id="dialogue-btn-action" style="display: none;" onclick="triggerNPCAction()">Ação Especial</button>
-                    <button class="dialogue-btn" id="dialogue-btn-next" onclick="nextDialogue()">Próximo ➔</button>
+                    <button class="dialogue-btn dialogue-btn-action" id="dialogue-btn-action" onclick="triggerNPCAction()">
+                        Abrir Loja
+                    </button>
+                    <button class="dialogue-btn" id="dialogue-btn-next" onclick="nextDialogue()">
+                        Próximo ➔
+                    </button>
+                    <button class="dialogue-btn dialogue-btn-close" onclick="closeDialogue()">
+                        Fechar
+                    </button>
                 </div>
             </div>
         </div>
 
-        <!-- 4. Modais Interativos de Função Única dos NPCs -->
-        <!-- 4A. LOJA DO MERCADOR -->
-        <div id="shop-modal" class="rpg-fullscreen-modal">
+        <!-- 4. Modal Loja RPG -->
+        <div class="rpg-fullscreen-modal" id="shop-modal">
             <div class="rpg-modal-card">
                 <div class="rpg-modal-header">
                     <div class="rpg-header-left">
                         <span class="rpg-modal-icon">🛒</span>
                         <div>
-                            <h2 class="rpg-modal-title" id="shop-title-text">Loja do Conhecimento</h2>
-                            <span class="rpg-modal-subtitle">Adquira elixires e relíquias para usar nas batalhas</span>
+                            <h2 class="rpg-modal-title">Bazar do Conhecimento</h2>
+                            <p class="rpg-modal-subtitle">Adquira elixires, poções e pergaminhos para sua jornada!</p>
                         </div>
                     </div>
                     <div class="rpg-coins-pill">
-                        <span>🪙 Moedas:</span>
-                        <strong id="shop-coins-val">150</strong>
+                        🪙 Moedas: <span id="shop-coins-val">150</span>
                     </div>
                 </div>
 
                 <div class="shop-grid">
                     <div class="shop-item-card">
                         <span class="item-icon">🧪</span>
-                        <h4 class="item-name">Poção de Vitalidade</h4>
-                        <p class="item-desc">Restaura +50 HP instantaneamente nos combates de trilha.</p>
+                        <h4 class="item-name">Poção de Vitalidade +50</h4>
+                        <p class="item-desc">Restaura 50 pontos de vida instantaneamente no próximo combate.</p>
                         <div class="item-footer">
-                            <span class="item-price">🪙 30 Moedas</span>
-                            <button class="item-buy-btn" onclick="buyShopItem('pocao_vida', 30, 'Poção de Vitalidade')">Comprar</button>
+                            <span class="item-price">🪙 40 Moedas</span>
+                            <button class="item-buy-btn" onclick="buyShopItem('potion_hp_50', 40, 'Poção de Vitalidade +50')">Comprar</button>
                         </div>
                     </div>
-
-                    <div class="shop-item-card">
-                        <span class="item-icon">⏳</span>
-                        <h4 class="item-name">Ampulheta de Chronos</h4>
-                        <p class="item-desc">+15 segundos no Modo Speedrun Ataque Contra o Tempo.</p>
-                        <div class="item-footer">
-                            <span class="item-price">🪙 45 Moedas</span>
-                            <button class="item-buy-btn" onclick="buyShopItem('ampulheta', 45, 'Ampulheta de Chronos')">Comprar</button>
-                        </div>
-                    </div>
-
-                    <div class="shop-item-card">
-                        <span class="item-icon">🛡️</span>
-                        <h4 class="item-name">Escudo de Titã</h4>
-                        <p class="item-desc">Reduz em 50% o dano do primeiro golpe recebido pelo herói.</p>
-                        <div class="item-footer">
-                            <span class="item-price">🪙 60 Moedas</span>
-                            <button class="item-buy-btn" onclick="buyShopItem('escudo_tita', 60, 'Escudo de Titã')">Comprar</button>
-                        </div>
-                    </div>
-
                     <div class="shop-item-card">
                         <span class="item-icon">📜</span>
-                        <h4 class="item-name">Pergaminho de Dica</h4>
-                        <p class="item-desc">Elimina 1 alternativa falsa durante o questionário.</p>
+                        <h4 class="item-name">Pergaminho de Dicas</h4>
+                        <p class="item-desc">Elimina 2 alternativas incorretas em uma questão crítica do chefe.</p>
                         <div class="item-footer">
-                            <span class="item-price">🪙 50 Moedas</span>
-                            <button class="item-buy-btn" onclick="buyShopItem('pergaminho', 50, 'Pergaminho de Dica')">Comprar</button>
+                            <span class="item-price">🪙 60 Moedas</span>
+                            <button class="item-buy-btn" onclick="buyShopItem('scroll_hint', 60, 'Pergaminho de Dicas')">Comprar</button>
                         </div>
                     </div>
-
                     <div class="shop-item-card">
-                        <span class="item-icon">⭐</span>
-                        <h4 class="item-name">Amuleto do Sábio</h4>
-                        <p class="item-desc">Concede +25% de XP bônus ao concluir qualquer fase da trilha.</p>
+                        <span class="item-icon">⚡</span>
+                        <h4 class="item-name">Cristal de Foco Arcana</h4>
+                        <p class="item-desc">Aumenta o dano do herói em 25% durante a fase inteira.</p>
                         <div class="item-footer">
-                            <span class="item-price">🪙 75 Moedas</span>
-                            <button class="item-buy-btn" onclick="buyShopItem('amuleto_sabio', 75, 'Amuleto do Sábio')">Comprar</button>
+                            <span class="item-price">🪙 80 Moedas</span>
+                            <button class="item-buy-btn" onclick="buyShopItem('crystal_focus', 80, 'Cristal de Foco Arcana')">Comprar</button>
+                        </div>
+                    </div>
+                    <div class="shop-item-card">
+                        <span class="item-icon">🛡️</span>
+                        <h4 class="item-name">Escudo Titânico Rúnico</h4>
+                        <p class="item-desc">Reduz em 40% o próximo golpe supremo que você receber.</p>
+                        <div class="item-footer">
+                            <span class="item-price">🪙 70 Moedas</span>
+                            <button class="item-buy-btn" onclick="buyShopItem('shield_titan', 70, 'Escudo Titânico Rúnico')">Comprar</button>
                         </div>
                     </div>
                 </div>
 
                 <div class="rpg-modal-footer">
-                    <button class="rpg-close-btn" onclick="closeModal('shop-modal')">Fechar Loja</button>
+                    <button class="rpg-close-btn" onclick="closeModal('shop-modal')">Voltar ao Mapa</button>
                 </div>
             </div>
         </div>
 
-        <!-- 4B. QUIZ TREINO DO SÁBIO -->
-        <div id="quiz-modal" class="rpg-fullscreen-modal">
-            <div class="rpg-modal-card" style="border-color: #38bdf8;">
+        <!-- 5. Modal Quiz Treino do Sábio -->
+        <div class="rpg-fullscreen-modal" id="quiz-modal">
+            <div class="rpg-modal-card">
                 <div class="rpg-modal-header">
                     <div class="rpg-header-left">
                         <span class="rpg-modal-icon">🧠</span>
                         <div>
-                            <h2 class="rpg-modal-title">Treino Rápido do Sábio</h2>
-                            <span class="rpg-modal-subtitle">Pratique sem risco de dano ou derrota</span>
+                            <h2 class="rpg-modal-title">Treino de Raciocínio com o Sábio</h2>
+                            <p class="rpg-modal-subtitle">Pratique questões pedagógicas sem risco de dano ou derrota!</p>
                         </div>
                     </div>
-                    <span id="quiz-counter" style="color: #38bdf8; font-weight: 800;">Questão 1/3</span>
+                    <span id="quiz-counter" style="color:#facc15; font-weight:800; font-size:13px;">Questão 1/3</span>
                 </div>
 
-                <div id="quiz-question-box" style="margin: 10px 0;">
-                    <p id="quiz-question-text" style="font-size: 16px; font-weight: 700; color: #f1f5f9; margin-bottom: 16px; line-height: 1.5;"></p>
+                <div>
+                    <h3 id="quiz-question-text" style="font-size:16px; margin-bottom:14px; color:#ffffff; line-height:1.4;">
+                        Carregando pergunta de treino...
+                    </h3>
                     <div id="quiz-options-container"></div>
-                    <p id="quiz-feedback-text" style="display: none; margin-top: 12px; font-size: 13px; font-weight: 700;"></p>
+                    <div id="quiz-feedback-text" style="display:none; margin-top:12px; font-weight:700; font-size:13px;"></div>
                 </div>
 
                 <div class="rpg-modal-footer">
@@ -895,79 +1276,87 @@
             </div>
         </div>
 
-        <!-- 4C. BÊNÇÃO DA CURANDEIRA -->
-        <div id="blessing-modal" class="rpg-fullscreen-modal">
-            <div class="rpg-modal-card" style="border-color: #10b981; text-align: center;">
-                <div style="font-size: 48px; margin-bottom: 8px;">✨</div>
-                <h2 class="rpg-modal-title" style="color: #10b981;">Bênção de Vitalidade & Serenidade</h2>
-                <p style="color: #cbd5e1; font-size: 14px; line-height: 1.6; margin: 12px 0;">
-                    As forças ancestrais curam sua mente e seu corpo! Sua energia foi restaurada e sua determinação para os combates da trilha aumentou.
+        <!-- 6. Modal Bênção de Vitalidade -->
+        <div class="rpg-fullscreen-modal" id="blessing-modal">
+            <div class="rpg-modal-card" style="text-align: center; align-items: center;">
+                <span style="font-size: 54px; margin-bottom: 8px;">✨</span>
+                <h2 class="rpg-modal-title" style="color:#38bdf8;">Bênção da Curandeira dos Ventos</h2>
+                <p style="font-size: 14px; color: #cbd5e1; max-width: 500px; line-height: 1.6;">
+                    Você foi envolvido por uma aura de restauração primordial! Sua mente foi acalmada e seu foco aumentado para a próxima batalha da trilha.
                 </p>
-                <div style="background: rgba(16, 185, 129, 0.15); border: 1.5px solid #10b981; border-radius: 12px; padding: 12px; color: #34d399; font-weight: 800;">
-                    🛡️ Vigor Renovado: +20 HP Máximo ativado para as próximas incursões!
+                <div style="background: rgba(56, 189, 248, 0.15); border: 2px solid #38bdf8; border-radius: 12px; padding: 12px 20px; color: #38bdf8; font-weight: 800; font-size: 13px; margin: 12px 0;">
+                    🛡️ Efeito Ativo: +20% Resistência a Erros no Próximo Confronto
                 </div>
-                <div class="rpg-modal-footer" style="justify-content: center; margin-top: 14px;">
-                    <button class="rpg-close-btn" style="background: #10b981;" onclick="closeModal('blessing-modal')">Agradecer e Prosseguir</button>
-                </div>
+                <button class="rpg-close-btn" onclick="closeModal('blessing-modal')">Receber Bênção e Continuar</button>
             </div>
         </div>
 
-        <!-- 4D. DOSSIÊ TÁTICO DO SENTINELA -->
-        <div id="dossier-modal" class="rpg-fullscreen-modal">
-            <div class="rpg-modal-card" style="border-color: #f43f5e;">
+        <!-- 7. Modal Dossiê Tático dos Inimigos -->
+        <div class="rpg-fullscreen-modal" id="dossier-modal">
+            <div class="rpg-modal-card">
                 <div class="rpg-modal-header">
                     <div class="rpg-header-left">
                         <span class="rpg-modal-icon">📜</span>
                         <div>
-                            <h2 class="rpg-modal-title">Dossiê Tático dos Monstros</h2>
-                            <span class="rpg-modal-subtitle">Fraquezas e avisos de combate desta trilha</span>
+                            <h2 class="rpg-modal-title">Dossiê de Inteligência do Território</h2>
+                            <p class="rpg-modal-subtitle">Relatórios táticos e fraquezas dos monstros deste bioma.</p>
                         </div>
                     </div>
                 </div>
 
-                <div id="dossier-content-list" style="display: flex; flex-direction: column; gap: 12px;"></div>
+                <div id="dossier-content-list" style="display:flex; flex-direction:column; gap:10px;">
+                    <!-- Preenchido dinamicamente com base no tema -->
+                </div>
 
-                <div class="rpg-modal-footer">
-                    <button class="rpg-close-btn" onclick="closeModal('dossier-modal')">Entendido</button>
+                <div class="rpg-modal-footer" style="gap:10px;">
+                    <button class="item-buy-btn" style="background:#e11d48; font-size:13px; padding:8px 18px;" onclick="enterBattleFromWorld()">
+                        ⚔️ Entrar na Batalha Agora
+                    </button>
+                    <button class="rpg-close-btn" onclick="closeModal('dossier-modal')">Fechar Dossiê</button>
                 </div>
             </div>
         </div>
 
-        <!-- 5. Controles Virtuais Touch (Mobile / Tablet) -->
+        <!-- 8. Controles Touch (Mobile) -->
         <div id="touch-controls">
             <div class="dpad-container">
-                <button class="dpad-btn dpad-up" onmousedown="startMove(0, 1)" onmouseup="stopMove()" ontouchstart="startMove(0, 1)" ontouchend="stopMove()">▲</button>
-                <button class="dpad-btn dpad-down" onmousedown="startMove(0, -1)" onmouseup="stopMove()" ontouchstart="startMove(0, -1)" ontouchend="stopMove()">▼</button>
-                <button class="dpad-btn dpad-left" onmousedown="startMove(-1, 0)" onmouseup="stopMove()" ontouchstart="startMove(-1, 0)" ontouchend="stopMove()">◀</button>
-                <button class="dpad-btn dpad-right" onmousedown="startMove(1, 0)" onmouseup="stopMove()" ontouchstart="startMove(1, 0)" ontouchend="stopMove()">▶</button>
+                <div class="dpad-btn dpad-up" onpointerdown="startMove(0, 1)" onpointerup="stopMove()" onpointerleave="stopMove()">▲</div>
+                <div class="dpad-btn dpad-down" onpointerdown="startMove(0, -1)" onpointerup="stopMove()" onpointerleave="stopMove()">▼</div>
+                <div class="dpad-btn dpad-left" onpointerdown="startMove(-1, 0)" onpointerup="stopMove()" onpointerleave="stopMove()">◀</div>
+                <div class="dpad-btn dpad-right" onpointerdown="startMove(1, 0)" onpointerup="stopMove()" onpointerleave="stopMove()">▶</div>
             </div>
 
             <div class="touch-action-box">
-                <button class="touch-interact-btn" onclick="triggerClosestInteraction()">
-                    <span>💬</span>
+                <div class="touch-action-btn btn-attack" onclick="triggerPlayerAttack()">
+                    <span style="font-size:18px;">⚔️</span>
+                    <span>Atacar</span>
+                </div>
+                <div class="touch-action-btn btn-interact" onclick="triggerClosestInteraction()">
+                    <span style="font-size:18px;">💬</span>
                     <span>Falar</span>
-                </button>
+                </div>
             </div>
         </div>
     </div>
 
     <script>
-        // ======================================================================
-        // MOTOR DE MUNDO ABERTO & EXPLORAÇÃO LIVRE COM NPCS E LOJA
-        // ======================================================================
         (function() {
-            'use strict';
-
-            // 1. Detecção do Tema Específico da Trilha
+            // 1. Identificação do Tema da Trilha e GameData
             const params = new URLSearchParams(window.location.search);
+            let rawTheme = (params.get('tema') || '').toLowerCase().trim();
             let gameData = null;
+
             try {
-                const s = sessionStorage.getItem('estudemy_game_data') || localStorage.getItem('estudemy_game_data');
-                if (s) gameData = JSON.parse(s);
+                if (window.parent && window.parent !== window && window.parent.gameData) {
+                    gameData = window.parent.gameData;
+                }
             } catch (e) {}
 
-            let rawTheme = (params.get('tema') || gameData?.trilhaTema || gameData?.cenario || '').toLowerCase().trim();
-            let activeTheme = 'castelo';
+            if (!rawTheme && gameData) {
+                rawTheme = (gameData.trilhaTema || gameData.cenario || '').toLowerCase().trim();
+            }
+
+            let activeTheme = 'deserto';
             if (rawTheme.includes('deserto') || rawTheme.includes('geo') || rawTheme.includes('bio')) {
                 activeTheme = 'deserto';
             } else if (rawTheme.includes('vila') || rawTheme.includes('port') || rawTheme.includes('cien') || rawTheme.includes('lit') || rawTheme.includes('filo')) {
@@ -976,64 +1365,67 @@
                 activeTheme = 'montanha';
             } else if (rawTheme.includes('vazio') || rawTheme.includes('cosmico')) {
                 activeTheme = 'vazio_cosmico';
-            } else {
+            } else if (rawTheme.includes('castelo')) {
                 activeTheme = 'castelo';
             }
 
-            // Mapas Panorâmicos: CADA TRILHA MOSTRA ESTRITAMENTE SEUS CENÁRIOS PRÓPRIOS
-            const THEME_ZONES = {
+            // Configuração Visual Panorâmica Única por Bioma
+            const THEME_PANORAMAS = {
                 deserto: {
                     title: 'Deserto Primordial',
-                    zones: [
-                        { name: 'Dunas Escaldantes da Erosão', bg: 'assets/backgrounds/deserto_fase1_dunas.jpg' },
-                        { name: 'Oásis dos Fósseis Antigos', bg: 'assets/backgrounds/deserto_fase2_oasis.jpg' },
-                        { name: 'Templo Solar do Arenito', bg: 'assets/backgrounds/deserto_fase3_ruinas.jpg' }
-                    ]
+                    bg: 'assets/backgrounds/deserto.jpg',
+                    groundGradient: 'linear-gradient(180deg, #d97706 0%, #b45309 30%, #78350f 100%)',
+                    groundBorder: '3px solid #facc15',
+                    particles: 'sand',
+                    subzones: ['Acampamento Nômade', 'Oásis dos Fósseis', 'Templo do Arenito', 'Portal de Khepri-Ra']
                 },
                 montanha: {
-                    title: 'Pico da Lógica',
-                    zones: [
-                        { name: 'Encosta Nevada dos Vetores', bg: 'assets/backgrounds/montanha_fase1_encosta.jpg' },
-                        { name: 'Desfiladeiro da Gravidade', bg: 'assets/backgrounds/montanha_fase2_desfiladeiro.jpg' },
-                        { name: 'Caverna dos Cristais Lógicos', bg: 'assets/backgrounds/montanha_fase3_caverna.jpg' }
-                    ]
+                    title: 'Pico da Lógica & Nevoeiro',
+                    bg: 'assets/backgrounds/montanha.jpg',
+                    groundGradient: 'linear-gradient(180deg, #475569 0%, #334155 35%, #0f172a 100%)',
+                    groundBorder: '3px solid #93c5fd',
+                    particles: 'snow',
+                    subzones: ['Posto da Encosta', 'Santuário dos Vetores', 'Caverna Glacial', 'Pico de Ignis']
                 },
                 castelo: {
-                    title: 'Castelo dos Dados',
-                    zones: [
-                        { name: 'Muralha e Portão dos Algoritmos', bg: 'assets/backgrounds/castelo_fase1_portao.jpg' },
-                        { name: 'Grande Salão dos Dados', bg: 'assets/backgrounds/castelo_fase2_salao.jpg' },
-                        { name: 'Catacumbas da Memória RAM', bg: 'assets/backgrounds/castelo_fase3_masmorra.jpg' }
-                    ]
+                    title: 'Castelo dos Dados & Algoritmos',
+                    bg: 'assets/backgrounds/castelo.jpg',
+                    groundGradient: 'linear-gradient(180deg, #334155 0%, #1e293b 35%, #090d16 100%)',
+                    groundBorder: '3px solid #38bdf8',
+                    particles: 'embers',
+                    subzones: ['Muralha Ocidental', 'Santuário RAM', 'Fonte Arcana', 'Trono do Soberano']
                 },
                 vila: {
-                    title: 'Vila Ancestral',
-                    zones: [
-                        { name: 'Praça do Mercado das Crônicas', bg: 'assets/backgrounds/vila_fase1_mercado.jpg' },
-                        { name: 'Grande Arquivo e Biblioteca Arcana', bg: 'assets/backgrounds/vila_fase2_biblioteca.jpg' },
-                        { name: 'Cripta dos Filósofos', bg: 'assets/backgrounds/vila_fase3_cripta.jpg' }
-                    ]
+                    title: 'Vila Ancestral das Crônicas',
+                    bg: 'assets/backgrounds/vila.jpg',
+                    groundGradient: 'linear-gradient(180deg, #15803d 0%, #166534 35%, #14532d 100%)',
+                    groundBorder: '3px solid #4ade80',
+                    particles: 'leaves',
+                    subzones: ['Praça do Mercado', 'Arquivo dos Filósofos', 'Fonte Sagrada', 'Campanário do Behemoth']
                 },
                 vazio_cosmico: {
-                    title: 'Vazio Cósmico',
-                    zones: [
-                        { name: 'Nebulosa da Entropia', bg: 'assets/backgrounds/montanha_fase4_pico.jpg' },
-                        { name: 'Horizonte dos Dados Proibidos', bg: 'assets/backgrounds/castelo_fase4_trono.jpg' },
-                        { name: 'Singularidade Cósmica', bg: 'assets/backgrounds/deserto_fase4_cratera.jpg' }
-                    ]
+                    title: 'Vazio Cósmico & Dimensões',
+                    bg: 'assets/backgrounds/vazio_cosmico.jpg',
+                    groundGradient: 'linear-gradient(180deg, #581c87 0%, #3b0764 35%, #090514 100%)',
+                    groundBorder: '3px solid #c084fc',
+                    particles: 'stars',
+                    subzones: ['Fragmento Cósmico', 'Santuário da Entropia', 'Fonte Astral', 'Singularidade do Shogun']
                 }
             };
 
-            const currentThemeConfig = THEME_ZONES[activeTheme] || THEME_ZONES.castelo;
-            const zone1El = document.getElementById('world-zone-1');
-            const zone2El = document.getElementById('world-zone-2');
-            const zone3El = document.getElementById('world-zone-3');
+            const currentThemeConfig = THEME_PANORAMAS[activeTheme] || THEME_PANORAMAS.deserto;
+            const skylineEl = document.getElementById('world-skyline');
+            const groundEl = document.getElementById('world-ground');
 
-            if (zone1El) zone1El.style.backgroundImage = `url('${currentThemeConfig.zones[0].bg}')`;
-            if (zone2El) zone2El.style.backgroundImage = `url('${currentThemeConfig.zones[1].bg}')`;
-            if (zone3El) zone3El.style.backgroundImage = `url('${currentThemeConfig.zones[2].bg}')`;
+            if (skylineEl) {
+                skylineEl.style.backgroundImage = `url('${currentThemeConfig.bg}')`;
+            }
+            if (groundEl) {
+                groundEl.style.background = currentThemeConfig.groundGradient;
+                groundEl.style.borderTop = currentThemeConfig.groundBorder;
+            }
 
-            // 2. Moedas e Economia do Jogador
+            // 2. Moedas e Economia
             let playerCoins = 150;
             try {
                 const savedCoins = localStorage.getItem('estudemy_player_coins');
@@ -1076,63 +1468,62 @@
                 showToast(`✅ ${itemName} adquirido com sucesso!`);
             };
 
-            // 3. Configuração dos NPCs Únicos com Diálogos e Funções por Tema
+            // 3. Roster de NPCs
             const NPC_ROSTER = {
                 merchant: {
                     name: 'Tariq o Mercador',
                     role: 'Comerciante de Relíquias',
                     sprite: 'assets/sprites/mago/idle.gif',
-                    x: 450,
+                    x: 480,
                     action: 'shop',
                     actionLabel: '🛒 Abrir Loja',
                     lines: [
-                        'Bem-vindo à Loja do Conhecimento, viajante!',
-                        'Aqui tenho elixires de vitalidade, pergaminhos de dicas e relíquias raras forjadas pelos maiores sábios.',
-                        'Troque suas moedas de ouro por itens que o ajudarão a superar os chefes mais difíceis das trilhas!'
+                        'Bem-vindo ao Bazar do Conhecimento, viajante!',
+                        'Aqui tenho elixires de vitalidade, poções de foco e relíquias raras forjadas pelos maiores sábios.',
+                        'Troque suas moedas de ouro por itens que o ajudarão a superar os chefes supremos das trilhas!'
                     ]
                 },
                 mentor: {
                     name: 'Mestre da Sabedoria',
-                    role: 'Instrutor de Questões',
+                    role: 'Instrutor Pedagógico',
                     sprite: 'assets/sprites/arqueira/idle.gif',
-                    x: 980,
+                    x: 1120,
                     action: 'quiz',
                     actionLabel: '🧠 Treino Rápido',
                     lines: [
                         'Saudações! O verdadeiro poder de um guerreiro reside em sua clareza de raciocínio.',
-                        'Deseja exercitar sua mente com 3 questões de treino pedagógico sem qualquer risco de dano ou derrota?',
-                        'Pratique sempre que quiser para afiar seus reflexos antes de entrar na trilha!'
+                        'Deseja exercitar sua mente com questões de treino pedagógico sem qualquer risco de dano ou derrota?',
+                        'Pratique sempre que quiser para afiar seus reflexos antes de marchar para a batalha!'
                     ]
                 },
                 healer: {
                     name: 'Curandeira dos Elementos',
                     role: 'Alquimista & Vitalidade',
                     sprite: 'assets/sprites/cavaleiro/idle.gif',
-                    x: 1420,
+                    x: 1740,
                     action: 'blessing',
                     actionLabel: '✨ Receber Bênção',
                     lines: [
-                        'Que a harmonia da natureza acolha seus passos cansados.',
-                        'Posso conceder-lhe uma Bênção de Vigor para revigorar seu espírito antes dos combates.',
-                        'Aproxime-se e receba o sopro curativo dos ancestrais!'
+                        'A paz esteja convosco, nobre aventureiro.',
+                        'Sinto em ti a determinação de superar as provações mais árduas deste território.',
+                        'Aceite as bênçãos curativas das águas ancestrais para restaurar seu ânimo e fortalecer sua resistência!'
                     ]
                 },
                 scout: {
                     name: 'Sentinela Roland',
                     role: 'Estrategista de Batalha',
                     sprite: 'assets/sprites/spectre/idle.gif',
-                    x: 1950,
+                    x: 2160,
                     action: 'dossier',
                     actionLabel: '📜 Ver Dossiê Tático',
                     lines: [
-                        'Atenção! Adiante jazem monstros implacáveis deste território.',
-                        'Tenho aqui os relatórios táticos de cada criatura: seus ataques especiais, chance de erro e fraquezas.',
-                        'Um estrategista sábio sempre estuda o inimigo antes de desferir o primeiro golpe!'
+                        'Atenção! Adiante jaz o Portal Dimensional para a batalha final desta trilha.',
+                        'Tenho aqui os relatórios táticos de cada monstro e chefão: seus golpes especiais, padrões de ataque e pontos fracos.',
+                        'Um estrategista sábio sempre estuda o inimigo antes de cruzar o portal para a arena!'
                     ]
                 }
             };
 
-            // Atualiza tags e sprites dos NPCs no DOM
             for (const [key, npc] of Object.entries(NPC_ROSTER)) {
                 const nameEl = document.getElementById(`npc-${key}-name`);
                 const roleEl = document.getElementById(`npc-${key}-role`);
@@ -1142,18 +1533,22 @@
                 if (imgEl) imgEl.src = npc.sprite;
             }
 
-            // 4. Estado do Herói
+            // 4. Seleção e Animação do Herói (Samurai, Mago ou Guerreiro)
             let heroKey = (params.get('personagem') || gameData?.personagem_selecionado || '').toLowerCase();
             if (!heroKey) {
                 try {
                     heroKey = (localStorage.getItem('estudemy_selected_hero') || '').toLowerCase();
                 } catch(e) {}
             }
+
             let heroFolder = 'assets/sprites/samurai';
+            let heroBaseFacing = 'right'; // samurai olha nativamente para a direita
             if (heroKey.includes('mago') || heroKey.includes('valerius')) {
                 heroFolder = 'assets/sprites/mago';
+                heroBaseFacing = 'left'; // mago olha nativamente para a esquerda
             } else if (heroKey.includes('guerreiro') || heroKey.includes('boran')) {
                 heroFolder = 'assets/sprites/guerreiro';
+                heroBaseFacing = 'right'; // guerreiro olha nativamente para a direita
             }
 
             const heroImg = new Image();
@@ -1163,48 +1558,91 @@
                     heroImg.src = `${heroFolder}/spritesheet.jpg`;
                 }
             };
+
             let heroFrame = 0;
+            let walkClock = 0;
             const heroCanvas = document.getElementById('player-sprite');
-            function renderHero() {
-                if (heroCanvas && heroImg.complete && heroImg.naturalWidth > 0) {
-                    const ctx = heroCanvas.getContext('2d');
-                    ctx.imageSmoothingEnabled = false;
-                    const padX = 3;
-                    const padY = 3;
-                    const fw = heroImg.naturalWidth / 3;
-                    const fh = heroImg.naturalHeight / 3;
-                    const row = player.isMoving ? 1 : 0;
-                    const col = heroFrame % 3;
-                    const sx = Math.floor(col * fw) + padX;
-                    const sy = Math.floor(row * fh) + padY;
-                    const sw = Math.floor(fw) - (2 * padX);
-                    const sh = Math.floor(fh) - (2 * padY);
-                    ctx.clearRect(0, 0, heroCanvas.width, heroCanvas.height);
-                    const innerPad = 3;
-                    const dw = heroCanvas.width - (2 * innerPad);
-                    const dh = heroCanvas.height - (2 * innerPad);
-                    ctx.drawImage(heroImg, sx, sy, sw, sh, innerPad, innerPad, dw, dh);
-                }
-            }
-            setInterval(() => {
-                heroFrame = (heroFrame + 1) % 3;
-                renderHero();
-            }, 150);
+            const playerSlashFx = document.getElementById('player-slash-fx');
 
             const player = {
                 x: 250,
                 y: 120,
-                speed: 4.8,
-                facing: 1,
+                speed: 5.2,
+                facing: 1, // 1 = direita, -1 = esquerda
                 isMoving: false,
+                isAttacking: false,
+                attackTimeout: null,
                 el: document.getElementById('player-hero'),
-                spriteEl: document.getElementById('player-sprite')
+                spriteEl: document.getElementById('player-sprite'),
+                shadowEl: document.getElementById('player-shadow')
+            };
+
+            // Renderiza o sprite na pose correta (linha 0 = repouso/caminhada, linha 1 = ataque)
+            function renderHero() {
+                if (!heroCanvas || !heroImg.complete || heroImg.naturalWidth <= 0) return;
+                const ctx = heroCanvas.getContext('2d');
+                ctx.imageSmoothingEnabled = false;
+
+                const padX = 3;
+                const padY = 3;
+                const fw = heroImg.naturalWidth / 3;
+                const fh = heroImg.naturalHeight / 3;
+
+                // CORREÇÃO CRUCIAL: Linha 0 para andar/parado, Linha 1 estritamente para ataque!
+                const row = player.isAttacking ? 1 : 0;
+                let col = 0;
+                if (player.isAttacking) {
+                    col = heroFrame % 3;
+                } else if (player.isMoving) {
+                    col = heroFrame % 3; // alterna passada rítmica
+                } else {
+                    col = 1; // postura firme de guarda da linha 0
+                }
+
+                const sx = Math.floor(col * fw) + padX;
+                const sy = Math.floor(row * fh) + padY;
+                const sw = Math.floor(fw) - (2 * padX);
+                const sh = Math.floor(fh) - (2 * padY);
+
+                ctx.clearRect(0, 0, heroCanvas.width, heroCanvas.height);
+                const innerPad = 4;
+                const dw = heroCanvas.width - (2 * innerPad);
+                const dh = heroCanvas.height - (2 * innerPad);
+                ctx.drawImage(heroImg, sx, sy, sw, sh, innerPad, innerPad, dw, dh);
+            }
+
+            // Ciclo de frames da linha do sprite
+            setInterval(() => {
+                heroFrame = (heroFrame + 1) % 3;
+                renderHero();
+            }, 140);
+
+            // Ação de Ataque do Jogador
+            window.triggerPlayerAttack = function() {
+                if (player.isAttacking || isDialogueOpen || isAnyModalOpen) return;
+                player.isAttacking = true;
+                heroFrame = 0;
+                renderHero();
+
+                if (playerSlashFx) {
+                    playerSlashFx.classList.add('slashing');
+                }
+
+                if (player.attackTimeout) clearTimeout(player.attackTimeout);
+                player.attackTimeout = setTimeout(() => {
+                    player.isAttacking = false;
+                    if (playerSlashFx) {
+                        playerSlashFx.classList.remove('slashing');
+                    }
+                    renderHero();
+                }, 380);
             };
 
             const stageEl = document.getElementById('world-stage');
             const locationText = document.getElementById('location-name-text');
+            const minimapMarker = document.getElementById('minimap-marker');
 
-            // 5. Controles de Entrada (Teclado e Touch)
+            // 5. Controles de Entrada (Teclado)
             const keys = {
                 ArrowLeft: false, ArrowRight: false, ArrowUp: false, ArrowDown: false,
                 KeyA: false, KeyD: false, KeyW: false, KeyS: false
@@ -1213,6 +1651,7 @@
             window.addEventListener('keydown', (e) => {
                 if (keys.hasOwnProperty(e.code)) keys[e.code] = true;
                 if (e.code === 'KeyE') triggerClosestInteraction();
+                if (e.code === 'Space' || e.code === 'KeyJ') triggerPlayerAttack();
                 if (e.code === 'Escape') {
                     closeDialogue();
                     closeAllModals();
@@ -1257,11 +1696,11 @@
                     player.y += dy * (player.speed * 0.7);
                 }
 
-                player.x = Math.max(60, Math.min(2320, player.x));
+                player.x = Math.max(80, Math.min(2520, player.x));
                 player.y = Math.max(75, Math.min(220, player.y));
             }
 
-            // 6. Loop de Renderização e Câmera
+            // 6. Loop de Renderização, Caminhada e Câmera Contínua
             function gameLoop() {
                 if (!isDialogueOpen && !isAnyModalOpen) {
                     let moveX = 0;
@@ -1275,27 +1714,52 @@
                     if (moveX !== 0 || moveY !== 0) {
                         applyMovement(moveX, moveY);
                         player.isMoving = true;
+                        walkClock += 0.16;
                     } else {
                         player.isMoving = false;
                     }
                 }
 
-                player.el.style.left = `${player.x}px`;
-                player.el.style.bottom = `${player.y}px`;
-                player.spriteEl.style.transform = `scaleX(${player.facing})`;
+                // Efeito clássico de passos no eixo Y (balanço natural de caminhada de RPG)
+                let bobY = 0;
+                if (player.isMoving && !player.isAttacking) {
+                    bobY = Math.abs(Math.sin(walkClock * 6)) * 4.5;
+                } else if (!player.isAttacking) {
+                    bobY = Math.sin(Date.now() / 380) * 1.5;
+                }
 
+                player.el.style.left = `${player.x}px`;
+                player.el.style.bottom = `${player.y + bobY}px`;
+
+                // Orientação (Flip) respeitando a face nativa do herói (mago é left, samurai/guerreiro é right)
+                let flipFactor = player.facing;
+                if (heroBaseFacing === 'left') {
+                    flipFactor = player.facing === 1 ? -1 : 1;
+                }
+                player.spriteEl.style.transform = `scaleX(${flipFactor})`;
+
+                // Câmera panorâmica suave contínua em palco de 2600px
                 const screenWidth = window.innerWidth;
                 let targetScroll = player.x - (screenWidth / 2);
-                targetScroll = Math.max(0, Math.min(2400 - screenWidth, targetScroll));
+                targetScroll = Math.max(0, Math.min(2600 - screenWidth, targetScroll));
                 stageEl.style.transform = `translateX(-${targetScroll}px)`;
 
-                // Atualiza o nome da região temático
-                if (player.x < 780) {
-                    locationText.textContent = `${currentThemeConfig.title} — ${currentThemeConfig.zones[0].name}`;
-                } else if (player.x < 1550) {
-                    locationText.textContent = `${currentThemeConfig.title} — ${currentThemeConfig.zones[1].name}`;
+                // Atualiza o Minimapa Holográfico em tempo real
+                const mapPercent = Math.max(4, Math.min(96, (player.x / 2600) * 100));
+                if (minimapMarker) {
+                    minimapMarker.style.left = `${mapPercent}%`;
+                }
+
+                // Atualiza o nome da região temático na top bar
+                const subzones = currentThemeConfig.subzones;
+                if (player.x < 750) {
+                    locationText.textContent = `${currentThemeConfig.title} — ${subzones[0]}`;
+                } else if (player.x < 1450) {
+                    locationText.textContent = `${currentThemeConfig.title} — ${subzones[1]}`;
+                } else if (player.x < 2100) {
+                    locationText.textContent = `${currentThemeConfig.title} — ${subzones[2]}`;
                 } else {
-                    locationText.textContent = `${currentThemeConfig.title} — ${currentThemeConfig.zones[2].name}`;
+                    locationText.textContent = `${currentThemeConfig.title} — ${subzones[3]}`;
                 }
 
                 checkNPCProximity();
@@ -1311,7 +1775,7 @@
                     const dist = Math.abs(player.x - npc.x);
                     const promptEl = document.getElementById(`prompt-${key}`);
 
-                    if (dist < 110) {
+                    if (dist < 115) {
                         foundNear = key;
                         if (promptEl) promptEl.classList.add('visible');
                     } else {
@@ -1328,7 +1792,7 @@
                 }
             };
 
-            // 8. Diálogo RPG com Ação Única
+            // 8. Diálogo RPG
             let isDialogueOpen = false;
             let isAnyModalOpen = false;
             let currentNPCKey = null;
@@ -1411,7 +1875,7 @@
                 }
             };
 
-            // 9. Modais de Função Única dos NPCs
+            // 9. Modais Interativos
             window.openShopModal = function() {
                 isAnyModalOpen = true;
                 updateCoinsUI();
@@ -1430,7 +1894,7 @@
                 isAnyModalOpen = false;
             };
 
-            // Quiz Treino Interativo
+            // Quiz de Treino
             const QUIZ_QUESTIONS = [
                 {
                     q: 'Qual é o objetivo principal de decompor um problema em subproblemas?',
@@ -1502,7 +1966,6 @@
                     feedback.style.display = 'block';
                 }
 
-                // Desabilita botões temporariamente
                 const btns = container.querySelectorAll('.quiz-option-btn');
                 btns.forEach((b) => b.disabled = true);
 
@@ -1525,38 +1988,39 @@
                 showToast('✨ Bênção da Curandeira Ativada!');
             };
 
-            // Dossiê Tático dos Inimigos
+            // Dossiê Tático
             const MONSTER_DOSSIERS = {
                 deserto: [
-                    { name: 'Guerreiro das Areias', type: 'Físico', trait: 'Golpes rápidos com cimitarra', counter: 'Esquiva e contra-ataque ágil' },
-                    { name: 'Djinn das Tempestades', type: 'Mágico', trait: 'Ciclone solar e QTEs frequentes', counter: 'Respostas imediatas em menos de 5s' },
-                    { name: 'Mago das Dunas', type: 'Mágico', trait: 'Sepultamento de arenito de alto impacto', counter: 'Ataques críticos encadeados' }
+                    { name: 'Sentinela das Areias', type: 'Físico', trait: 'Lâminas velozes e esquiva ágil', counter: 'Ataques mágicos e combos rápidos' },
+                    { name: 'Ladino das Sombras', type: 'Físico', trait: 'Furtividade e dano crítico alto', counter: 'Responder com velocidade antes do ataque' },
+                    { name: 'Imperador Khepri-Ra (Chefão)', type: 'Chefão Supremo', trait: 'Olho de Rá e tempestades de areia dourada', counter: 'Manter sequência de acertos e usar buffs' }
                 ],
                 montanha: [
-                    { name: 'Guerreiro da Geada', type: 'Físico', trait: 'Armadura reforçada e impacto glacial', counter: 'Defesa oportuna com [W] e [ESPAÇO]' },
-                    { name: 'Mago Cósmico do Pico', type: 'Mágico', trait: 'Tempestade de nevasca cósmica devastadora', counter: 'Priorizar eliminação antes do turno 3' },
-                    { name: 'Espectro dos Ventos', type: 'Mágico', trait: 'Rajadas cortantes velozes', counter: 'Manter sequência de respostas certas' }
+                    { name: 'Colosso de Magma', type: 'Físico', trait: 'Armadura pesada de rocha ígnea', counter: 'Priorizar respostas exatas para quebrar guarda' },
+                    { name: 'Valquíria das Tempestades', type: 'Mágico', trait: 'Raios celestiais em área', counter: 'Responder em menos de 5s' },
+                    { name: 'Ignis, o Titã Vulcânico (Chefão)', type: 'Chefão Supremo', trait: 'Supercratera sísmica e punhos de lava', counter: 'Atenção redobrada na Fase 2 de Fúria' }
                 ],
                 castelo: [
-                    { name: 'Guarda da Muralha', type: 'Físico', trait: 'Resistência mecânica e escudos densos', counter: 'Uso de relíquias e golpes certeiros' },
-                    { name: 'Spectre do Código', type: 'Mágico', trait: 'Chamas negras de corrupção lógica', counter: 'Atenção máxima à pontuação e sintaxe' },
-                    { name: 'Acólito da Memória', type: 'Mágico', trait: 'Vórtice arcano veloz', counter: 'Respostas pontuais eliminam rapidamente' }
+                    { name: 'Ceifador do Eclipse', type: 'Mágico', trait: 'Corrupção arcana veloz', counter: 'Uso de poções e foco mental' },
+                    { name: 'Cavaleiro de Aço', type: 'Físico', trait: 'Escudo impenetrável', counter: 'Combinações de acertos em streak' },
+                    { name: 'General Shogun do Vazio (Chefão)', type: 'Chefão Supremo', trait: 'Dança dimensional de quatro braços', counter: 'Precisão cirúrgica no quiz' }
                 ],
                 vila: [
-                    { name: 'Cavaleiro Renegado', type: 'Físico', trait: 'Golpes pesados com espada larga', counter: 'Bloqueio tático via QTE' },
-                    { name: 'Lorde Decaído', type: 'Físico', trait: 'Alta vitalidade e dano massivo', counter: 'Combinações de acertos em streak' },
-                    { name: 'Ilusionista das Ruínas', type: 'Mágico', trait: 'Espelhos e duplicatas', counter: 'Discernimento rápido de alternativas' }
+                    { name: 'Ent Ancestral', type: 'Físico/Mágico', trait: 'Raízes profundas e grande resistência', counter: 'Golpes cortantes encadeados' },
+                    { name: 'Arquivista Cósmico', type: 'Mágico', trait: 'Chama estelar e feitiços milenares', counter: 'Eliminar alternativas absurdas primeiro' },
+                    { name: 'Behemoth da Cripta (Chefão)', type: 'Chefão Supremo', trait: 'Terremoto de catacumbas e fúria bruta', counter: 'Defender nos QTEs e maximizar dano' }
                 ],
                 vazio_cosmico: [
-                    { name: 'Arauto do Esquecimento', type: 'Mágico', trait: 'Aniquilação da matéria', counter: 'Precisão absoluta no quiz' },
-                    { name: 'O Arquivista do Vazio', type: 'Mágico', trait: 'Singularidade e buraco negro', counter: 'Usar poções de vida e buffs' }
+                    { name: 'Arquivista Cósmico', type: 'Mágico', trait: 'Manipulação de singularidades estelares', counter: 'Precisão analítica máxima' },
+                    { name: 'Ceifador do Eclipse', type: 'Mágico', trait: 'Aniquilação da matéria', counter: 'Usar pergaminho de dicas' },
+                    { name: 'General Shogun Decaído (Chefão)', type: 'Chefão Supremo', trait: 'Quatro katanas dimensionais abissais', counter: 'Foco absoluto e buffs de defesa' }
                 ]
             };
 
             window.openDossierModal = function() {
                 isAnyModalOpen = true;
                 const list = document.getElementById('dossier-content-list');
-                const monsters = MONSTER_DOSSIERS[activeTheme] || MONSTER_DOSSIERS.castelo;
+                const monsters = MONSTER_DOSSIERS[activeTheme] || MONSTER_DOSSIERS.deserto;
 
                 if (list) {
                     list.innerHTML = '';
@@ -1582,7 +2046,20 @@
                 if (modal) modal.classList.add('active');
             };
 
-            // 10. Navegação e Áudio
+            // 10. Ação do Portal: Saltar Direto para a Batalha
+            window.enterBattleFromWorld = function() {
+                try {
+                    if (window.parent && window.parent !== window) {
+                        window.parent.postMessage({ type: 'AVANCAR_FASE', modo: 'campanha' }, '*');
+                    }
+                    if (window.ReactNativeWebView && typeof window.ReactNativeWebView.postMessage === 'function') {
+                        window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'AVANCAR_FASE', modo: 'campanha' }));
+                    }
+                } catch(e) {}
+                exitWorld();
+            };
+
+            // 11. Navegação e Áudio
             window.exitWorld = function() {
                 try {
                     if (window.parent && window.parent !== window) {
@@ -1609,6 +2086,59 @@
                     label.textContent = isAudioOn ? 'Som: ON' : 'Som: OFF';
                 }
             };
+
+            // 12. Efeitos Climáticos Atmosféricos no Canvas
+            const weatherCanvas = document.getElementById('weather-canvas');
+            if (weatherCanvas) {
+                const wCtx = weatherCanvas.getContext('2d');
+                function resizeCanvas() {
+                    weatherCanvas.width = window.innerWidth;
+                    weatherCanvas.height = window.innerHeight;
+                }
+                resizeCanvas();
+                window.addEventListener('resize', resizeCanvas);
+
+                const particles = [];
+                const pType = currentThemeConfig.particles;
+                const count = pType === 'snow' ? 50 : pType === 'sand' ? 60 : 40;
+
+                for (let i = 0; i < count; i++) {
+                    particles.push({
+                        x: Math.random() * weatherCanvas.width,
+                        y: Math.random() * weatherCanvas.height,
+                        vx: pType === 'sand' ? (Math.random() * 2 + 1.5) : (Math.random() * 0.8 - 0.4),
+                        vy: pType === 'snow' ? (Math.random() * 1.2 + 0.8) : (Math.random() * 0.6 - 0.3),
+                        r: Math.random() * 2.5 + 1,
+                        alpha: Math.random() * 0.6 + 0.2
+                    });
+                }
+
+                function drawWeather() {
+                    wCtx.clearRect(0, 0, weatherCanvas.width, weatherCanvas.height);
+                    particles.forEach(p => {
+                        p.x += p.vx;
+                        p.y += p.vy;
+
+                        if (p.x > weatherCanvas.width) p.x = 0;
+                        if (p.x < 0) p.x = weatherCanvas.width;
+                        if (p.y > weatherCanvas.height) p.y = 0;
+                        if (p.y < 0) p.y = weatherCanvas.height;
+
+                        wCtx.beginPath();
+                        wCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+                        if (pType === 'sand') {
+                            wCtx.fillStyle = `rgba(250, 204, 21, ${p.alpha * 0.5})`;
+                        } else if (pType === 'snow') {
+                            wCtx.fillStyle = `rgba(255, 255, 255, ${p.alpha * 0.8})`;
+                        } else {
+                            wCtx.fillStyle = `rgba(56, 189, 248, ${p.alpha * 0.6})`;
+                        }
+                        wCtx.fill();
+                    });
+                    requestAnimationFrame(drawWeather);
+                }
+                drawWeather();
+            }
 
             requestAnimationFrame(gameLoop);
         })();

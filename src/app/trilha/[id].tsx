@@ -143,12 +143,30 @@ export default function TrilhaDetailScreen() {
     }
   }, [id, selectedMode]);
 
-  const handleIniciarModo = (modo: GameModeId, customFaseId?: string) => {
-    const activeFase = fases.find((f) => !fasesConcluidas.includes(f._id)) || fases[0];
-    const targetFase = customFaseId || activeFase?._id || `trilha_${id}`;
+  const handleIniciarModo = (modo: GameModeId, customFaseId?: string, customPhaseIndex?: number) => {
+    let targetPhase = 0;
+    let targetFase = customFaseId;
+
+    if (modo === 'boss_rush') {
+      const firstUncompletedIdx = fases.findIndex((f) => !bossRushConcluidas.includes(f._id));
+      const safeBossIdx = customPhaseIndex !== undefined
+        ? customPhaseIndex
+        : (firstUncompletedIdx >= 0 ? firstUncompletedIdx : 0);
+      targetPhase = safeBossIdx;
+      targetFase = customFaseId || fases[safeBossIdx]?._id || `boss_fase_${safeBossIdx + 1}`;
+    } else if (modo === 'speedrun') {
+      const firstUncompleted = fases.find((f) => !speedrunConcluidas.includes(f._id)) || fases[0];
+      targetFase = customFaseId || firstUncompleted?._id || `trilha_${id}`;
+      targetPhase = customPhaseIndex !== undefined ? customPhaseIndex : Math.max(0, fases.indexOf(firstUncompleted));
+    } else {
+      const activeFase = fases.find((f) => !fasesConcluidas.includes(f._id)) || fases[0];
+      targetFase = customFaseId || activeFase?._id || `trilha_${id}`;
+      targetPhase = customPhaseIndex !== undefined ? customPhaseIndex : Math.max(0, fases.indexOf(activeFase));
+    }
+
     router.push({
       pathname: '/game/[faseId]',
-      params: { faseId: targetFase, trilhaId: id, modo: modo },
+      params: { faseId: targetFase, trilhaId: id, modo: modo, phase: String(targetPhase) },
     });
   };
 
@@ -847,7 +865,7 @@ export default function TrilhaDetailScreen() {
                     { backgroundColor: isCompleted ? '#10B981' : isUnlocked ? boss.color : '#4B5563' },
                   ]}
                   disabled={!isUnlocked}
-                  onPress={() => handleIniciarModo('boss_rush', relatedFase?._id)}
+                  onPress={() => handleIniciarModo('boss_rush', relatedFase?._id, idx)}
                   activeOpacity={0.85}
                 >
                   {isCompleted ? (
@@ -874,7 +892,7 @@ export default function TrilhaDetailScreen() {
 
         <TouchableOpacity
           style={[styles.bigModeCtaBtn, { backgroundColor: '#E11D48' }]}
-          onPress={() => handleIniciarModo('boss_rush')}
+          onPress={() => handleIniciarModo('boss_rush', undefined, 0)}
           activeOpacity={0.88}
         >
           <Trophy size={22} color="#ffffff" style={{ marginRight: 8 }} />

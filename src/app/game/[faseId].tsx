@@ -33,10 +33,11 @@ import {
 } from 'lucide-react-native';
 
 export default function GameScreen() {
-  const { faseId, trilhaId, modo } = useLocalSearchParams<{
+  const { faseId, trilhaId, modo, phase } = useLocalSearchParams<{
     faseId: string;
     trilhaId?: string;
     modo?: string;
+    phase?: string;
   }>();
   const router = useRouter();
   const { user, refreshUser, updateUserState } = useAuth();
@@ -277,7 +278,15 @@ export default function GameScreen() {
 
         // Determinar índice e ordem da fase no tema (0 a 3)
         let phaseIndex = 0;
-        if (currentFase && fasesDaTrilha.length > 0) {
+        const modoAtual = (modo || '').toLowerCase().trim();
+        if (phase !== undefined && phase !== null && phase !== '') {
+          const parsed = parseInt(phase, 10);
+          if (!isNaN(parsed) && parsed >= 0) {
+            phaseIndex = parsed % 4;
+          }
+        } else if (modoAtual === 'boss_rush') {
+          phaseIndex = 0;
+        } else if (currentFase && fasesDaTrilha.length > 0) {
           const foundIdx = fasesDaTrilha.findIndex((f) => f._id === currentFase._id);
           if (foundIdx >= 0) phaseIndex = foundIdx % 4;
         } else if (currentFase && typeof currentFase.ordem === 'number') {
@@ -427,7 +436,7 @@ export default function GameScreen() {
     }
 
     void loadFase();
-  }, [faseId, trilhaId, user?.personagem, (user as any)?.skin, (user as any)?.skinSelecionada]);
+  }, [faseId, trilhaId, modo, phase, user?.personagem, (user as any)?.skin, (user as any)?.skinSelecionada]);
 
   // 6. Injeção de gameData na Window (Web) e Ponte de Mensagens
   useEffect(() => {
@@ -520,8 +529,11 @@ export default function GameScreen() {
   const cleanBase = rawBaseUrl.replace(/:5000.*$/, '').replace(/\/api.*$/, '').replace(/\/$/, '');
   const initialTemaFallback = getTrilhaTheme(trilhaId || faseId);
   const activeTema = gameData?.trilhaTema || initialTemaFallback;
-  const activePhase = gameData?.phaseIndex || 0;
   const activeModo = (modo || gameData?.modoJogo || 'campanha').toLowerCase().trim();
+  const parsedPhaseParam = phase !== undefined && phase !== '' ? parseInt(phase, 10) : null;
+  const activePhase = parsedPhaseParam !== null && !isNaN(parsedPhaseParam)
+    ? parsedPhaseParam
+    : (activeModo === 'boss_rush' ? 0 : (gameData?.phaseIndex || 0));
   const isMundoAberto = activeModo === 'mundo_aberto';
 
   let localHero = '';
