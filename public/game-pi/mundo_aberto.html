@@ -1157,7 +1157,12 @@
             }
 
             const heroImg = new Image();
-            heroImg.src = `${heroFolder}/spritesheet.jpg`;
+            heroImg.src = `${heroFolder}/spritesheet.png`;
+            heroImg.onerror = () => {
+                if (!heroImg.src.endsWith('.jpg')) {
+                    heroImg.src = `${heroFolder}/spritesheet.jpg`;
+                }
+            };
             let heroFrame = 0;
             const heroCanvas = document.getElementById('player-sprite');
             function renderHero() {

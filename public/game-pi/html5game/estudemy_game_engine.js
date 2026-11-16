@@ -26,7 +26,13 @@
         return this.sheetCache.get(cleanFolder);
       }
       const img = new Image();
-      img.src = `${cleanFolder}/spritesheet.jpg`;
+      // Prioridade total para PNG oficial com fundo 100% transparente
+      img.src = `${cleanFolder}/spritesheet.png`;
+      img.onerror = () => {
+        if (!img.src.endsWith('.jpg')) {
+          img.src = `${cleanFolder}/spritesheet.jpg`;
+        }
+      };
       this.sheetCache.set(cleanFolder, img);
       return img;
     }
@@ -54,6 +60,7 @@
       if (!canvas) return null;
 
       const cleanFolder = (folder || '').replace(/\/$/, '');
+      const isEnemy = !!(targetEl.id && (targetEl.id.startsWith('enemy-') || targetEl.id.includes('enemy')));
       const existing = this.activeMap.get(canvas);
       if (existing && existing.folder === cleanFolder && existing.action === action) {
         return canvas;
@@ -96,7 +103,39 @@
         const sy = row * fh;
 
         ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(sheetImg, sx, sy, fw, fh, 0, 0, canvas.width, canvas.height);
+
+        // Se for inimigo, espelha no eixo X para que ele fique virado para a ESQUERDA (em direção ao herói)
+        if (isEnemy) {
+          ctx.save();
+          ctx.translate(canvas.width, 0);
+          ctx.scale(-1, 1);
+          ctx.drawImage(sheetImg, sx, sy, fw, fh, 0, 0, canvas.width, canvas.height);
+          ctx.restore();
+        } else {
+          // Herói no lado esquerdo ataca e encara para a DIREITA
+          ctx.drawImage(sheetImg, sx, sy, fw, fh, 0, 0, canvas.width, canvas.height);
+        }
+
+        // Filtro de segurança caso uma imagem JPG com fundo opaco seja carregada
+        if (sheetImg.src.endsWith('.jpg')) {
+          try {
+            const imgData = ctx.getImageData(0, 0, canvas.width, canvas.height);
+            const data = imgData.data;
+            const rCorner = data[0], gCorner = data[1], bCorner = data[2];
+            if (data[3] > 0 && rCorner < 85 && gCorner < 85 && bCorner < 85) {
+              const tolSq = 32 * 32;
+              for (let i = 0; i < data.length; i += 4) {
+                const dr = data[i] - rCorner;
+                const dg = data[i + 1] - gCorner;
+                const db = data[i + 2] - bCorner;
+                if ((dr * dr + dg * dg + db * db) <= tolSq || (data[i] < 16 && data[i + 1] < 16 && data[i + 2] < 16)) {
+                  data[i + 3] = 0;
+                }
+              }
+              ctx.putImageData(imgData, 0, 0);
+            }
+          } catch (e) {}
+        }
       };
 
       if (sheetImg.complete) {
