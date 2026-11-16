@@ -37,6 +37,7 @@ import {
   removeTrailAccessCode,
 } from '../../services/trilhaAcessoService';
 import { getCharacterImage, getTrackImage, EXTRA_IMAGES } from '../../constants/assets';
+import { calculateLevel } from '../../utils/leveling';
 import {
   Search,
   Zap,
@@ -484,10 +485,9 @@ export default function HomeScreen() {
     }
   };
 
-  // Cálculo de nível (ex: cada 100 XP sobe um nível)
+  // Sistema de Leveling dinâmico baseado no XP Total acumulado
   const xp = user?.xpTotal || 0;
-  const level = Math.floor(xp / 100) + 1;
-  const xpInLevel = xp % 100;
+  const { level, xpInCurrentLevel, xpNeededForNextLevel, progressPercentage, title } = calculateLevel(xp);
 
   // Card para os carrosséis horizontais
   const renderTrackCard = ({ item }: { item: Trilha }) => {
@@ -742,13 +742,18 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Barra de XP */}
+        {/* Barra de XP Funcional com Leveling */}
         <View style={styles.xpRow}>
           <Zap size={16} color="#EAB308" fill="#EAB308" />
-          <Text style={[styles.xpText, { color: colors.text }]}>{xpInLevel}/100 XP</Text>
+          <Text style={[styles.xpText, { color: colors.text }]}>
+            {xpInCurrentLevel} / {xpNeededForNextLevel} XP ({progressPercentage}%)
+          </Text>
+          <Text style={[styles.xpText, { color: colors.textMuted, marginLeft: 'auto', fontSize: 12, fontWeight: '700' }]}>
+            {title}
+          </Text>
         </View>
         <View style={[styles.progressBarBg, { backgroundColor: colors.cardSecondary }]}>
-          <View style={[styles.progressBarFill, { width: `${xpInLevel}%` }]} />
+          <View style={[styles.progressBarFill, { width: `${progressPercentage}%` }]} />
         </View>
       </View>
 

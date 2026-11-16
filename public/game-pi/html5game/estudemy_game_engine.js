@@ -103,10 +103,12 @@
         { name: 'Arquimago Solar', spriteFolder: 'assets/sprites/arquimago_solar', baseHp: 110, atk: 25, isFlying: false, type: 'magico', ultName: 'Tempestade da Supernova' },
         { name: 'Sentinela das Areias', spriteFolder: 'assets/sprites/sentinela_areias', baseHp: 130, atk: 24, isFlying: false, type: 'fisico', ultName: 'Maldição de Anúbis' },
         {
-          name: 'Imperador Khepri-Ra',
-          spriteFolder: 'assets/sprites/mago',
-          baseHp: 235,
-          atk: 36,
+          name: 'Imperador Khepri-Ra (Soberano Eterno das Areias)',
+          spriteFolder: 'assets/sprites/boss_khepri',
+          baseHp: 320,
+          atk: 38,
+          atkEnraged: 50,
+          def: 22,
           isFlying: true,
           type: 'magico',
           isBoss: true,
@@ -205,6 +207,98 @@
       ],
     },
   };
+
+  const SUPREME_BOSSES = [
+    {
+      id: 'boss_ignis',
+      name: 'Ignis, o Titã Vulcânico Primordial',
+      spriteFolder: 'assets/sprites/boss_ignis',
+      baseHp: 340,
+      atk: 36,
+      atkEnraged: 48,
+      def: 24,
+      isFlying: false,
+      type: 'fisico',
+      isBoss: true,
+      bossTier: 'supreme',
+      attacks: [
+        { name: 'Erupção Sísmica de Punhos', style: 'strike', sfx: 'heavy_impact', color: '#f97316' },
+        { name: 'Cataclismo da Supercratera', style: 'leap', sfx: 'thunder_ultimate', color: '#ef4444' },
+        { name: 'Caldeira Primordial Ardente', style: 'cast', sfx: 'magic_impact', color: '#ea580c' },
+      ],
+      ultName: 'Cataclismo da Supercratera',
+      secondUltName: 'Fúria da Caldeira Primordial (Fase 2)',
+      bgImg: 'assets/backgrounds/montanha_fase4_pico.jpg',
+      arenaName: 'Caldeira do Titã Vulcânico',
+    },
+    {
+      id: 'boss_khepri',
+      name: 'Imperador Khepri-Ra (Soberano Eterno das Areias)',
+      spriteFolder: 'assets/sprites/boss_khepri',
+      baseHp: 320,
+      atk: 38,
+      atkEnraged: 50,
+      def: 22,
+      isFlying: true,
+      type: 'magico',
+      isBoss: true,
+      bossTier: 'supreme',
+      attacks: [
+        { name: 'Feixe Concentrado do Olho de Ra', style: 'cast', sfx: 'magic_impact', color: '#eab308' },
+        { name: 'Tempestade de Areia Dourada', style: 'leap', sfx: 'heavy_impact', color: '#f59e0b' },
+        { name: 'Lança Solar de Âmbar', style: 'strike', sfx: 'sword_slash', color: '#fcd34d' },
+      ],
+      ultName: 'Julgamento das Pirâmides Cósmicas',
+      secondUltName: 'Grande Eclipse Solar da Morte (Fase 2)',
+      bgImg: 'assets/backgrounds/deserto_fase4_cratera.jpg',
+      arenaName: 'Templo Solar de Khepri-Ra',
+    },
+    {
+      id: 'boss_behemoth',
+      name: 'Behemoth da Cripta Esquecida',
+      spriteFolder: 'assets/sprites/boss_behemoth',
+      baseHp: 360,
+      atk: 38,
+      atkEnraged: 52,
+      def: 26,
+      isFlying: false,
+      type: 'fisico',
+      isBoss: true,
+      bossTier: 'supreme',
+      attacks: [
+        { name: 'Garras de Ferro da Cripta', style: 'strike', sfx: 'heavy_impact', color: '#10b981' },
+        { name: 'Vórtice do Apocalipse das Almas', style: 'cast', sfx: 'magic_impact', color: '#059669' },
+        { name: 'Dilaceração das Correntes Abissais', style: 'leap', sfx: 'thunder_ultimate', color: '#047857' },
+      ],
+      ultName: 'Vórtice do Apocalipse das Almas',
+      secondUltName: 'Dilaceração das Correntes Abissais (Fase 2)',
+      bgImg: 'assets/backgrounds/vila_fase3_cripta.jpg',
+      arenaName: 'Cripta Esquecida das Almas',
+    },
+    {
+      id: 'boss_shogun',
+      name: 'General Shogun Decaído (Lorde Abissal das Lâminas do Vazio)',
+      spriteFolder: 'assets/sprites/boss_shogun',
+      baseHp: 400,
+      atk: 46,
+      atkEnraged: 62,
+      def: 22,
+      isFlying: true,
+      type: 'fisico',
+      isBoss: true,
+      isFinalBoss: true,
+      bossTier: 'supreme',
+      attacks: [
+        { name: 'Dança Dimensional dos Quatro Braços', style: 'strike', sfx: 'sword_slash', color: '#a855f7' },
+        { name: 'Singularidade do Eclipse Cósmico', style: 'cast', sfx: 'thunder_ultimate', color: '#9333ea' },
+        { name: 'Fenda Temporal de Vácuo', style: 'leap', sfx: 'heavy_impact', color: '#7e22ce' },
+      ],
+      ultName: 'Singularidade do Eclipse Cósmico',
+      secondUltName: 'Corte Dimensional dos Quatro Braços (Fase 2)',
+      bgImg: 'assets/backgrounds/vazio_fase3_singularidade.jpg',
+      arenaName: 'Singularidade do Vazio Infinito',
+    },
+  ];
 
   const CHARACTERS_CONFIG = {
     samurai: {
@@ -1316,11 +1410,28 @@
       }
 
       // 3. MODO ARENA DOS MESTRES (BOSS RUSH)
-      // Apenas chefes. A cada fase começa com a mesma vida que terminou a anterior!
+      // Apenas os 4 Chefões Supremos exclusivos!
       if (this.modoJogo === 'boss_rush') {
+        const bossIdx = Math.max(0, safeIdx) % SUPREME_BOSSES.length;
+        const currentBoss = SUPREME_BOSSES[bossIdx];
+
+        // Background temático imersivo da arena do chefão supremo
+        this.bgLayer.style.opacity = '0.35';
+        setTimeout(() => {
+          this.bgLayer.src = currentBoss.bgImg || 'assets/backgrounds/montanha_fase4_pico.jpg';
+          this.bgLayer.style.opacity = '1';
+        }, 120);
+
+        if (this.missionTrackText) {
+          this.missionTrackText.textContent = `👑 ARENA DOS MESTRES • CHEFÃO ${bossIdx + 1}/${SUPREME_BOSSES.length}`;
+        }
+        if (this.missionPhaseText) {
+          this.missionPhaseText.textContent = currentBoss.arenaName || currentBoss.name;
+        }
+
         if (this.bossRushBadge) this.bossRushBadge.style.display = 'flex';
         if (this.bossRushNum) {
-          this.bossRushNum.textContent = `CHEFE ${safeIdx + 1}/${maxPhases}`;
+          this.bossRushNum.textContent = `CHEFÃO ${bossIdx + 1}/${SUPREME_BOSSES.length}`;
         }
         if (safeIdx === 0) {
           this.playerHp = this.playerMaxHp;
@@ -1340,6 +1451,11 @@
           this.addFloatingText(`VIDA PRESERVADA: ${this.playerHp} HP!`, '#f43f5e', 683, 260, true);
         }
         this.updateHUD();
+
+        this.spawnRandomEnemiesForPhase(null);
+        this.applyGrounding();
+        this.addFloatingText(`☠️ CHEFÃO SUPREMO: ${currentBoss.name}!`, '#ef4444', 683, 220, true);
+        return;
       } else {
         if (this.bossRushBadge) this.bossRushBadge.style.display = 'none';
       }
@@ -1375,6 +1491,38 @@
     }
 
     spawnRandomEnemiesForPhase(pool) {
+      if (this.modoJogo === 'boss_rush') {
+        const bossIdx = Math.max(0, this.currentThemePhase) % SUPREME_BOSSES.length;
+        const eData = { ...SUPREME_BOSSES[bossIdx] };
+
+        // Reseta todos os slots
+        this.enemySlots.forEach((slot) => {
+          slot.isAlive = false;
+          slot.wrapper.style.display = 'none';
+          slot.wrapper.style.opacity = '1';
+          slot.wrapper.style.transform = '';
+        });
+
+        const slot = this.enemySlots[1];
+        slot.data = eData;
+        slot.maxHp = eData.baseHp;
+        slot.currentHp = slot.maxHp;
+        slot.phase2Activated = false;
+        slot.wrapper.classList.remove('boss-phase2-enrage');
+        slot.isAlive = true;
+        slot.wrapper.style.display = 'flex';
+        slot.wrapper.style.right = '18%';
+        this.setActorAnimation(slot.sprite, eData.spriteFolder, 'idle', 7);
+        slot.nameText.textContent = `☠️ CHEFÃO SUPREMO: ${eData.name}`;
+        slot.barFill.style.width = '100%';
+
+        if (eData.isFlying) slot.wrapper.classList.add('is-flying');
+        else slot.wrapper.classList.remove('is-flying');
+
+        this.applyGrounding();
+        this.updateTotalBossHUD();
+        return;
+      }
       // Garante que a quantidade de inimigos se repita e nunca aumente ao tentar novamente
       let count = 1;
       const phaseKey = `${this.currentTrilhaId || this.activeTheme}_fase_${this.currentThemePhase}`;
@@ -1988,6 +2136,21 @@
         }
       }
 
+      if (this.modoJogo === 'boss_rush') {
+        const bossesDefeatedSoFar = Math.min(SUPREME_BOSSES.length, this.currentThemePhase + 1);
+        try {
+          if (typeof window.localStorage !== 'undefined') {
+            const prev = parseInt(window.localStorage.getItem('estudemy_user_bosses_derrotados') || '0', 10);
+            if (bossesDefeatedSoFar > prev) {
+              window.localStorage.setItem('estudemy_user_bosses_derrotados', bossesDefeatedSoFar.toString());
+            }
+          }
+          if (typeof window.sessionStorage !== 'undefined') {
+            window.sessionStorage.setItem('estudemy_bossrush_hp', Math.max(1, this.playerHp).toString());
+          }
+        } catch (e) {}
+      }
+
       if (typeof window.notificar_vitoria_js === 'function') {
         window.notificar_vitoria_js();
       }
@@ -2036,6 +2199,29 @@
 
     advanceToNextPhase() {
       if (this.phaseVictoryModal) this.phaseVictoryModal.style.display = 'none';
+
+      if (this.modoJogo === 'boss_rush') {
+        const nextBossIndex = this.currentThemePhase + 1;
+        if (nextBossIndex < SUPREME_BOSSES.length) {
+          this.updateHUD();
+          this.setPhase(nextBossIndex);
+          this.currentQuestionIdx = 0;
+          this.renderQuestion();
+          try {
+            if (window.parent && window.parent !== window) {
+              window.parent.postMessage({ type: 'AVANCAR_FASE', nextFaseId: `boss_${nextBossIndex}`, phaseIndex: nextBossIndex, modo: 'boss_rush' }, '*');
+            }
+            if (window.ReactNativeWebView && typeof window.ReactNativeWebView.postMessage === 'function') {
+              window.ReactNativeWebView.postMessage(JSON.stringify({ type: 'AVANCAR_FASE', nextFaseId: `boss_${nextBossIndex}`, phaseIndex: nextBossIndex, modo: 'boss_rush' }));
+            }
+          } catch (e) {}
+        } else {
+          this.addFloatingText('👑 VITÓRIA SUPREMA: ARENA DOS MESTRES CONCLUÍDA!', '#fbbf24', 683, 220, true);
+          this.exitBattle();
+        }
+        return;
+      }
+
       const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
       const nextThemePhase = this.currentThemePhase + 1;
       const maxPhases = (this.fasesDaTrilha && this.fasesDaTrilha.length > 0)

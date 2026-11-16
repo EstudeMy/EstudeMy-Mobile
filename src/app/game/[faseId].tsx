@@ -39,7 +39,7 @@ export default function GameScreen() {
     modo?: string;
   }>();
   const router = useRouter();
-  const { user, refreshUser } = useAuth();
+  const { user, refreshUser, updateUserState } = useAuth();
   const { colors } = useTheme();
 
   // Estados de Carregamento e Fases
@@ -161,6 +161,11 @@ export default function GameScreen() {
 
     setSalvandoProgresso(true);
     try {
+      if (updateUserState && xpGanho > 0) {
+        const currentXp = (user as any)?.xpTotal || 0;
+        updateUserState({ xpTotal: currentXp + xpGanho });
+      }
+
       if (realModo === 'campanha') {
         await registrarFaseConcluida(realTrilhaId, realFaseId, xpGanho);
         console.log('[Progresso] Registrado campanha com sucesso:', realFaseId, 'na trilha:', realTrilhaId);
@@ -176,6 +181,10 @@ export default function GameScreen() {
             list.push(realFaseId);
             window.localStorage.setItem(key, JSON.stringify(list));
           }
+          if (realModo === 'boss_rush') {
+            const prev = parseInt(window.localStorage.getItem('estudemy_user_bosses_derrotados') || '0', 10);
+            window.localStorage.setItem('estudemy_user_bosses_derrotados', String(Math.min(4, Math.max(prev, list.length))));
+          }
         }
         console.log(`[Progresso] Registrado modo ${realModo} localmente:`, realFaseId);
       }
@@ -187,7 +196,7 @@ export default function GameScreen() {
         refreshUser().catch(() => {});
       }
     }
-  }, [faseId, trilhaId, gameData, fase, modo, refreshUser]);
+  }, [faseId, trilhaId, gameData, fase, modo, refreshUser, updateUserState, user]);
 
   // Cálculo da Próxima Fase da Trilha
   const proximaFaseIndex = (gameData?.phaseIndex !== undefined ? gameData.phaseIndex : 0) + 1;
@@ -283,19 +292,33 @@ export default function GameScreen() {
           perguntasOriginais = getThematicQuestions(themeKey, phaseIndex);
         }
 
-        // Herói fixo como Samurai Kaito, com sua skin selecionada no Perfil
+        // Herói selecionado pelo usuário no Perfil (Samurai, Mago ou Guerreiro)
+        let storedHero = '';
         let storedHeroSkin = '';
         if (typeof window !== 'undefined' && window.localStorage) {
           try {
+            storedHero = window.localStorage.getItem('estudemy_selected_hero') || '';
             storedHeroSkin = window.localStorage.getItem('estudemy_hero_skin') || '';
           } catch {}
         }
-        const personagemUsuario = 'samurai';
+        const rawPersonagem = (user as any)?.personagem || storedHero || 'Samurai';
+        const personagemUsuario = rawPersonagem.toLowerCase().includes('mago') || rawPersonagem.toLowerCase().includes('valerius')
+          ? 'mago'
+          : rawPersonagem.toLowerCase().includes('guerreiro') || rawPersonagem.toLowerCase().includes('boran')
+          ? 'guerreiro'
+          : 'samurai';
+
+        const defaultSkin = personagemUsuario === 'mago'
+          ? 'mago_arcanista'
+          : personagemUsuario === 'guerreiro'
+          ? 'guerreiro_templario'
+          : 'samurai_ronin';
+
         const skinUsuario = (
           (user as any)?.skin ||
           (user as any)?.skinSelecionada ||
           storedHeroSkin ||
-          'samurai_ronin'
+          defaultSkin
         ).toLowerCase();
 
         const perguntasTransformadas = perguntasOriginais.map((p: any) => {

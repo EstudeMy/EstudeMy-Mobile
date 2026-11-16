@@ -58,8 +58,14 @@ export function getSubjectImage(materia?: string | null): ImageSourcePropType {
 }
 
 export function getCharacterImage(charName?: string | null): ImageSourcePropType {
-  if (!charName) return CHARACTER_IMAGES.default;
-  return CHARACTER_IMAGES[charName] || CHARACTER_IMAGES.default;
+  if (!charName) return CHARACTER_IMAGES.Samurai;
+  const normalized = charName.toLowerCase().trim();
+  if (normalized.includes('samurai') || normalized.includes('kaito')) return CHARACTER_IMAGES.Samurai;
+  if (normalized.includes('mago') || normalized.includes('valerius') || normalized.includes('arcano')) return CHARACTER_IMAGES.Mago;
+  if (normalized.includes('guerreiro') || normalized.includes('boran') || normalized.includes('cavaleiro')) return CHARACTER_IMAGES.Guerreiro;
+  if (normalized.includes('arqueira') || normalized.includes('lyra')) return CHARACTER_IMAGES.Arqueira;
+  if (normalized.includes('spectre') || normalized.includes('draven')) return CHARACTER_IMAGES.Spectre;
+  return CHARACTER_IMAGES[charName] || CHARACTER_IMAGES.Samurai;
 }
 
 export function getTrackImage(
