@@ -60,25 +60,27 @@
         { name: 'Guerreiro da Geada', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 75, atk: 16, isFlying: false, type: 'fisico', ultName: 'Impacto Glacial Esmagador' },
         { name: 'Mago Cósmico do Pico', spriteFolder: 'assets/sprites/mago', baseHp: 120, atk: 25, isFlying: false, type: 'magico', ultName: 'Tempestade de Nevasca Cósmica' },
         { name: 'Espectro dos Ventos', spriteFolder: 'assets/sprites/spectre', baseHp: 60, atk: 18, isFlying: false, type: 'magico', ultName: 'Rajada Cortante do Ártico' },
-        { name: 'Lorde da Geada', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 115, atk: 24, isFlying: false, type: 'fisico', ultName: 'Nevasca do Ártico Cósmico' },
-        { name: 'Colosso de Magma', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 175, atk: 35, isFlying: false, type: 'fisico', ultName: 'Cataclismo Vulcânico' },
-        { name: 'Valquíria das Tempestades', spriteFolder: 'assets/sprites/arqueira', baseHp: 110, atk: 28, isFlying: true, type: 'magico', ultName: 'Julgamento Celestial' },
+        { name: 'Lorde da Geada', spriteFolder: 'assets/sprites/lorde_geada', baseHp: 115, atk: 24, isFlying: false, type: 'fisico', ultName: 'Nevasca do Ártico Cósmico' },
+        { name: 'Colosso de Magma', spriteFolder: 'assets/sprites/colosso_magma', baseHp: 175, atk: 35, isFlying: false, type: 'fisico', ultName: 'Cataclismo Vulcânico' },
+        { name: 'Valquíria das Tempestades', spriteFolder: 'assets/sprites/valquiria_tempestades', baseHp: 110, atk: 28, isFlying: true, type: 'magico', ultName: 'Julgamento Celestial' },
         {
-          name: 'Ignis, o Soberano do Magma',
-          spriteFolder: 'assets/sprites/cavaleiro',
-          baseHp: 245,
-          atk: 37,
+          name: 'Ignis, o Titã Vulcânico Primordial',
+          spriteFolder: 'assets/sprites/boss_ignis',
+          baseHp: 340,
+          atk: 36,
+          atkEnraged: 48,
+          def: 24,
           isFlying: false,
           type: 'fisico',
           isBoss: true,
           bossTier: 'supreme',
           attacks: [
-            { name: 'Garras Devoradoras de Magma', style: 'strike', sfx: 'sword_slash', color: '#f97316' },
-            { name: 'Sopro Calcinante do Inferno', style: 'cast', sfx: 'magic_impact', color: '#ef4444' },
-            { name: 'Fissura Sísmica Vulcânica', style: 'leap', sfx: 'heavy_impact', color: '#ea580c' },
+            { name: 'Erupção Sísmica de Punhos', style: 'strike', sfx: 'heavy_impact', color: '#f97316' },
+            { name: 'Cataclismo da Supercratera', style: 'leap', sfx: 'thunder_ultimate', color: '#ef4444' },
+            { name: 'Caldeira Primordial Ardente', style: 'cast', sfx: 'magic_impact', color: '#ea580c' },
           ],
-          ultName: 'Cataclismo da Caldeira Cósmica',
-          secondUltName: 'Despertar do Dragão do Fogo (Fase 2)',
+          ultName: 'Cataclismo da Supercratera',
+          secondUltName: 'Fúria da Caldeira Primordial (Fase 2)',
         },
       ],
       phases: [
@@ -98,8 +100,8 @@
         { name: 'Guerreiro das Areias', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 70, atk: 15, isFlying: false, type: 'fisico', ultName: 'Fúria da Cimitarra Solar' },
         { name: 'Djinn das Tempestades', spriteFolder: 'assets/sprites/spectre', baseHp: 115, atk: 24, isFlying: false, type: 'magico', ultName: 'Ciclone do Sol Escaldante' },
         { name: 'Mago das Dunas', spriteFolder: 'assets/sprites/mago', baseHp: 60, atk: 18, isFlying: false, type: 'magico', ultName: 'Sepultamento do Arenito' },
-        { name: 'Arquimago Solar', spriteFolder: 'assets/sprites/mago', baseHp: 110, atk: 25, isFlying: false, type: 'magico', ultName: 'Tempestade da Supernova' },
-        { name: 'Sentinela das Areias', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 130, atk: 24, isFlying: false, type: 'fisico', ultName: 'Maldição de Anúbis' },
+        { name: 'Arquimago Solar', spriteFolder: 'assets/sprites/arquimago_solar', baseHp: 110, atk: 25, isFlying: false, type: 'magico', ultName: 'Tempestade da Supernova' },
+        { name: 'Sentinela das Areias', spriteFolder: 'assets/sprites/sentinela_areias', baseHp: 130, atk: 24, isFlying: false, type: 'fisico', ultName: 'Maldição de Anúbis' },
         {
           name: 'Imperador Khepri-Ra',
           spriteFolder: 'assets/sprites/mago',
@@ -135,23 +137,25 @@
         { name: 'Cavaleiro Renegado', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 80, atk: 18, isFlying: false, type: 'fisico', ultName: 'Lâmina do Julgamento Cego' },
         { name: 'Lorde Decaído', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 125, atk: 26, isFlying: false, type: 'fisico', ultName: 'Golpe Quebra-Crânios' },
         { name: 'Ilusionista das Ruínas', spriteFolder: 'assets/sprites/mago', baseHp: 65, atk: 17, isFlying: false, type: 'magico', ultName: 'Espelhos do Caos Eterno' },
-        { name: 'Ladino das Sombras', spriteFolder: 'assets/sprites/arqueira', baseHp: 85, atk: 32, isFlying: false, type: 'fisico', ultName: 'Tempestade das Sombras' },
+        { name: 'Ladino das Sombras', spriteFolder: 'assets/sprites/ladino_sombras', baseHp: 85, atk: 32, isFlying: false, type: 'fisico', ultName: 'Tempestade das Sombras' },
         {
-          name: 'General Shogun Ronin Decaído',
-          spriteFolder: 'assets/sprites/samurai',
-          baseHp: 220,
-          atk: 36,
+          name: 'Behemoth da Cripta Esquecida',
+          spriteFolder: 'assets/sprites/boss_behemoth',
+          baseHp: 360,
+          atk: 38,
+          atkEnraged: 52,
+          def: 26,
           isFlying: false,
           type: 'fisico',
           isBoss: true,
           bossTier: 'supreme',
           attacks: [
-            { name: 'Corte Relâmpago das Sombras', style: 'strike', sfx: 'sword_slash', color: '#e11d48' },
-            { name: 'Dança das Lâminas Fantasmas', style: 'cast', sfx: 'thunder_ultimate', color: '#f43f5e' },
-            { name: 'Shuriken Venenoso da Noite', style: 'strike', sfx: 'arrow_whoosh', color: '#10b981' },
+            { name: 'Garras de Ferro da Cripta', style: 'strike', sfx: 'heavy_impact', color: '#10b981' },
+            { name: 'Vórtice do Apocalipse das Almas', style: 'cast', sfx: 'magic_impact', color: '#059669' },
+            { name: 'Dilaceração das Correntes Abissais', style: 'leap', sfx: 'thunder_ultimate', color: '#047857' },
           ],
-          ultName: 'Julgamento da Lua Sangrenta',
-          secondUltName: 'Corte Proibido: Mil Sombras (Fase 2)',
+          ultName: 'Vórtice do Apocalipse das Almas',
+          secondUltName: 'Dilaceração das Correntes Abissais (Fase 2)',
         },
       ],
       phases: [
@@ -171,24 +175,27 @@
         { name: 'Arauto do Esquecimento', spriteFolder: 'assets/sprites/spectre', baseHp: 85, atk: 20, isFlying: false, type: 'magico', ultName: 'Aniquilação da Matéria' },
         { name: 'O Arquivista do Vazio', spriteFolder: 'assets/sprites/mago', baseHp: 150, atk: 30, isFlying: false, type: 'magico', ultName: 'Singularidade da Entropia' },
         { name: 'Cavaleiro da Entropia', spriteFolder: 'assets/sprites/cavaleiro', baseHp: 90, atk: 22, isFlying: false, type: 'fisico', ultName: 'Corte da Dimensão Oculta' },
-        { name: 'Ceifador do Eclipse', spriteFolder: 'assets/sprites/spectre', baseHp: 125, atk: 26, isFlying: false, type: 'fisico', ultName: 'Vórtice do Eclipse Sombrio' },
-        { name: 'Arquivista Cósmico', spriteFolder: 'assets/sprites/mago', baseHp: 135, atk: 30, isFlying: true, type: 'magico', ultName: 'Colapso Gravitacional' },
+        { name: 'Ceifador do Eclipse', spriteFolder: 'assets/sprites/ceifador_eclipse', baseHp: 125, atk: 26, isFlying: false, type: 'fisico', ultName: 'Vórtice do Eclipse Sombrio' },
+        { name: 'Arquivista Cósmico', spriteFolder: 'assets/sprites/arquivista_cosmico', baseHp: 135, atk: 30, isFlying: true, type: 'magico', ultName: 'Colapso Gravitacional' },
         {
-          name: 'Behemoth da Singularidade',
-          spriteFolder: 'assets/sprites/spectre',
-          baseHp: 260,
-          atk: 39,
-          isFlying: false,
-          type: 'magico',
+          name: 'General Shogun Decaído (Lorde Abissal das Lâminas do Vazio)',
+          spriteFolder: 'assets/sprites/boss_shogun',
+          baseHp: 400,
+          atk: 46,
+          atkEnraged: 62,
+          def: 22,
+          isFlying: true,
+          type: 'fisico',
           isBoss: true,
+          isFinalBoss: true,
           bossTier: 'supreme',
           attacks: [
-            { name: 'Corte Dimensional de Vácuo', style: 'strike', sfx: 'sword_slash', color: '#a855f7' },
-            { name: 'Tentáculos de Matéria Escura', style: 'cast', sfx: 'magic_impact', color: '#7c3aed' },
-            { name: 'Pulsação Gravitacional Anômala', style: 'leap', sfx: 'heavy_impact', color: '#6366f1' },
+            { name: 'Dança Dimensional dos Quatro Braços', style: 'strike', sfx: 'sword_slash', color: '#a855f7' },
+            { name: 'Singularidade do Eclipse Cósmico', style: 'cast', sfx: 'thunder_ultimate', color: '#9333ea' },
+            { name: 'Fenda Temporal de Vácuo', style: 'leap', sfx: 'heavy_impact', color: '#7e22ce' },
           ],
-          ultName: 'Colapso do Horizonte de Eventos',
-          secondUltName: 'Dilaceração da Supernova Negra (Fase 2)',
+          ultName: 'Singularidade do Eclipse Cósmico',
+          secondUltName: 'Corte Dimensional dos Quatro Braços (Fase 2)',
         },
       ],
       phases: [
@@ -214,7 +221,7 @@
     },
     guerreiro: {
       name: 'Boran',
-      spriteFolder: 'assets/sprites/cavaleiro',
+      spriteFolder: 'assets/sprites/guerreiro',
       attackSound: 'heavy_impact',
       heavySound: 'shield_block',
       skins: [
@@ -259,6 +266,7 @@
   // ============================================================================
   class RealisticOrchestralAudio {
     constructor() {
+      this.animator = new SpriteSheetAnimator();
       this.ctx = null;
       this.isMuted = false;
       this.timer = null;
@@ -1430,7 +1438,7 @@
         slot.isAlive = true;
         slot.wrapper.style.display = 'flex';
         slot.wrapper.style.right = '18%';
-        slot.sprite.src = `${eData.spriteFolder}/idle.gif`;
+        this.setActorAnimation(slot.sprite, eData.spriteFolder, 'idle', eData.isBoss ? 7 : 6);
         slot.nameText.textContent = eData.isBoss ? `☠️ CHEFÃO: ${eData.name}` : `👑 ${eData.name}`;
         slot.barFill.style.width = '100%';
 
@@ -1450,7 +1458,7 @@
           slot.isAlive = true;
           slot.wrapper.style.display = 'flex';
           slot.wrapper.style.right = slotIdx === 0 ? '25%' : '10%';
-          slot.sprite.src = `${eData.spriteFolder}/idle.gif`;
+          this.setActorAnimation(slot.sprite, eData.spriteFolder, 'idle', eData.isBoss ? 7 : 6);
           slot.nameText.textContent = eData.isBoss ? `☠️ ${eData.name}` : eData.name;
           slot.barFill.style.width = '100%';
 
@@ -1469,7 +1477,7 @@
           slot.isAlive = true;
           slot.wrapper.style.display = 'flex';
           slot.wrapper.style.right = i === 0 ? '28%' : i === 1 ? '17%' : '6%';
-          slot.sprite.src = `${eData.spriteFolder}/idle.gif`;
+          this.setActorAnimation(slot.sprite, eData.spriteFolder, 'idle', eData.isBoss ? 7 : 6);
           slot.nameText.textContent = eData.isBoss ? `☠️ ${eData.name}` : eData.name;
           slot.barFill.style.width = '100%';
 
@@ -1480,6 +1488,15 @@
 
       this.applyGrounding();
       this.updateTotalBossHUD();
+    }
+
+    
+    setActorAnimation(actorImg, folder, action = 'idle', fps = 6) {
+      if (!actorImg || !folder) return;
+      if (!this.animator) {
+        this.animator = new SpriteSheetAnimator();
+      }
+      this.animator.play(actorImg, folder, action, fps);
     }
 
     applyGrounding() {
@@ -1499,7 +1516,7 @@
       const char = CHARACTERS_CONFIG[this.selectedCharKey];
       const skin = char.skins[this.selectedSkinIndex] || char.skins[0];
       this.playerSprite.className = `actor-sprite ${skin.cssClass}`;
-      this.playerSprite.src = `${char.spriteFolder}/idle.gif`;
+      this.setActorAnimation(this.playerSprite, char.spriteFolder, 'idle', 6);
     }
 
     toggleAudio() {
@@ -1546,7 +1563,7 @@
 
         // Animação de Ataque do Herói
         const attackGif = this.streak % 2 === 0 ? 'attack2.gif' : 'attack1.gif';
-        this.playerSprite.src = `${char.spriteFolder}/${attackGif}`;
+        this.setActorAnimation(this.playerSprite, char.spriteFolder, attackGif === 'attack2.gif' ? 'attack2' : 'attack1', 8);
         this.playerWrapper.classList.add('actor-dash-strike');
 
         setTimeout(() => {
@@ -1554,7 +1571,7 @@
         }, 130);
 
         setTimeout(() => {
-          this.playerSprite.src = `${char.spriteFolder}/idle.gif`;
+          this.setActorAnimation(this.playerSprite, char.spriteFolder, 'idle', 6);
           this.playerWrapper.classList.remove('actor-dash-strike');
         }, 480);
 
@@ -1714,7 +1731,7 @@
 
       if (isUltimate) {
         // Golpe Supremo do Inimigo ou Chefão
-        attacker.sprite.src = `${attacker.data.spriteFolder}/attack2.gif`;
+        this.setActorAnimation(attacker.sprite, attacker.data.spriteFolder, 'attack2', 8);
         attacker.wrapper.classList.add('actor-charge-glow', isBoss ? 'actor-boss-supreme-strike' : 'actor-enemy-strike');
 
         let ultTitle = attacker.data.ultName || 'GOLPE SUPREMO';
@@ -1746,7 +1763,7 @@
             this.spawnMagicProjectile(attacker);
           }, 180);
         } else if (style === 'leap') {
-          attacker.sprite.src = `${attacker.data.spriteFolder}/attack1.gif`;
+          this.setActorAnimation(attacker.sprite, attacker.data.spriteFolder, 'attack1', 8);
           attacker.wrapper.classList.add('actor-enemy-leap');
           this.addFloatingText(`🌋 ${chosenAtk.name.toUpperCase()}!`, color, 683, 260, false);
           setTimeout(() => {
@@ -2153,7 +2170,7 @@
       this.ultimateBanner.textContent = `⚡ ${skin.ultName.toUpperCase()}!`;
       this.cinematicOverlay.style.display = 'flex';
 
-      this.playerSprite.src = `${char.spriteFolder}/full.gif`;
+      this.setActorAnimation(this.playerSprite, char.spriteFolder, 'full', 8);
       this.playerWrapper.classList.add('actor-charge-glow');
 
       if (this.selectedCharKey === 'arqueira') {
