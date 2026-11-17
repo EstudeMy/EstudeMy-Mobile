@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Prévia Cinemática: Cutscenes In-Engine (Novos Personagens) • EstudeMy</title>
+    <title>Prévia Cinemática: Trilha Sonora Orquestral & Cutscenes In-Engine • EstudeMy</title>
     <style>
         * {
             box-sizing: border-box;
@@ -42,7 +42,7 @@
         }
 
         .header-badge {
-            background: linear-gradient(135deg, #10b981, #059669);
+            background: linear-gradient(135deg, #f59e0b, #ef4444);
             color: #ffffff;
             font-size: 11px;
             font-weight: 900;
@@ -140,6 +140,25 @@
             background: rgba(225, 29, 72, 0.4);
             border-color: #fb7185;
             color: #ffffff;
+        }
+
+        .btn-bgm {
+            background: rgba(168, 85, 247, 0.2);
+            border-color: #a855f7;
+            color: #d8b4fe;
+        }
+
+        .btn-bgm:hover {
+            background: rgba(168, 85, 247, 0.4);
+            border-color: #c084fc;
+            color: #ffffff;
+        }
+
+        .bgm-active {
+            background: linear-gradient(135deg, #9333ea, #7e22ce) !important;
+            border-color: #d8b4fe !important;
+            color: #ffffff !important;
+            box-shadow: 0 0 14px rgba(168, 85, 247, 0.6);
         }
 
         /* Container do Palco do Jogo (16:9) */
@@ -490,6 +509,49 @@
             text-shadow: 0 2px 6px rgba(0,0,0,0.8);
         }
 
+        /* Badge Indicador de Trilha Sonora BGM */
+        .music-indicator-badge {
+            position: absolute;
+            top: 14px;
+            left: 16px;
+            background: rgba(15, 23, 42, 0.88);
+            border: 1.5px solid #a855f7;
+            padding: 5px 12px;
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 11px;
+            font-weight: 800;
+            color: #e9d5ff;
+            z-index: 25;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(6px);
+        }
+
+        .sound-wave-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 2px;
+            height: 12px;
+        }
+
+        .sound-wave-bar {
+            width: 3px;
+            background: #c084fc;
+            border-radius: 2px;
+            animation: soundWave 0.6s infinite alternate ease-in-out;
+        }
+
+        .sound-wave-bar:nth-child(2) { animation-delay: 0.15s; height: 10px; }
+        .sound-wave-bar:nth-child(3) { animation-delay: 0.3s; height: 7px; }
+        .sound-wave-bar:nth-child(4) { animation-delay: 0.45s; height: 11px; }
+
+        @keyframes soundWave {
+            0% { height: 3px; }
+            100% { height: 12px; }
+        }
+
         /* Simulação do Quiz no Combate Normal (após a cutscene) */
         .mock-quiz-hud {
             position: absolute;
@@ -595,10 +657,10 @@
     <!-- Cabeçalho -->
     <header>
         <div class="header-title-box">
-            <span class="header-badge">Personagens Oficiais • 100% Sincronizado</span>
+            <span class="header-badge">🎵 Trilha Orquestral Ativa</span>
             <div>
-                <h1>Cutscene Cinemática In-Engine</h1>
-                <p class="subtitle">Heróis oficiais (Kaito, Valerius, Boran) e Chefões Supremos (Ignis, Khepri, Shogun, Behemoth)</p>
+                <h1>Cutscene Cinemática com Trilha Sonora</h1>
+                <p class="subtitle">Música contínua com progressão de tensão, tema exclusivo do boss e marcha de combate</p>
             </div>
         </div>
     </header>
@@ -606,7 +668,7 @@
     <!-- Painel de Controles da Prévia -->
     <div class="controls-card">
         <div class="controls-group">
-            <span class="control-label">Chefão Supremo:</span>
+            <span class="control-label">Chefão:</span>
             <select id="select-boss" onchange="changeBossPreview()">
                 <option value="ignis">🔥 Ignis (Titã Vulcânico - Montanha)</option>
                 <option value="khepri">☀️ Imperador Khepri-Ra (Deserto)</option>
@@ -616,7 +678,7 @@
         </div>
 
         <div class="controls-group">
-            <span class="control-label">Herói do Jogador:</span>
+            <span class="control-label">Herói:</span>
             <select id="select-hero" onchange="changeHeroPreview()">
                 <option value="samurai">🗡️ Samurai (Kaito)</option>
                 <option value="mago">🔮 Mago (Valerius)</option>
@@ -627,12 +689,24 @@
         <div class="controls-group">
             <button class="btn-primary" id="btn-play" onclick="playCutscene()">▶️ Iniciar Cutscene</button>
             <button class="btn-skip" onclick="skipCutscene()">⏭️ Pular Cena</button>
+            <button class="btn-bgm" id="btn-bgm" onclick="toggleBGMStandalone()">🎵 Trilha Sonora: OFF</button>
             <button id="btn-sound" onclick="toggleSound()">🔊 Som: ON</button>
         </div>
     </div>
 
     <!-- Palco do Jogo (16:9) -->
     <div class="stage-container" id="stage">
+
+        <!-- Indicador de Trilha Sonora Sonora Ativa -->
+        <div class="music-indicator-badge" id="music-badge">
+            <div class="sound-wave-bars">
+                <div class="sound-wave-bar"></div>
+                <div class="sound-wave-bar"></div>
+                <div class="sound-wave-bar"></div>
+                <div class="sound-wave-bar"></div>
+            </div>
+            <span id="music-badge-text">🎵 Tema: Caldeira do Titã Ignis</span>
+        </div>
 
         <!-- Câmera do Cenário -->
         <div class="camera-viewport" id="camera">
@@ -705,31 +779,31 @@
     <!-- Cards de Benefícios da Opção 1 -->
     <div class="features-grid">
         <div class="feature-card">
-            <span class="feature-icon">✨</span>
+            <span class="feature-icon">🎻</span>
             <div>
-                <div class="feature-title">Spritesheets Oficiais</div>
-                <div class="feature-desc">Utiliza exatamente as novas spritesheets de 16-bit (Kaito, Valerius, Boran, Ignis, Khepri, Shogun, Behemoth).</div>
+                <div class="feature-title">Trilha Sonora Contínua</div>
+                <div class="feature-desc">Música imersiva em tempo real com cordas, trompas orquestrais e tambores de guerra acústicos.</div>
             </div>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">🛡️</span>
+            <span class="feature-icon">🔥</span>
             <div>
-                <div class="feature-title">Animação Idle & Attack</div>
-                <div class="feature-desc">Motor Canvas em tempo real alternando postura de espera, rugido/ataque e reações heroicas.</div>
+                <div class="feature-title">Temas Exclusivos por Chefe</div>
+                <div class="feature-desc">Vulcão tem tambores de taiko, Deserto tem escala Hijaz com oud árabe, Cripta tem órgão de tubos gótico.</div>
             </div>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">⏭️</span>
+            <span class="feature-icon">⚔️</span>
             <div>
-                <div class="feature-title">Skip Instantâneo</div>
-                <div class="feature-desc">Pode ser pulada a qualquer segundo pelo botão no topo ou tecla ESC sem atrasar o gameplay.</div>
+                <div class="feature-title">Transição para Combate</div>
+                <div class="feature-desc">A música de suspense transiciona sem corte para a empolgante marcha de batalha quando o quiz aparece!</div>
             </div>
         </div>
         <div class="feature-card">
-            <span class="feature-icon">🎵</span>
+            <span class="feature-icon">📱</span>
             <div>
-                <div class="feature-title">Áudio Orquestral Nativo</div>
-                <div class="feature-desc">Transição musical de suspense para marcha de batalha sem cortes ou delays de áudio.</div>
+                <div class="feature-title">Zero Arquivos de Áudio</div>
+                <div class="feature-desc">100% sintetizado via Web Audio API. Não gasta memória nem trava com downloads em redes lentas.</div>
             </div>
         </div>
     </div>
@@ -744,6 +818,7 @@
             ignis: {
                 name: 'Ignis, o Titã Vulcânico',
                 subtitle: 'Soberano das Chamas Primordiais',
+                trackName: 'Fúria da Caldeira Sísmica',
                 bg: ASSETS_B64.bg_montanha,
                 sheet: ASSETS_B64.sheet_boss_ignis,
                 auraClass: 'ignis',
@@ -756,10 +831,11 @@
             khepri: {
                 name: 'Imperador Khepri-Ra',
                 subtitle: 'Soberano Eterno das Areias',
+                trackName: 'Oasis das Dunas Sagradas de Rá',
                 bg: ASSETS_B64.bg_deserto,
                 sheet: ASSETS_B64.sheet_boss_khepri,
                 auraClass: 'khepri',
-                isKhepri: true, // Khepri olha nativamente para a esquerda
+                isKhepri: true,
                 lines: [
                     'Milênios sob as areias não enfraqueceram meu império solar!',
                     'A luz implacável de Rá revelará sua total ignorância diante dos deuses!'
@@ -768,6 +844,7 @@
             shogun: {
                 name: 'General Shogun Decaído',
                 subtitle: 'Lorde Abissal das Lâminas do Vazio',
+                trackName: 'Vácuo Dimensional das Quatro Lâminas',
                 bg: ASSETS_B64.bg_castelo,
                 sheet: ASSETS_B64.sheet_boss_shogun,
                 auraClass: 'shogun',
@@ -780,6 +857,7 @@
             behemoth: {
                 name: 'Behemoth da Cripta',
                 subtitle: 'Terror Titânico das Profundezas',
+                trackName: 'Réquiem Gótico das Catacumbas',
                 bg: ASSETS_B64.bg_vila,
                 sheet: ASSETS_B64.sheet_boss_behemoth,
                 auraClass: 'behemoth',
@@ -811,7 +889,7 @@
         };
 
         // ============================================================================
-        // SISTEMA DE ANIMAÇÃO DE SPRITESHEET CANVAS (3x3 Grid)
+        // 1. SISTEMA DE ANIMAÇÃO DE SPRITESHEET CANVAS (3x3 Grid)
         // ============================================================================
         class CanvasSpriteSheetAnimator {
             constructor() {
@@ -842,7 +920,6 @@
                 else row = 0; // idle
 
                 let frame = 0;
-                // Herói encara para a DIREITA (natural). Inimigos encaram ESQUERDA (Khepri nativo, outros invertem)
                 const shouldFlip = isEnemy ? !isKhepri : false;
 
                 const draw = () => {
@@ -924,113 +1001,430 @@
 
         const animator = new CanvasSpriteSheetAnimator();
 
-        // Estado
-        let soundEnabled = true;
-        let isPlaying = false;
-        let cutsceneTimer = null;
-        let typewriterInterval = null;
-        let currentBossKey = 'ignis';
-        let currentHeroKey = 'samurai';
-
-        // Sintetizador de Áudio Web Audio API
-        class AudioSynth {
+        // ============================================================================
+        // 2. SISTEMA DE TRILHA SONORA ORQUESTRAL COMPLETA (WEB AUDIO API)
+        // ============================================================================
+        class CinematicOrchestraAudio {
             constructor() {
                 this.ctx = null;
+                this.isMuted = false;
+                this.bgmTimer = null;
+                this.step = 0;
+                this.phase = 'suspense'; // 'suspense', 'boss', 'hero', 'battle'
+                this.currentBoss = 'ignis';
+                this.masterGain = null;
+                this.reverbSend = null;
             }
+
             init() {
-                if (!this.ctx) {
-                    const AudioContext = window.AudioContext || window.webkitAudioContext;
-                    if (AudioContext) this.ctx = new AudioContext();
-                }
-                if (this.ctx && this.ctx.state === 'suspended') {
-                    this.ctx.resume();
+                if (this.ctx && this.ctx.state === 'running') return;
+                try {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    if (AudioCtx) {
+                        this.ctx = new AudioCtx();
+                        if (this.ctx.state === 'suspended') {
+                            this.ctx.resume().catch(() => {});
+                        }
+
+                        this.masterGain = this.ctx.createGain();
+                        this.masterGain.gain.setValueAtTime(0.75, this.ctx.currentTime);
+                        this.masterGain.connect(this.ctx.destination);
+
+                        const delay = this.ctx.createDelay();
+                        delay.delayTime.value = 0.22;
+                        const feedback = this.ctx.createGain();
+                        feedback.gain.value = 0.35;
+                        const filter = this.ctx.createBiquadFilter();
+                        filter.type = 'lowpass';
+                        filter.frequency.value = 1600;
+
+                        this.reverbSend = this.ctx.createGain();
+                        this.reverbSend.gain.value = 0.45;
+
+                        this.reverbSend.connect(delay);
+                        delay.connect(filter);
+                        filter.connect(feedback);
+                        feedback.connect(delay);
+                        filter.connect(this.masterGain);
+                    }
+                } catch(e) {}
+            }
+
+            startBGM(bossKey = 'ignis') {
+                this.init();
+                this.stopBGM();
+                this.currentBoss = bossKey;
+                this.step = 0;
+                this.phase = 'suspense';
+                if (this.isMuted || !this.ctx) return;
+
+                // Loop a cada 240ms (125 BPM)
+                this.bgmTimer = setInterval(() => {
+                    if (this.isMuted || !this.ctx) return;
+                    const t = this.ctx.currentTime;
+                    this.tick(t);
+                    this.step++;
+                }, 240);
+
+                this.updateBadge();
+            }
+
+            setPhase(newPhase) {
+                this.phase = newPhase;
+                this.updateBadge();
+            }
+
+            stopBGM() {
+                if (this.bgmTimer) {
+                    clearInterval(this.bgmTimer);
+                    this.bgmTimer = null;
                 }
             }
-            playSuspenseDrone() {
-                if (!soundEnabled) return;
-                this.init();
-                if (!this.ctx) return;
-                const osc = this.ctx.createOscillator();
+
+            updateBadge() {
+                const b = document.getElementById('music-badge');
+                const t = document.getElementById('music-badge-text');
+                const boss = BOSSES[this.currentBoss];
+                if (!b || !t || !boss) return;
+
+                if (this.phase === 'suspense') {
+                    t.textContent = '🎵 Tensão: Aproximação do Boss...';
+                } else if (this.phase === 'boss') {
+                    t.textContent = '🔥 Tema do Chefe: ' + boss.trackName;
+                } else if (this.phase === 'hero') {
+                    t.textContent = '⚔️ Marcha Heroica de Resposta';
+                } else if (this.phase === 'battle') {
+                    t.textContent = '⚡ Batalha Decisiva: ' + boss.name;
+                }
+            }
+
+            tick(t) {
+                if (this.phase === 'suspense') {
+                    // Fase 1: Cordas tensas, sub-baixo e sino
+                    const suspenseBass = [55.0, 55.0, 58.27, 51.91];
+                    const note = suspenseBass[Math.floor(this.step / 4) % suspenseBass.length];
+                    if (this.step % 4 === 0) {
+                        this.playWarmStrings(note, t, 1.2, 0.28);
+                        this.playWarmStrings(note * 1.5, t, 1.0, 0.18);
+                    }
+                    if (this.step % 8 === 0) {
+                        this.playTimpani(t, 0.4);
+                    }
+                    if (this.step % 16 === 0) {
+                        this.playTubularBell(220.0, t, 3.0, 0.35);
+                    }
+                } else if (this.phase === 'boss') {
+                    // Fase 2: Boss Theme com percussão e instrumentos temáticos
+                    if (this.step % 2 === 0) {
+                        this.playTimpani(t, 0.55);
+                    }
+                    if (this.step % 4 === 2) {
+                        this.playWarSnare(t, 0.3);
+                    }
+
+                    if (this.currentBoss === 'ignis') {
+                        // Tema Vulcânico: Metais de Guerra
+                        const ignisMotif = [110.0, 116.54, 130.81, 110.0, 98.0, 110.0];
+                        const f = ignisMotif[Math.floor(this.step / 2) % ignisMotif.length];
+                        this.playBrassHorn(f, t, 0.48, 0.26);
+                        if (this.step % 4 === 0) this.playWarmStrings(55.0, t, 0.9, 0.24);
+                    } else if (this.currentBoss === 'khepri') {
+                        // Tema Deserto: Escala Hijaz com Oud
+                        const hijaz = [220.0, 233.08, 277.18, 293.66, 277.18, 233.08];
+                        const f = hijaz[this.step % hijaz.length];
+                        this.playOud(f, t, 0.28, 0.28);
+                        if (this.step % 4 === 0) this.playWarmStrings(110.0, t, 0.9, 0.22);
+                    } else if (this.currentBoss === 'shogun') {
+                        // Tema Cósmico: Ressonância mística
+                        const shogunMotif = [146.83, 164.81, 174.61, 220.0, 196.0, 146.83];
+                        const f = shogunMotif[Math.floor(this.step / 2) % shogunMotif.length];
+                        this.playWarmStrings(f, t, 0.8, 0.25);
+                        this.playWarmStrings(f * 0.5, t, 1.2, 0.3);
+                    } else {
+                        // Tema Behemoth: Órgão de tubos gótico
+                        const behemothMotif = [73.42, 87.31, 82.41, 69.30];
+                        const f = behemothMotif[Math.floor(this.step / 4) % behemothMotif.length];
+                        this.playPipeOrgan(f * 2, t, 0.9, 0.3);
+                        this.playWarmStrings(f, t, 0.9, 0.25);
+                    }
+                } else if (this.phase === 'hero') {
+                    // Fase 3: Réplica Heroica
+                    const heroChords = [146.83, 174.61, 220.0, 293.66];
+                    const f = heroChords[this.step % heroChords.length];
+                    this.playBrassHorn(f * 1.5, t, 0.38, 0.24);
+                    if (this.step % 2 === 0) {
+                        this.playWarmStrings(146.83, t, 0.5, 0.25);
+                        this.playTimpani(t, 0.45);
+                    }
+                } else if (this.phase === 'battle') {
+                    // Fase 4: Marcha Triunfal de Batalha contínua
+                    if (this.step % 2 === 0) this.playTimpani(t, 0.6);
+                    if (this.step % 2 === 1) this.playWarSnare(t, 0.35);
+
+                    const battleLead = [293.66, 349.23, 440.0, 523.25, 440.0, 349.23, 392.0, 329.63];
+                    const note = battleLead[this.step % battleLead.length];
+                    this.playBrassHorn(note, t, 0.22, 0.25);
+                    if (this.step % 4 === 0) {
+                        this.playWarmStrings(73.42, t, 0.9, 0.3);
+                    }
+                }
+            }
+
+            // Instrumentos Acústicos
+            playWarmStrings(freq, time, duration, vol) {
+                if (!this.ctx || this.isMuted) return;
+                const osc1 = this.ctx.createOscillator();
+                const osc2 = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
-                osc.type = 'sawtooth';
-                osc.frequency.setValueAtTime(55, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(73.4, this.ctx.currentTime + 3.5);
-
                 const filter = this.ctx.createBiquadFilter();
-                filter.type = 'lowpass';
-                filter.frequency.setValueAtTime(220, this.ctx.currentTime);
 
-                gain.gain.setValueAtTime(0.001, this.ctx.currentTime);
-                gain.gain.linearRampToValueAtTime(0.25, this.ctx.currentTime + 0.8);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 4.5);
+                osc1.type = 'sawtooth';
+                osc1.frequency.setValueAtTime(freq, time);
+                osc2.type = 'triangle';
+                osc2.frequency.setValueAtTime(freq * 1.004, time);
+
+                filter.type = 'lowpass';
+                filter.frequency.setValueAtTime(900, time);
+
+                gain.gain.setValueAtTime(0.001, time);
+                gain.gain.linearRampToValueAtTime(vol, time + 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+                osc1.connect(filter);
+                osc2.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.masterGain);
+                gain.connect(this.reverbSend);
+
+                osc1.start(time);
+                osc2.start(time);
+                osc1.stop(time + duration);
+                osc2.stop(time + duration);
+            }
+
+            playBrassHorn(freq, time, duration, vol) {
+                if (!this.ctx || this.isMuted) return;
+                const osc = this.ctx.createOscillator();
+                const osc2 = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                const filter = this.ctx.createBiquadFilter();
+
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(freq, time);
+                osc2.type = 'sawtooth';
+                osc2.frequency.setValueAtTime(freq * 0.996, time);
+
+                filter.type = 'bandpass';
+                filter.frequency.setValueAtTime(freq * 2.2, time);
+                filter.Q.value = 1.8;
+
+                gain.gain.setValueAtTime(0.001, time);
+                gain.gain.linearRampToValueAtTime(vol, time + 0.04);
+                gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
 
                 osc.connect(filter);
+                osc2.connect(filter);
                 filter.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 4.5);
+                gain.connect(this.masterGain);
+                gain.connect(this.reverbSend);
+
+                osc.start(time);
+                osc2.start(time);
+                osc.stop(time + duration);
+                osc2.stop(time + duration);
             }
-            playTypewriterBlip() {
-                if (!soundEnabled) return;
-                this.init();
-                if (!this.ctx) return;
+
+            playTimpani(time, vol) {
+                if (!this.ctx || this.isMuted) return;
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 osc.type = 'sine';
-                osc.frequency.setValueAtTime(600 + Math.random() * 80, this.ctx.currentTime);
-                gain.gain.setValueAtTime(0.04, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
+                osc.frequency.setValueAtTime(82, time);
+                osc.frequency.exponentialRampToValueAtTime(38, time + 0.35);
+
+                gain.gain.setValueAtTime(vol, time);
+                gain.gain.exponentialRampToValueAtTime(0.001, time + 0.45);
+
                 osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.04);
+                gain.connect(this.masterGain);
+                osc.start(time);
+                osc.stop(time + 0.45);
             }
-            playRoarImpact() {
-                if (!soundEnabled) return;
-                this.init();
-                if (!this.ctx) return;
+
+            playWarSnare(time, vol) {
+                if (!this.ctx || this.isMuted) return;
+                const bufferSize = Math.floor(this.ctx.sampleRate * 0.12);
+                const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+                const output = buffer.getChannelData(0);
+                for (let i = 0; i < bufferSize; i++) {
+                    output[i] = Math.random() * 2 - 1;
+                }
+                const whiteNoise = this.ctx.createBufferSource();
+                whiteNoise.buffer = buffer;
+
+                const filter = this.ctx.createBiquadFilter();
+                filter.type = 'highpass';
+                filter.frequency.setValueAtTime(1200, time);
+
+                const gain = this.ctx.createGain();
+                gain.gain.setValueAtTime(vol, time);
+                gain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
+
+                whiteNoise.connect(filter);
+                filter.connect(gain);
+                gain.connect(this.masterGain);
+
+                whiteNoise.start(time);
+                whiteNoise.stop(time + 0.12);
+            }
+
+            playPipeOrgan(freq, time, duration, vol) {
+                if (!this.ctx || this.isMuted) return;
+                [1, 2].forEach((harmonic, idx) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq * harmonic, time);
+
+                    gain.gain.setValueAtTime(0.001, time);
+                    gain.gain.linearRampToValueAtTime(vol / (idx + 1.2), time + 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+                    osc.connect(gain);
+                    gain.connect(this.masterGain);
+                    gain.connect(this.reverbSend);
+
+                    osc.start(time);
+                    osc.stop(time + duration);
+                });
+            }
+
+            playOud(freq, time, duration, vol) {
+                if (!this.ctx || this.isMuted) return;
                 const osc = this.ctx.createOscillator();
                 const gain = this.ctx.createGain();
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(95, this.ctx.currentTime);
-                osc.frequency.exponentialRampToValueAtTime(35, this.ctx.currentTime + 0.6);
-                gain.gain.setValueAtTime(0.35, this.ctx.currentTime);
-                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.7);
+                osc.frequency.setValueAtTime(freq, time);
+
+                gain.gain.setValueAtTime(vol, time);
+                gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
                 osc.connect(gain);
-                gain.connect(this.ctx.destination);
-                osc.start();
-                osc.stop(this.ctx.currentTime + 0.7);
+                gain.connect(this.masterGain);
+                gain.connect(this.reverbSend);
+
+                osc.start(time);
+                osc.stop(time + duration);
             }
+
+            playTubularBell(freq, time, duration, vol) {
+                if (!this.ctx || this.isMuted) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, time);
+
+                gain.gain.setValueAtTime(vol, time);
+                gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+                gain.connect(this.reverbSend);
+
+                osc.start(time);
+                osc.stop(time + duration);
+            }
+
             playBattleGong() {
-                if (!soundEnabled) return;
-                this.init();
-                if (!this.ctx) return;
-                const freqs = [130.81, 196.00, 261.63, 392.00];
+                if (!this.ctx || this.isMuted) return;
+                const freqs = [98.0, 130.81, 196.0, 261.63, 392.0];
                 freqs.forEach((f) => {
                     const osc = this.ctx.createOscillator();
                     const gain = this.ctx.createGain();
                     osc.type = 'sawtooth';
                     osc.frequency.setValueAtTime(f, this.ctx.currentTime);
-                    gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
-                    gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 1.8);
+                    gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 2.4);
                     osc.connect(gain);
-                    gain.connect(this.ctx.destination);
-                    osc.start();
-                    osc.stop(this.ctx.currentTime + 1.8);
+                    gain.connect(this.masterGain);
+                    gain.connect(this.reverbSend);
+                    osc.start(this.ctx.currentTime);
+                    osc.stop(this.ctx.currentTime + 2.4);
                 });
+            }
+
+            playTypewriterBlip() {
+                if (!this.ctx || this.isMuted) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600 + Math.random() * 80, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.035, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+                osc.start(this.ctx.currentTime);
+                osc.stop(this.ctx.currentTime + 0.04);
+            }
+
+            playRoarImpact() {
+                if (!this.ctx || this.isMuted) return;
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(95, this.ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(32, this.ctx.currentTime + 0.7);
+                gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.8);
+                osc.connect(gain);
+                gain.connect(this.masterGain);
+                osc.start(this.ctx.currentTime);
+                osc.stop(this.ctx.currentTime + 0.8);
             }
         }
 
-        const audio = new AudioSynth();
+        const audio = new CinematicOrchestraAudio();
+
+        // Estado
+        let soundEnabled = true;
+        let isPlaying = false;
+        let isBgmManualPlaying = false;
+        let cutsceneTimer = null;
+        let typewriterInterval = null;
+        let currentBossKey = 'ignis';
+        let currentHeroKey = 'samurai';
 
         function toggleSound() {
             soundEnabled = !soundEnabled;
+            audio.isMuted = !soundEnabled;
             const btn = document.getElementById('btn-sound');
             if (btn) {
                 btn.textContent = soundEnabled ? '🔊 Som: ON' : '🔇 Som: OFF';
                 btn.style.color = soundEnabled ? '#38bdf8' : '#94a3b8';
             }
             if (soundEnabled) audio.init();
+            else audio.stopBGM();
+        }
+
+        function toggleBGMStandalone() {
+            audio.init();
+            isBgmManualPlaying = !isBgmManualPlaying;
+            const btn = document.getElementById('btn-bgm');
+
+            if (isBgmManualPlaying) {
+                audio.startBGM(currentBossKey);
+                audio.setPhase('boss');
+                if (btn) {
+                    btn.textContent = '⏹️ Parar Música';
+                    btn.classList.add('bgm-active');
+                }
+            } else {
+                audio.stopBGM();
+                if (btn) {
+                    btn.textContent = '🎵 Trilha Sonora: OFF';
+                    btn.classList.remove('bgm-active');
+                }
+            }
         }
 
         function changeBossPreview() {
@@ -1045,6 +1439,13 @@
 
             const bossCanvas = document.getElementById('boss-sprite');
             animator.play(bossCanvas, boss.sheet, 'idle', true, boss.isKhepri, 6);
+
+            if (isBgmManualPlaying) {
+                audio.startBGM(currentBossKey);
+                audio.setPhase('boss');
+            } else {
+                audio.updateBadge();
+            }
 
             resetScene();
         }
@@ -1064,6 +1465,10 @@
             clearTimeout(cutsceneTimer);
             clearInterval(typewriterInterval);
             isPlaying = false;
+
+            if (!isBgmManualPlaying) {
+                audio.stopBGM();
+            }
 
             const stage = document.getElementById('stage');
             const camera = document.getElementById('camera');
@@ -1139,11 +1544,12 @@
             const boss = BOSSES[currentBossKey];
             const hero = HEROES[currentHeroKey];
 
-            // 1. Entrada das Barras de Cinema e Suspense
+            // 1. Inicia Trilha Sonora: Fase 1 (Tensão e Suspense)
             stage.classList.add('cutscene-active');
-            audio.playSuspenseDrone();
+            audio.startBGM(currentBossKey);
+            audio.setPhase('suspense');
 
-            // 2. Câmera aproxima no Chefão (1.2s)
+            // 2. Câmera aproxima no Chefão e Trilha Sonora entra no Tema do Boss (1.2s)
             cutsceneTimer = setTimeout(() => {
                 if (!isPlaying) return;
                 camera.style.transform = 'scale(1.22) translate(-9%, 5%)';
@@ -1151,8 +1557,8 @@
 
                 stage.classList.add('screen-shake');
                 audio.playRoarImpact();
+                audio.setPhase('boss'); // Inicia tambores de guerra e metais temáticos do Boss!
 
-                // Boss golpe/rugido da linha 1 (attack)
                 animator.play(bossCanvas, boss.sheet, 'attack', true, boss.isKhepri, 7);
 
                 setTimeout(() => {
@@ -1163,7 +1569,7 @@
                 titleCard.classList.add('show');
             }, 1200);
 
-            // 3. Diálogo do Chefão (3.2s)
+            // 3. Diálogo do Chefão com Bleeps e Música de Fundo (3.2s)
             cutsceneTimer = setTimeout(() => {
                 if (!isPlaying) return;
                 animator.drawPortrait(portraitCanvas, boss.sheet, true, boss.isKhepri);
@@ -1178,13 +1584,13 @@
                 }, 28);
             }, 3200);
 
-            // 4. Pan de Câmera para o Herói (6.8s)
+            // 4. Pan de Câmera para o Herói e Trilha Sonora Heroica (6.8s)
             cutsceneTimer = setTimeout(() => {
                 if (!isPlaying) return;
                 camera.style.transform = 'scale(1.2) translate(14%, 2%)';
                 titleCard.classList.remove('show');
+                audio.setPhase('hero'); // Transiciona a orquestra para o acorde heróico!
 
-                // Animação heroica de ataque/postura
                 animator.play(heroCanvas, hero.sheet, 'attack', false, false, 7);
                 setTimeout(() => {
                     animator.play(heroCanvas, hero.sheet, 'idle', false, false, 6);
@@ -1195,7 +1601,7 @@
                 typeText(textEl, hero.reply, null, 26);
             }, 6800);
 
-            // 5. Clímax: Flash, Gongo e Transição para a Batalha (9.6s)
+            // 5. Clímax: Flash, Gongo e Início da Marcha de Combate (9.6s)
             cutsceneTimer = setTimeout(() => {
                 if (!isPlaying) return;
                 dialogueBox.classList.remove('show');
@@ -1203,6 +1609,7 @@
 
                 flash.style.opacity = '0.9';
                 audio.playBattleGong();
+                audio.setPhase('battle'); // Inicia a marcha de combate rítmica contínua!
 
                 setTimeout(() => {
                     flash.style.opacity = '0';
@@ -1213,7 +1620,7 @@
                 stage.classList.remove('cutscene-active');
             }, 9600);
 
-            // 6. Fim da Cutscene e Início Normal do Combate (11.4s)
+            // 6. Fim da Cutscene e Início Normal do Combate mantendo a BGM (11.4s)
             cutsceneTimer = setTimeout(() => {
                 if (!isPlaying) return;
                 battleEmblem.classList.remove('show');
@@ -1252,6 +1659,7 @@
 
             flash.style.opacity = '0.8';
             audio.playBattleGong();
+            audio.setPhase('battle'); // Entra direto na marcha de combate
             setTimeout(() => {
                 flash.style.opacity = '0';
             }, 100);
