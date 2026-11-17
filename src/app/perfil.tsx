@@ -259,6 +259,19 @@ export default function PerfilScreen() {
         if (typeof window !== 'undefined' && window.localStorage) {
           window.localStorage.setItem(HERO_STORAGE_KEY, heroId);
           window.localStorage.setItem(SKIN_STORAGE_KEY, defaultSkin);
+          try {
+            window.sessionStorage?.setItem(HERO_STORAGE_KEY, heroId);
+            window.sessionStorage?.setItem(SKIN_STORAGE_KEY, defaultSkin);
+            const raw = window.localStorage.getItem('estudemy_game_data');
+            if (raw) {
+              const parsed = JSON.parse(raw);
+              parsed.personagem_selecionado = heroId;
+              parsed.personagem = heroId;
+              parsed.skin_selecionada = defaultSkin;
+              window.localStorage.setItem('estudemy_game_data', JSON.stringify(parsed));
+              window.sessionStorage?.setItem('estudemy_game_data', JSON.stringify(parsed));
+            }
+          } catch {}
         }
       } else {
         await SecureStore.setItemAsync(HERO_STORAGE_KEY, heroId);
@@ -845,6 +858,136 @@ export default function PerfilScreen() {
                   <ActivityIndicator size="small" color="#10B981" style={{ marginTop: 8 }} />
                 )}
               </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+
+      {/* Seção: Amuletos & Talentos de Sabedoria */}
+      <View style={styles.section}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Sparkles size={20} color="#F59E0B" />
+            <Text style={[styles.sectionTitle, { color: colors.text, marginBottom: 0 }]}>
+              Amuletos & Talentos de Sabedoria
+            </Text>
+          </View>
+          <View style={[styles.skinRarityPill, { backgroundColor: '#8B5CF6' }]}>
+            <Text style={styles.skinRarityPillText}>
+              Nível {level}
+            </Text>
+          </View>
+        </View>
+        <Text style={[styles.skinSectionSubtitle, { color: colors.textMuted }]}>
+          Poderes arcanos e habilidades de combate desbloqueados conforme sua evolução na jornada EstudeMy:
+        </Text>
+
+        <View style={{ gap: 10, marginTop: 12 }}>
+          {[
+            {
+              reqLevel: 1,
+              name: 'Escudo do Aprendiz',
+              icon: '🛡️',
+              desc: '+10% de Defesa Passiva contra contra-ataques de inimigos em todas as fases.',
+              badge: 'Defesa Básica',
+            },
+            {
+              reqLevel: 2,
+              name: 'Reflexo Arcano (Parry Relâmpago)',
+              icon: '⚡',
+              desc: 'Libera a chance de Defesa Ativa ocasional em combate, absorvendo 70% do golpe inimigo.',
+              badge: 'Defesa Ativa',
+            },
+            {
+              reqLevel: 3,
+              name: 'Orbe Alquímico 50/50',
+              icon: '🧪',
+              desc: 'Permite usar o Orbe 50/50 em combate para incinerar 2 alternativas incorretas do quiz.',
+              badge: 'Item de Batalha',
+            },
+            {
+              reqLevel: 4,
+              name: 'Ampulheta de Chronos',
+              icon: '⏳',
+              desc: 'Concede a Ampulheta em combate para adicionar +10s ao cronômetro de raciocínio.',
+              badge: 'Controle de Tempo',
+            },
+            {
+              reqLevel: 5,
+              name: 'Coroa dos Mestres',
+              icon: '👑',
+              desc: 'Bônus passivo permanente de +20% de XP ao superar qualquer trilha ou chefão supremo.',
+              badge: 'Glória Lendária',
+            },
+          ].map((talent) => {
+            const isUnlocked = level >= talent.reqLevel;
+            return (
+              <View
+                key={talent.name}
+                style={[
+                  styles.skinCard,
+                  {
+                    backgroundColor: isUnlocked ? colors.cardSecondary : (colors.background || '#0f172a'),
+                    borderColor: isUnlocked ? '#38BDF8' : '#334155',
+                    opacity: isUnlocked ? 1 : 0.65,
+                    borderWidth: isUnlocked ? 2 : 1.5,
+                  },
+                ]}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <View
+                    style={{
+                      width: 44,
+                      height: 44,
+                      borderRadius: 10,
+                      backgroundColor: isUnlocked ? 'rgba(56, 189, 248, 0.15)' : 'rgba(51, 65, 85, 0.3)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      borderWidth: 1,
+                      borderColor: isUnlocked ? '#38BDF8' : '#475569',
+                    }}
+                  >
+                    <Text style={{ fontSize: 22 }}>{talent.icon}</Text>
+                  </View>
+
+                  <View style={{ flex: 1 }}>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 2 }}>
+                      <Text style={[styles.skinNameText, { color: isUnlocked ? colors.text : colors.textMuted, fontSize: 14 }]}>
+                        {talent.name}
+                      </Text>
+                      <View
+                        style={{
+                          backgroundColor: isUnlocked ? '#10B981' : '#475569',
+                          paddingHorizontal: 6,
+                          paddingVertical: 1,
+                          borderRadius: 4,
+                        }}
+                      >
+                        <Text style={{ color: '#ffffff', fontSize: 9, fontWeight: '900' }}>
+                          NÍVEL {talent.reqLevel}
+                        </Text>
+                      </View>
+                    </View>
+                    <Text style={[styles.skinDescText, { color: colors.textMuted, fontSize: 11 }]} numberOfLines={2}>
+                      {talent.desc}
+                    </Text>
+                  </View>
+
+                  <View style={{ alignItems: 'flex-end', justifyContent: 'center' }}>
+                    {isUnlocked ? (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <CheckCircle2 size={16} color="#10B981" />
+                        <Text style={{ color: '#10B981', fontSize: 10, fontWeight: '900' }}>ATIVO</Text>
+                      </View>
+                    ) : (
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                        <Lock size={14} color="#64748B" />
+                        <Text style={{ color: '#64748B', fontSize: 10, fontWeight: '800' }}>Nv. {talent.reqLevel}</Text>
+                      </View>
+                    )}
+                  </View>
+                </View>
+              </View>
             );
           })}
         </View>

@@ -644,6 +644,100 @@
             text-align: center;
         }
 
+        /* Camada 5.1: HUD de Itens Consumíveis de Batalha (50/50, Ampulheta e Poção de Cura) */
+        .battle-items-hud {
+            position: absolute;
+            bottom: 136px;
+            right: 18px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 12;
+        }
+
+        .battle-item-btn {
+            background: rgba(15, 23, 42, 0.92);
+            border: 1.5px solid #38bdf8;
+            border-radius: 8px;
+            color: #f8fafc;
+            padding: 4px 10px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 11px;
+            font-weight: 800;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.6);
+            backdrop-filter: blur(8px);
+            transition: all 0.15s ease;
+            user-select: none;
+        }
+
+        .battle-item-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            background: rgba(30, 41, 59, 0.98);
+            border-color: #60a5fa;
+            box-shadow: 0 0 14px rgba(56, 189, 248, 0.5);
+        }
+
+        .battle-item-btn:active:not(:disabled) {
+            transform: scale(0.96);
+        }
+
+        .battle-item-btn:disabled {
+            opacity: 0.35;
+            cursor: not-allowed;
+            filter: grayscale(0.8);
+            border-color: #475569;
+        }
+
+        .battle-item-btn .item-count {
+            background: #38bdf8;
+            color: #0f172a;
+            font-size: 9px;
+            font-weight: 900;
+            padding: 1px 5px;
+            border-radius: 4px;
+        }
+
+        /* Camada 5.2: Badge de Combo Dinâmico e Frenesi */
+        .combo-hud {
+            position: absolute;
+            bottom: 136px;
+            left: 16px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 4px 12px;
+            border-radius: 8px;
+            background: rgba(15, 23, 42, 0.94);
+            border: 1.5px solid #f97316;
+            color: #fdba74;
+            font-size: 11px;
+            font-weight: 900;
+            z-index: 12;
+            box-shadow: 0 0 14px rgba(249, 115, 22, 0.45);
+            backdrop-filter: blur(8px);
+            animation: comboPulse 0.8s infinite alternate;
+        }
+
+        @keyframes comboPulse {
+            from { transform: scale(1); }
+            to { transform: scale(1.04); filter: drop-shadow(0 0 8px #f97316); }
+        }
+
+        .combo-hud.frenesi {
+            border-color: #ef4444;
+            color: #fef08a;
+            box-shadow: 0 0 20px #ef4444, 0 0 35px #f59e0b;
+            animation: frenesiPulse 0.4s infinite alternate;
+        }
+
+        @keyframes frenesiPulse {
+            0% { transform: scale(1); filter: drop-shadow(0 0 15px #ef4444); }
+            100% { transform: scale(1.08); filter: drop-shadow(0 0 25px #f59e0b); }
+        }
+
         @keyframes pulse-glow {
             from { transform: scale(1); box-shadow: 0 0 10px #eab308; }
             to { transform: scale(1.04); box-shadow: 0 0 22px #facc15; }
@@ -1242,7 +1336,7 @@
 
                 <div id="enemy-1" class="actor-wrapper" style="display: none;">
                     <div class="enemy-mini-hud">
-                        <span class="enemy-mini-title" id="enemy-1-name" style="color: #facc15;">Chefe</span>
+                        <span class="enemy-mini-title" id="enemy-1-name" style="color: #facc15;">Inimigo</span>
                         <div class="enemy-mini-bar-track">
                             <div class="enemy-mini-bar-fill" id="enemy-1-hp-fill" style="background: #38bdf8;"></div>
                         </div>
@@ -1349,6 +1443,30 @@
                     <div id="player-ult-fill" class="ult-fill"></div>
                 </div>
             </div>
+        </div>
+
+        <!-- 6.1 Badge de Combo Dinâmico e Frenesi -->
+        <div id="combo-hud" class="combo-hud" style="display: none;">
+            <span id="combo-text">🔥 COMBO x2</span>
+        </div>
+
+        <!-- 6.2 HUD de Itens Consumíveis de Batalha (50/50, Ampulheta e Poção de Cura) -->
+        <div id="battle-items-hud" class="battle-items-hud">
+            <button id="btn-item-5050" class="battle-item-btn" onclick="window.estudemyGame.useItem5050()" title="Elimina 2 alternativas incorretas">
+                <span>🧪</span>
+                <span>50/50</span>
+                <span id="badge-item-5050" class="item-count">1</span>
+            </button>
+            <button id="btn-item-hourglass" class="battle-item-btn" onclick="window.estudemyGame.useItemHourglass()" title="+10s Tempo de Análise">
+                <span>⏳</span>
+                <span>+10s</span>
+                <span id="badge-item-hourglass" class="item-count">1</span>
+            </button>
+            <button id="btn-item-potion" class="battle-item-btn" onclick="window.estudemyGame.useItemPotion()" title="Recupera +35 HP">
+                <span>❤️</span>
+                <span>+35 HP</span>
+                <span id="badge-item-potion" class="item-count">1</span>
+            </button>
         </div>
 
         <!-- 7. Cartão Pedagógico de Perguntas e Respostas (Compacto e Bem Posicionado) -->

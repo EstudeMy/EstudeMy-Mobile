@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import * as SecureStore from 'expo-secure-store';
 import { WebView } from 'react-native-webview';
 import { buscarFasePorId, buscarFasesPorTrilha, concluirFase, Fase } from '../../services/faseService';
 import { buscarTrilhaPorId, listarTrilhas, Trilha } from '../../services/trilhaService';
@@ -308,10 +309,15 @@ export default function GameScreen() {
         // Herói selecionado pelo usuário no Perfil (Samurai, Mago ou Guerreiro)
         let storedHero = '';
         let storedHeroSkin = '';
-        if (typeof window !== 'undefined' && window.localStorage) {
+        if (Platform.OS === 'web' && typeof window !== 'undefined' && window.localStorage) {
           try {
             storedHero = window.localStorage.getItem('estudemy_selected_hero') || '';
             storedHeroSkin = window.localStorage.getItem('estudemy_hero_skin') || '';
+          } catch {}
+        } else {
+          try {
+            storedHero = (await SecureStore.getItemAsync('estudemy_selected_hero')) || '';
+            storedHeroSkin = (await SecureStore.getItemAsync('estudemy_hero_skin')) || '';
           } catch {}
         }
         const rawPersonagem = storedHero || (user as any)?.personagem || 'Samurai';

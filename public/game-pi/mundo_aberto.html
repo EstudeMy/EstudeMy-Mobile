@@ -1077,6 +1077,19 @@
                 <div class="actor-shadow"></div>
             </div>
 
+            <!-- Baú Ancestral de Enigmas (Tesouro de Sabedoria) -->
+            <div class="world-actor" id="world-chest" style="left: 1440px; bottom: 120px;">
+                <div class="npc-tag-container">
+                    <span class="npc-name" style="color: #f59e0b;">📦 Baú Ancestral</span>
+                    <span class="npc-role" style="color: #fbbf24;">Enigma de Sabedoria</span>
+                </div>
+                <div class="interact-prompt" id="prompt-chest" onclick="openChestEnigma()">
+                    <span>✨ [E] Abrir Baú</span>
+                </div>
+                <div id="chest-icon" style="font-size: 52px; filter: drop-shadow(0 6px 12px rgba(0,0,0,0.8)); cursor: pointer; transition: transform 0.25s ease;" onclick="openChestEnigma()">🎁</div>
+                <div class="actor-shadow" style="width: 60px; height: 18px;"></div>
+            </div>
+
             <!-- NPC 3: Curandeira dos Elementos (Bênção) -->
             <div class="world-actor" id="npc-healer" style="left: 1740px; bottom: 120px;">
                 <div class="npc-tag-container">
@@ -1288,6 +1301,38 @@
                     🛡️ Efeito Ativo: +20% Resistência a Erros no Próximo Confronto
                 </div>
                 <button class="rpg-close-btn" onclick="closeModal('blessing-modal')">Receber Bênção e Continuar</button>
+            </div>
+        </div>
+
+        <!-- 6.1 Modal Enigma do Baú Ancestral -->
+        <div class="rpg-fullscreen-modal" id="chest-modal">
+            <div class="rpg-modal-card">
+                <div class="rpg-modal-header">
+                    <div class="rpg-header-left">
+                        <span class="rpg-modal-icon">📦</span>
+                        <div>
+                            <h2 class="rpg-modal-title" style="color:#f59e0b;">Baú Ancestral da Sabedoria</h2>
+                            <p class="rpg-modal-subtitle">Decifre o enigma das runas para desbloquear o tesouro!</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <h3 id="chest-riddle-text" style="font-size:16px; margin-bottom:14px; color:#fef08a; line-height:1.5; font-style:italic; background:rgba(0,0,0,0.4); padding:12px; border-radius:8px; border-left:4px solid #f59e0b;">
+                        "Sou leve como uma pluma, mas nem o mais forte guerreiro consegue me segurar por muito tempo. O que sou eu?"
+                    </h3>
+                    <div id="chest-options-container" style="display:flex; flex-direction:column; gap:8px;">
+                        <button class="quiz-option-btn" onclick="answerChestEnigma(0)">A) A Respiração</button>
+                        <button class="quiz-option-btn" onclick="answerChestEnigma(1)">B) Uma Espada de Prata</button>
+                        <button class="quiz-option-btn" onclick="answerChestEnigma(2)">C) Uma Rocha Vulcânica</button>
+                        <button class="quiz-option-btn" onclick="answerChestEnigma(3)">D) O Escudo Celestial</button>
+                    </div>
+                    <div id="chest-feedback-text" style="display:none; margin-top:12px; font-weight:700; font-size:13px;"></div>
+                </div>
+
+                <div class="rpg-modal-footer">
+                    <button class="rpg-close-btn" onclick="closeModal('chest-modal')">Fechar Baú</button>
+                </div>
             </div>
         </div>
 
@@ -1783,11 +1828,23 @@
                     }
                 }
 
+                // Checagem de proximidade com o Baú Ancestral (x: 1440)
+                const chestDist = Math.abs(player.x - 1440);
+                const chestPrompt = document.getElementById('prompt-chest');
+                if (chestDist < 115) {
+                    foundNear = 'chest';
+                    if (chestPrompt) chestPrompt.classList.add('visible');
+                } else {
+                    if (chestPrompt) chestPrompt.classList.remove('visible');
+                }
+
                 activeNearNPC = foundNear;
             }
 
             window.triggerClosestInteraction = function() {
-                if (activeNearNPC) {
+                if (activeNearNPC === 'chest') {
+                    openChestEnigma();
+                } else if (activeNearNPC) {
                     openDialogue(activeNearNPC);
                 }
             };
@@ -1974,11 +2031,69 @@
                         currentQuizIdx++;
                         renderQuizQuestion();
                     } else {
-                        feedback.textContent = '🏆 Parabéns! Você concluiu o Treino Pedagógico!';
+                        feedback.textContent = '🏆 Parabéns! Você concluiu o Treino Pedagógico (+20 XP)!';
                         feedback.style.color = '#facc15';
+                        showToast('⭐ +20 XP de Treino Concedido!');
+                        try {
+                            if (window.parent && window.parent !== window) {
+                                window.parent.postMessage({ type: 'ESTUDEMY_XP_EARNED', xp: 20 }, '*');
+                            }
+                            const curXp = parseInt(localStorage.getItem('estudemy_user_xp') || '0', 10);
+                            localStorage.setItem('estudemy_user_xp', (curXp + 20).toString());
+                        } catch(e) {}
                     }
                 }, 1600);
             }
+
+            // Enigma do Baú Ancestral
+            let chestOpened = false;
+            window.openChestEnigma = function() {
+                if (chestOpened) {
+                    showToast('📦 O Baú Ancestral já foi aberto nesta jornada!');
+                    return;
+                }
+                isAnyModalOpen = true;
+                const m = document.getElementById('chest-modal');
+                if (m) m.classList.add('active');
+            };
+
+            window.answerChestEnigma = function(selectedIdx) {
+                if (chestOpened) return;
+                const feedback = document.getElementById('chest-feedback-text');
+                const container = document.getElementById('chest-options-container');
+
+                if (selectedIdx === 0) { // A Respiração
+                    chestOpened = true;
+                    if (feedback) {
+                        feedback.style.color = '#34d399';
+                        feedback.textContent = '🎉 Enigma Desvendado! Você recebeu 50 Moedas de Ouro e +1 Poção de Vitalidade!';
+                        feedback.style.display = 'block';
+                    }
+                    const chestIcon = document.getElementById('chest-icon');
+                    if (chestIcon) {
+                        chestIcon.textContent = '✨';
+                        chestIcon.style.transform = 'scale(1.25)';
+                    }
+                    coins += 50;
+                    updateCoinsUI();
+                    showToast('🎁 +50 Moedas de Ouro Concedidas!');
+
+                    if (container) {
+                        const btns = container.querySelectorAll('.quiz-option-btn');
+                        btns.forEach((b) => b.disabled = true);
+                    }
+
+                    setTimeout(() => {
+                        closeModal('chest-modal');
+                    }, 2200);
+                } else {
+                    if (feedback) {
+                        feedback.style.color = '#f87171';
+                        feedback.textContent = '❌ Resposta incorreta! O mecanismo mágico do baú não se moveu. Tente novamente!';
+                        feedback.style.display = 'block';
+                    }
+                }
+            };
 
             // Bênção de Vitalidade
             window.openBlessingModal = function() {

@@ -1054,6 +1054,20 @@
           break;
       }
     }
+
+    playComboMelody(streak = 1) {
+      this.init();
+      if (!this.ctx || this.isMuted) return;
+      const t = this.ctx.currentTime;
+      // Escala pentatônica brilhante ascendente (C5, D5, E5, G5, A5, C6)
+      const notes = [523.25, 587.33, 659.25, 783.99, 880.00, 1046.50];
+      const idx = Math.min(Math.max(0, streak - 1), notes.length - 1);
+      const freq = notes[idx];
+      this.playTubularBell(freq, t, 0.18, 0.45);
+      if (streak >= 3) {
+        this.playAcousticFlute(freq * 1.5, t + 0.06, 0.2, 0.35);
+      }
+    }
   }
 
   // ============================================================================
@@ -1199,6 +1213,8 @@
       this.particles = [];
       this.cinematicSlashes = [];
 
+      this.questionStartTime = Date.now();
+      this.initBattleItems();
       this.initEvents();
       this.loadGameData();
       this.startFxLoop();
@@ -1303,13 +1319,16 @@
         rawHeroChoice = urlParams.get('personagem') || '';
       } catch (e) {}
 
-      if (!rawHeroChoice) {
-        rawHeroChoice = raw?.personagem_selecionado || raw?.personagem || '';
-      }
+      // Prioridade 2: Escolha explícita mais recente no perfil (localStorage / sessionStorage)
       if (!rawHeroChoice) {
         try {
           rawHeroChoice = localStorage.getItem('estudemy_selected_hero') || sessionStorage.getItem('estudemy_selected_hero') || '';
         } catch (e) {}
+      }
+
+      // Prioridade 3: gameData injetado na sessão
+      if (!rawHeroChoice) {
+        rawHeroChoice = raw?.personagem_selecionado || raw?.personagem || '';
       }
 
       const char = (rawHeroChoice || 'samurai').toLowerCase();
@@ -1333,12 +1352,13 @@
       } catch (e) {}
 
       if (!rawSkinChoice) {
-        rawSkinChoice = raw?.skin_selecionada || raw?.personagem_skin || raw?.skin || '';
-      }
-      if (!rawSkinChoice) {
         try {
           rawSkinChoice = localStorage.getItem('estudemy_hero_skin') || sessionStorage.getItem('estudemy_hero_skin') || '';
         } catch (e) {}
+      }
+
+      if (!rawSkinChoice) {
+        rawSkinChoice = raw?.skin_selecionada || raw?.personagem_skin || raw?.skin || '';
       }
 
       const skinKey = (rawSkinChoice || '').toLowerCase();
@@ -1552,6 +1572,8 @@
       const maxPhases = theme.phases ? theme.phases.length : 1;
       const safeIdx = Math.max(0, Math.min(phaseIdx, maxPhases - 1));
       this.currentThemePhase = safeIdx;
+      this.initBattleItems();
+      this.updateComboHUD();
       const phase = theme.phases ? theme.phases[safeIdx] : { name: theme.name, bgImg: theme.bgImg };
 
       // Fade de transição suave do background
@@ -1961,9 +1983,116 @@
       }
     }
 
+    initBattleItems() {
+      this.battleItems = {
+        potion5050: 1,
+        hourglass: 1,
+        healPotion: 1
+      };
+      this.updateBattleItemsHUD();
+    }
+
+    updateBattleItemsHUD() {
+      const b5050 = document.getElementById('badge-item-5050');
+      const bHour = document.getElementById('badge-item-hourglass');
+      const bPot = document.getElementById('badge-item-potion');
+      const btn5050 = document.getElementById('btn-item-5050');
+      const btnHour = document.getElementById('btn-item-hourglass');
+      const btnPot = document.getElementById('btn-item-potion');
+
+      if (b5050) b5050.textContent = this.battleItems ? this.battleItems.potion5050 : 0;
+      if (bHour) bHour.textContent = this.battleItems ? this.battleItems.hourglass : 0;
+      if (bPot) bPot.textContent = this.battleItems ? this.battleItems.healPotion : 0;
+
+      if (btn5050) btn5050.disabled = (!this.battleItems || this.battleItems.potion5050 <= 0);
+      if (btnHour) btnHour.disabled = (!this.battleItems || this.battleItems.hourglass <= 0);
+      if (btnPot) btnPot.disabled = (!this.battleItems || this.battleItems.healPotion <= 0 || this.playerHp >= this.playerMaxHp);
+    }
+
+    useItem5050() {
+      if (!this.battleItems || this.battleItems.potion5050 <= 0 || this.qteActive) return;
+      const q = this.questions[this.currentQuestionIdx % this.questions.length];
+      if (!q) return;
+
+      const correctIdx = q.indiceRespostaCorreta;
+      const incorrectIndices = [0, 1, 2, 3].filter((i) => i !== correctIdx);
+      incorrectIndices.sort(() => Math.random() - 0.5);
+      const toHide = incorrectIndices.slice(0, 2);
+
+      const altBtns = document.querySelectorAll('.alt-btn');
+      toHide.forEach((idx) => {
+        if (altBtns[idx]) {
+          altBtns[idx].style.opacity = '0.2';
+          altBtns[idx].style.pointerEvents = 'none';
+          altBtns[idx].style.textDecoration = 'line-through';
+        }
+      });
+
+      this.battleItems.potion5050--;
+      this.updateBattleItemsHUD();
+      this.soundtrack.playSFX('magic_cast');
+      this.addFloatingText('🧪 50/50 ATIVADO: 2 OPÇÕES ELIMINADAS!', '#38bdf8', 683, 210, true);
+    }
+
+    useItemHourglass() {
+      if (!this.battleItems || this.battleItems.hourglass <= 0 || this.qteActive) return;
+      this.battleItems.hourglass--;
+      this.updateBattleItemsHUD();
+      this.soundtrack.playSFX('qte_alert');
+
+      if (this.modoJogo === 'speedrun') {
+        this.speedrunTimeRemaining += 10;
+        if (this.speedrunTimerNum) this.speedrunTimerNum.textContent = `${this.speedrunTimeRemaining}s`;
+        this.addFloatingText('⏳ +10s NO CRONÔMETRO!', '#facc15', 683, 210, true);
+      } else {
+        this.addFloatingText('⏳ AMPULHETA DE CHRONOS ATIVADA!', '#facc15', 683, 210, true);
+      }
+    }
+
+    useItemPotion() {
+      if (!this.battleItems || this.battleItems.healPotion <= 0 || this.playerHp >= this.playerMaxHp || this.qteActive) return;
+      this.battleItems.healPotion--;
+      this.playerHp = Math.min(this.playerMaxHp, this.playerHp + 35);
+      this.updateHUD();
+      this.updateBattleItemsHUD();
+      this.soundtrack.playSFX('qte_success');
+      this.addFloatingText('❤️ +35 HP RESTAURADOS!', '#22c55e', 250, 280, true);
+      this.showFeedback('❤️ Poção de Vida consumida! 35 pontos de vida recuperados.', '#22c55e');
+    }
+
+    updateComboHUD() {
+      const comboHud = document.getElementById('combo-hud');
+      const comboText = document.getElementById('combo-text');
+      if (!comboHud || !comboText) return;
+
+      if (this.streak >= 2) {
+        comboHud.style.display = 'flex';
+        if (this.streak >= 5) {
+          comboHud.className = 'combo-hud frenesi';
+          comboText.textContent = `⚡ FRENESI x${this.streak} (+60% DANO)`;
+        } else {
+          comboHud.className = 'combo-hud';
+          const bonusPct = Math.min(60, (this.streak - 1) * 15);
+          comboText.textContent = `🔥 COMBO x${this.streak} (+${bonusPct}%)`;
+        }
+      } else {
+        comboHud.style.display = 'none';
+      }
+    }
+
     renderQuestion() {
       const q = this.questions[this.currentQuestionIdx % this.questions.length];
       if (!q) return;
+
+      this.questionStartTime = Date.now();
+
+      // Restaura alternativas (caso 50/50 tenha sido usado na pergunta anterior)
+      const altBtns = document.querySelectorAll('.alt-btn');
+      altBtns.forEach((btn) => {
+        btn.style.opacity = '1';
+        btn.style.pointerEvents = 'auto';
+        btn.style.textDecoration = 'none';
+      });
 
       this.questionTitle.textContent = q.enunciado;
       q.alternativas.forEach((alt, i) => {
@@ -1971,6 +2100,7 @@
           this.altTexts[i].textContent = alt;
         }
       });
+      this.updateBattleItemsHUD();
     }
 
     submitAnswer(idx) {
@@ -1981,18 +2111,29 @@
       const isCorrect = idx === q.indiceRespostaCorreta;
       const char = CHARACTERS_CONFIG[this.selectedCharKey];
 
-      if (isCorrect) {
-        this.soundtrack.playSFX('correct');
-        this.streak++;
-        this.chargeUltimate(25);
+      // Cálculo de velocidade de resposta (Reflexo Perfeito)
+      const elapsedSec = (Date.now() - (this.questionStartTime || Date.now())) / 1000;
+      const isQuickResponse = elapsedSec <= 4.0;
 
-        // Bônus de tempo no modo Speedrun (+3s por acerto)
+      if (isCorrect) {
+        this.streak++;
+        this.soundtrack.playComboMelody(this.streak);
+        this.chargeUltimate(25);
+        this.updateComboHUD();
+
+        // Bônus no modo Speedrun (+3s por acerto)
         if (this.modoJogo === 'speedrun') {
           this.speedrunTimeRemaining += 3;
           if (this.speedrunTimerNum) {
             this.speedrunTimerNum.textContent = `${this.speedrunTimeRemaining}s`;
           }
           this.addFloatingText('+3s BÔNUS!', '#facc15', 683, 200, true);
+        }
+
+        // Bônus de Frenesi (Streak >= 5)
+        if (this.streak >= 5) {
+          this.chargeUltimate(20);
+          this.addFloatingText('🔥 FRENESI x5! +20% ULTIMATE!', '#f97316', 683, 180, true);
         }
 
         // Animação de Ataque do Herói
@@ -2009,16 +2150,32 @@
           this.playerWrapper.classList.remove('actor-dash-strike');
         }, 480);
 
-        // O golpe atinge o primeiro inimigo vivo
+        // O golpe atinge o primeiro inimigo vivo com bônus de velocidade e combo
         const target = this.getFirstAliveEnemy();
         if (target) {
+          let baseDamage = 32;
+          let bonusMult = 1.0;
+
+          // Bônus de Reflexo Perfeito (<= 4s)
+          if (isQuickResponse) {
+            bonusMult += 0.4;
+            this.addFloatingText('⚡ REFLEXO CRÍTICO (+40% DANO)!', '#facc15', 683, 150, true);
+          }
+
+          // Bônus de Combo Crescente
+          if (this.streak >= 2) {
+            bonusMult += Math.min(0.6, (this.streak - 1) * 0.15);
+          }
+
+          const totalDmg = Math.round(baseDamage * bonusMult);
+
           if (this.streak >= 3 && !this.qteCooldown && Math.random() < 0.35) {
             this.triggerQTE(['A', 'D', 'SPACE'], 'GOLPE CRÍTICO! [A] -> [D] -> [ESPAÇO]!', (success) => {
-              const mult = success ? 2.4 : 1.0;
-              this.damageEnemy(target, Math.round(35 * mult), success);
+              const qteMult = success ? 2.2 : 1.0;
+              this.damageEnemy(target, Math.round(totalDmg * qteMult), success);
             });
           } else {
-            this.damageEnemy(target, 32, false);
+            this.damageEnemy(target, totalDmg, isQuickResponse || this.streak >= 3);
           }
         }
 
@@ -2026,6 +2183,7 @@
       } else {
         this.soundtrack.playSFX('wrong');
         this.streak = 0;
+        this.updateComboHUD();
 
         // Penalidade de tempo no modo Speedrun (-5s por erro)
         if (this.modoJogo === 'speedrun') {
@@ -2036,7 +2194,7 @@
           this.addFloatingText('-5s TEMPO!', '#ef4444', 683, 200, true);
         }
 
-        // Inimigo contra-ataca (com chance de errar ou desferir supremo!)
+        // Inimigo contra-ataca (com chance de errar ou dar chance de Parry defensivo ao jogador!)
         this.executeEnemyTurn();
 
         this.showFeedback(`Incorreto! Dica: ${q.explicacao || 'Revise o conteúdo desta etapa.'}`, '#ef4444');
@@ -2273,17 +2431,22 @@
         return;
       }
 
-      // Se acertou, verifica QTE defensivo ocasional
+      // Se acertou, verifica QTE defensivo ocasional (~35% de chance de dar a chance de Parry ativo!)
       let baseDmg = isUltimate ? Math.round(attacker.data.atk * 1.6) : attacker.data.atk;
       if (isPhase2) {
         baseDmg = Math.round(baseDmg * 1.25); // Fúria da Fase 2 aumenta dano em +25%
       }
 
-      if (!this.qteCooldown && Math.random() < 0.3) {
-        this.triggerQTE(['W', 'SPACE'], 'DEFESA RELÂMPAGO! [W] -> [ESPAÇO]!', (success) => {
+      const canTriggerParry = !this.qteCooldown && !this.qteActive && !this.isExecutingUltimate && Math.random() < 0.35;
+
+      if (canTriggerParry) {
+        this.triggerQTE(['SPACE'], '🛡️ DEFESA RELÂMPAGO! [ESPAÇO] OU TOQUE AQUI!', (success) => {
           if (success) {
             this.soundtrack.playSFX('shield_block');
-            this.addFloatingText('BLOQUEADO!', '#38bdf8', 250, 310, true);
+            const parryDmg = Math.round(baseDmg * 0.3); // Reduz 70% do dano!
+            this.addFloatingText('🛡️ PARADA PERFEITA! (-70% DANO)', '#22c55e', 250, 310, true);
+            this.showFeedback('🛡️ Defesa Relâmpago bem-sucedida! O herói aparou o golpe e absorveu 70% do dano!', '#22c55e');
+            this.damagePlayer(parryDmg);
           } else {
             this.damagePlayer(baseDmg);
           }
@@ -2774,10 +2937,19 @@
       keys.forEach((k, idx) => {
         const box = document.createElement('div');
         box.className = `qte-key-box ${idx === 0 ? 'active' : ''}`;
-        box.textContent = k;
-        box.onclick = () => this.handleQTEKey(k);
+        box.textContent = (k === 'SPACE') ? '🛡️ DEFENDER [ESPAÇO]' : k;
+        box.onclick = (e) => {
+          e.stopPropagation();
+          this.handleQTEKey(k);
+        };
         this.qteKeysContainer.appendChild(box);
       });
+
+      this.qteModal.onclick = () => {
+        if (this.qteActive && this.qteKeys && this.qteKeys.length === 1 && this.qteKeys[0] === 'SPACE') {
+          this.handleQTEKey('SPACE');
+        }
+      };
 
       this.qteModal.style.display = 'flex';
 
