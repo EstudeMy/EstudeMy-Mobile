@@ -193,6 +193,43 @@
       return canvas;
     }
 
+    drawPortrait(canvas, folder, isEnemy = false, isKhepri = false) {
+      if (!canvas || !folder) return;
+      const cleanFolder = (folder || '').replace(/\/$/, '');
+      const sheetImg = this.loadSheet(cleanFolder);
+
+      const render = () => {
+        if (!sheetImg.complete || sheetImg.naturalWidth === 0) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+        ctx.imageSmoothingEnabled = false;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        const fw = sheetImg.naturalWidth / 3;
+        const fh = sheetImg.naturalHeight / 3;
+        const padX = 8;
+        const padY = 8;
+        const sx = padX;
+        const sy = padY;
+        const sw = fw - 2 * padX;
+        const sh = fh - 2 * padY;
+
+        const shouldFlip = isEnemy ? !isKhepri : false;
+        if (shouldFlip) {
+          ctx.save();
+          ctx.translate(canvas.width, 0);
+          ctx.scale(-1, 1);
+          ctx.drawImage(sheetImg, sx, sy, sw, sh, 2, 2, canvas.width - 4, canvas.height - 4);
+          ctx.restore();
+        } else {
+          ctx.drawImage(sheetImg, sx, sy, sw, sh, 2, 2, canvas.width - 4, canvas.height - 4);
+        }
+      };
+
+      if (sheetImg.complete) render();
+      else sheetImg.onload = render;
+    }
+
     stop(targetEl) {
       if (!targetEl) return;
       const existing = this.activeMap.get(targetEl);
@@ -542,6 +579,75 @@
   };
 
   // ============================================================================
+  // CONFIGURAÇÃO CINEMÁTICA: DIÁLOGOS E TEMAS EXCLUSIVOS DOS CHEFÕES
+  // ============================================================================
+  const BOSS_CUTSCENE_DATA = {
+    boss_ignis: {
+      name: 'Ignis, o Titã Vulcânico Primordial',
+      subtitle: 'Soberano das Chamas Primordiais',
+      auraClass: 'ignis',
+      isKhepri: false,
+      lines: [
+        'Vocês, mortais insignificantes... ousam adentrar a caldeira eterna?',
+        'Queimem sob o fogo da criação! Seu saber se reduzirá a cinzas!'
+      ]
+    },
+    boss_khepri: {
+      name: 'Imperador Khepri-Ra',
+      subtitle: 'Soberano Eterno das Areias',
+      auraClass: 'khepri',
+      isKhepri: true,
+      lines: [
+        'Milênios sob as areias não enfraqueceram meu império solar!',
+        'A luz implacável de Rá revelará sua total ignorância diante dos deuses!'
+      ]
+    },
+    boss_shogun: {
+      name: 'General Shogun Decaído',
+      subtitle: 'Lorde Abissal das Lâminas do Vazio',
+      auraClass: 'shogun',
+      isKhepri: false,
+      lines: [
+        'O próprio espaço-tempo se fragmenta diante das minhas quatro lâminas.',
+        'Aqui jaz o término da sua patética ilusão de conhecimento!'
+      ]
+    },
+    boss_behemoth: {
+      name: 'Behemoth da Cripta Esquecida',
+      subtitle: 'Terror Titânico das Profundezas',
+      auraClass: 'behemoth',
+      isKhepri: false,
+      lines: [
+        'GRRRRRR! O solo sagrado da cripta foi profanado!',
+        'Nenhum aventureiro escapará com vida das garras do esquecimento!'
+      ]
+    }
+  };
+
+  const HERO_CUTSCENE_REPLIES = {
+    samurai: {
+      name: 'Kaito (Samurai)',
+      reply: 'Minha lâmina foi temperada na verdade e na disciplina. Sua tirania termina aqui!'
+    },
+    guerreiro: {
+      name: 'Boran (Guerreiro)',
+      reply: 'Pela honra e pelo saber dos reinos! Meu escudo jamais vacilará diante de ti!'
+    },
+    mago: {
+      name: 'Valerius (Arquimago)',
+      reply: 'As leis do cosmos e do conhecimento eterno estão ao meu lado. Curve-se à sabedoria!'
+    },
+    arqueira: {
+      name: 'Lyra (Guardiã dos Céus)',
+      reply: 'Minhas flechas cortam a escuridão! Nenhum tirano escapará do meu disparo certeiro!'
+    },
+    spectre: {
+      name: 'Draven (Paladino Sombrio)',
+      reply: 'As trevas me obedem. Prepare-se para testemunhar o verdadeiro poder do conhecimento!'
+    }
+  };
+
+  // ============================================================================
   // 2. SISTEMA DE ÁUDIO ORQUESTRAL REALISTA (SÍNTESE ACÚSTICA)
   // ============================================================================
   class RealisticOrchestralAudio {
@@ -553,6 +659,8 @@
       this.step = 0;
       this.masterGain = null;
       this.reverbSend = null;
+      this.bossCinematicPhase = 'suspense';
+      this.currentBossKey = 'boss_ignis';
     }
 
     init() {
@@ -651,6 +759,216 @@
         this.start(this.currentTrack);
       }
       return !this.isMuted;
+    }
+
+    startBossCinematicBGM(bossKey = 'boss_ignis') {
+      this.init();
+      this.stop();
+      this.currentTrack = 'boss_cinematic';
+      this.currentBossKey = bossKey;
+      this.bossCinematicPhase = 'suspense';
+      this.step = 0;
+      if (this.isMuted || !this.ctx) return;
+
+      this.timer = setInterval(() => {
+        if (this.isMuted || !this.ctx) return;
+        const t = this.ctx.currentTime;
+        this.tickBossCinematic(t, this.step);
+        this.step++;
+      }, 240);
+    }
+
+    setBossCinematicPhase(phase) {
+      this.bossCinematicPhase = phase;
+    }
+
+    tickBossCinematic(t, step) {
+      if (this.bossCinematicPhase === 'suspense') {
+        const suspenseBass = [55.0, 55.0, 58.27, 51.91];
+        const note = suspenseBass[Math.floor(step / 4) % suspenseBass.length];
+        if (step % 4 === 0) {
+          this.playWarmStrings(note, t, 1.2, 0.28);
+          this.playWarmStrings(note * 1.5, t, 1.0, 0.18);
+        }
+        if (step % 8 === 0) {
+          this.playTimpani(t, 0.4);
+        }
+        if (step % 16 === 0) {
+          this.playTubularBell(220.0, t, 3.0, 0.35);
+        }
+      } else if (this.bossCinematicPhase === 'boss') {
+        if (step % 2 === 0) {
+          this.playTimpani(t, 0.55);
+        }
+        if (step % 4 === 2) {
+          this.playWarSnare(t, 0.3);
+        }
+
+        const bKey = (this.currentBossKey || '').toLowerCase();
+        if (bKey.includes('ignis')) {
+          const ignisMotif = [110.0, 116.54, 130.81, 110.0, 98.0, 110.0];
+          const f = ignisMotif[Math.floor(step / 2) % ignisMotif.length];
+          this.playBrassHorn(f, t, 0.48, 0.26);
+          if (step % 4 === 0) this.playWarmStrings(55.0, t, 0.9, 0.24);
+        } else if (bKey.includes('khepri')) {
+          const hijaz = [220.0, 233.08, 277.18, 293.66, 277.18, 233.08];
+          const f = hijaz[step % hijaz.length];
+          this.playAcousticOud(f, t, 0.28, 0.28);
+          if (step % 4 === 0) this.playWarmStrings(110.0, t, 0.9, 0.22);
+        } else if (bKey.includes('shogun')) {
+          const shogunMotif = [146.83, 164.81, 174.61, 220.0, 196.0, 146.83];
+          const f = shogunMotif[Math.floor(step / 2) % shogunMotif.length];
+          this.playWarmStrings(f, t, 0.8, 0.25);
+          this.playWarmStrings(f * 0.5, t, 1.2, 0.3);
+        } else {
+          // Behemoth (Cripta)
+          const behemothMotif = [73.42, 87.31, 82.41, 69.30];
+          const f = behemothMotif[Math.floor(step / 4) % behemothMotif.length];
+          this.playAcousticPipeOrgan(f * 2, t, 0.9, 0.3);
+          this.playWarmStrings(f, t, 0.9, 0.25);
+        }
+      } else if (this.bossCinematicPhase === 'hero') {
+        const heroChords = [146.83, 174.61, 220.0, 293.66];
+        const f = heroChords[step % heroChords.length];
+        this.playBrassHorn(f * 1.5, t, 0.38, 0.24);
+        if (step % 2 === 0) {
+          this.playWarmStrings(146.83, t, 0.5, 0.25);
+          this.playTimpani(t, 0.45);
+        }
+      } else if (this.bossCinematicPhase === 'battle') {
+        if (step % 2 === 0) this.playTimpani(t, 0.6);
+        if (step % 2 === 1) this.playWarSnare(t, 0.35);
+
+        const battleLead = [293.66, 349.23, 440.0, 523.25, 440.0, 349.23, 392.0, 329.63];
+        const note = battleLead[step % battleLead.length];
+        this.playBrassHorn(note, t, 0.22, 0.25);
+        if (step % 4 === 0) {
+          this.playWarmStrings(146.83, t, 0.8, 0.22);
+        }
+      }
+    }
+
+    playBrassHorn(freq, time, duration, vol) {
+      if (!this.ctx || this.isMuted) return;
+      const osc = this.ctx.createOscillator();
+      const osc2 = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      const filter = this.ctx.createBiquadFilter();
+
+      osc.type = 'sawtooth';
+      osc.frequency.setValueAtTime(freq, time);
+      osc2.type = 'sawtooth';
+      osc2.frequency.setValueAtTime(freq * 0.996, time);
+
+      filter.type = 'bandpass';
+      filter.frequency.setValueAtTime(freq * 2.2, time);
+      filter.Q.value = 1.8;
+
+      gain.gain.setValueAtTime(0.001, time);
+      gain.gain.linearRampToValueAtTime(vol, time + 0.04);
+      gain.gain.exponentialRampToValueAtTime(0.0001, time + duration);
+
+      osc.connect(filter);
+      osc2.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.masterGain);
+      if (this.reverbSend) gain.connect(this.reverbSend);
+
+      osc.start(time);
+      osc2.start(time);
+      osc.stop(time + duration);
+      osc2.stop(time + duration);
+    }
+
+    playTimpani(time, vol) {
+      if (!this.ctx || this.isMuted) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(82, time);
+      osc.frequency.exponentialRampToValueAtTime(38, time + 0.35);
+
+      gain.gain.setValueAtTime(vol, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.45);
+
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(time);
+      osc.stop(time + 0.45);
+    }
+
+    playWarSnare(time, vol) {
+      if (!this.ctx || this.isMuted) return;
+      const bufferSize = Math.floor(this.ctx.sampleRate * 0.12);
+      const buffer = this.ctx.createBuffer(1, bufferSize, this.ctx.sampleRate);
+      const output = buffer.getChannelData(0);
+      for (let i = 0; i < bufferSize; i++) {
+        output[i] = Math.random() * 2 - 1;
+      }
+      const whiteNoise = this.ctx.createBufferSource();
+      whiteNoise.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'highpass';
+      filter.frequency.setValueAtTime(1200, time);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(vol, time);
+      gain.gain.exponentialRampToValueAtTime(0.001, time + 0.12);
+
+      whiteNoise.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.masterGain);
+
+      whiteNoise.start(time);
+      whiteNoise.stop(time + 0.12);
+    }
+
+    playBattleGong() {
+      if (!this.ctx || this.isMuted) return;
+      const freqs = [98.0, 130.81, 196.0, 261.63, 392.0];
+      freqs.forEach((f) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(f, this.ctx.currentTime);
+        gain.gain.setValueAtTime(0.25, this.ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.0001, this.ctx.currentTime + 2.4);
+        osc.connect(gain);
+        gain.connect(this.masterGain);
+        if (this.reverbSend) gain.connect(this.reverbSend);
+        osc.start(this.ctx.currentTime);
+        osc.stop(this.ctx.currentTime + 2.4);
+      });
+    }
+
+    playTypewriterBlip() {
+      if (!this.ctx || this.isMuted) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(600 + Math.random() * 80, this.ctx.currentTime);
+      gain.gain.setValueAtTime(0.035, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.04);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(this.ctx.currentTime);
+      osc.stop(this.ctx.currentTime + 0.04);
+    }
+
+    playRoarImpact() {
+      if (!this.ctx || this.isMuted) return;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(95, this.ctx.currentTime);
+      osc.frequency.exponentialRampToValueAtTime(32, this.ctx.currentTime + 0.7);
+      gain.gain.setValueAtTime(0.4, this.ctx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, this.ctx.currentTime + 0.8);
+      osc.connect(gain);
+      gain.connect(this.masterGain);
+      osc.start(this.ctx.currentTime);
+      osc.stop(this.ctx.currentTime + 0.8);
     }
 
     playGothicMovement(t, step) {
@@ -1159,6 +1477,26 @@
       this.cinematicOverlay = document.getElementById('cinematic-overlay');
       this.ultimateBanner = document.getElementById('ultimate-banner');
 
+      // Elementos e Estado da Cutscene Cinemática In-Engine
+      this.gameContainer = document.getElementById('game-container');
+      this.cameraViewport = document.getElementById('camera-viewport');
+      this.cinematicBarTop = document.getElementById('cinematic-bar-top');
+      this.cinematicBarBottom = document.getElementById('cinematic-bar-bottom');
+      this.cinematicSkipBtn = document.getElementById('cinematic-skip-btn');
+      this.bossTitleCard = document.getElementById('boss-title-card');
+      this.bossTitleName = document.getElementById('boss-title-name');
+      this.bossTitleSubtitle = document.getElementById('boss-title-subtitle');
+      this.cinematicDialogueBox = document.getElementById('cinematic-dialogue-box');
+      this.cinematicDialoguePortrait = document.getElementById('cinematic-dialogue-portrait');
+      this.cinematicDialogueSpeaker = document.getElementById('cinematic-dialogue-speaker');
+      this.cinematicDialogueText = document.getElementById('cinematic-dialogue-text');
+      this.battleStartEmblem = document.getElementById('battle-start-emblem');
+      this.bossAura = document.getElementById('boss-aura');
+
+      this.isCutsceneActive = false;
+      this.cutsceneTimers = [];
+      this.cutsceneTypewriterInterval = null;
+
       // Modais de Fim de Fase (Vitória e Derrota)
       this.phaseVictoryModal = document.getElementById('phase-victory-modal');
       this.victoryPhaseTitle = document.getElementById('victory-phase-title');
@@ -1225,8 +1563,10 @@
       const unlockAudio = () => {
         this.soundtrack.init();
         if (!this.soundtrack.timer && !this.soundtrack.isMuted) {
-          const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
-          this.soundtrack.start(theme.musicKey);
+          if (!this.isCutsceneActive) {
+            const theme = THEMES_CONFIG[this.activeTheme] || THEMES_CONFIG.castelo;
+            this.soundtrack.start(theme.musicKey);
+          }
         }
       };
       window.addEventListener('pointerdown', unlockAudio, { once: true });
@@ -1235,6 +1575,13 @@
       // Teclado
       window.addEventListener('keydown', (e) => {
         if (e.repeat) return;
+
+        // Atalho para Pular Cutscene instantaneamente
+        if (this.isCutsceneActive && (e.key === 'Escape' || e.key === ' ' || e.code === 'Space')) {
+          e.preventDefault();
+          this.skipBossCutscene();
+          return;
+        }
 
         if (e.code === 'Space' && this.isUltReady) {
           if (this.qteActive) {
@@ -1563,7 +1910,9 @@
       this.setPhase(phaseIndex);
 
       if (this.soundtrack.ctx && !this.soundtrack.isMuted) {
-        this.soundtrack.start(theme.musicKey);
+        if (!this.isCutsceneActive) {
+          this.soundtrack.start(theme.musicKey);
+        }
       }
     }
 
@@ -1776,6 +2125,7 @@
 
         this.applyGrounding();
         this.updateTotalBossHUD();
+        this.triggerBossCinematicIntro(eData);
         return;
       }
 
@@ -1827,6 +2177,7 @@
 
         this.applyGrounding();
         this.updateTotalBossHUD();
+        this.triggerBossCinematicIntro(eData);
         return;
       }
 
@@ -1966,6 +2317,233 @@
       if (this.enemySlots[0]?.wrapper) this.enemySlots[0].wrapper.style.bottom = bottom;
       if (this.enemySlots[1]?.wrapper) this.enemySlots[1].wrapper.style.bottom = bottom;
       if (this.enemySlots[2]?.wrapper) this.enemySlots[2].wrapper.style.bottom = bottom;
+    }
+
+    typeCutsceneText(targetEl, text, onComplete, speed = 25) {
+      if (!targetEl) return;
+      targetEl.textContent = '';
+      let idx = 0;
+      if (this.cutsceneTypewriterInterval) {
+        clearInterval(this.cutsceneTypewriterInterval);
+      }
+      this.cutsceneTypewriterInterval = setInterval(() => {
+        if (!this.isCutsceneActive) {
+          clearInterval(this.cutsceneTypewriterInterval);
+          return;
+        }
+        if (idx < text.length) {
+          targetEl.textContent += text.charAt(idx);
+          if (idx % 2 === 0 && this.soundtrack) {
+            this.soundtrack.playTypewriterBlip();
+          }
+          idx++;
+        } else {
+          clearInterval(this.cutsceneTypewriterInterval);
+          if (onComplete) onComplete();
+        }
+      }, speed);
+    }
+
+    triggerBossCinematicIntro(bossData) {
+      if (!bossData) return;
+      this.isCutsceneActive = true;
+      this.cutsceneTimers.forEach((t) => clearTimeout(t));
+      this.cutsceneTimers = [];
+      if (this.cutsceneTypewriterInterval) {
+        clearInterval(this.cutsceneTypewriterInterval);
+      }
+
+      const bossKey = (bossData.id || 'boss_ignis').toLowerCase();
+      const meta = BOSS_CUTSCENE_DATA[bossKey] || {
+        name: bossData.name,
+        subtitle: 'Chefão Supremo',
+        auraClass: 'ignis',
+        isKhepri: bossData.isFlying || false,
+        lines: [
+          'Você ousa desafiar a autoridade máxima deste domínio?',
+          'Prove seu valor e sabedoria... se for capaz de sobreviver!'
+        ]
+      };
+
+      const hero = HERO_CUTSCENE_REPLIES[this.selectedCharKey] || {
+        name: 'Herói',
+        reply: 'Minha jornada de aprendizado me trouxe até aqui. Não recuarei!'
+      };
+
+      const heroChar = CHARACTERS_CONFIG[this.selectedCharKey] || CHARACTERS_CONFIG.samurai;
+
+      // 1. Inicia Cutscene e Trilha Sonora na Fase 1 (Suspense)
+      if (this.gameContainer) this.gameContainer.classList.add('cutscene-active');
+      if (this.soundtrack) {
+        this.soundtrack.init();
+        this.soundtrack.startBossCinematicBGM(bossKey);
+        this.soundtrack.setBossCinematicPhase('suspense');
+      }
+
+      // Configura Aura do Boss
+      if (this.bossAura) {
+        this.bossAura.className = `boss-aura ${meta.auraClass}`;
+        this.bossAura.style.opacity = '0';
+      }
+
+      // Configura Title Card
+      if (this.bossTitleName) this.bossTitleName.textContent = meta.name;
+      if (this.bossTitleSubtitle) this.bossTitleSubtitle.textContent = meta.subtitle;
+
+      // T = 1.2s: Zoom no Boss, Roar, Aura, Efeitos e Tema do Boss
+      const t1 = setTimeout(() => {
+        if (!this.isCutsceneActive) return;
+        if (this.cameraViewport) {
+          this.cameraViewport.style.transform = 'scale(1.22) translate(-9%, 5%)';
+        }
+        if (this.bossAura) this.bossAura.style.opacity = '1';
+
+        if (this.gameContainer) this.gameContainer.classList.add('screen-shake');
+        if (this.soundtrack) {
+          this.soundtrack.playRoarImpact();
+          this.soundtrack.setBossCinematicPhase('boss');
+        }
+
+        const bossSlot = this.enemySlots[1];
+        if (bossSlot && bossSlot.sprite) {
+          this.setActorAnimation(bossSlot.sprite, bossData.spriteFolder, 'attack', 7);
+        }
+
+        const tShake = setTimeout(() => {
+          if (this.gameContainer) this.gameContainer.classList.remove('screen-shake');
+          if (bossSlot && bossSlot.sprite) {
+            this.setActorAnimation(bossSlot.sprite, bossData.spriteFolder, 'idle', 6);
+          }
+        }, 750);
+        this.cutsceneTimers.push(tShake);
+
+        if (this.bossTitleCard) this.bossTitleCard.classList.add('show');
+      }, 1200);
+      this.cutsceneTimers.push(t1);
+
+      // T = 3.2s: Diálogo do Chefe com som de máquina de escrever
+      const t2 = setTimeout(() => {
+        if (!this.isCutsceneActive) return;
+        if (this.cinematicDialoguePortrait && this.animator) {
+          this.animator.drawPortrait(this.cinematicDialoguePortrait, bossData.spriteFolder, true, meta.isKhepri);
+        }
+        if (this.cinematicDialogueSpeaker) {
+          this.cinematicDialogueSpeaker.innerHTML = `<span>💀 ${meta.name}</span>`;
+        }
+        if (this.cinematicDialogueBox) {
+          this.cinematicDialogueBox.classList.add('show');
+        }
+
+        this.typeCutsceneText(this.cinematicDialogueText, meta.lines[0], () => {
+          const tSub = setTimeout(() => {
+            if (!this.isCutsceneActive) return;
+            this.typeCutsceneText(this.cinematicDialogueText, meta.lines[1], null, 24);
+          }, 1400);
+          this.cutsceneTimers.push(tSub);
+        }, 28);
+      }, 3200);
+      this.cutsceneTimers.push(t2);
+
+      // T = 6.8s: Pan de Câmera para o Herói e Resposta Heroica
+      const t3 = setTimeout(() => {
+        if (!this.isCutsceneActive) return;
+        if (this.cameraViewport) {
+          this.cameraViewport.style.transform = 'scale(1.2) translate(14%, 2%)';
+        }
+        if (this.bossTitleCard) this.bossTitleCard.classList.remove('show');
+        if (this.soundtrack) this.soundtrack.setBossCinematicPhase('hero');
+
+        if (this.playerSprite) {
+          this.setActorAnimation(this.playerSprite, heroChar.spriteFolder, 'attack', 7);
+          const tHeroIdle = setTimeout(() => {
+            this.setActorAnimation(this.playerSprite, heroChar.spriteFolder, 'idle', 6);
+          }, 650);
+          this.cutsceneTimers.push(tHeroIdle);
+        }
+
+        if (this.cinematicDialoguePortrait && this.animator) {
+          this.animator.drawPortrait(this.cinematicDialoguePortrait, heroChar.spriteFolder, false, false);
+        }
+        if (this.cinematicDialogueSpeaker) {
+          this.cinematicDialogueSpeaker.innerHTML = `<span style="color:#38bdf8;">🛡️ ${hero.name}</span>`;
+        }
+        this.typeCutsceneText(this.cinematicDialogueText, hero.reply, null, 26);
+      }, 6800);
+      this.cutsceneTimers.push(t3);
+
+      // T = 9.6s: Flash, Gongo, Emblema e Transição para Marcha de Combate
+      const t4 = setTimeout(() => {
+        if (!this.isCutsceneActive) return;
+        if (this.cinematicDialogueBox) this.cinematicDialogueBox.classList.remove('show');
+        if (this.bossAura) this.bossAura.style.opacity = '0';
+
+        const flash = document.getElementById('screen-flash');
+        if (flash) {
+          flash.style.background = '#ffffff';
+          flash.style.opacity = '0.9';
+          setTimeout(() => { if (flash) flash.style.opacity = '0'; }, 140);
+        }
+
+        if (this.soundtrack) {
+          this.soundtrack.playBattleGong();
+          this.soundtrack.setBossCinematicPhase('battle');
+        }
+
+        if (this.battleStartEmblem) this.battleStartEmblem.classList.add('show');
+        if (this.cameraViewport) {
+          this.cameraViewport.style.transform = 'scale(1) translate(0, 0)';
+        }
+        if (this.gameContainer) this.gameContainer.classList.remove('cutscene-active');
+      }, 9600);
+      this.cutsceneTimers.push(t4);
+
+      // T = 11.4s: Fim da Cutscene, HUD ativa, Quiz liberado
+      const t5 = setTimeout(() => {
+        if (!this.isCutsceneActive) return;
+        if (this.battleStartEmblem) this.battleStartEmblem.classList.remove('show');
+        this.isCutsceneActive = false;
+        this.questionStartTime = Date.now();
+      }, 11400);
+      this.cutsceneTimers.push(t5);
+    }
+
+    skipBossCutscene() {
+      if (!this.isCutsceneActive) return;
+      this.cutsceneTimers.forEach((t) => clearTimeout(t));
+      this.cutsceneTimers = [];
+      if (this.cutsceneTypewriterInterval) {
+        clearInterval(this.cutsceneTypewriterInterval);
+      }
+
+      if (this.cameraViewport) {
+        this.cameraViewport.style.transform = 'scale(1) translate(0, 0)';
+      }
+      if (this.bossAura) this.bossAura.style.opacity = '0';
+      if (this.bossTitleCard) this.bossTitleCard.classList.remove('show');
+      if (this.cinematicDialogueBox) this.cinematicDialogueBox.classList.remove('show');
+      if (this.battleStartEmblem) this.battleStartEmblem.classList.remove('show');
+      if (this.gameContainer) {
+        this.gameContainer.classList.remove('cutscene-active');
+        this.gameContainer.classList.remove('screen-shake');
+      }
+
+      // Restaura sprites em idle
+      const bossSlot = this.enemySlots[1];
+      if (bossSlot && bossSlot.sprite && bossSlot.data) {
+        this.setActorAnimation(bossSlot.sprite, bossSlot.data.spriteFolder, 'idle', 6);
+      }
+      const heroChar = CHARACTERS_CONFIG[this.selectedCharKey] || CHARACTERS_CONFIG.samurai;
+      if (this.playerSprite) {
+        this.setActorAnimation(this.playerSprite, heroChar.spriteFolder, 'idle', 6);
+      }
+
+      // Transiciona a música diretamente para a marcha de batalha contínua
+      if (this.soundtrack) {
+        this.soundtrack.setBossCinematicPhase('battle');
+      }
+
+      this.isCutsceneActive = false;
+      this.questionStartTime = Date.now();
     }
 
     applyHeroSkin() {
