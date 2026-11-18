@@ -46,10 +46,10 @@
         /* Camada 1: Background Cenário com Animação Visível de Câmera e Respiração */
         #bg-layer {
             position: absolute;
-            top: -7%;
-            left: -5%;
-            width: 110%;
-            height: 114%;
+            top: -15%;
+            left: -20%;
+            width: 140%;
+            height: 130%;
             object-fit: cover;
             object-position: center 74%;
             filter: brightness(0.85) contrast(1.12);
@@ -1372,67 +1372,85 @@
         /* 4. Caixa de Diálogo Cinemática RPG */
         .cinematic-dialogue-box {
             position: absolute;
-            bottom: 6%;
-            left: 50%;
-            transform: translate(-50%, 30px);
-            width: 86%;
-            max-width: 760px;
-            background: rgba(10, 15, 29, 0.94);
-            border: 2px solid #38bdf8;
-            border-radius: 12px;
-            padding: 14px 18px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            z-index: 32;
+            bottom: 13% !important;
+            left: 50% !important;
+            transform: translate(-50%, 20px) !important;
+            width: 86% !important;
+            max-width: 740px !important;
+            height: 94px !important;
+            max-height: 94px !important;
+            min-height: 94px !important;
+            background: rgba(10, 15, 29, 0.95) !important;
+            border: 2px solid #38bdf8 !important;
+            border-radius: 14px !important;
+            padding: 10px 16px !important;
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 16px !important;
+            z-index: 35 !important;
             opacity: 0;
             pointer-events: none;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 24px rgba(56, 189, 248, 0.25);
-            backdrop-filter: blur(12px);
-            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 24px rgba(56, 189, 248, 0.3) !important;
+            backdrop-filter: blur(12px) !important;
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            overflow: hidden !important;
         }
 
         .cinematic-dialogue-box.show {
-            opacity: 1;
-            transform: translate(-50%, 0);
-            pointer-events: auto;
+            opacity: 1 !important;
+            transform: translate(-50%, 0) !important;
+            pointer-events: auto !important;
         }
 
+        #cinematic-dialogue-portrait,
         .cinematic-dialogue-portrait {
-            width: 72px;
-            height: 72px;
-            border-radius: 10px;
-            border: 2px solid #facc15;
-            background: #020617;
-            flex-shrink: 0;
-            image-rendering: pixelated;
-            box-shadow: 0 0 12px rgba(250, 204, 21, 0.4);
+            width: 70px !important;
+            height: 70px !important;
+            min-width: 70px !important;
+            max-width: 70px !important;
+            min-height: 70px !important;
+            max-height: 70px !important;
+            flex: 0 0 70px !important;
+            border-radius: 10px !important;
+            border: 2px solid #facc15 !important;
+            background: #020617 !important;
+            image-rendering: pixelated !important;
+            box-shadow: 0 0 12px rgba(250, 204, 21, 0.4) !important;
+            object-fit: cover !important;
         }
 
         .cinematic-dialogue-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            gap: 2px !important;
+            overflow: hidden !important;
         }
 
         .cinematic-speaker-tag {
-            font-size: 13px;
-            font-weight: 900;
-            color: #facc15;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-size: 13px !important;
+            font-weight: 900 !important;
+            color: #facc15 !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            line-height: 1.2 !important;
         }
 
         .cinematic-text {
-            font-size: 15px;
-            line-height: 1.45;
-            color: #f1f5f9;
-            font-weight: 600;
-            min-height: 42px;
+            font-size: 14px !important;
+            line-height: 1.35 !important;
+            color: #f1f5f9 !important;
+            font-weight: 600 !important;
+            min-height: 38px !important;
+            max-height: 48px !important;
+            overflow: hidden !important;
+            word-break: break-word !important;
         }
 
         /* 5. Emblema de Batalha Decisiva */
@@ -1520,13 +1538,13 @@
             box-shadow: 0 0 70px rgba(16, 185, 129, 0.7);
         }
 
-        /* Efeito de Tremor de Tela no Roar do Boss */
+        /* Efeito de Tremor de Tela no Roar do Boss (Preserva perfeitamente a ancoragem central -50%, -50%) */
         @keyframes cutsceneShake {
-            0%, 100% { transform: translate(0, 0); }
-            20% { transform: translate(-6px, 4px); }
-            40% { transform: translate(5px, -5px); }
-            60% { transform: translate(-4px, 3px); }
-            80% { transform: translate(4px, -2px); }
+            0%, 100% { transform: translate(-50%, -50%); }
+            20% { transform: translate(calc(-50% - 6px), calc(-50% + 4px)); }
+            40% { transform: translate(calc(-50% + 5px), calc(-50% - 5px)); }
+            60% { transform: translate(calc(-50% - 4px), calc(-50% + 3px)); }
+            80% { transform: translate(calc(-50% + 4px), calc(-50% - 2px)); }
         }
 
         #game-container.screen-shake {

@@ -182,12 +182,12 @@
         }
 
         .bg-layer {
-            width: 100%;
-            height: 100%;
+            width: 140%;
+            height: 130%;
             object-fit: cover;
             position: absolute;
-            top: 0;
-            left: 0;
+            top: -15%;
+            left: -20%;
             filter: brightness(0.95);
             transition: filter 0.8s ease;
         }
@@ -400,67 +400,85 @@
         /* 4. Caixa de Diálogo Cinemática RPG */
         .cinematic-dialogue-box {
             position: absolute;
-            bottom: 6%;
-            left: 50%;
-            transform: translate(-50%, 30px);
-            width: 86%;
-            max-width: 720px;
-            background: rgba(10, 15, 29, 0.94);
-            border: 2px solid #38bdf8;
-            border-radius: 12px;
-            padding: 14px 18px;
-            display: flex;
-            align-items: center;
-            gap: 16px;
-            z-index: 32;
+            bottom: 13% !important;
+            left: 50% !important;
+            transform: translate(-50%, 20px) !important;
+            width: 86% !important;
+            max-width: 720px !important;
+            height: 94px !important;
+            max-height: 94px !important;
+            min-height: 94px !important;
+            background: rgba(10, 15, 29, 0.95) !important;
+            border: 2px solid #38bdf8 !important;
+            border-radius: 14px !important;
+            padding: 10px 16px !important;
+            display: flex !important;
+            flex-direction: row !important;
+            align-items: center !important;
+            gap: 16px !important;
+            z-index: 35 !important;
             opacity: 0;
             pointer-events: none;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8), 0 0 24px rgba(56, 189, 248, 0.25);
-            backdrop-filter: blur(12px);
-            transition: all 0.5s cubic-bezier(0.16, 1, 0.3, 1);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.85), 0 0 24px rgba(56, 189, 248, 0.3) !important;
+            backdrop-filter: blur(12px) !important;
+            transition: opacity 0.4s ease, transform 0.4s cubic-bezier(0.16, 1, 0.3, 1) !important;
+            overflow: hidden !important;
         }
 
         .cinematic-dialogue-box.show {
-            opacity: 1;
-            transform: translate(-50%, 0);
-            pointer-events: auto;
+            opacity: 1 !important;
+            transform: translate(-50%, 0) !important;
+            pointer-events: auto !important;
         }
 
+        #dialogue-portrait,
         .cinematic-dialogue-portrait {
-            width: 70px;
-            height: 70px;
-            border-radius: 10px;
-            border: 2px solid #facc15;
-            background: #020617;
-            flex-shrink: 0;
-            image-rendering: pixelated;
-            box-shadow: 0 0 12px rgba(250, 204, 21, 0.4);
+            width: 70px !important;
+            height: 70px !important;
+            min-width: 70px !important;
+            max-width: 70px !important;
+            min-height: 70px !important;
+            max-height: 70px !important;
+            flex: 0 0 70px !important;
+            border-radius: 10px !important;
+            border: 2px solid #facc15 !important;
+            background: #020617 !important;
+            image-rendering: pixelated !important;
+            box-shadow: 0 0 12px rgba(250, 204, 21, 0.4) !important;
+            object-fit: cover !important;
         }
 
         .cinematic-dialogue-content {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
+            flex: 1 1 auto !important;
+            min-width: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+            justify-content: center !important;
+            gap: 2px !important;
+            overflow: hidden !important;
         }
 
         .cinematic-speaker-tag {
-            font-size: 12px;
-            font-weight: 900;
-            color: #facc15;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
+            font-size: 13px !important;
+            font-weight: 900 !important;
+            color: #facc15 !important;
+            display: flex !important;
+            align-items: center !important;
+            gap: 6px !important;
+            text-transform: uppercase !important;
+            letter-spacing: 0.5px !important;
+            line-height: 1.2 !important;
         }
 
         .cinematic-text {
-            font-size: 14px;
-            line-height: 1.45;
-            color: #f1f5f9;
-            font-weight: 600;
-            min-height: 40px;
+            font-size: 14px !important;
+            line-height: 1.35 !important;
+            color: #f1f5f9 !important;
+            font-weight: 600 !important;
+            min-height: 38px !important;
+            max-height: 48px !important;
+            overflow: hidden !important;
+            word-break: break-word !important;
         }
 
         /* 5. Clímax: Flash de Tela e Emblema de Batalha */
@@ -1002,12 +1020,20 @@
 
                     const fw = img.naturalWidth / 3;
                     const fh = img.naturalHeight / 3;
-                    const padX = 8;
-                    const padY = 8;
-                    const sx = padX;
-                    const sy = padY;
-                    const sw = fw - 2 * padX;
-                    const sh = fh - 2 * padY;
+
+                    // Foco expressivo de Retrato RPG no rosto/busto do personagem
+                    let sx, sy, sw, sh;
+                    if (isEnemy) {
+                        sw = Math.floor(fw * 0.70);
+                        sh = Math.floor(fh * 0.52);
+                        sx = Math.floor((fw - sw) / 2);
+                        sy = Math.floor(fh * 0.04);
+                    } else {
+                        sw = Math.floor(fw * 0.62);
+                        sh = Math.floor(fh * 0.48);
+                        sx = Math.floor((fw - sw) / 2);
+                        sy = Math.floor(fh * 0.02);
+                    }
 
                     const shouldFlip = isEnemy ? !isKhepri : false;
                     if (shouldFlip) {
@@ -1579,7 +1605,7 @@
             // 2. Câmera aproxima no Chefão e Trilha Sonora entra no Tema do Boss (1.2s)
             cutsceneTimer = setTimeout(() => {
                 if (!isPlaying) return;
-                camera.style.transform = 'scale(1.22) translate(-9%, 5%)';
+                camera.style.transform = 'scale(1.15) translate(-7%, 3%)';
                 aura.style.opacity = '1';
 
                 stage.classList.add('screen-shake');
@@ -1614,7 +1640,7 @@
             // 4. Pan de Câmera para o Herói e Trilha Sonora Heroica (6.8s)
             cutsceneTimer = setTimeout(() => {
                 if (!isPlaying) return;
-                camera.style.transform = 'scale(1.2) translate(14%, 2%)';
+                camera.style.transform = 'scale(1.15) translate(8%, 2%)';
                 titleCard.classList.remove('show');
                 audio.setPhase('hero'); // Transiciona a orquestra para o acorde heróico!
 

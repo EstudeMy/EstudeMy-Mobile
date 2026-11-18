@@ -207,12 +207,21 @@
 
         const fw = sheetImg.naturalWidth / 3;
         const fh = sheetImg.naturalHeight / 3;
-        const padX = 8;
-        const padY = 8;
-        const sx = padX;
-        const sy = padY;
-        const sw = fw - 2 * padX;
-        const sh = fh - 2 * padY;
+
+        // Foco expressivo de Retrato RPG no rosto/busto do personagem
+        const isBoss = isEnemy || cleanFolder.includes('boss_') || cleanFolder.includes('colosso') || cleanFolder.includes('lorde');
+        let sx, sy, sw, sh;
+        if (isBoss) {
+          sw = Math.floor(fw * 0.70);
+          sh = Math.floor(fh * 0.52);
+          sx = Math.floor((fw - sw) / 2);
+          sy = Math.floor(fh * 0.04);
+        } else {
+          sw = Math.floor(fw * 0.62);
+          sh = Math.floor(fh * 0.48);
+          sx = Math.floor((fw - sw) / 2);
+          sy = Math.floor(fh * 0.02);
+        }
 
         const shouldFlip = isEnemy ? !isKhepri : false;
         if (shouldFlip) {
@@ -2394,7 +2403,7 @@
       const t1 = setTimeout(() => {
         if (!this.isCutsceneActive) return;
         if (this.cameraViewport) {
-          this.cameraViewport.style.transform = 'scale(1.22) translate(-9%, 5%)';
+          this.cameraViewport.style.transform = 'scale(1.15) translate(-7%, 3%)';
         }
         if (this.bossAura) this.bossAura.style.opacity = '1';
 
@@ -2448,7 +2457,7 @@
       const t3 = setTimeout(() => {
         if (!this.isCutsceneActive) return;
         if (this.cameraViewport) {
-          this.cameraViewport.style.transform = 'scale(1.2) translate(14%, 2%)';
+          this.cameraViewport.style.transform = 'scale(1.15) translate(8%, 2%)';
         }
         if (this.bossTitleCard) this.bossTitleCard.classList.remove('show');
         if (this.soundtrack) this.soundtrack.setBossCinematicPhase('hero');
