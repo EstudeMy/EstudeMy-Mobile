@@ -1641,19 +1641,30 @@
       this.currentFaseIndex = typeof raw?.phaseIndex === 'number' ? raw.phaseIndex : 0;
       this.modoJogo = (raw?.modoJogo || raw?.modo || 'campanha').toLowerCase().trim();
 
-      // Prioridade absoluta para parâmetros da URL se presentes
+      // Prioridade absoluta para parâmetros da URL se presentes (ou window.locationParams no Android WebView)
       let urlPhase = null;
       try {
         const urlParams = new URLSearchParams(window.location.search);
-        const urlModo = urlParams.get('modo');
+        let urlModo = urlParams.get('modo');
+        let p = urlParams.get('phase');
+        let urlTema = (urlParams.get('tema') || '').toLowerCase().trim();
+
+        if (!urlModo && window.locationParams && window.locationParams.modo) {
+          urlModo = window.locationParams.modo;
+        }
+        if ((p === null || p === undefined || p === '') && window.locationParams && window.locationParams.phase !== undefined) {
+          p = window.locationParams.phase;
+        }
+        if (!urlTema && window.locationParams && window.locationParams.tema) {
+          urlTema = (window.locationParams.tema || '').toLowerCase().trim();
+        }
+
         if (urlModo) {
           this.modoJogo = urlModo.toLowerCase().trim();
         }
-        const p = urlParams.get('phase');
         if (p !== null && p !== undefined && p !== '') {
           urlPhase = parseInt(p, 10);
         }
-        const urlTema = (urlParams.get('tema') || '').toLowerCase().trim();
         if (urlTema) {
           if (urlTema.includes('deserto')) this.activeTheme = 'deserto';
           else if (urlTema.includes('vila')) this.activeTheme = 'vila';
@@ -1673,6 +1684,9 @@
       try {
         const urlParams = new URLSearchParams(window.location.search);
         rawHeroChoice = urlParams.get('personagem') || '';
+        if (!rawHeroChoice && window.locationParams && window.locationParams.personagem) {
+          rawHeroChoice = window.locationParams.personagem;
+        }
       } catch (e) {}
 
       // Prioridade 2: Escolha explícita mais recente no perfil (localStorage / sessionStorage)
@@ -1705,6 +1719,9 @@
       try {
         const urlParams = new URLSearchParams(window.location.search);
         rawSkinChoice = urlParams.get('skin') || '';
+        if (!rawSkinChoice && window.locationParams && window.locationParams.skin) {
+          rawSkinChoice = window.locationParams.skin;
+        }
       } catch (e) {}
 
       if (!rawSkinChoice) {

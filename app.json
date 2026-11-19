@@ -57,7 +57,8 @@
           "cameraPermission": "O EstudeMy precisa de acesso à câmera para ler QR Codes de trilhas de estudo."
         }
       ],
-      "./plugins/withCleartextTraffic"
+      "./plugins/withCleartextTraffic",
+      "./plugins/withGamePiAssets"
     ],
     "experiments": {
       "typedRoutes": true,

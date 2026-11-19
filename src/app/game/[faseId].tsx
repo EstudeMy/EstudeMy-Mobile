@@ -51,6 +51,7 @@ export default function GameScreen() {
   const [erro, setErro] = useState<string | null>(null);
   const [iframeKey, setIframeKey] = useState(1);
   const [gameData, setGameData] = useState<any>(null);
+  const [useRemoteFallback, setUseRemoteFallback] = useState(false);
 
   // Estados de Fim de Fase
   const [fimDeJogo, setFimDeJogo] = useState<'vitoria' | 'derrota' | null>(null);
@@ -563,9 +564,18 @@ export default function GameScreen() {
     ? `/game-pi/mundo_aberto.html?t=${iframeKey}&tema=${activeTema}&personagem=${encodeURIComponent(charKey)}&skin=${encodeURIComponent(skinKey)}`
     : `/game-pi/index.html?t=${iframeKey}&tema=${activeTema}&phase=${activePhase}&modo=${activeModo}&personagem=${encodeURIComponent(charKey)}&skin=${encodeURIComponent(skinKey)}`;
 
-  const mobileGameSrc = isMundoAberto
+  const isAndroid = Platform.OS === 'android';
+  const localAndroidGameSrc = isMundoAberto
+    ? `file:///android_asset/game-pi/mundo_aberto.html?t=${iframeKey}&tema=${activeTema}&personagem=${encodeURIComponent(charKey)}&skin=${encodeURIComponent(skinKey)}`
+    : `file:///android_asset/game-pi/index.html?t=${iframeKey}&tema=${activeTema}&phase=${activePhase}&modo=${activeModo}&personagem=${encodeURIComponent(charKey)}&skin=${encodeURIComponent(skinKey)}`;
+
+  const remoteGameSrc = isMundoAberto
     ? `${cleanBase}/game-pi/mundo_aberto.html?t=${iframeKey}&tema=${activeTema}&personagem=${encodeURIComponent(charKey)}&skin=${encodeURIComponent(skinKey)}`
     : `${cleanBase}/game-pi/index.html?t=${iframeKey}&tema=${activeTema}&phase=${activePhase}&modo=${activeModo}&personagem=${encodeURIComponent(charKey)}&skin=${encodeURIComponent(skinKey)}`;
+
+  const mobileGameSrc = (isAndroid && !useRemoteFallback)
+    ? localAndroidGameSrc
+    : remoteGameSrc;
 
   if (erro) {
     return (
@@ -641,19 +651,37 @@ export default function GameScreen() {
           {podeExibirJogo && !isWeb && (
             <WebView
               ref={webViewRef}
-              key={iframeKey}
+              key={`${iframeKey}-${mobileGameSrc}`}
               source={{ uri: mobileGameSrc }}
               style={styles.webView}
               javaScriptEnabled
               domStorageEnabled
               allowsFullscreenVideo
               mediaPlaybackRequiresUserAction={false}
+              allowFileAccess={true}
+              allowFileAccessFromFileURLs={true}
+              allowUniversalAccessFromFileURLs={true}
+              mixedContentMode="always"
               injectedJavaScriptBeforeContentLoaded={`
                 window.gameData = ${JSON.stringify(gameData)};
+                window.locationParams = {
+                  tema: '${activeTema}',
+                  phase: ${activePhase},
+                  modo: '${activeModo}',
+                  personagem: '${encodeURIComponent(charKey)}',
+                  skin: '${encodeURIComponent(skinKey)}'
+                };
                 true;
               `}
               onMessage={handleNativeMessage}
               originWhitelist={['*']}
+              onError={(syntheticEvent) => {
+                const { nativeEvent } = syntheticEvent;
+                console.warn('WebView error ao carregar jogo:', nativeEvent);
+                if (!useRemoteFallback && isAndroid) {
+                  setUseRemoteFallback(true);
+                }
+              }}
             />
           )}
         </View>

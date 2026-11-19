@@ -1397,6 +1397,14 @@
                 }
             } catch (e) {}
 
+            if (!rawTheme && window.gameData) {
+                gameData = window.gameData;
+            }
+
+            if (!rawTheme && window.locationParams && window.locationParams.tema) {
+                rawTheme = (window.locationParams.tema || '').toLowerCase().trim();
+            }
+
             if (!rawTheme && gameData) {
                 rawTheme = (gameData.trilhaTema || gameData.cenario || '').toLowerCase().trim();
             }
