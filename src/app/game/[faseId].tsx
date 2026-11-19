@@ -1,37 +1,36 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  Platform,
-  Animated,
-  Easing,
-  StatusBar,
-} from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import * as SecureStore from 'expo-secure-store';
-import { WebView } from 'react-native-webview';
-import { buscarFasePorId, buscarFasesPorTrilha, concluirFase, Fase } from '../../services/faseService';
-import { buscarTrilhaPorId, listarTrilhas, Trilha } from '../../services/trilhaService';
-import { registrarFaseConcluida } from '../../services/progressoService';
-import { getTrilhaTheme, getThematicQuestions, ThemeKey } from '../../game/data/thematicQuestions';
-import { useAuth } from '../../contexts/AuthContext';
-import { useTheme } from '../../contexts/ThemeContext';
-import api from '../../services/api';
-import GameSplashScreen from '../../components/game/SplashScreen';
 import {
-  Trophy,
+  AlertTriangle,
   ArrowLeft,
+  ArrowRight,
+  CheckCircle2,
+  RefreshCw,
   RotateCcw,
   Smartphone,
   Sparkles,
-  ArrowRight,
-  CheckCircle2,
-  AlertTriangle,
-  RefreshCw,
+  Trophy,
 } from 'lucide-react-native';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  Animated,
+  Easing,
+  Platform,
+  StatusBar,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
+import { WebView } from 'react-native-webview';
+import GameSplashScreen from '../../components/game/SplashScreen';
+import { useAuth } from '../../contexts/AuthContext';
+import { useTheme } from '../../contexts/ThemeContext';
+import { getThematicQuestions, getTrilhaTheme, ThemeKey } from '../../game/data/thematicQuestions';
+import { buscarFasePorId, buscarFasesPorTrilha, Fase } from '../../services/faseService';
+import { registrarFaseConcluida } from '../../services/progressoService';
+import { buscarTrilhaPorId, listarTrilhas } from '../../services/trilhaService';
 
 export default function GameScreen() {
   const { faseId, trilhaId, modo, phase } = useLocalSearchParams<{
@@ -95,7 +94,7 @@ export default function GameScreen() {
 
     return () => {
       if (!isWeb) {
-        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => { });
       }
     };
   }, [isWeb]);
@@ -182,7 +181,7 @@ export default function GameScreen() {
         if (typeof window !== 'undefined' && window.localStorage) {
           const raw = window.localStorage.getItem(key);
           if (raw) {
-            try { list = JSON.parse(raw); } catch (e) {}
+            try { list = JSON.parse(raw); } catch (e) { }
           }
           if (!list.includes(realFaseId)) {
             list.push(realFaseId);
@@ -200,7 +199,7 @@ export default function GameScreen() {
     } finally {
       setSalvandoProgresso(false);
       if (refreshUser && !isMundoAberto && realModo === 'campanha') {
-        refreshUser().catch(() => {});
+        refreshUser().catch(() => { });
       }
     }
   }, [faseId, trilhaId, gameData, fase, modo, refreshUser, updateUserState, user]);
@@ -314,25 +313,25 @@ export default function GameScreen() {
           try {
             storedHero = window.localStorage.getItem('estudemy_selected_hero') || '';
             storedHeroSkin = window.localStorage.getItem('estudemy_hero_skin') || '';
-          } catch {}
+          } catch { }
         } else {
           try {
             storedHero = (await SecureStore.getItemAsync('estudemy_selected_hero')) || '';
             storedHeroSkin = (await SecureStore.getItemAsync('estudemy_hero_skin')) || '';
-          } catch {}
+          } catch { }
         }
         const rawPersonagem = storedHero || (user as any)?.personagem || 'Samurai';
         const personagemUsuario = rawPersonagem.toLowerCase().includes('mago') || rawPersonagem.toLowerCase().includes('valerius')
           ? 'mago'
           : rawPersonagem.toLowerCase().includes('guerreiro') || rawPersonagem.toLowerCase().includes('boran')
-          ? 'guerreiro'
-          : 'samurai';
+            ? 'guerreiro'
+            : 'samurai';
 
         const defaultSkin = personagemUsuario === 'mago'
           ? 'mago_arcanista'
           : personagemUsuario === 'guerreiro'
-          ? 'guerreiro_templario'
-          : 'samurai_ronin';
+            ? 'guerreiro_templario'
+            : 'samurai_ronin';
 
         const skinUsuario = (
           (user as any)?.skin ||
@@ -434,7 +433,7 @@ export default function GameScreen() {
           try {
             sessionStorage.setItem('estudemy_game_data', JSON.stringify(prepared));
             localStorage.setItem('estudemy_game_data', JSON.stringify(prepared));
-          } catch {}
+          } catch { }
         }
       } catch (err: any) {
         console.error('Erro ao conectar com dados da trilha e fase:', err);
@@ -549,14 +548,14 @@ export default function GameScreen() {
     try {
       localHero = window.localStorage?.getItem('estudemy_selected_hero') || '';
       localSkin = window.localStorage?.getItem('estudemy_hero_skin') || '';
-    } catch {}
+    } catch { }
   }
   const rawHero = localHero || (user as any)?.personagem || gameData?.personagem_selecionado || 'Samurai';
   const charKey = rawHero.toLowerCase().includes('mago') || rawHero.toLowerCase().includes('valerius')
     ? 'mago'
     : rawHero.toLowerCase().includes('guerreiro') || rawHero.toLowerCase().includes('boran')
-    ? 'guerreiro'
-    : 'samurai';
+      ? 'guerreiro'
+      : 'samurai';
   const defaultSkin = charKey === 'mago' ? 'mago_arcanista' : charKey === 'guerreiro' ? 'guerreiro_templario' : 'samurai_ronin';
   const skinKey = localSkin || (user as any)?.skin || (user as any)?.skinSelecionada || defaultSkin;
 
@@ -760,8 +759,8 @@ export default function GameScreen() {
                 {salvandoProgresso
                   ? 'Salvando...'
                   : temProximaFase
-                  ? 'Avançar para Próxima Fase'
-                  : 'Finalizar Trilha'}
+                    ? 'Avançar para Próxima Fase'
+                    : 'Finalizar Trilha'}
               </Text>
               <ArrowRight size={18} color="#ffffff" style={{ marginLeft: 6 }} />
             </TouchableOpacity>

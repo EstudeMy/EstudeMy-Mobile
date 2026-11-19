@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
+
 <head>
     <meta charset="utf-8" />
     <meta http-equiv="X-UA-Compatible" content="IE=edge" />
@@ -8,7 +9,8 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Jaro&family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Jaro&family=Inter:wght@400;600;700;800;900&display=swap"
+        rel="stylesheet">
 
     <style>
         * {
@@ -17,7 +19,8 @@
             -webkit-user-select: none;
         }
 
-        html, body {
+        html,
+        body {
             margin: 0;
             padding: 0;
             width: 100%;
@@ -60,9 +63,17 @@
         }
 
         @keyframes bg-camera-drift {
-            0% { transform: scale(1) translate(0px, 0px); }
-            50% { transform: scale(1.05) translate(-14px, -6px); }
-            100% { transform: scale(1.08) translate(14px, 4px); }
+            0% {
+                transform: scale(1) translate(0px, 0px);
+            }
+
+            50% {
+                transform: scale(1.05) translate(-14px, -6px);
+            }
+
+            100% {
+                transform: scale(1.08) translate(14px, 4px);
+            }
         }
 
         #bg-vignette {
@@ -71,8 +82,8 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: radial-gradient(circle at center, rgba(0,0,0,0) 50%, rgba(0,0,0,0.85) 100%),
-                        linear-gradient(to top, rgba(10,13,24,0.85) 0%, rgba(10,13,24,0.3) 14%, rgba(0,0,0,0) 24%);
+            background: radial-gradient(circle at center, rgba(0, 0, 0, 0) 50%, rgba(0, 0, 0, 0.85) 100%),
+                linear-gradient(to top, rgba(10, 13, 24, 0.85) 0%, rgba(10, 13, 24, 0.3) 14%, rgba(0, 0, 0, 0) 24%);
             z-index: 2;
             pointer-events: none;
         }
@@ -106,9 +117,20 @@
         }
 
         @keyframes fog-drift {
-            0% { transform: translateX(0); opacity: 0.4; }
-            50% { transform: translateX(12%); opacity: 0.75; }
-            100% { transform: translateX(24%); opacity: 0.45; }
+            0% {
+                transform: translateX(0);
+                opacity: 0.4;
+            }
+
+            50% {
+                transform: translateX(12%);
+                opacity: 0.75;
+            }
+
+            100% {
+                transform: translateX(24%);
+                opacity: 0.45;
+            }
         }
 
         /* Feixe de Luz Atmosférica em Movimento */
@@ -118,16 +140,27 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(115deg, rgba(255,255,255,0) 25%, rgba(56,189,248,0.07) 50%, rgba(255,255,255,0) 75%);
+            background: linear-gradient(115deg, rgba(255, 255, 255, 0) 25%, rgba(56, 189, 248, 0.07) 50%, rgba(255, 255, 255, 0) 75%);
             animation: light-sweep 16s ease-in-out infinite alternate;
             pointer-events: none;
             z-index: 2;
         }
 
         @keyframes light-sweep {
-            0% { transform: translateX(-35%); opacity: 0.3; }
-            50% { transform: translateX(10%); opacity: 0.7; }
-            100% { transform: translateX(45%); opacity: 0.35; }
+            0% {
+                transform: translateX(-35%);
+                opacity: 0.3;
+            }
+
+            50% {
+                transform: translateX(10%);
+                opacity: 0.7;
+            }
+
+            100% {
+                transform: translateX(45%);
+                opacity: 0.35;
+            }
         }
 
         /* Camada 2: Canvas de Efeitos Especiais, Tochas Animadas, Aurora e Clima */
@@ -244,15 +277,34 @@
         }
 
         @keyframes float-levitate {
-            0% { transform: translateY(0px); }
-            50% { transform: translateY(-16px); }
-            100% { transform: translateY(-4px); }
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-16px);
+            }
+
+            100% {
+                transform: translateY(-4px);
+            }
         }
 
         @keyframes shadow-breathe {
-            0% { transform: scale(1); opacity: 0.75; }
-            50% { transform: scale(0.72); opacity: 0.35; }
-            100% { transform: scale(0.9); opacity: 0.65; }
+            0% {
+                transform: scale(1);
+                opacity: 0.75;
+            }
+
+            50% {
+                transform: scale(0.72);
+                opacity: 0.35;
+            }
+
+            100% {
+                transform: scale(0.9);
+                opacity: 0.65;
+            }
         }
 
         /* Barra de Vida Mini Individual Sobre os Inimigos */
@@ -298,10 +350,24 @@
         }
 
         @keyframes anim-recoil {
-            0% { transform: translateX(0); filter: brightness(2.5) contrast(1.5) drop-shadow(0 0 20px #ef4444); }
-            35% { transform: translateX(-24px) scale(0.96); }
-            70% { transform: translateX(-8px); filter: brightness(1.5); }
-            100% { transform: translateX(0) scale(1); filter: none; }
+            0% {
+                transform: translateX(0);
+                filter: brightness(2.5) contrast(1.5) drop-shadow(0 0 20px #ef4444);
+            }
+
+            35% {
+                transform: translateX(-24px) scale(0.96);
+            }
+
+            70% {
+                transform: translateX(-8px);
+                filter: brightness(1.5);
+            }
+
+            100% {
+                transform: translateX(0) scale(1);
+                filter: none;
+            }
         }
 
         .actor-dodge {
@@ -309,10 +375,24 @@
         }
 
         @keyframes anim-dodge {
-            0% { transform: translateX(0); }
-            30% { transform: translateX(-35px) scale(0.92); opacity: 0.7; }
-            70% { transform: translateX(-15px); opacity: 0.9; }
-            100% { transform: translateX(0) scale(1); opacity: 1; }
+            0% {
+                transform: translateX(0);
+            }
+
+            30% {
+                transform: translateX(-35px) scale(0.92);
+                opacity: 0.7;
+            }
+
+            70% {
+                transform: translateX(-15px);
+                opacity: 0.9;
+            }
+
+            100% {
+                transform: translateX(0) scale(1);
+                opacity: 1;
+            }
         }
 
         .actor-enemy-recoil {
@@ -320,10 +400,24 @@
         }
 
         @keyframes anim-enemy-recoil {
-            0% { transform: translateX(0); filter: brightness(2.5) contrast(1.5) drop-shadow(0 0 20px #facc15); }
-            35% { transform: translateX(24px) scale(0.96); }
-            70% { transform: translateX(8px); filter: brightness(1.5); }
-            100% { transform: translateX(0) scale(1); filter: none; }
+            0% {
+                transform: translateX(0);
+                filter: brightness(2.5) contrast(1.5) drop-shadow(0 0 20px #facc15);
+            }
+
+            35% {
+                transform: translateX(24px) scale(0.96);
+            }
+
+            70% {
+                transform: translateX(8px);
+                filter: brightness(1.5);
+            }
+
+            100% {
+                transform: translateX(0) scale(1);
+                filter: none;
+            }
         }
 
         .actor-dash-strike {
@@ -331,9 +425,19 @@
         }
 
         @keyframes anim-dash-strike {
-            0% { transform: translateX(0); }
-            40% { transform: translateX(110px) scale(1.08); filter: drop-shadow(0 0 25px #38bdf8); }
-            100% { transform: translateX(0) scale(1); filter: none; }
+            0% {
+                transform: translateX(0);
+            }
+
+            40% {
+                transform: translateX(110px) scale(1.08);
+                filter: drop-shadow(0 0 25px #38bdf8);
+            }
+
+            100% {
+                transform: translateX(0) scale(1);
+                filter: none;
+            }
         }
 
         .actor-enemy-strike {
@@ -341,9 +445,19 @@
         }
 
         @keyframes anim-enemy-strike {
-            0% { transform: translateX(0); }
-            40% { transform: translateX(-110px) scale(1.08); filter: drop-shadow(0 0 25px #ef4444); }
-            100% { transform: translateX(0) scale(1); filter: none; }
+            0% {
+                transform: translateX(0);
+            }
+
+            40% {
+                transform: translateX(-110px) scale(1.08);
+                filter: drop-shadow(0 0 25px #ef4444);
+            }
+
+            100% {
+                transform: translateX(0) scale(1);
+                filter: none;
+            }
         }
 
         .actor-enemy-leap {
@@ -351,10 +465,24 @@
         }
 
         @keyframes anim-enemy-leap {
-            0% { transform: translate(0, 0) scale(1); }
-            35% { transform: translate(-80px, -60px) scale(1.18); filter: drop-shadow(0 20px 20px rgba(0,0,0,0.5)); }
-            65% { transform: translate(-120px, 10px) scale(1.22); filter: drop-shadow(0 0 25px #f97316); }
-            100% { transform: translate(0, 0) scale(1); filter: none; }
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+
+            35% {
+                transform: translate(-80px, -60px) scale(1.18);
+                filter: drop-shadow(0 20px 20px rgba(0, 0, 0, 0.5));
+            }
+
+            65% {
+                transform: translate(-120px, 10px) scale(1.22);
+                filter: drop-shadow(0 0 25px #f97316);
+            }
+
+            100% {
+                transform: translate(0, 0) scale(1);
+                filter: none;
+            }
         }
 
         .actor-enemy-cast {
@@ -362,10 +490,24 @@
         }
 
         @keyframes anim-enemy-cast {
-            0% { transform: scale(1); }
-            30% { transform: scale(1.15) translateY(-20px); filter: drop-shadow(0 0 30px #a855f7) brightness(1.3); }
-            70% { transform: scale(1.1) translateX(-30px); filter: drop-shadow(0 0 35px #c084fc); }
-            100% { transform: scale(1); filter: none; }
+            0% {
+                transform: scale(1);
+            }
+
+            30% {
+                transform: scale(1.15) translateY(-20px);
+                filter: drop-shadow(0 0 30px #a855f7) brightness(1.3);
+            }
+
+            70% {
+                transform: scale(1.1) translateX(-30px);
+                filter: drop-shadow(0 0 35px #c084fc);
+            }
+
+            100% {
+                transform: scale(1);
+                filter: none;
+            }
         }
 
         .screen-shake {
@@ -373,11 +515,27 @@
         }
 
         @keyframes anim-screen-shake {
-            0%, 100% { transform: translate(-50%, -50%); }
-            20% { transform: translate(calc(-50% - 6px), calc(-50% + 4px)); }
-            40% { transform: translate(calc(-50% + 6px), calc(-50% - 4px)); }
-            60% { transform: translate(calc(-50% - 4px), calc(-50% + 3px)); }
-            80% { transform: translate(calc(-50% + 4px), calc(-50% - 2px)); }
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%);
+            }
+
+            20% {
+                transform: translate(calc(-50% - 6px), calc(-50% + 4px));
+            }
+
+            40% {
+                transform: translate(calc(-50% + 6px), calc(-50% - 4px));
+            }
+
+            60% {
+                transform: translate(calc(-50% - 4px), calc(-50% + 3px));
+            }
+
+            80% {
+                transform: translate(calc(-50% + 4px), calc(-50% - 2px));
+            }
         }
 
         .actor-charge-glow {
@@ -395,6 +553,7 @@
                 filter: drop-shadow(0 0 25px #ef4444) brightness(1.2) saturate(1.8);
                 transform: scale(1.08);
             }
+
             100% {
                 filter: drop-shadow(0 0 45px #dc2626) drop-shadow(0 0 20px #f59e0b) brightness(1.45) saturate(2.3);
                 transform: scale(1.15);
@@ -406,31 +565,51 @@
         }
 
         @keyframes anim-boss-supreme {
-            0% { transform: scale(1); }
-            30% { transform: scale(1.3) translateY(-30px); filter: drop-shadow(0 0 45px #f43f5e) brightness(1.5); }
-            50% { transform: scale(1.35) translateX(-140px); filter: drop-shadow(0 0 65px #ef4444) saturate(2); }
-            100% { transform: scale(1); filter: none; }
+            0% {
+                transform: scale(1);
+            }
+
+            30% {
+                transform: scale(1.3) translateY(-30px);
+                filter: drop-shadow(0 0 45px #f43f5e) brightness(1.5);
+            }
+
+            50% {
+                transform: scale(1.35) translateX(-140px);
+                filter: drop-shadow(0 0 65px #ef4444) saturate(2);
+            }
+
+            100% {
+                transform: scale(1);
+                filter: none;
+            }
         }
 
         /* Auras de Skins para o Herói (Samurai Kaito) */
         .skin-cyber-void {
             filter: drop-shadow(0 0 20px #a855f7) hue-rotate(180deg) brightness(1.2) !important;
         }
+
         .skin-shogun-solar {
             filter: drop-shadow(0 0 24px #eab308) saturate(2) hue-rotate(-20deg) brightness(1.25) !important;
         }
+
         .skin-shinobi-sombra {
             filter: drop-shadow(0 0 20px #6366f1) contrast(1.4) brightness(0.9) !important;
         }
+
         .skin-berserker-lava {
             filter: drop-shadow(0 0 25px #f97316) saturate(1.8) hue-rotate(-25deg) !important;
         }
+
         .skin-necromante {
             filter: drop-shadow(0 0 20px #10b981) hue-rotate(85deg) contrast(1.3) !important;
         }
+
         .skin-cacadora-celeste {
             filter: drop-shadow(0 0 25px #38bdf8) saturate(1.7) hue-rotate(-30deg) brightness(1.2) !important;
         }
+
         .skin-senhor-abissal {
             filter: drop-shadow(0 0 25px #7c3aed) hue-rotate(140deg) contrast(1.4) brightness(1.1) !important;
         }
@@ -618,8 +797,15 @@
         }
 
         @keyframes timerPulse {
-            0% { transform: scale(1); filter: drop-shadow(0 0 2px #ef4444); }
-            100% { transform: scale(1.1); filter: drop-shadow(0 0 10px #ef4444); }
+            0% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 2px #ef4444);
+            }
+
+            100% {
+                transform: scale(1.1);
+                filter: drop-shadow(0 0 10px #ef4444);
+            }
         }
 
         /* Camada 5: Botão de Golpe Supremo (Acima do HUD do Jogador) */
@@ -722,8 +908,14 @@
         }
 
         @keyframes comboPulse {
-            from { transform: scale(1); }
-            to { transform: scale(1.04); filter: drop-shadow(0 0 8px #f97316); }
+            from {
+                transform: scale(1);
+            }
+
+            to {
+                transform: scale(1.04);
+                filter: drop-shadow(0 0 8px #f97316);
+            }
         }
 
         .combo-hud.frenesi {
@@ -734,13 +926,27 @@
         }
 
         @keyframes frenesiPulse {
-            0% { transform: scale(1); filter: drop-shadow(0 0 15px #ef4444); }
-            100% { transform: scale(1.08); filter: drop-shadow(0 0 25px #f59e0b); }
+            0% {
+                transform: scale(1);
+                filter: drop-shadow(0 0 15px #ef4444);
+            }
+
+            100% {
+                transform: scale(1.08);
+                filter: drop-shadow(0 0 25px #f59e0b);
+            }
         }
 
         @keyframes pulse-glow {
-            from { transform: scale(1); box-shadow: 0 0 10px #eab308; }
-            to { transform: scale(1.04); box-shadow: 0 0 22px #facc15; }
+            from {
+                transform: scale(1);
+                box-shadow: 0 0 10px #eab308;
+            }
+
+            to {
+                transform: scale(1.04);
+                box-shadow: 0 0 22px #facc15;
+            }
         }
 
         /* Camada 6: HUD Inferior do Herói (Vida e Barra de Carga de Ultimate) */
@@ -1004,9 +1210,20 @@
         }
 
         @keyframes ult-banner-pop {
-            0% { transform: scale(0.4); opacity: 0; }
-            70% { transform: scale(1.12); opacity: 1; }
-            100% { transform: scale(1); opacity: 1; }
+            0% {
+                transform: scale(0.4);
+                opacity: 0;
+            }
+
+            70% {
+                transform: scale(1.12);
+                opacity: 1;
+            }
+
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
         }
 
         /* Efeito de Flash na Tela */
@@ -1039,8 +1256,15 @@
         }
 
         @keyframes modal-fade-in {
-            from { opacity: 0; transform: scale(0.96); }
-            to { opacity: 1; transform: scale(1); }
+            from {
+                opacity: 0;
+                transform: scale(0.96);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
         }
 
         .game-end-card {
@@ -1200,14 +1424,16 @@
             box-shadow: 0 0 25px rgba(34, 197, 94, 0.6);
         }
 
-        .btn-repeat, .btn-retry {
+        .btn-repeat,
+        .btn-retry {
             background: #1e293b;
             border: 1.5px solid #64748b;
             color: #f8fafc;
             flex: 1;
         }
 
-        .btn-repeat:hover, .btn-retry:hover {
+        .btn-repeat:hover,
+        .btn-retry:hover {
             background: #334155;
             border-color: #38bdf8;
             transform: translateY(-2px);
@@ -1489,8 +1715,15 @@
         }
 
         @keyframes pulseBannerCutscene {
-            from { transform: scale(1); filter: drop-shadow(0 0 15px #e11d48); }
-            to { transform: scale(1.05); filter: drop-shadow(0 0 30px #f43f5e); }
+            from {
+                transform: scale(1);
+                filter: drop-shadow(0 0 15px #e11d48);
+            }
+
+            to {
+                transform: scale(1.05);
+                filter: drop-shadow(0 0 30px #f43f5e);
+            }
         }
 
         .battle-start-sub {
@@ -1540,11 +1773,27 @@
 
         /* Efeito de Tremor de Tela no Roar do Boss (Preserva perfeitamente a ancoragem central -50%, -50%) */
         @keyframes cutsceneShake {
-            0%, 100% { transform: translate(-50%, -50%); }
-            20% { transform: translate(calc(-50% - 6px), calc(-50% + 4px)); }
-            40% { transform: translate(calc(-50% + 5px), calc(-50% - 5px)); }
-            60% { transform: translate(calc(-50% - 4px), calc(-50% + 3px)); }
-            80% { transform: translate(calc(-50% + 4px), calc(-50% - 2px)); }
+
+            0%,
+            100% {
+                transform: translate(-50%, -50%);
+            }
+
+            20% {
+                transform: translate(calc(-50% - 6px), calc(-50% + 4px));
+            }
+
+            40% {
+                transform: translate(calc(-50% + 5px), calc(-50% - 5px));
+            }
+
+            60% {
+                transform: translate(calc(-50% - 4px), calc(-50% + 3px));
+            }
+
+            80% {
+                transform: translate(calc(-50% + 4px), calc(-50% - 2px));
+            }
         }
 
         #game-container.screen-shake {
@@ -1552,7 +1801,10 @@
         }
 
         /* Ocultamento Suave dos Elementos do Quiz durante a Cutscene */
-        #quiz-box, #battle-items-hud, #game-top-bar, #player-hud-card {
+        #quiz-box,
+        #battle-items-hud,
+        #game-top-bar,
+        #player-hud-card {
             transition: opacity 0.5s ease, transform 0.5s ease;
         }
 
@@ -1576,132 +1828,137 @@
         }
     </style>
 </head>
+
 <body>
 
     <div id="game-container">
         <!-- 0. Viewport de Câmera Cinemática In-Engine (Pan & Zoom sem distorcer HUD) -->
         <div id="camera-viewport">
-        <!-- 1. Background Cenário com Movimento Suave -->
-        <img id="bg-layer" src="" alt="Cenário de Batalha" style="opacity: 0; transition: opacity 0.2s ease-in-out;" />
-        <script>
-            (function() {
-                try {
-                    var raw = null;
+            <!-- 1. Background Cenário com Movimento Suave -->
+            <img id="bg-layer" src="" alt="Cenário de Batalha"
+                style="opacity: 0; transition: opacity 0.2s ease-in-out;" />
+            <script>
+                (function () {
                     try {
-                        var s = sessionStorage.getItem('estudemy_game_data') || localStorage.getItem('estudemy_game_data');
-                        if (s) raw = JSON.parse(s);
-                    } catch(e) {}
-                    var params = new URLSearchParams(window.location.search);
-                    var tema = (params.get('tema') || (raw && (raw.trilhaTema || raw._D5 || raw.cenario)) || '').toLowerCase();
-                    var pIdx = parseInt(params.get('phase') || (raw && raw.phaseIndex) || 0, 10);
-                    if (isNaN(pIdx)) pIdx = 0;
+                        var raw = null;
+                        try {
+                            var s = sessionStorage.getItem('estudemy_game_data') || localStorage.getItem('estudemy_game_data');
+                            if (s) raw = JSON.parse(s);
+                        } catch (e) { }
+                        var params = new URLSearchParams(window.location.search);
+                        var tema = (params.get('tema') || (raw && (raw.trilhaTema || raw._D5 || raw.cenario)) || '').toLowerCase();
+                        var pIdx = parseInt(params.get('phase') || (raw && raw.phaseIndex) || 0, 10);
+                        if (isNaN(pIdx)) pIdx = 0;
 
-                    var themeMap = {
-                        castelo: [
-                            'assets/backgrounds/castelo_fase1_portao.jpg',
-                            'assets/backgrounds/castelo_fase2_salao.jpg',
-                            'assets/backgrounds/castelo_fase3_masmorra.jpg',
-                            'assets/backgrounds/castelo_fase4_trono.jpg'
-                        ],
-                        montanha: [
-                            'assets/backgrounds/montanha_fase1_encosta.jpg',
-                            'assets/backgrounds/montanha_fase2_desfiladeiro.jpg',
-                            'assets/backgrounds/montanha_fase3_caverna.jpg',
-                            'assets/backgrounds/montanha_fase4_pico.jpg'
-                        ],
-                        deserto: [
-                            'assets/backgrounds/deserto_fase1_dunas.jpg',
-                            'assets/backgrounds/deserto_fase2_oasis.jpg',
-                            'assets/backgrounds/deserto_fase3_ruinas.jpg',
-                            'assets/backgrounds/deserto_fase4_templo.jpg'
-                        ],
-                        vila: [
-                            'assets/backgrounds/vila_fase1_mercado.jpg',
-                            'assets/backgrounds/vila_fase2_biblioteca.jpg',
-                            'assets/backgrounds/vila_fase3_cripta.jpg',
-                            'assets/backgrounds/vila_fase4_campanario.jpg'
-                        ]
-                    };
+                        var themeMap = {
+                            castelo: [
+                                'assets/backgrounds/castelo_fase1_portao.jpg',
+                                'assets/backgrounds/castelo_fase2_salao.jpg',
+                                'assets/backgrounds/castelo_fase3_masmorra.jpg',
+                                'assets/backgrounds/castelo_fase4_trono.jpg'
+                            ],
+                            montanha: [
+                                'assets/backgrounds/montanha_fase1_encosta.jpg',
+                                'assets/backgrounds/montanha_fase2_desfiladeiro.jpg',
+                                'assets/backgrounds/montanha_fase3_caverna.jpg',
+                                'assets/backgrounds/montanha_fase4_pico.jpg'
+                            ],
+                            deserto: [
+                                'assets/backgrounds/deserto_fase1_dunas.jpg',
+                                'assets/backgrounds/deserto_fase2_oasis.jpg',
+                                'assets/backgrounds/deserto_fase3_ruinas.jpg',
+                                'assets/backgrounds/deserto_fase4_templo.jpg'
+                            ],
+                            vila: [
+                                'assets/backgrounds/vila_fase1_mercado.jpg',
+                                'assets/backgrounds/vila_fase2_biblioteca.jpg',
+                                'assets/backgrounds/vila_fase3_cripta.jpg',
+                                'assets/backgrounds/vila_fase4_campanario.jpg'
+                            ]
+                        };
 
-                    var resolvedKey = 'castelo';
-                    if (tema.indexOf('deserto') !== -1 || tema.indexOf('geo') !== -1 || tema.indexOf('hist') !== -1) {
-                        resolvedKey = 'deserto';
-                    } else if (tema.indexOf('vila') !== -1 || tema.indexOf('port') !== -1 || tema.indexOf('cien') !== -1 || tema.indexOf('bio') !== -1) {
-                        resolvedKey = 'vila';
-                    } else if (tema.indexOf('montanha') !== -1 || tema.indexOf('mat') !== -1 || tema.indexOf('fis') !== -1 || tema.indexOf('calc') !== -1) {
-                        resolvedKey = 'montanha';
-                    }
+                        var resolvedKey = 'castelo';
+                        if (tema.indexOf('deserto') !== -1 || tema.indexOf('geo') !== -1 || tema.indexOf('hist') !== -1) {
+                            resolvedKey = 'deserto';
+                        } else if (tema.indexOf('vila') !== -1 || tema.indexOf('port') !== -1 || tema.indexOf('cien') !== -1 || tema.indexOf('bio') !== -1) {
+                            resolvedKey = 'vila';
+                        } else if (tema.indexOf('montanha') !== -1 || tema.indexOf('mat') !== -1 || tema.indexOf('fis') !== -1 || tema.indexOf('calc') !== -1) {
+                            resolvedKey = 'montanha';
+                        }
 
-                    var list = themeMap[resolvedKey] || themeMap.castelo;
-                    var bgSrc = list[pIdx % list.length];
-                    var bgImg = document.getElementById('bg-layer');
-                    if (bgImg && bgSrc) {
-                        bgImg.src = bgSrc;
-                        bgImg.style.opacity = '1';
-                    }
-                } catch(e) {}
-            })();
-        </script>
-        <div id="bg-vignette"></div>
-        <div id="fog-layer"></div>
-        <div id="ambient-light-sweep"></div>
-        <div id="ground-plane"></div>
+                        var list = themeMap[resolvedKey] || themeMap.castelo;
+                        var bgSrc = list[pIdx % list.length];
+                        var bgImg = document.getElementById('bg-layer');
+                        if (bgImg && bgSrc) {
+                            bgImg.src = bgSrc;
+                            bgImg.style.opacity = '1';
+                        }
+                    } catch (e) { }
+                })();
+            </script>
+            <div id="bg-vignette"></div>
+            <div id="fog-layer"></div>
+            <div id="ambient-light-sweep"></div>
+            <div id="ground-plane"></div>
 
-        <!-- 2. Canvas de Efeitos Especiais, Tochas Animadas, Aurora e Clima -->
-        <canvas id="fx-canvas" width="1366" height="768"></canvas>
-        <div id="screen-flash"></div>
+            <!-- 2. Canvas de Efeitos Especiais, Tochas Animadas, Aurora e Clima -->
+            <canvas id="fx-canvas" width="1366" height="768"></canvas>
+            <div id="screen-flash"></div>
 
-        <!-- 3. Atores do Jogo (Herói à Esquerda e Inimigos à Direita) -->
-        <div class="stage-actors">
-            <!-- Herói (Posicionado firmemente a 18% de altura com pés assentados no piso) -->
-            <div id="player-wrapper" class="actor-wrapper">
-                <canvas id="player-sprite" class="actor-sprite" width="280" height="280"></canvas>
-                <div class="actor-contact-shadow"></div>
+            <!-- 3. Atores do Jogo (Herói à Esquerda e Inimigos à Direita) -->
+            <div class="stage-actors">
+                <!-- Herói (Posicionado firmemente a 18% de altura com pés assentados no piso) -->
+                <div id="player-wrapper" class="actor-wrapper">
+                    <canvas id="player-sprite" class="actor-sprite" width="280" height="280"></canvas>
+                    <div class="actor-contact-shadow"></div>
+                </div>
+
+                <!-- Inimigos Dinâmicos (Até 3 por fase) -->
+                <div id="enemies-container">
+                    <div id="enemy-0" class="actor-wrapper" style="display: none;">
+                        <div class="enemy-mini-hud">
+                            <span class="enemy-mini-title" id="enemy-0-name">Inimigo</span>
+                            <div class="enemy-mini-bar-track">
+                                <div class="enemy-mini-bar-fill" id="enemy-0-hp-fill"></div>
+                            </div>
+                        </div>
+                        <canvas id="enemy-0-sprite" class="actor-sprite" width="280" height="280"></canvas>
+                        <div class="actor-contact-shadow"></div>
+                    </div>
+
+                    <div id="enemy-1" class="actor-wrapper" style="display: none;">
+                        <div id="boss-aura" class="boss-aura"></div>
+                        <div class="enemy-mini-hud">
+                            <span class="enemy-mini-title" id="enemy-1-name" style="color: #facc15;">Inimigo</span>
+                            <div class="enemy-mini-bar-track">
+                                <div class="enemy-mini-bar-fill" id="enemy-1-hp-fill" style="background: #38bdf8;">
+                                </div>
+                            </div>
+                        </div>
+                        <canvas id="enemy-1-sprite" class="actor-sprite" width="280" height="280"></canvas>
+                        <div class="actor-contact-shadow"></div>
+                    </div>
+
+                    <div id="enemy-2" class="actor-wrapper" style="display: none;">
+                        <div class="enemy-mini-hud">
+                            <span class="enemy-mini-title" id="enemy-2-name">Inimigo</span>
+                            <div class="enemy-mini-bar-track">
+                                <div class="enemy-mini-bar-fill" id="enemy-2-hp-fill" style="background: #a855f7;">
+                                </div>
+                            </div>
+                        </div>
+                        <canvas id="enemy-2-sprite" class="actor-sprite" width="280" height="280"></canvas>
+                        <div class="actor-contact-shadow"></div>
+                    </div>
+                </div>
             </div>
-
-            <!-- Inimigos Dinâmicos (Até 3 por fase) -->
-            <div id="enemies-container">
-                <div id="enemy-0" class="actor-wrapper" style="display: none;">
-                    <div class="enemy-mini-hud">
-                        <span class="enemy-mini-title" id="enemy-0-name">Inimigo</span>
-                        <div class="enemy-mini-bar-track">
-                            <div class="enemy-mini-bar-fill" id="enemy-0-hp-fill"></div>
-                        </div>
-                    </div>
-                    <canvas id="enemy-0-sprite" class="actor-sprite" width="280" height="280"></canvas>
-                    <div class="actor-contact-shadow"></div>
-                </div>
-
-                <div id="enemy-1" class="actor-wrapper" style="display: none;">
-                    <div id="boss-aura" class="boss-aura"></div>
-                    <div class="enemy-mini-hud">
-                        <span class="enemy-mini-title" id="enemy-1-name" style="color: #facc15;">Inimigo</span>
-                        <div class="enemy-mini-bar-track">
-                            <div class="enemy-mini-bar-fill" id="enemy-1-hp-fill" style="background: #38bdf8;"></div>
-                        </div>
-                    </div>
-                    <canvas id="enemy-1-sprite" class="actor-sprite" width="280" height="280"></canvas>
-                    <div class="actor-contact-shadow"></div>
-                </div>
-
-                <div id="enemy-2" class="actor-wrapper" style="display: none;">
-                    <div class="enemy-mini-hud">
-                        <span class="enemy-mini-title" id="enemy-2-name">Inimigo</span>
-                        <div class="enemy-mini-bar-track">
-                            <div class="enemy-mini-bar-fill" id="enemy-2-hp-fill" style="background: #a855f7;"></div>
-                        </div>
-                    </div>
-                    <canvas id="enemy-2-sprite" class="actor-sprite" width="280" height="280"></canvas>
-                    <div class="actor-contact-shadow"></div>
-                </div>
-            </div>
-        </div>
         </div> <!-- Fim de #camera-viewport -->
 
         <!-- Elementos Cinemáticos In-Engine da Cutscene -->
         <div class="cinematic-bar cinematic-bar-top" id="cinematic-bar-top"></div>
         <div class="cinematic-bar cinematic-bar-bottom" id="cinematic-bar-bottom"></div>
-        <button class="cinematic-skip-btn" id="cinematic-skip-btn" onclick="window.estudemyGame && window.estudemyGame.skipBossCutscene()">⏭️ Pular Cena [ESC]</button>
+        <button class="cinematic-skip-btn" id="cinematic-skip-btn"
+            onclick="window.estudemyGame && window.estudemyGame.skipBossCutscene()">⏭️ Pular Cena [ESC]</button>
 
         <div class="boss-title-card" id="boss-title-card">
             <span class="boss-title-subtitle" id="boss-title-subtitle">Chefão Supremo</span>
@@ -1710,7 +1967,8 @@
         </div>
 
         <div class="cinematic-dialogue-box" id="cinematic-dialogue-box">
-            <canvas id="cinematic-dialogue-portrait" class="cinematic-dialogue-portrait" width="80" height="80"></canvas>
+            <canvas id="cinematic-dialogue-portrait" class="cinematic-dialogue-portrait" width="80"
+                height="80"></canvas>
             <div class="cinematic-dialogue-content">
                 <div class="cinematic-speaker-tag" id="cinematic-dialogue-speaker">
                     <span>💀 Ignis</span>
@@ -1777,11 +2035,14 @@
 
             <!-- Direita: Controles In-Game (Áudio e Sair) -->
             <div id="top-actions-group">
-                <button class="top-action-btn" id="btn-audio-toggle" onclick="window.estudemyGame.toggleAudio()" title="Ligar/Desligar Orquestra e Sons">
+                <button class="top-action-btn" id="btn-audio-toggle" onclick="window.estudemyGame.toggleAudio()"
+                    title="Ligar/Desligar Orquestra e Sons">
                     <span id="audio-btn-icon">🔊</span>
                     <span id="audio-btn-text">Som: ON</span>
                 </button>
-                <button class="top-action-btn exit-btn" onclick="window.jogar_voltar_js ? window.jogar_voltar_js() : history.back()" title="Voltar para a Trilha">
+                <button class="top-action-btn exit-btn"
+                    onclick="window.jogar_voltar_js ? window.jogar_voltar_js() : history.back()"
+                    title="Voltar para a Trilha">
                     <span>🚪</span>
                     <span>Sair</span>
                 </button>
@@ -1818,17 +2079,20 @@
 
         <!-- 6.2 HUD de Itens Consumíveis de Batalha (50/50, Ampulheta e Poção de Cura) -->
         <div id="battle-items-hud" class="battle-items-hud">
-            <button id="btn-item-5050" class="battle-item-btn" onclick="window.estudemyGame.useItem5050()" title="Elimina 2 alternativas incorretas">
+            <button id="btn-item-5050" class="battle-item-btn" onclick="window.estudemyGame.useItem5050()"
+                title="Elimina 2 alternativas incorretas">
                 <span>🧪</span>
                 <span>50/50</span>
                 <span id="badge-item-5050" class="item-count">1</span>
             </button>
-            <button id="btn-item-hourglass" class="battle-item-btn" onclick="window.estudemyGame.useItemHourglass()" title="+10s Tempo de Análise">
+            <button id="btn-item-hourglass" class="battle-item-btn" onclick="window.estudemyGame.useItemHourglass()"
+                title="+10s Tempo de Análise">
                 <span>⏳</span>
                 <span>+10s</span>
                 <span id="badge-item-hourglass" class="item-count">1</span>
             </button>
-            <button id="btn-item-potion" class="battle-item-btn" onclick="window.estudemyGame.useItemPotion()" title="Recupera +35 HP">
+            <button id="btn-item-potion" class="battle-item-btn" onclick="window.estudemyGame.useItemPotion()"
+                title="Recupera +35 HP">
                 <span>❤️</span>
                 <span>+35 HP</span>
                 <span id="badge-item-potion" class="item-count">1</span>
@@ -1880,7 +2144,7 @@
             <div class="game-end-card victory-card">
                 <div class="end-badge victory-badge">🏆 FASE CONCLUÍDA!</div>
                 <h2 id="victory-phase-title" class="end-title">Fase Concluída!</h2>
-                
+
                 <div class="xp-gain-box">
                     <span class="xp-sparkle">✨</span>
                     <span id="victory-xp-amount" class="xp-number">+120 XP</span>
@@ -1899,11 +2163,13 @@
                 </div>
 
                 <div class="end-actions-row">
-                    <button id="btn-next-phase" class="end-btn btn-advance" onclick="window.estudemyGame.advanceToNextPhase()">
+                    <button id="btn-next-phase" class="end-btn btn-advance"
+                        onclick="window.estudemyGame.advanceToNextPhase()">
                         <span>Avançar</span>
                         <span class="btn-arrow">➔</span>
                     </button>
-                    <button id="btn-repeat-phase" class="end-btn btn-repeat" onclick="window.estudemyGame.repeatCurrentPhase()">
+                    <button id="btn-repeat-phase" class="end-btn btn-repeat"
+                        onclick="window.estudemyGame.repeatCurrentPhase()">
                         <span>Repetir</span>
                         <span>↺</span>
                     </button>
@@ -1920,10 +2186,12 @@
             <div class="game-end-card defeat-card">
                 <div class="end-badge defeat-badge">💀 DERROTA</div>
                 <h2 id="defeat-phase-title" class="end-title defeat-title">O Herói Caiu em Batalha!</h2>
-                <p id="defeat-phase-desc" class="defeat-desc">Sua vida chegou a zero, mas um verdadeiro herói aprende com seus erros e levanta mais forte!</p>
-                
+                <p id="defeat-phase-desc" class="defeat-desc">Sua vida chegou a zero, mas um verdadeiro herói aprende
+                    com seus erros e levanta mais forte!</p>
+
                 <div class="end-actions-row">
-                    <button id="btn-retry-phase" class="end-btn btn-retry-main" onclick="window.estudemyGame.repeatCurrentPhase()">
+                    <button id="btn-retry-phase" class="end-btn btn-retry-main"
+                        onclick="window.estudemyGame.repeatCurrentPhase()">
                         <span>Tentar Novamente</span>
                         <span>↺</span>
                     </button>
@@ -1941,4 +2209,5 @@
     <script type="text/javascript" src="html5game/estudemy_game_engine.js?v=20261114_overhaul_v9"></script>
 
 </body>
+
 </html>
