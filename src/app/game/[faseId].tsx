@@ -12,7 +12,6 @@ import {
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import * as ScreenOrientation from 'expo-screen-orientation';
 import * as SecureStore from 'expo-secure-store';
-import Constants, { ExecutionEnvironment } from 'expo-constants';
 import { WebView } from 'react-native-webview';
 import { buscarFasePorId, buscarFasesPorTrilha, concluirFase, Fase } from '../../services/faseService';
 import { buscarTrilhaPorId, listarTrilhas, Trilha } from '../../services/trilhaService';
@@ -566,11 +565,6 @@ export default function GameScreen() {
     : `/game-pi/index.html?t=${iframeKey}&tema=${activeTema}&phase=${activePhase}&modo=${activeModo}&personagem=${encodeURIComponent(charKey)}&skin=${encodeURIComponent(skinKey)}`;
 
   const isAndroid = Platform.OS === 'android';
-  const isExpoGo =
-    Constants.appOwnership === 'expo' ||
-    Constants.executionEnvironment === ExecutionEnvironment.StoreClient;
-  const shouldUseLocalAndroidAsset = isAndroid && !isExpoGo && !useRemoteFallback;
-
   const localAndroidGameSrc = isMundoAberto
     ? `file:///android_asset/game-pi/mundo_aberto.html?t=${iframeKey}&tema=${activeTema}&personagem=${encodeURIComponent(charKey)}&skin=${encodeURIComponent(skinKey)}`
     : `file:///android_asset/game-pi/index.html?t=${iframeKey}&tema=${activeTema}&phase=${activePhase}&modo=${activeModo}&personagem=${encodeURIComponent(charKey)}&skin=${encodeURIComponent(skinKey)}`;
@@ -579,7 +573,7 @@ export default function GameScreen() {
     ? `${cleanBase}/game-pi/mundo_aberto.html?t=${iframeKey}&tema=${activeTema}&personagem=${encodeURIComponent(charKey)}&skin=${encodeURIComponent(skinKey)}`
     : `${cleanBase}/game-pi/index.html?t=${iframeKey}&tema=${activeTema}&phase=${activePhase}&modo=${activeModo}&personagem=${encodeURIComponent(charKey)}&skin=${encodeURIComponent(skinKey)}`;
 
-  const mobileGameSrc = shouldUseLocalAndroidAsset
+  const mobileGameSrc = (isAndroid && !useRemoteFallback)
     ? localAndroidGameSrc
     : remoteGameSrc;
 
