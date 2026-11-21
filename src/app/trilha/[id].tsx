@@ -34,6 +34,7 @@ import api from '../../services/api';
 import QRCodeModal from '../../components/QRCodeModal';
 import QRScannerModal from '../../components/QRScannerModal';
 import { CheckoutModal } from '../../components/CheckoutModal';
+import GameGuideModal from '../../components/game/GameGuideModal';
 import { isTrilhaComprada } from '../../services/pagamentoService';
 import {
   Lock,
@@ -176,7 +177,6 @@ export default function TrilhaDetailScreen() {
 
   const [isSaved, setIsSaved] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
-  const [guideTab, setGuideTab] = useState<'trail' | 'game' | 'tips'>('trail');
 
   const SAVED_TRAILS_KEY = 'saved_trails_list';
   const isInitialLoadRef = useRef(true);
@@ -1453,220 +1453,11 @@ export default function TrilhaDetailScreen() {
         </>
       )}
 
-      {/* Modal do Guia de Estudos estilo Duolingo */}
-      <Modal
+      {/* Modal do Guia de Estudos e Oráculo IA */}
+      <GameGuideModal
         visible={showGuide}
-        animationType="slide"
-        transparent={true}
-        onRequestClose={() => setShowGuide(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={[styles.modalContent, { backgroundColor: colors.background, borderTopColor: isDark ? '#1b1b1b' : '#E5E7EB', paddingBottom: Math.max(insets.bottom + 16, 16) }]}>
-            {/* Header do Modal */}
-            <View style={styles.modalHeader}>
-              <Text style={[styles.modalTitle, { color: colors.text }]}>{t('trail.guideTitle') || 'Guia da Trilha'}</Text>
-              <TouchableOpacity onPress={() => setShowGuide(false)} style={styles.closeModalBtn}>
-                <X size={24} color={colors.text} />
-              </TouchableOpacity>
-            </View>
-            <Text style={[styles.modalSubtitle, { color: colors.textMuted }]}>
-              {t('trail.guideSubtitle') || 'Entenda como funciona a plataforma!'}
-            </Text>
-
-            {/* Tabs */}
-            <View style={[styles.tabsContainer, { borderBottomColor: isDark ? '#1b1b1b' : '#E5E7EB' }]}>
-              <TouchableOpacity
-                style={[
-                  styles.tabButton,
-                  guideTab === 'trail' && { borderBottomColor: '#4F46E5', borderBottomWidth: 3 },
-                ]}
-                onPress={() => setGuideTab('trail')}
-              >
-                <Text
-                  style={[
-                    styles.tabButtonText,
-                    { color: colors.text },
-                    guideTab === 'trail' && { color: '#4F46E5', fontWeight: '900' },
-                  ]}
-                >
-                  {t('trail.guideTabTrail') || 'A Trilha'}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.tabButton,
-                  guideTab === 'game' && { borderBottomColor: '#F59E0B', borderBottomWidth: 3 },
-                ]}
-                onPress={() => setGuideTab('game')}
-              >
-                <Text
-                  style={[
-                    styles.tabButtonText,
-                    { color: colors.text },
-                    guideTab === 'game' && { color: '#F59E0B', fontWeight: '900' },
-                  ]}
-                >
-                  {t('trail.guideTabGame') || 'O Jogo'}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  styles.tabButton,
-                  guideTab === 'tips' && { borderBottomColor: '#10B981', borderBottomWidth: 3 },
-                ]}
-                onPress={() => setGuideTab('tips')}
-              >
-                <Text
-                  style={[
-                    styles.tabButtonText,
-                    { color: colors.text },
-                    guideTab === 'tips' && { color: '#10B981', fontWeight: '900' },
-                  ]}
-                >
-                  {t('trail.guideTabTips') || 'Dicas'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-
-            {/* Conteúdo da Tab */}
-            <ScrollView style={styles.modalScrollView} contentContainerStyle={{ paddingVertical: 16 }}>
-              {guideTab === 'trail' && (
-                <View style={styles.guideTabContent}>
-                  <Text style={[styles.guideIntroText, { color: colors.text }]}>
-                    {t('trail.guideTrailIntro') || 'Sua jornada é organizada em uma trilha linear.'}
-                  </Text>
-                  
-                  {/* Status das Fases */}
-                  <View style={[styles.guideCard, { borderColor: isDark ? '#1b1b1b' : '#E5E7EB', backgroundColor: isDark ? '#262626' : '#F3F4F6' }]}>
-                    <View style={[styles.badgeIndicator, { backgroundColor: '#374151', borderColor: isDark ? '#1b1b1b' : '#E5E7EB' }]}>
-                      <Lock size={16} color="#9CA3AF" />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.guideCardTitle, { color: colors.text }]}>
-                        {t('trail.guideStatusLockedTitle') || 'Bloqueada'}
-                      </Text>
-                      <Text style={[styles.guideCardDesc, { color: colors.textMuted }]}>
-                        {t('trail.guideStatusLockedDesc') || 'Fases futuras que você ainda não pode acessar.'}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={[styles.guideCard, { borderColor: isDark ? '#1b1b1b' : '#E5E7EB', backgroundColor: isDark ? '#262626' : '#F3F4F6' }]}>
-                    <View style={[styles.badgeIndicator, { backgroundColor: '#4F46E5', borderColor: isDark ? '#1b1b1b' : '#E5E7EB' }]}>
-                      <Star size={16} color="#ffffff" fill="#ffffff" />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.guideCardTitle, { color: colors.text }]}>
-                        {t('trail.guideStatusAvailableTitle') || 'Disponível'}
-                      </Text>
-                      <Text style={[styles.guideCardDesc, { color: colors.textMuted }]}>
-                        {t('trail.guideStatusAvailableDesc') || 'A fase atual onde você deve jogar!'}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={[styles.guideCard, { borderColor: isDark ? '#1b1b1b' : '#E5E7EB', backgroundColor: isDark ? '#262626' : '#F3F4F6' }]}>
-                    <View style={[styles.badgeIndicator, { backgroundColor: '#10B981', borderColor: isDark ? '#1b1b1b' : '#E5E7EB' }]}>
-                      <Check size={16} color="#ffffff" strokeWidth={3} />
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.guideCardTitle, { color: colors.text }]}>
-                        {t('trail.guideStatusCompletedTitle') || 'Concluída'}
-                      </Text>
-                      <Text style={[styles.guideCardDesc, { color: colors.textMuted }]}>
-                        {t('trail.guideStatusCompletedDesc') || 'Fases que você já finalizou com sucesso.'}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              )}
-
-              {guideTab === 'game' && (
-                <View style={styles.guideTabContent}>
-                  <Text style={[styles.guideIntroText, { color: colors.text }]}>
-                    {t('trail.guideGameIntro') || 'Estude jogando como em um RPG!'}
-                  </Text>
-
-                  <View style={[styles.guideCard, { borderColor: isDark ? '#1b1b1b' : '#E5E7EB', backgroundColor: isDark ? '#262626' : '#F3F4F6' }]}>
-                    <Heart size={24} color="#EF4444" />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.guideCardTitle, { color: colors.text }]}>
-                        {t('trail.guideGameLivesTitle') || 'Vidas'}
-                      </Text>
-                      <Text style={[styles.guideCardDesc, { color: colors.textMuted }]}>
-                        {t('trail.guideGameLivesDesc') || 'Você começa cada Quiz com vidas.'}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={[styles.guideCard, { borderColor: isDark ? '#1b1b1b' : '#E5E7EB', backgroundColor: isDark ? '#262626' : '#F3F4F6' }]}>
-                    <Coins size={24} color="#F59E0B" />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.guideCardTitle, { color: colors.text }]}>
-                        {t('trail.guideGameCoinsTitle') || 'Moedas'}
-                      </Text>
-                      <Text style={[styles.guideCardDesc, { color: colors.textMuted }]}>
-                        {t('trail.guideGameCoinsDesc') || 'Sua recompensa de ouro!'}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={[styles.guideCard, { borderColor: isDark ? '#1b1b1b' : '#E5E7EB', backgroundColor: isDark ? '#262626' : '#F3F4F6' }]}>
-                    <Zap size={24} color="#3B82F6" />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.guideCardTitle, { color: colors.text }]}>
-                        {t('trail.guideGameXpTitle') || 'Experiência (XP)'}
-                      </Text>
-                      <Text style={[styles.guideCardDesc, { color: colors.textMuted }]}>
-                        {t('trail.guideGameXpDesc') || 'Pontos de experiência recebidos.'}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              )}
-
-              {guideTab === 'tips' && (
-                <View style={styles.guideTabContent}>
-                  <Text style={[styles.guideIntroText, { color: colors.text }]}>
-                    {t('trail.guideTipsIntro') || 'Torne-se um estudante lendário com estas estratégias:'}
-                  </Text>
-
-                  <View style={[styles.guideCard, { borderColor: isDark ? '#1b1b1b' : '#E5E7EB', backgroundColor: isDark ? '#262626' : '#F3F4F6' }]}>
-                    <Trophy size={24} color="#EAB308" />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.guideCardTitle, { color: colors.text }]}>
-                        {t('trail.guideTipsRankingTitle') || 'Lidere o Ranking'}
-                      </Text>
-                      <Text style={[styles.guideCardDesc, { color: colors.textMuted }]}>
-                        {t('trail.guideTipsRankingDesc') || 'Suba de nível para escalar a tabela.'}
-                      </Text>
-                    </View>
-                  </View>
-
-                  <View style={[styles.guideCard, { borderColor: isDark ? '#1b1b1b' : '#E5E7EB', backgroundColor: isDark ? '#262626' : '#F3F4F6' }]}>
-                    <Book size={24} color="#10B981" />
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.guideCardTitle, { color: colors.text }]}>
-                        {t('trail.guideTipsReadTitle') || 'Teoria Primeiro'}
-                      </Text>
-                      <Text style={[styles.guideCardDesc, { color: colors.textMuted }]}>
-                        {t('trail.guideTipsReadDesc') || 'Sempre leia as fases de Conteúdo antes.'}
-                      </Text>
-                    </View>
-                  </View>
-                </View>
-              )}
-            </ScrollView>
-
-            {/* Rodapé Close */}
-            <TouchableOpacity style={styles.closeButton} onPress={() => setShowGuide(false)} activeOpacity={0.9}>
-              <Text style={styles.closeButtonText}>{t('trail.guideClose') || 'Entendi, vamos jogar!'}</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
+        onClose={() => setShowGuide(false)}
+      />
 
       {/* Modal de Exibição de QR Code da Trilha */}
       {trilha && (

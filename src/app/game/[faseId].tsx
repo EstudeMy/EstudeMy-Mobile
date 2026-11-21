@@ -11,6 +11,7 @@ import {
   Smartphone,
   Sparkles,
   Trophy,
+  HelpCircle,
 } from 'lucide-react-native';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import {
@@ -31,6 +32,7 @@ import { getThematicQuestions, getTrilhaTheme, ThemeKey } from '../../game/data/
 import { buscarFasePorId, buscarFasesPorTrilha, Fase } from '../../services/faseService';
 import { registrarFaseConcluida } from '../../services/progressoService';
 import { buscarTrilhaPorId, listarTrilhas } from '../../services/trilhaService';
+import GameGuideModal from '../../components/game/GameGuideModal';
 
 export default function GameScreen() {
   const { faseId, trilhaId, modo, phase } = useLocalSearchParams<{
@@ -60,6 +62,7 @@ export default function GameScreen() {
   const [portraitAngle, setPortraitAngle] = useState<90 | 270>(90);
   const [showRotationAnimation, setShowRotationAnimation] = useState(true);
   const [toastMessage, setToastMessage] = useState<string | null>(null);
+  const [showGuide, setShowGuide] = useState(false);
 
   // Animação de Entrada em React Native puro (compatível com React 19)
   const [rotateAnim] = useState(() => new Animated.Value(0));
@@ -710,6 +713,14 @@ export default function GameScreen() {
           >
             <Text style={styles.angleLabelText}>{portraitAngle}°</Text>
           </TouchableOpacity>
+
+          <TouchableOpacity
+            style={[styles.floatingControlBtn, { backgroundColor: '#8B5CF6' }]}
+            onPress={() => setShowGuide(true)}
+            activeOpacity={0.8}
+          >
+            <Sparkles size={16} color="#ffffff" />
+          </TouchableOpacity>
         </View>
 
         {/* Notificação Toast */}
@@ -801,6 +812,13 @@ export default function GameScreen() {
           </View>
         </View>
       )}
+
+      {/* Modal Guia do Jogo & Oráculo IA */}
+      <GameGuideModal
+        visible={showGuide}
+        onClose={() => setShowGuide(false)}
+        initialTab="game"
+      />
     </View>
   );
 }

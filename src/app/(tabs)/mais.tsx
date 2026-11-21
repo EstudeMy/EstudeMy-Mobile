@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   View,
   Text,
@@ -12,8 +12,9 @@ import { useLanguage } from '../../contexts/LanguageContext';
 import { useTheme } from '../../contexts/ThemeContext';
 import { useAuth } from '../../contexts/AuthContext';
 import { APP_VERSION, APP_BUILD, APP_ENVIRONMENT } from '../../constants/version';
-import { User, Settings, ChevronRight, BookOpen, Bookmark, ShieldCheck, HelpCircle, Info } from 'lucide-react-native';
+import { User, Settings, ChevronRight, BookOpen, Bookmark, ShieldCheck, HelpCircle, Info, Sparkles } from 'lucide-react-native';
 import { AccessibilityIcon } from '../../components/AccessibilityIcon';
+import GameGuideModal from '../../components/game/GameGuideModal';
 
 export default function MaisScreen() {
   const router = useRouter();
@@ -21,13 +22,15 @@ export default function MaisScreen() {
   const { t } = useLanguage();
   const { colors, openAccessibilityModal } = useTheme();
   const { user } = useAuth();
+  const [showGuideModal, setShowGuideModal] = useState(false);
 
   const rawRole = (user?.tipoUsuario || (user as any)?.role || (user as any)?.tipo || (user as any)?.tipo_usuario || '').toString().toUpperCase();
   const isAdminEmail = user?.email?.toLowerCase().includes('adm') || user?.email === 'estudemy.adm@gmail.com';
   const isAdminOrOwner = rawRole === 'ADMINISTRADOR' || rawRole === 'ADMIN' || rawRole === 'OWNER' || isAdminEmail || Boolean((user as any)?.isAdmin);
 
   return (
-    <ScrollView
+    <>
+      <ScrollView
       style={[
         styles.container,
         {
@@ -183,6 +186,33 @@ export default function MaisScreen() {
           <ChevronRight size={20} color={colors.textMuted} />
         </TouchableOpacity>
 
+        {/* Opção Guia do Jogo & Oráculo IA */}
+        <TouchableOpacity
+          style={[styles.menuItem, { backgroundColor: colors.card, borderColor: '#8B5CF6' }]}
+          onPress={() => setShowGuideModal(true)}
+          activeOpacity={0.85}
+        >
+          <View style={styles.menuItemLeft}>
+            <View style={[styles.iconContainer, { backgroundColor: '#8B5CF6' }]}>
+              <Sparkles size={22} color="#ffffff" />
+            </View>
+            <View style={{ flex: 1 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={[styles.menuItemLabel, { color: colors.text }]}>
+                  Guia do Jogo & Oráculo IA
+                </Text>
+                <View style={[styles.adminBadge, { backgroundColor: '#8B5CF6' }]}>
+                  <Text style={styles.adminBadgeText}>RPG IA</Text>
+                </View>
+              </View>
+              <Text style={[styles.menuItemSublabel, { color: colors.textMuted }]}>
+                Mecânicas, chefões, modos e chat com o Mestre do Jogo
+              </Text>
+            </View>
+          </View>
+          <ChevronRight size={20} color={colors.textMuted} />
+        </TouchableOpacity>
+
         {/* Opção Central de Ajuda & FAQ */}
         <TouchableOpacity
           style={[styles.menuItem, { backgroundColor: colors.card }]}
@@ -215,6 +245,11 @@ export default function MaisScreen() {
         </View>
       </View>
     </ScrollView>
+    <GameGuideModal
+      visible={showGuideModal}
+      onClose={() => setShowGuideModal(false)}
+    />
+  </>
   );
 }
 
