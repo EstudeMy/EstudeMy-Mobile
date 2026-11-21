@@ -10,7 +10,6 @@ import {
   ActivityIndicator,
   KeyboardAvoidingView,
   Platform,
-  Animated,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme } from '../../contexts/ThemeContext';
@@ -33,14 +32,11 @@ import {
   RotateCcw,
   Shield,
   Flame,
-  Clock,
-  MapPin,
   Bot,
   User,
   Skull,
   Layers,
   Crown,
-  ChevronRight,
 } from 'lucide-react-native';
 
 export interface GameGuideModalProps {
@@ -48,6 +44,15 @@ export interface GameGuideModalProps {
   onClose: () => void;
   initialTab?: 'trail' | 'game' | 'ai' | 'tips';
 }
+
+const INITIAL_ORACLE_MESSAGES: ChatMessage[] = [
+  {
+    id: 'welcome_1',
+    sender: 'oracle',
+    text: '⚔️ **Saudações, nobre guerreiro do saber!**\n\nEu sou o **Oráculo e Mestre do EstudeMy Game**. Minha missão é guiar sua mente e sua lâmina pelas trilhas do conhecimento!\n\nPosso te ajudar com táticas contra chefões (como Ignis, Shogun e Khepri), mecânicas de Parry e Ultimate, heróis e modos de jogo. O que deseja saber?',
+    timestamp: 1,
+  },
+];
 
 export default function GameGuideModal({
   visible,
@@ -59,25 +64,21 @@ export default function GameGuideModal({
   const { t } = useLanguage();
 
   const [activeTab, setActiveTab] = useState<'trail' | 'game' | 'ai' | 'tips'>(initialTab);
+  const [prevVisible, setPrevVisible] = useState(visible);
 
-  // Estados do Chat com IA (Oráculo do Jogo)
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'welcome_1',
-      sender: 'oracle',
-      text: '⚔️ **Saudações, nobre guerreiro do saber!**\n\nEu sou o **Oráculo e Mestre do EstudeMy Game**. Minha missão é guiar sua mente e sua lâmina pelas trilhas do conhecimento!\n\nPosso te ajudar com táticas contra chefões (como Ignis, Shogun e Khepri), mecânicas de Parry e Ultimate, heróis e modos de jogo. O que deseja saber?',
-      timestamp: Date.now(),
-    },
-  ]);
-  const [inputMessage, setInputMessage] = useState('');
-  const [isAiLoading, setIsAiLoading] = useState(false);
-  const chatScrollRef = useRef<any>(null);
-
-  useEffect(() => {
+  if (visible !== prevVisible) {
+    setPrevVisible(visible);
     if (visible && initialTab) {
       setActiveTab(initialTab);
     }
-  }, [visible, initialTab]);
+  }
+
+  // Estados do Chat com IA (Oráculo do Jogo)
+  const [messages, setMessages] = useState<ChatMessage[]>(INITIAL_ORACLE_MESSAGES);
+  const [inputMessage, setInputMessage] = useState('');
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const chatScrollRef = useRef<any>(null);
+  const msgCounterRef = useRef(1);
 
   useEffect(() => {
     if (activeTab === 'ai') {
@@ -91,11 +92,13 @@ export default function GameGuideModal({
     const text = (textToSend || inputMessage).trim();
     if (!text || isAiLoading) return;
 
+    msgCounterRef.current += 1;
+    const currentId = msgCounterRef.current;
     const userMsg: ChatMessage = {
-      id: 'usr_' + Date.now(),
+      id: `usr_${currentId}`,
       sender: 'user',
       text,
-      timestamp: Date.now(),
+      timestamp: currentId,
     };
 
     setMessages((prev) => [...prev, userMsg]);
@@ -104,19 +107,23 @@ export default function GameGuideModal({
 
     try {
       const response = await askGameOracle(text, messages);
+      msgCounterRef.current += 1;
+      const oracleId = msgCounterRef.current;
       const oracleMsg: ChatMessage = {
-        id: 'orc_' + Date.now(),
+        id: `orc_${oracleId}`,
         sender: 'oracle',
         text: response,
-        timestamp: Date.now(),
+        timestamp: oracleId,
       };
       setMessages((prev) => [...prev, oracleMsg]);
-    } catch (err) {
+    } catch {
+      msgCounterRef.current += 1;
+      const errId = msgCounterRef.current;
       const fallbackMsg: ChatMessage = {
-        id: 'orc_err_' + Date.now(),
+        id: `orc_err_${errId}`,
         sender: 'oracle',
         text: '🛡️ Meus pergaminhos enfrentaram uma oscilação na fenda cósmica! Tente perguntar novamente sobre fraquezas dos chefões, Parry, Ultimate ou modos de jogo.',
-        timestamp: Date.now(),
+        timestamp: errId,
       };
       setMessages((prev) => [...prev, fallbackMsg]);
     } finally {
@@ -125,12 +132,14 @@ export default function GameGuideModal({
   };
 
   const handleClearChat = () => {
+    msgCounterRef.current += 1;
+    const resetId = msgCounterRef.current;
     setMessages([
       {
-        id: 'welcome_' + Date.now(),
+        id: `welcome_${resetId}`,
         sender: 'oracle',
         text: '📜 Grimório de conversa reiniciado! Como posso guiar sua jornada no EstudeMy Game hoje?',
-        timestamp: Date.now(),
+        timestamp: resetId,
       },
     ]);
   };

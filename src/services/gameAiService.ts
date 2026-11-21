@@ -18,8 +18,8 @@ export interface ChatMessage {
   timestamp: number;
 }
 
-// Chave pública do Gemini configurada no backend/ambiente
-const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || 'AIzaSyCI_0BhI_bJH9D6AED5TFTEE0rS3cfKAa8';
+// Chave do Gemini configurada via variável de ambiente (nunca hardcoded)
+const GEMINI_API_KEY = process.env.EXPO_PUBLIC_GEMINI_API_KEY || process.env.GEMINI_API_KEY || '';
 
 // System prompt com guardrail estrito focado no jogo
 const SYSTEM_PROMPT = `
@@ -236,39 +236,41 @@ export async function askGameOracle(
     return '🛡️ Como Oráculo e Mestre do EstudeMy Game, minha sabedoria é consagrada exclusivamente ao universo do nosso jogo!\n\nNão posso responder sobre temas fora do game. Me pergunte sobre estratégias de combate, como derrotar os chefões, modos de jogo, heróis ou itens!';
   }
 
-  // 2. Tentar chamada à API do Gemini se houver conectividade
-  try {
-    const formattedContents = [
-      {
-        role: 'user',
-        parts: [{ text: `${SYSTEM_PROMPT}\n\nPergunta do Jogador: ${query}` }]
+  // 2. Tentar chamada à API do Gemini se houver chave configurada e conectividade
+  if (GEMINI_API_KEY) {
+    try {
+      const formattedContents = [
+        {
+          role: 'user',
+          parts: [{ text: `${SYSTEM_PROMPT}\n\nPergunta do Jogador: ${query}` }]
+        }
+      ];
+
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 7000); // 7s timeout
+
+      const response = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ contents: formattedContents }),
+          signal: controller.signal
+        }
+      );
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const data = await response.json();
+        const aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (aiReply && aiReply.trim()) {
+          return aiReply.trim();
+        }
       }
-    ];
-
-    const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 7000); // 7s timeout
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ contents: formattedContents }),
-        signal: controller.signal
-      }
-    );
-
-    clearTimeout(timeoutId);
-
-    if (response.ok) {
-      const data = await response.json();
-      const aiReply = data?.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (aiReply && aiReply.trim()) {
-        return aiReply.trim();
-      }
+    } catch {
+      // Se a chamada online falhar (offline, timeout, rate limit), cai graciosamente no motor local
     }
-  } catch (e) {
-    // Se a chamada online falhar (offline, timeout, rate limit), cai graciosamente no motor local
   }
 
   // 3. Fallback: Base de Conhecimento Local Completa
