@@ -20,10 +20,15 @@ import { generateAccessCode, copyToClipboard } from '../../services/trilhaAcesso
 import { FASE_BACKGROUNDS } from '../../constants/assets';
 import { QRCodeModal } from '../../components/QRCodeModal';
 import { AccessibilityIcon } from '../../components/AccessibilityIcon';
+import api from '../../services/api';
+import { gerarFaseComIA, FaseGeradaIA } from '../../services/aiPhaseGeneratorService';
 import {
   ArrowLeft,
   BookOpen,
   PlusCircle,
+  Plus,
+  Trash2,
+  X,
   ShieldAlert,
   Lock,
   Globe,
@@ -86,6 +91,13 @@ export default function CriarTrilhaScreen() {
   const [createdTrilha, setCreatedTrilha] = useState<Trilha | null>(null);
   const [qrModalVisible, setQrModalVisible] = useState(false);
   const [idioma, setIdioma] = useState('Português');
+
+  // Fases geradas com IA
+  const [fasesGeradas, setFasesGeradas] = useState<FaseGeradaIA[]>([]);
+  const [modalFaseIaVisible, setModalFaseIaVisible] = useState(false);
+  const [faseIaTema, setFaseIaTema] = useState('');
+  const [faseIaQtdPerguntas, setFaseIaQtdPerguntas] = useState('3');
+  const [generatingFase, setGeneratingFase] = useState(false);
 
   // Período da Trilha: Data de Início e Data Fim (opcional)
   const todayStr = new Date().toISOString().split('T')[0];
@@ -184,6 +196,32 @@ export default function CriarTrilhaScreen() {
           dataFim: cleanDataFim || undefined,
         });
 
+        // Se o professor gerou fases com IA, persiste seções e fases no backend
+        if (novaTrilha && novaTrilha._id && fasesGeradas.length > 0) {
+          try {
+            const secaoRes = await api.post('/api/secoes', {
+              trilhaId: novaTrilha._id,
+              titulo: 'Seção 1: ' + cleanTitulo,
+              descricao: cleanDescricao,
+              ordem: 1,
+            });
+            const secaoId = secaoRes.data._id || secaoRes.data.secao?._id;
+            for (const f of fasesGeradas) {
+              await api.post('/api/fases', {
+                trilhaId: novaTrilha._id,
+                secaoId: secaoId,
+                titulo: f.titulo,
+                descricao: f.descricao,
+                conteudo: f.conteudo,
+                ordem: f.ordem,
+                perguntas: f.perguntas,
+              });
+            }
+          } catch (secErr) {
+            logger.warn('Erro ao salvar seções e fases geradas por IA:', secErr);
+          }
+        }
+
         if (disponibilidade === 'Privado' && finalCodigo) {
           setCreatedTrilha({ ...novaTrilha, codigoAcesso: finalCodigo });
           setCreatedModalVisible(true);
@@ -200,6 +238,45 @@ export default function CriarTrilhaScreen() {
         setLoading(false);
       }
     });
+  };
+
+  const handleOpenAddFaseModal = () => {
+    setFaseIaTema('');
+    setFaseIaQtdPerguntas('3');
+    setModalFaseIaVisible(true);
+  };
+
+  const handleGerarFaseComIA = async () => {
+    if (!faseIaTema.trim()) {
+      setErrorMsg('Informe o tema da fase.');
+      return;
+    }
+    setGeneratingFase(true);
+    setErrorMsg(null);
+    try {
+      const novaOrdem = fasesGeradas.length + 1;
+      const novaFase = await gerarFaseComIA({
+        materia,
+        temaOuFoco: faseIaTema.trim(),
+        dificuldade,
+        ordem: novaOrdem,
+        quantidadePerguntas: parseInt(faseIaQtdPerguntas, 10) || 3,
+        idioma,
+      });
+
+      setFasesGeradas([...fasesGeradas, novaFase]);
+      setModalFaseIaVisible(false);
+    } catch (e: any) {
+      logger.error('Erro ao gerar fase com IA:', e);
+      setErrorMsg('Falha ao gerar fase com IA.');
+    } finally {
+      setGeneratingFase(false);
+    }
+  };
+
+  const handleRemoverFase = (index: number) => {
+    const filtradas = fasesGeradas.filter((_, idx) => idx !== index).map((f, i) => ({ ...f, ordem: i + 1 }));
+    setFasesGeradas(filtradas);
   };
 
   return (
@@ -613,6 +690,50 @@ export default function CriarTrilhaScreen() {
           </View>
         </View>
 
+        {/* Seção de Fases com IA */}
+        <View style={[styles.inputGroup, { borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 16 }]}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Sparkles size={18} color="#818CF8" />
+              <Text style={[styles.label, { color: colors.text, marginBottom: 0 }]}>
+                Fases da Trilha (Gerar com IA)
+              </Text>
+            </View>
+            <TouchableOpacity
+              style={[styles.addFaseBtn, { backgroundColor: colors.primary }]}
+              onPress={handleOpenAddFaseModal}
+              activeOpacity={0.85}
+            >
+              <Plus size={14} color="#ffffff" style={{ marginRight: 4 }} />
+              <Text style={styles.addFaseBtnText}>+ Fase com IA</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={{ fontSize: 12, color: colors.textMuted, marginBottom: 10 }}>
+            {fasesGeradas.length === 0
+              ? 'Opcional: Gere fases e quizzes pedagógicos automaticamente com a Inteligência Artificial para enriquecer sua trilha.'
+              : `${fasesGeradas.length} fase(s) gerada(s) por IA prontas para serem salvas com a trilha.`}
+          </Text>
+
+          {fasesGeradas.map((f, idx) => (
+            <View key={idx} style={[styles.faseItemRow, { backgroundColor: colors.cardSecondary, padding: 10, borderRadius: 8, marginBottom: 8 }]}>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.faseName, { color: colors.text }]}>
+                  Fase {f.ordem}: {f.titulo}
+                </Text>
+                <Text style={[styles.faseQuestions, { color: colors.textMuted }]}>
+                  {f.perguntas.length} questões pedagógicas geradas
+                </Text>
+              </View>
+              <TouchableOpacity
+                style={styles.faseMiniAction}
+                onPress={() => handleRemoverFase(idx)}
+              >
+                <Trash2 size={16} color="#EF4444" />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+
         {/* Botão de Criação */}
         <TouchableOpacity
           style={styles.submitBtn}
@@ -631,6 +752,104 @@ export default function CriarTrilhaScreen() {
         </TouchableOpacity>
       </View>
     </ScrollView>
+
+    {/* Modal para Gerar Fase com IA */}
+    <Modal
+      visible={modalFaseIaVisible}
+      transparent
+      animationType="fade"
+      onRequestClose={() => {
+        if (!generatingFase) setModalFaseIaVisible(false);
+      }}
+    >
+      <View style={styles.modalOverlay}>
+        <View style={[styles.successModalCard, { backgroundColor: colors.card, maxWidth: 440 }]}>
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Sparkles size={24} color="#818CF8" />
+              <Text style={{ fontSize: 18, fontWeight: '900', color: colors.text }}>
+                Gerar Fase com IA
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => setModalFaseIaVisible(false)}
+              disabled={generatingFase}
+            >
+              <X size={20} color={colors.textMuted} />
+            </TouchableOpacity>
+          </View>
+
+          <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 16 }}>
+            A IA irá formular o conteúdo teórico e as perguntas de quiz pedagógicas automaticamente para a matéria &quot;{materia}&quot;.
+          </Text>
+
+          <View style={{ marginBottom: 14 }}>
+            <Text style={[styles.label, { color: colors.text }]}>Tema / Assunto da Fase</Text>
+            <TextInput
+              style={[styles.input, { backgroundColor: colors.cardSecondary, color: colors.text }]}
+              placeholder={`Ex: Tópico de ${materia}`}
+              placeholderTextColor={colors.textMuted}
+              value={faseIaTema}
+              onChangeText={setFaseIaTema}
+              editable={!generatingFase}
+            />
+          </View>
+
+          <View style={{ marginBottom: 20 }}>
+            <Text style={[styles.label, { color: colors.text }]}>Quantidade de Questões</Text>
+            <View style={{ flexDirection: 'row', gap: 8 }}>
+              {['2', '3', '4', '5'].map((qtd) => (
+                <TouchableOpacity
+                  key={qtd}
+                  style={[
+                    styles.selectorBtn,
+                    { flex: 1, backgroundColor: colors.cardSecondary, paddingVertical: 10 },
+                    faseIaQtdPerguntas === qtd && styles.selectorBtnActive,
+                  ]}
+                  onPress={() => setFaseIaQtdPerguntas(qtd)}
+                  disabled={generatingFase}
+                >
+                  <Text
+                    style={[
+                      styles.selectorBtnText,
+                      { color: colors.textMuted },
+                      faseIaQtdPerguntas === qtd && styles.textActive,
+                    ]}
+                  >
+                    {qtd}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
+          <View style={{ flexDirection: 'row', gap: 10 }}>
+            <TouchableOpacity
+              style={[styles.modalCopyBtn, { flex: 1, backgroundColor: colors.cardSecondary, borderWidth: 1, borderColor: colors.border }]}
+              onPress={() => setModalFaseIaVisible(false)}
+              disabled={generatingFase}
+            >
+              <Text style={[styles.modalCopyBtnText, { color: colors.text }]}>Cancelar</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.modalCopyBtn, { flex: 1.5, backgroundColor: colors.primary }]}
+              onPress={handleGerarFaseComIA}
+              disabled={generatingFase}
+            >
+              {generatingFase ? (
+                <ActivityIndicator color="#ffffff" />
+              ) : (
+                <>
+                  <Sparkles size={16} color="#ffffff" style={{ marginRight: 6 }} />
+                  <Text style={styles.modalCopyBtnText}>Gerar Fase</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    </Modal>
 
     {/* Modal de Sucesso pós-criação para Trilha Privada */}
     <Modal
@@ -1214,5 +1433,40 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
     fontWeight: '900',
+  },
+  addFaseBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  addFaseBtnText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  faseItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  faseName: {
+    fontSize: 14,
+    fontWeight: '800',
+  },
+  faseQuestions: {
+    fontSize: 11,
+    fontWeight: '600',
+    marginTop: 2,
+  },
+  faseMiniAction: {
+    padding: 8,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#1b1b1b',
+    backgroundColor: '#1E293B',
   },
 });

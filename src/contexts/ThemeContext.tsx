@@ -3,6 +3,7 @@ import { useColorScheme as useRNColorScheme, Platform } from 'react-native';
 import * as SecureStore from 'expo-secure-store';
 import { useAuth } from './AuthContext';
 import api from '../services/api';
+import { setGlobalFontMultiplier } from '../utils/fontScaler';
 
 export type ThemePreference = 'system' | 'light' | 'dark';
 export type ActiveTheme = 'light' | 'dark';
@@ -230,6 +231,11 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
     return 1.0;
   }, [fontScale]);
 
+  // Aplica escala global no mobile imediatamente
+  useEffect(() => {
+    setGlobalFontMultiplier(fontSizeMultiplier);
+  }, [fontSizeMultiplier]);
+
   const scaledFontSize = (baseSize: number) => {
     return Math.round(baseSize * fontSizeMultiplier);
   };
@@ -375,6 +381,7 @@ export function ThemeProvider({ children }: { children: ReactNode }) {
 
   return (
     <ThemeContext.Provider
+      key={`theme-provider-font-${fontScale}`}
       value={{
         theme: activeTheme,
         isDark: activeTheme === 'dark',

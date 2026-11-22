@@ -19,6 +19,8 @@ import {
   Brain,
   ArrowLeft,
   PlusCircle,
+  Plus,
+  Trash2,
   ShieldAlert,
   Lock,
   Globe,
@@ -29,6 +31,7 @@ import {
   Check,
   RefreshCw,
   Eye,
+  X,
 } from 'lucide-react-native';
 import { obterMaterias } from '../../services/materiaService';
 import {
@@ -39,6 +42,7 @@ import {
 import { QRCodeModal } from '../../components/QRCodeModal';
 import { AccessibilityIcon } from '../../components/AccessibilityIcon';
 import { logger } from '../../utils/logger';
+import { gerarFaseComIA } from '../../services/aiPhaseGeneratorService';
 
 interface SugestaoTrilha {
   trilha: {
@@ -100,6 +104,13 @@ export default function ConsultAiScreen() {
   const [createdModalVisible, setCreatedModalVisible] = useState(false);
   const [createdTrilha, setCreatedTrilha] = useState<{ _id: string; titulo: string; codigoAcesso: string } | null>(null);
   const [qrModalVisible, setQrModalVisible] = useState(false);
+
+  // Estados de Criação de Fases com IA
+  const [modalFaseIaVisible, setModalFaseIaVisible] = useState(false);
+  const [targetSecaoIdx, setTargetSecaoIdx] = useState<number | null>(null);
+  const [faseIaTema, setFaseIaTema] = useState('');
+  const [faseIaQtdPerguntas, setFaseIaQtdPerguntas] = useState('3');
+  const [generatingFase, setGeneratingFase] = useState(false);
 
   // Carrega lista de matérias dinâmicas
   useEffect(() => {
@@ -271,6 +282,84 @@ export default function ConsultAiScreen() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleOpenAddFaseModal = (secaoIdx: number) => {
+    setTargetSecaoIdx(secaoIdx);
+    setFaseIaTema('');
+    setFaseIaQtdPerguntas('3');
+    setModalFaseIaVisible(true);
+  };
+
+  const handleGerarFaseParaSecao = async () => {
+    if (targetSecaoIdx === null || !sugestao) return;
+    if (!faseIaTema.trim()) {
+      setErrorMsg('Informe o tema ou assunto da nova fase.');
+      return;
+    }
+    setGeneratingFase(true);
+    setErrorMsg(null);
+    try {
+      const targetSec = sugestao.secoes[targetSecaoIdx];
+      const novaOrdem = targetSec.fases.length + 1;
+      const novaFase = await gerarFaseComIA({
+        materia: sugestao.trilha.materia || materiaFinal,
+        temaOuFoco: faseIaTema.trim(),
+        dificuldade: (sugestao.trilha.dificuldade as any) || dificuldade,
+        ordem: novaOrdem,
+        quantidadePerguntas: parseInt(faseIaQtdPerguntas, 10) || 3,
+        idioma,
+      });
+
+      const novasSecoes = [...sugestao.secoes];
+      novasSecoes[targetSecaoIdx] = {
+        ...targetSec,
+        fases: [...targetSec.fases, novaFase],
+      };
+      setSugestao({ ...sugestao, secoes: novasSecoes });
+      setModalFaseIaVisible(false);
+    } catch (err: any) {
+      logger.error('Erro ao gerar fase avulsa com IA:', err);
+      setErrorMsg('Falha ao gerar a fase com IA. Tente novamente.');
+    } finally {
+      setGeneratingFase(false);
+    }
+  };
+
+  const handleRefazerFaseComIA = async (secaoIdx: number, faseIdx: number) => {
+    if (!sugestao) return;
+    const targetFase = sugestao.secoes[secaoIdx].fases[faseIdx];
+    setGeneratingFase(true);
+    setErrorMsg(null);
+    try {
+      const faseRegenerada = await gerarFaseComIA({
+        materia: sugestao.trilha.materia || materiaFinal,
+        temaOuFoco: targetFase.titulo,
+        dificuldade: (sugestao.trilha.dificuldade as any) || dificuldade,
+        ordem: targetFase.ordem,
+        quantidadePerguntas: targetFase.perguntas?.length || 3,
+        idioma,
+      });
+      const novasSecoes = [...sugestao.secoes];
+      const novasFases = [...novasSecoes[secaoIdx].fases];
+      novasFases[faseIdx] = faseRegenerada;
+      novasSecoes[secaoIdx] = { ...novasSecoes[secaoIdx], fases: novasFases };
+      setSugestao({ ...sugestao, secoes: novasSecoes });
+    } catch (e) {
+      logger.error('Erro ao refazer fase:', e);
+      setErrorMsg('Não foi possível refazer a fase neste momento.');
+    } finally {
+      setGeneratingFase(false);
+    }
+  };
+
+  const handleRemoverFase = (secaoIdx: number, faseIdx: number) => {
+    if (!sugestao) return;
+    const novasSecoes = [...sugestao.secoes];
+    const targetSec = novasSecoes[secaoIdx];
+    const filtradas = targetSec.fases.filter((_, idx) => idx !== faseIdx).map((f, i) => ({ ...f, ordem: i + 1 }));
+    novasSecoes[secaoIdx] = { ...targetSec, fases: filtradas };
+    setSugestao({ ...sugestao, secoes: novasSecoes });
   };
 
   return (
@@ -689,18 +778,47 @@ export default function ConsultAiScreen() {
             {/* Estrutura de Seções Geradas */}
             <Text style={[styles.structureTitle, { color: colors.text }]}>Estrutura da Trilha Gerada</Text>
             {sugestao.secoes.map((sec, sIdx) => (
-              <View key={sIdx} style={[styles.secaoCard, { backgroundColor: colors.card }]}>
-                <Text style={[styles.secaoName, { color: colors.text }]}>
-                  Seção {sec.ordem}: {sec.titulo}
-                </Text>
+              <View key={sIdx} style={[styles.secaoCard, { backgroundColor: colors.card, marginBottom: 12 }]}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                  <Text style={[styles.secaoName, { color: colors.text, marginBottom: 0, flex: 1 }]}>
+                    Seção {sec.ordem}: {sec.titulo}
+                  </Text>
+                  <TouchableOpacity
+                    style={[styles.addFaseBtn, { backgroundColor: colors.primary }]}
+                    onPress={() => handleOpenAddFaseModal(sIdx)}
+                  >
+                    <Plus size={14} color="#ffffff" style={{ marginRight: 4 }} />
+                    <Text style={styles.addFaseBtnText}>+ Fase com IA</Text>
+                  </TouchableOpacity>
+                </View>
                 {sec.fases.map((fase, fIdx) => (
-                  <View key={fIdx} style={styles.faseItem}>
-                    <Text style={[styles.faseName, { color: colors.text }]}>
-                      Fase {fase.ordem}: {fase.titulo}
-                    </Text>
-                    <Text style={[styles.faseQuestions, { color: colors.textMuted }]}>
-                      ({fase.perguntas.length} perguntas de quiz geradas)
-                    </Text>
+                  <View key={fIdx} style={styles.faseItemRow}>
+                    <View style={styles.faseItem}>
+                      <Text style={[styles.faseName, { color: colors.text }]}>
+                        Fase {fase.ordem}: {fase.titulo}
+                      </Text>
+                      <Text style={[styles.faseQuestions, { color: colors.textMuted }]}>
+                        ({fase.perguntas.length} perguntas de quiz geradas)
+                      </Text>
+                    </View>
+                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                      <TouchableOpacity
+                        style={[styles.faseMiniAction, { backgroundColor: colors.cardSecondary }]}
+                        onPress={() => handleRefazerFaseComIA(sIdx, fIdx)}
+                        accessibilityLabel="Refazer com IA"
+                      >
+                        <RefreshCw size={14} color="#818CF8" />
+                      </TouchableOpacity>
+                      {sec.fases.length > 1 && (
+                        <TouchableOpacity
+                          style={[styles.faseMiniAction, { backgroundColor: colors.cardSecondary }]}
+                          onPress={() => handleRemoverFase(sIdx, fIdx)}
+                          accessibilityLabel="Remover Fase"
+                        >
+                          <Trash2 size={14} color="#EF4444" />
+                        </TouchableOpacity>
+                      )}
+                    </View>
                   </View>
                 ))}
               </View>
@@ -802,6 +920,104 @@ export default function ConsultAiScreen() {
               >
                 <Eye size={20} color="#ffffff" style={{ marginRight: 8 }} />
                 <Text style={styles.goToTrailBtnText}>Acessar Trilha Agora</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Modal para Gerar Fase com IA */}
+      <Modal
+        visible={modalFaseIaVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => {
+          if (!generatingFase) setModalFaseIaVisible(false);
+        }}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.createdCard, { backgroundColor: colors.card, maxWidth: 440 }]}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Sparkles size={24} color="#818CF8" />
+                <Text style={[styles.formTitle, { color: colors.text, marginBottom: 0 }]}>
+                  Gerar Fase com IA
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => setModalFaseIaVisible(false)}
+                disabled={generatingFase}
+              >
+                <X size={20} color={colors.textMuted} />
+              </TouchableOpacity>
+            </View>
+
+            <Text style={{ fontSize: 13, color: colors.textMuted, marginBottom: 16 }}>
+              A Inteligência Artificial criará a explicação teórica e perguntas de quiz personalizadas para este tema.
+            </Text>
+
+            <View style={{ marginBottom: 14 }}>
+              <Text style={[styles.label, { color: colors.text }]}>Tema ou Assunto da Fase</Text>
+              <TextInput
+                style={[styles.input, { backgroundColor: colors.cardSecondary, color: colors.text }]}
+                placeholder="Ex: Teorema de Pitágoras, Funções Afins..."
+                placeholderTextColor={colors.textMuted}
+                value={faseIaTema}
+                onChangeText={setFaseIaTema}
+                editable={!generatingFase}
+              />
+            </View>
+
+            <View style={{ marginBottom: 20 }}>
+              <Text style={[styles.label, { color: colors.text }]}>Quantidade de Perguntas</Text>
+              <View style={{ flexDirection: 'row', gap: 8 }}>
+                {['2', '3', '4', '5'].map((qtd) => (
+                  <TouchableOpacity
+                    key={qtd}
+                    style={[
+                      styles.materiaChip,
+                      { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.cardSecondary },
+                      faseIaQtdPerguntas === qtd && styles.materiaChipActive,
+                    ]}
+                    onPress={() => setFaseIaQtdPerguntas(qtd)}
+                    disabled={generatingFase}
+                  >
+                    <Text
+                      style={[
+                        styles.materiaChipText,
+                        { color: colors.textMuted },
+                        faseIaQtdPerguntas === qtd && styles.materiaChipTextActive,
+                      ]}
+                    >
+                      {qtd}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <View style={{ flexDirection: 'row', gap: 10 }}>
+              <TouchableOpacity
+                style={[styles.cancelBtn, { flex: 1, marginTop: 0 }]}
+                onPress={() => setModalFaseIaVisible(false)}
+                disabled={generatingFase}
+              >
+                <Text style={styles.cancelBtnText}>Cancelar</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.saveBtn, { flex: 1.5, marginTop: 0, backgroundColor: colors.primary }]}
+                onPress={handleGerarFaseParaSecao}
+                disabled={generatingFase}
+              >
+                {generatingFase ? (
+                  <ActivityIndicator color="#ffffff" />
+                ) : (
+                  <>
+                    <Sparkles size={16} color="#ffffff" style={{ marginRight: 6 }} />
+                    <Text style={styles.saveBtnText}>Gerar Fase</Text>
+                  </>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -1122,11 +1338,37 @@ const styles = StyleSheet.create({
     fontWeight: '900',
     marginBottom: 8,
   },
+  addFaseBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 10,
+    paddingVertical: 5,
+    borderRadius: 8,
+    borderWidth: 2,
+    borderColor: '#1b1b1b',
+  },
+  addFaseBtnText: {
+    color: '#ffffff',
+    fontSize: 11,
+    fontWeight: '800',
+  },
+  faseItemRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginVertical: 4,
+  },
   faseItem: {
+    flex: 1,
     borderLeftWidth: 3,
     borderLeftColor: '#10B981',
     paddingLeft: 10,
-    marginVertical: 4,
+  },
+  faseMiniAction: {
+    padding: 6,
+    borderRadius: 6,
+    borderWidth: 1.5,
+    borderColor: '#1b1b1b',
   },
   faseName: {
     fontSize: 14,

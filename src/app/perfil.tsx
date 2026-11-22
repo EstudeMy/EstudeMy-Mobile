@@ -418,7 +418,7 @@ export default function PerfilScreen() {
     localSavedXp = parseInt(window.localStorage.getItem('estudemy_user_xp_acumulado') || '0', 10) || 0;
   }
   const xp = Math.max(rawUserXp, acumuladoXp, localSavedXp, fasesConcluidasCount * 100);
-  const { level, xpInCurrentLevel, xpNeededForNextLevel, progressPercentage, title: levelTitle } = calculateLevel(xp);
+  const { level, xpInCurrentLevel, xpNeededForNextLevel, progressPercentage, title: levelTitle, formattedXpText } = calculateLevel(xp);
 
   // Ofensiva do usuário (dias consecutivos)
   const rawStreak = (user as any)?.ofensiva || (user as any)?.streak || (user as any)?.diasConsecutivos;
@@ -631,7 +631,7 @@ export default function PerfilScreen() {
         <View style={styles.levelRow}>
           <Text style={styles.levelLabel}>{t('ranking.levelLabel') || 'Nível'} {level} • {levelTitle}</Text>
           <Text style={[styles.xpLabel, { backgroundColor: colors.cardSecondary, color: colors.text }]}>
-            {xpInCurrentLevel} / {xpNeededForNextLevel} XP ({progressPercentage}%)
+            {formattedXpText}
           </Text>
         </View>
       </View>

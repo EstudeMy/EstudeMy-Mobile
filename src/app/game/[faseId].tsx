@@ -33,6 +33,7 @@ import { buscarFasePorId, buscarFasesPorTrilha, Fase } from '../../services/fase
 import { registrarFaseConcluida } from '../../services/progressoService';
 import { buscarTrilhaPorId, listarTrilhas } from '../../services/trilhaService';
 import GameGuideModal from '../../components/game/GameGuideModal';
+import { registrarSessaoQuiz } from '../../services/adaptiveRecommendationService';
 
 export default function GameScreen() {
   const { faseId, trilhaId, modo, phase } = useLocalSearchParams<{
@@ -468,7 +469,19 @@ export default function GameScreen() {
         } else if (data?.type === 'AVANCAR_FASE') {
           avancarParaProximaFase();
         } else if (data?.type === 'FIM_FASE') {
-          if (data?.vitoria) {
+          const isVit = !!data?.vitoria;
+          const acertos = Number(data?.acertos) || (isVit ? 3 : 1);
+          const erros = Number(data?.erros) || (isVit ? 0 : 2);
+          void registrarSessaoQuiz({
+            trilhaId: data?.trilhaId || gameData?.trilhaId,
+            faseId: data?.faseId || gameData?.faseId,
+            acertos,
+            erros,
+            vitoria: isVit,
+            dificuldade: gameData?.dificuldade,
+          });
+
+          if (isVit) {
             setFimDeJogo('vitoria');
             await salvarProgressoVitoria(data?.faseId, data?.trilhaId, data?.modo);
           } else {
@@ -500,7 +513,19 @@ export default function GameScreen() {
     } else if (payload?.type === 'AVANCAR_FASE') {
       avancarParaProximaFase();
     } else if (payload?.type === 'FIM_FASE') {
-      if (payload?.vitoria) {
+      const isVit = !!payload?.vitoria;
+      const acertos = Number(payload?.acertos) || (isVit ? 3 : 1);
+      const erros = Number(payload?.erros) || (isVit ? 0 : 2);
+      void registrarSessaoQuiz({
+        trilhaId: payload?.trilhaId || gameData?.trilhaId,
+        faseId: payload?.faseId || gameData?.faseId,
+        acertos,
+        erros,
+        vitoria: isVit,
+        dificuldade: gameData?.dificuldade,
+      });
+
+      if (isVit) {
         setFimDeJogo('vitoria');
         await salvarProgressoVitoria(payload?.faseId, payload?.trilhaId, payload?.modo);
       } else {

@@ -34,17 +34,19 @@ import {
   unlockTrail,
   copyToClipboard,
   isTrilhaPrivada,
-  removeTrailAccessCode,
 } from '../../services/trilhaAcessoService';
 import { getCharacterImage, getTrackImage, EXTRA_IMAGES } from '../../constants/assets';
 import { calculateLevel } from '../../utils/leveling';
 import { obterResumoProgressoUsuario } from '../../services/progressoService';
 import {
+  calcularPerfilHabilidade,
+  ordenarTrilhasPorAdaptabilidade,
+  UserSkillProfile,
+} from '../../services/adaptiveRecommendationService';
+import {
   Search,
   Zap,
-  Sparkles,
   BookOpen,
-  PlusCircle,
   X,
   Lock,
   Globe,
@@ -87,6 +89,7 @@ export default function HomeScreen() {
   const [populares, setPopulares] = useState<Trilha[]>([]);
   const [novidades, setNovidades] = useState<Trilha[]>([]);
   const [searchResults, setSearchResults] = useState<Trilha[] | null>(null);
+  const [skillProfile, setSkillProfile] = useState<UserSkillProfile | null>(null);
 
   // Estados de controle de acesso e trilhas privadas
   const [unlockedTrailIds, setUnlockedTrailIds] = useState<string[]>([]);
@@ -157,17 +160,20 @@ export default function HomeScreen() {
     setLoading(true);
     try {
       const mappedIdioma = getMappedIdioma(language);
-      const [continueData, popularesData, novidadesData, materiasList, progressoResumo] = await Promise.all([
+      const [continueData, popularesData, novidadesData, materiasList, progressoResumo, profile] = await Promise.all([
         obterContinue(mappedIdioma),
         obterPopulares(mappedIdioma),
         obterNovidades(mappedIdioma),
         obterMaterias(),
         obterResumoProgressoUsuario().catch(() => null),
+        calcularPerfilHabilidade(user).catch(() => null),
       ]);
 
       if (progressoResumo && typeof progressoResumo.xpAcumulado === 'number') {
         setDashboardProgressoXp(progressoResumo.xpAcumulado);
       }
+
+      setSkillProfile(profile);
 
       const filterByLanguage = (trilhas: Trilha[]) => {
         return trilhas.filter((t) => {
@@ -177,7 +183,14 @@ export default function HomeScreen() {
       };
 
       setContinueTrilhas(filterByLanguage(continueData));
-      setPopulares(filterByLanguage(popularesData));
+
+      // Aplica modelo de Machine Learning adaptativo de dificuldade nas trilhas recomendadas ("Melhores para você")
+      const filteredPopulares = filterByLanguage(popularesData);
+      const adaptativasPopulares = profile
+        ? ordenarTrilhasPorAdaptabilidade(filteredPopulares, profile.dificuldadeRecomendada)
+        : filteredPopulares;
+
+      setPopulares(adaptativasPopulares);
       setNovidades(filterByLanguage(novidadesData));
       setMateriasDisponiveis(materiasList || []);
     } catch (error) {
@@ -185,7 +198,7 @@ export default function HomeScreen() {
     } finally {
       setLoading(false);
     }
-  }, [language]);
+  }, [language, user]);
 
   useEffect(() => {
     if (token) {
@@ -499,7 +512,7 @@ export default function HomeScreen() {
     localSavedXp = parseInt(window.localStorage.getItem('estudemy_user_xp_acumulado') || '0', 10) || 0;
   }
   const xp = Math.max(rawUserXp, dashboardProgressoXp, localSavedXp);
-  const { level, xpInCurrentLevel, xpNeededForNextLevel, progressPercentage, title } = calculateLevel(xp);
+  const { level, progressPercentage, title, formattedXpText } = calculateLevel(xp);
 
   // Card para os carrosséis horizontais
   const renderTrackCard = ({ item }: { item: Trilha }) => {
@@ -758,7 +771,7 @@ export default function HomeScreen() {
         <View style={styles.xpRow}>
           <Zap size={16} color="#EAB308" fill="#EAB308" />
           <Text style={[styles.xpText, { color: colors.text }]}>
-            {xpInCurrentLevel} / {xpNeededForNextLevel} XP ({progressPercentage}%)
+            {formattedXpText}
           </Text>
           <Text style={[styles.xpText, { color: colors.textMuted, marginLeft: 'auto', fontSize: 12, fontWeight: '700' }]}>
             {title}
@@ -1098,10 +1111,45 @@ export default function HomeScreen() {
             </View>
           )}
 
-          {/* Carrossel Trilhas Populares */}
+          {/* Carrossel Trilhas Populares com Recomendação Adaptativa IA */}
           <View style={styles.section}>
-            <View style={[styles.sectionHeaderPill, { backgroundColor: isDark ? '#262626' : '#E5E7EB' }]}>
-              <Text style={[styles.sectionHeaderPillText, { color: colors.text }]}>{t('home.popularTrails') || 'Melhores para você'}</Text>
+            <View style={styles.popularHeaderRow}>
+              <View style={[styles.sectionHeaderPill, { backgroundColor: isDark ? '#262626' : '#E5E7EB' }]}>
+                <Text style={[styles.sectionHeaderPillText, { color: colors.text }]}>{t('home.popularTrails') || 'Melhores para você'}</Text>
+              </View>
+              {skillProfile && (
+                <View style={[
+                  styles.mlBadge,
+                  {
+                    backgroundColor:
+                      skillProfile.dificuldadeRecomendada === 'Dificil'
+                        ? 'rgba(239, 68, 68, 0.15)'
+                        : skillProfile.dificuldadeRecomendada === 'Facil'
+                          ? 'rgba(16, 185, 129, 0.15)'
+                          : 'rgba(245, 158, 11, 0.15)',
+                    borderColor:
+                      skillProfile.dificuldadeRecomendada === 'Dificil'
+                        ? '#EF4444'
+                        : skillProfile.dificuldadeRecomendada === 'Facil'
+                          ? '#10B981'
+                          : '#F59E0B',
+                  }
+                ]}>
+                  <Text style={[
+                    styles.mlBadgeText,
+                    {
+                      color:
+                        skillProfile.dificuldadeRecomendada === 'Dificil'
+                          ? '#EF4444'
+                          : skillProfile.dificuldadeRecomendada === 'Facil'
+                            ? '#10B981'
+                            : '#F59E0B'
+                    }
+                  ]}>
+                    {skillProfile.badgeTexto}
+                  </Text>
+                </View>
+              )}
             </View>
             {populares.length === 0 ? (
               <Text style={[styles.emptyText, { color: colors.textMuted }]}>{t('home.noPopularTrails') || 'Nenhuma trilha disponível.'}</Text>
@@ -2896,5 +2944,24 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 13,
     fontWeight: '900',
+  },
+  popularHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    marginBottom: 8,
+    flexWrap: 'wrap',
+    gap: 8,
+  },
+  mlBadge: {
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+  },
+  mlBadgeText: {
+    fontSize: 11,
+    fontWeight: '800',
   },
 });
