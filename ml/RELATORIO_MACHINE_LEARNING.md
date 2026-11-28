@@ -178,7 +178,23 @@ No aprendizado não supervisionado, fornecemos **apenas a matriz $X$ padronizada
 
 ---
 
-## 7. Como Executar os Scripts
+## 7. Previsão e Recomendação de Trilhas para 5 Novos Alunos (Fora da Base de 1.000)
+
+Para validar a capacidade de generalização e recomendação em produção, foram criados **5 novos alunos inéditos** (que **não estão presentes nos 1.000 registros** de treino/teste) com diferentes históricos de acertos, erros, HP restante e XP. Os modelos treinados realizaram a previsão da classe ($Y$), do cluster (K-Means) e recomendaram a trilha ideal:
+
+| # | Novo Aluno (Fora dos 1.000) | Matéria | Fases | Acertos (%) | HP Rest. | XP (Nível) | Previsão Árvore / RF / Rede Neural | Cluster K-Means | Trilha e Dificuldade Recomendada pela IA |
+| :- | :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :--- |
+| **1** | **Carlos Eduardo Ribeiro** (`@carlos_edu_novo1`) | Programação | 4 | `9/28` (**32,14%**) | `19,5` | `145 XP` (Nv.2) | **`0: Basico_Risco_Evasao`** (100% conf.) | `Cluster 0` | **Trilha Fácil:** Lógica e Algoritmos Passo a Passo *(Reforço imediato)* |
+| **2** | **Fernanda Martins Souza** (`@fernanda_ms_novo2`) | Banco de Dados | 22 | `106/160` (**66,25%**) | `61,8` | `2.210 XP` (Nv.23) | **`1: Intermediario_Regular`** (100% conf.) | `Cluster 1` | **Trilha Média:** Modelagem Relacional, JOINs e Índices no MongoDB |
+| **3** | **Guilherme Augusto Lima** (`@gui_lima_novo3`) | Matemática | 54 | `386/420` (**91,90%**) | `90,4` | `8.810 XP` (Nv.89) | **`2: Avancado_Mestre`** (100% conf.) | `Cluster 2` | **Trilha Difícil:** Cálculo, Matrizes e Estatística Aplicada à IA |
+| **4** | **Larissa Azevedo Rocha** (`@larissa_ar_novo4`) | Física | 7 | `21/50` (**42,00%**) | `31,2` | `365 XP` (Nv.4) | **`0: Basico_Risco_Evasao`** (100% conf.) | `Cluster 0` | **Trilha Fácil:** Cinemática Básica e Leis de Newton Ilustradas *(Reforço)* |
+| **5** | **Rafael Henrique Borges** (`@rafael_hb_novo5`) | Inglês | 43 | `264/310` (**85,16%**) | `82,6` | `6.490 XP` (Nv.65) | **`2: Avancado_Mestre`** (100% conf.) | `Cluster 2` | **Trilha Difícil:** Inglês Fluente para Documentação Técnica e Entrevistas |
+
+> **Resultado do Teste de Previsão:** **5/5 previsões corretas (100% de precisão)** e concordância unânime entre Árvore de Decisão, Random Forest, Rede Neural MLP e K-Means. Os resultados detalhados também são exportados para [`ml/previsao_5_novos_alunos.csv`](file:///c:/Users/Alunos/Documents/GitHub/EstudeMy-Mobile/ml/previsao_5_novos_alunos.csv).
+
+---
+
+## 8. Como Executar os Scripts
 
 No terminal, na raiz do projeto:
 
@@ -186,7 +202,10 @@ No terminal, na raiz do projeto:
 # 1. Gerar novamente a base de 1.000 registros únicos com Faker
 python ml/gerar_dados_faker.py
 
-# 2. Executar o treinamento Supervisionado (Árvore, Random Forest, Rede Neural) e Não Supervisionado (K-Means)
+# 2. Executar o treinamento Supervisionado, Não Supervisionado e a Previsão dos 5 Novos Alunos
 python ml/treinar_modelos_ml.py
+
+# 3. Atualizar os gráficos e o relatório HTML A4
+python ml/gerar_relatorio_graficos.py
 ```
 

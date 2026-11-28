@@ -2750,228 +2750,92 @@
         </div>
       </div>
 
-      <div class="section-title">6. Amostra dos 1.000 Registros Únicos Gerados pelo Faker (`estudemy_resultados_ml_1000.csv`)</div>
+      <div class="section-title">6. Previsão e Recomendação de Trilhas para 5 Novos Alunos (Fora dos 1.000 Registros)</div>
+      <p style="font-size: 7.4pt; color: #475569;">Validação prática de inferência: <strong>5 novos alunos inéditos</strong> (ausentes do conjunto de 1.000 registros) foram submetidos à Árvore de Decisão, Random Forest, Rede Neural MLP e K-Means para prever seu nível e recomendar a trilha ideal com base nos acertos, erros e HP:</p>
       <table>
         <thead>
           <tr>
-            <th>ObjectId (_id)</th>
-            <th>Nome (Faker pt_BR)</th>
-            <th>@username</th>
-            <th>Herói</th>
+            <th class="center">#</th>
+            <th>Novo Aluno Inédito</th>
             <th>Matéria</th>
-            <th class="center">Dif.</th>
-            <th class="center">Fases</th>
-            <th class="center">Streak</th>
-            <th class="center">Acerto %</th>
-            <th class="center">HP</th>
-            <th class="center">XP (Nível)</th>
-            <th class="center">Classe Real (Y)</th>
+            <th class="center">Progresso</th>
+            <th class="center">Acertos (C/E)</th>
+            <th class="center">HP Méd.</th>
+            <th class="center">XP / Nível</th>
+            <th class="center">Previsão IA (Árvore/RF/MLP)</th>
             <th class="center">K-Means</th>
+            <th>Trilha e Ação Pedagógica Recomendada pela IA</th>
           </tr>
         </thead>
         <tbody>
           
             <tr>
-              <td class="mono">6a7d238fd0...</td>
-              <td><strong>Bella Câmara</strong></td>
-              <td class="mono">@bella_camara_563</td>
-              <td>Guerreiro</td>
-              <td>Química</td>
-              <td class="center">Facil</td>
-              <td class="center">23</td>
-              <td class="center">25d</td>
-              <td class="center"><strong>68.2%</strong></td>
-              <td class="center">41.9</td>
-              <td class="center mono"><strong>1993</strong> (Nv.20)</td>
-              <td class="center"><span class="pill badge-med">Intermediario_Regular</span></td>
-              <td class="center mono">Cluster 1</td>
+              <td class="center mono"><strong>#1</strong></td>
+              <td><strong>Carlos Eduardo Ribeiro</strong><br/><span class="mono" style="color:#64748b;">@carlos_edu_novo1 • Samurai</span></td>
+              <td><strong>Programação</strong></td>
+              <td class="center">4 fases<br/><span style="color:#64748b;font-size:6.4pt;">2d streak</span></td>
+              <td class="center"><strong>32.14%</strong><br/><span style="color:#64748b;font-size:6.4pt;">(9C / 19E)</span></td>
+              <td class="center">19.5 HP</td>
+              <td class="center mono"><strong>145 XP</strong><br/><span style="color:#64748b;font-size:6.4pt;">Nível 2</span></td>
+              <td class="center"><span class="pill badge-low">Basico_Risco_Evasao</span><br/><span style="color:#15803d;font-size:6.3pt;font-weight:700;">MLP: 100.0% | RF: 100.0%</span></td>
+              <td class="center mono"><strong>Cluster 0</strong></td>
+              <td><strong>Trilha Fácil: Lógica e Algoritmos Passo a Passo (Cenário: Vila • Chefe: Spectre 100 HP)</strong><br/><span style="color:#475569;font-size:6.5pt;">Reforço imediato (32.1% acertos, 19.5 HP): reduzir dificuldade para FÁCIL e liberar dicas 50/50 para evitar evasão.</span></td>
             </tr>
             
 
             <tr>
-              <td class="mono">6af20b82df...</td>
-              <td><strong>João Pedro Brito</strong></td>
-              <td class="mono">@joao_brito_166</td>
-              <td>Samurai</td>
-              <td>História</td>
-              <td class="center">Facil</td>
-              <td class="center">8</td>
-              <td class="center">11d</td>
-              <td class="center"><strong>58.1%</strong></td>
-              <td class="center">38.6</td>
-              <td class="center mono"><strong>689</strong> (Nv.7)</td>
-              <td class="center"><span class="pill badge-low">Basico_Risco_Evasao</span></td>
-              <td class="center mono">Cluster 0</td>
+              <td class="center mono"><strong>#2</strong></td>
+              <td><strong>Fernanda Martins Souza</strong><br/><span class="mono" style="color:#64748b;">@fernanda_ms_novo2 • Mago</span></td>
+              <td><strong>Banco de Dados</strong></td>
+              <td class="center">22 fases<br/><span style="color:#64748b;font-size:6.4pt;">15d streak</span></td>
+              <td class="center"><strong>66.25%</strong><br/><span style="color:#64748b;font-size:6.4pt;">(106C / 54E)</span></td>
+              <td class="center">61.8 HP</td>
+              <td class="center mono"><strong>2210 XP</strong><br/><span style="color:#64748b;font-size:6.4pt;">Nível 23</span></td>
+              <td class="center"><span class="pill badge-med">Intermediario_Regular</span><br/><span style="color:#15803d;font-size:6.3pt;font-weight:700;">MLP: 99.8% | RF: 100.0%</span></td>
+              <td class="center mono"><strong>Cluster 1</strong></td>
+              <td><strong>Trilha Média: Modelagem Relacional, JOINs e Índices no MongoDB (Cenário: Deserto • Chefe: Mago Corrompido 200 HP)</strong><br/><span style="color:#475569;font-size:6.5pt;">Progressão guiada (66.2% acertos, 61.8 HP): manter na trilha MÉDIA e incentivar aumento de streak diário.</span></td>
             </tr>
             
 
             <tr>
-              <td class="mono">6aa62794d3...</td>
-              <td><strong>Dr. Théo Porto</strong></td>
-              <td class="mono">@dr_porto_147</td>
-              <td>Mago</td>
-              <td>Geografia</td>
-              <td class="center">Dificil</td>
-              <td class="center">3</td>
-              <td class="center">3d</td>
-              <td class="center"><strong>27.8%</strong></td>
-              <td class="center">34.2</td>
-              <td class="center mono"><strong>195</strong> (Nv.2)</td>
-              <td class="center"><span class="pill badge-low">Basico_Risco_Evasao</span></td>
-              <td class="center mono">Cluster 0</td>
+              <td class="center mono"><strong>#3</strong></td>
+              <td><strong>Guilherme Augusto Lima</strong><br/><span class="mono" style="color:#64748b;">@gui_lima_novo3 • Guerreiro</span></td>
+              <td><strong>Matemática</strong></td>
+              <td class="center">54 fases<br/><span style="color:#64748b;font-size:6.4pt;">46d streak</span></td>
+              <td class="center"><strong>91.90%</strong><br/><span style="color:#64748b;font-size:6.4pt;">(386C / 34E)</span></td>
+              <td class="center">90.4 HP</td>
+              <td class="center mono"><strong>8810 XP</strong><br/><span style="color:#64748b;font-size:6.4pt;">Nível 89</span></td>
+              <td class="center"><span class="pill badge-high">Avancado_Mestre</span><br/><span style="color:#15803d;font-size:6.3pt;font-weight:700;">MLP: 100.0% | RF: 100.0%</span></td>
+              <td class="center mono"><strong>Cluster 2</strong></td>
+              <td><strong>Trilha Difícil: Cálculo, Matrizes e Estatística Aplicada à IA (Cenário: Castelo • Chefe: Cavaleiro Decaído 250 HP)</strong><br/><span style="color:#475569;font-size:6.5pt;">Alta performance (91.9% acertos, 90.4 HP): desbloquear trilha DIFÍCIL e desafios Boss Rush / Contra o Tempo.</span></td>
             </tr>
             
 
             <tr>
-              <td class="mono">6af0dceea2...</td>
-              <td><strong>Dra. Luana Alves</strong></td>
-              <td class="mono">@dra_alves_117</td>
-              <td>Guerreiro</td>
-              <td>Química</td>
-              <td class="center">Facil</td>
-              <td class="center">1</td>
-              <td class="center">3d</td>
-              <td class="center"><strong>33.3%</strong></td>
-              <td class="center">40.4</td>
-              <td class="center mono"><strong>131</strong> (Nv.2)</td>
-              <td class="center"><span class="pill badge-low">Basico_Risco_Evasao</span></td>
-              <td class="center mono">Cluster 0</td>
+              <td class="center mono"><strong>#4</strong></td>
+              <td><strong>Larissa Azevedo Rocha</strong><br/><span class="mono" style="color:#64748b;">@larissa_ar_novo4 • Samurai</span></td>
+              <td><strong>Física</strong></td>
+              <td class="center">7 fases<br/><span style="color:#64748b;font-size:6.4pt;">3d streak</span></td>
+              <td class="center"><strong>42.00%</strong><br/><span style="color:#64748b;font-size:6.4pt;">(21C / 29E)</span></td>
+              <td class="center">31.2 HP</td>
+              <td class="center mono"><strong>365 XP</strong><br/><span style="color:#64748b;font-size:6.4pt;">Nível 4</span></td>
+              <td class="center"><span class="pill badge-low">Basico_Risco_Evasao</span><br/><span style="color:#15803d;font-size:6.3pt;font-weight:700;">MLP: 100.0% | RF: 100.0%</span></td>
+              <td class="center mono"><strong>Cluster 0</strong></td>
+              <td><strong>Trilha Fácil: Cinemática Básica e Leis de Newton Ilustradas (Cenário: Vila • Chefe: Spectre 100 HP)</strong><br/><span style="color:#475569;font-size:6.5pt;">Reforço imediato (42.0% acertos, 31.2 HP): reduzir dificuldade para FÁCIL e liberar dicas 50/50 para evitar evasão.</span></td>
             </tr>
             
 
             <tr>
-              <td class="mono">6a935b9e1a...</td>
-              <td><strong>Rebeca Gonçalves</strong></td>
-              <td class="mono">@rebeca_goncalv_104</td>
-              <td>Mago</td>
-              <td>Química</td>
-              <td class="center">Medio</td>
-              <td class="center">30</td>
-              <td class="center">9d</td>
-              <td class="center"><strong>70.6%</strong></td>
-              <td class="center">69.6</td>
-              <td class="center mono"><strong>3082</strong> (Nv.31)</td>
-              <td class="center"><span class="pill badge-med">Intermediario_Regular</span></td>
-              <td class="center mono">Cluster 1</td>
-            </tr>
-            
-
-            <tr>
-              <td class="mono">6acc9d9252...</td>
-              <td><strong>Dra. Bella Silva</strong></td>
-              <td class="mono">@dra_silva_557</td>
-              <td>Samurai</td>
-              <td>Português</td>
-              <td class="center">Dificil</td>
-              <td class="center">56</td>
-              <td class="center">36d</td>
-              <td class="center"><strong>90.0%</strong></td>
-              <td class="center">93.4</td>
-              <td class="center mono"><strong>8905</strong> (Nv.90)</td>
-              <td class="center"><span class="pill badge-high">Avancado_Mestre</span></td>
-              <td class="center mono">Cluster 2</td>
-            </tr>
-            
-
-            <tr>
-              <td class="mono">6ab666cfeb...</td>
-              <td><strong>Isis Novais</strong></td>
-              <td class="mono">@isis_novais_28</td>
-              <td>Mago</td>
-              <td>Programação</td>
-              <td class="center">Medio</td>
-              <td class="center">31</td>
-              <td class="center">27d</td>
-              <td class="center"><strong>72.6%</strong></td>
-              <td class="center">52.7</td>
-              <td class="center mono"><strong>3528</strong> (Nv.36)</td>
-              <td class="center"><span class="pill badge-med">Intermediario_Regular</span></td>
-              <td class="center mono">Cluster 1</td>
-            </tr>
-            
-
-            <tr>
-              <td class="mono">6aebd8057d...</td>
-              <td><strong>Arthur Gabriel Cassiano</strong></td>
-              <td class="mono">@arthur_cassian_776</td>
-              <td>Samurai</td>
-              <td>Geografia</td>
-              <td class="center">Facil</td>
-              <td class="center">10</td>
-              <td class="center">24d</td>
-              <td class="center"><strong>63.6%</strong></td>
-              <td class="center">46.8</td>
-              <td class="center mono"><strong>1029</strong> (Nv.11)</td>
-              <td class="center"><span class="pill badge-med">Intermediario_Regular</span></td>
-              <td class="center mono">Cluster 0</td>
-            </tr>
-            
-
-            <tr>
-              <td class="mono">6ae575d465...</td>
-              <td><strong>Maya Novais</strong></td>
-              <td class="mono">@maya_novais_780</td>
-              <td>Mago</td>
-              <td>Inglês</td>
-              <td class="center">Facil</td>
-              <td class="center">3</td>
-              <td class="center">1d</td>
-              <td class="center"><strong>27.8%</strong></td>
-              <td class="center">21.2</td>
-              <td class="center mono"><strong>123</strong> (Nv.2)</td>
-              <td class="center"><span class="pill badge-low">Basico_Risco_Evasao</span></td>
-              <td class="center mono">Cluster 0</td>
-            </tr>
-            
-
-            <tr>
-              <td class="mono">6a7257172c...</td>
-              <td><strong>Otávio Siqueira</strong></td>
-              <td class="mono">@otavio_siqueir_132</td>
-              <td>Mago</td>
-              <td>Banco de Dados</td>
-              <td class="center">Facil</td>
-              <td class="center">5</td>
-              <td class="center">3d</td>
-              <td class="center"><strong>38.5%</strong></td>
-              <td class="center">18.6</td>
-              <td class="center mono"><strong>273</strong> (Nv.3)</td>
-              <td class="center"><span class="pill badge-low">Basico_Risco_Evasao</span></td>
-              <td class="center mono">Cluster 0</td>
-            </tr>
-            
-
-            <tr>
-              <td class="mono">6aa1ee35eb...</td>
-              <td><strong>Rael Albuquerque</strong></td>
-              <td class="mono">@rael_albuquerq_744</td>
-              <td>Samurai</td>
-              <td>Química</td>
-              <td class="center">Dificil</td>
-              <td class="center">10</td>
-              <td class="center">19d</td>
-              <td class="center"><strong>61.4%</strong></td>
-              <td class="center">57.0</td>
-              <td class="center mono"><strong>1283</strong> (Nv.13)</td>
-              <td class="center"><span class="pill badge-med">Intermediario_Regular</span></td>
-              <td class="center mono">Cluster 1</td>
-            </tr>
-            
-
-            <tr>
-              <td class="mono">6ad070d328...</td>
-              <td><strong>Juliana Rios</strong></td>
-              <td class="mono">@juliana_rios_324</td>
-              <td>Samurai</td>
-              <td>Ciências</td>
-              <td class="center">Medio</td>
-              <td class="center">49</td>
-              <td class="center">46d</td>
-              <td class="center"><strong>92.1%</strong></td>
-              <td class="center">91.3</td>
-              <td class="center mono"><strong>6690</strong> (Nv.67)</td>
-              <td class="center"><span class="pill badge-high">Avancado_Mestre</span></td>
-              <td class="center mono">Cluster 2</td>
+              <td class="center mono"><strong>#5</strong></td>
+              <td><strong>Rafael Henrique Borges</strong><br/><span class="mono" style="color:#64748b;">@rafael_hb_novo5 • Mago</span></td>
+              <td><strong>Inglês</strong></td>
+              <td class="center">43 fases<br/><span style="color:#64748b;font-size:6.4pt;">35d streak</span></td>
+              <td class="center"><strong>85.16%</strong><br/><span style="color:#64748b;font-size:6.4pt;">(264C / 46E)</span></td>
+              <td class="center">82.6 HP</td>
+              <td class="center mono"><strong>6490 XP</strong><br/><span style="color:#64748b;font-size:6.4pt;">Nível 65</span></td>
+              <td class="center"><span class="pill badge-high">Avancado_Mestre</span><br/><span style="color:#15803d;font-size:6.3pt;font-weight:700;">MLP: 100.0% | RF: 100.0%</span></td>
+              <td class="center mono"><strong>Cluster 2</strong></td>
+              <td><strong>Trilha Difícil: Inglês Fluente para Documentação Técnica e Entrevistas (Cenário: Castelo • Chefe: Cavaleiro Decaído 250 HP)</strong><br/><span style="color:#475569;font-size:6.5pt;">Alta performance (85.2% acertos, 82.6 HP): desbloquear trilha DIFÍCIL e desafios Boss Rush / Contra o Tempo.</span></td>
             </tr>
             
         </tbody>
@@ -2980,7 +2844,7 @@
 
     <div class="footer">
       <span>EstudeMy • Projeto Integrador V (Machine Learning)</span>
-      <span>Arquivos: ml/gerar_dados_faker.py • ml/treinar_modelos_ml.py • ml/estudemy_dataset_1000.csv</span>
+      <span>Arquivos: ml/gerar_dados_faker.py • ml/treinar_modelos_ml.py • ml/previsao_5_novos_alunos.csv</span>
       <span>Página 3 de 3</span>
     </div>
   </div>

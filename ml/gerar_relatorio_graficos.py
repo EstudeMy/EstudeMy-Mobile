@@ -345,6 +345,32 @@ def gerar_relatorio_html(
 
     perf = metricas["nao_supervisionado"]["perfil_medio_clusters"]
 
+    previsoes_5 = metricas.get("previsao_5_novos_alunos", [])
+    linhas_5_alunos = []
+    for idx_p, p in enumerate(previsoes_5):
+        b_cls = (
+            "badge-low"
+            if p["classe_esperada_y"] == 0
+            else ("badge-med" if p["classe_esperada_y"] == 1 else "badge-high")
+        )
+        linhas_5_alunos.append(
+            f"""
+            <tr>
+              <td class="center mono"><strong>#{idx_p + 1}</strong></td>
+              <td><strong>{p['nome'].replace(' (Novo Aluno ' + str(idx_p + 1) + ')', '')}</strong><br/><span class="mono" style="color:#64748b;">@{p['username']} • {p['personagem']}</span></td>
+              <td><strong>{p['materia_principal']}</strong></td>
+              <td class="center">{p['fases_concluidas']} fases<br/><span style="color:#64748b;font-size:6.4pt;">{p['dias_ofensiva']}d streak</span></td>
+              <td class="center"><strong>{p['media_acertos_pct']:.2f}%</strong><br/><span style="color:#64748b;font-size:6.4pt;">({p['total_acertos']}C / {p['total_erros']}E)</span></td>
+              <td class="center">{p['hp_medio_restante']:.1f} HP</td>
+              <td class="center mono"><strong>{p['xp_total']} XP</strong><br/><span style="color:#64748b;font-size:6.4pt;">Nível {p['nivel_heroi']}</span></td>
+              <td class="center"><span class="pill {b_cls}">{p['pred_rede_neural_mlp']}</span><br/><span style="color:#15803d;font-size:6.3pt;font-weight:700;">MLP: {p['confianca_mlp_pct']:.1f}% | RF: {p['confianca_rf_pct']:.1f}%</span></td>
+              <td class="center mono"><strong>{p['cluster_kmeans']}</strong></td>
+              <td><strong>{p['trilha_recomendada']}</strong><br/><span style="color:#475569;font-size:6.5pt;">{p['acao_pedagogica']}</span></td>
+            </tr>
+            """
+        )
+    html_5_alunos = "\n".join(linhas_5_alunos)
+
     return f"""<!DOCTYPE html>
 <html lang="pt-BR">
 <head>
@@ -825,34 +851,32 @@ def gerar_relatorio_html(
         </div>
       </div>
 
-      <div class="section-title">6. Amostra dos 1.000 Registros Únicos Gerados pelo Faker (`estudemy_resultados_ml_1000.csv`)</div>
+      <div class="section-title">6. Previsão e Recomendação de Trilhas para 5 Novos Alunos (Fora dos 1.000 Registros)</div>
+      <p style="font-size: 7.4pt; color: #475569;">Validação prática de inferência: <strong>5 novos alunos inéditos</strong> (ausentes do conjunto de 1.000 registros) foram submetidos à Árvore de Decisão, Random Forest, Rede Neural MLP e K-Means para prever seu nível e recomendar a trilha ideal com base nos acertos, erros e HP:</p>
       <table>
         <thead>
           <tr>
-            <th>ObjectId (_id)</th>
-            <th>Nome (Faker pt_BR)</th>
-            <th>@username</th>
-            <th>Herói</th>
+            <th class="center">#</th>
+            <th>Novo Aluno Inédito</th>
             <th>Matéria</th>
-            <th class="center">Dif.</th>
-            <th class="center">Fases</th>
-            <th class="center">Streak</th>
-            <th class="center">Acerto %</th>
-            <th class="center">HP</th>
-            <th class="center">XP (Nível)</th>
-            <th class="center">Classe Real (Y)</th>
+            <th class="center">Progresso</th>
+            <th class="center">Acertos (C/E)</th>
+            <th class="center">HP Méd.</th>
+            <th class="center">XP / Nível</th>
+            <th class="center">Previsão IA (Árvore/RF/MLP)</th>
             <th class="center">K-Means</th>
+            <th>Trilha e Ação Pedagógica Recomendada pela IA</th>
           </tr>
         </thead>
         <tbody>
-          {amostra_html}
+          {html_5_alunos}
         </tbody>
       </table>
     </div>
 
     <div class="footer">
       <span>EstudeMy • Projeto Integrador V (Machine Learning)</span>
-      <span>Arquivos: ml/gerar_dados_faker.py • ml/treinar_modelos_ml.py • ml/estudemy_dataset_1000.csv</span>
+      <span>Arquivos: ml/gerar_dados_faker.py • ml/treinar_modelos_ml.py • ml/previsao_5_novos_alunos.csv</span>
       <span>Página 3 de 3</span>
     </div>
   </div>
